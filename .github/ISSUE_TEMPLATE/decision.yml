@@ -1,0 +1,40 @@
+name: Product or architecture decision
+description: Resolve an ambiguity before affected implementation.
+title: "decision: "
+labels: ["decision"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision required
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and affected requirements
+      description: Include documents, rule IDs, workflows and UI references.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and trade-offs
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+    validations:
+      required: true
+  - type: checkboxes
+    id: outputs
+    attributes:
+      label: Required updates after decision
+      options:
+        - label: ADR/specification
+        - label: OpenAPI/data model
+        - label: Tests/traceability
+        - label: Design/copy
+

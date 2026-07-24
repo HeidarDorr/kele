@@ -1,0 +1,43 @@
+# KELE specification index
+
+Version: 1.0  
+Status: Active  
+Last reviewed: 2026-07-24
+
+This index defines canonical names, authority, and readiness. File names are
+authoritative; older names embedded in imported documents are legacy metadata.
+
+| Order | File | Purpose | Status | Authority |
+|---:|---|---|---|---|
+| 0 | `00-glossary.md` | Shared terminology | Frozen | Normative |
+| 1 | `01-project-overview.md` | Vision and version-1 scope | Draft | Normative after Frozen docs |
+| 2 | `02-domain-model.md` | Business objects and ownership | Frozen, amended by ADRs | Normative |
+| 3 | `03-business-rules.md` | Identified business rules | Draft | Normative for SHALL rules unless amended |
+| 4 | `04-cms-workflows.md` | Administrative workflows | Draft | Supporting |
+| 5 | `05-api-spec.md` | Imported narrative API draft | Draft/Superseded | Supporting only |
+| 6 | `openapi.yaml` | Machine-readable API contract | Baseline | Normative for transport |
+| 7 | `06-persistence-model.md` | Imported persistence proposal | Draft/Superseded in conflicts | Supporting |
+| 8 | `07-system-architecture.md` | Backend architecture principles | Accepted | Normative |
+| 9 | `08-frontend-system-architecture.md` | Frontend architecture principles | Accepted | Normative |
+| 10 | `adr/` | Accepted decisions | Accepted individually | Highest authority |
+
+## Known import corrections
+
+- Escaped Markdown punctuation was normalized on 2026-07-24.
+- `08-frontend-system-architecture.md` was renamed to
+  `08-frontend-system-architecture.md`.
+- Embedded document numbers in the original files are not reliable and must
+  not be used for link generation.
+- Duplicate product-detail reference imagery was removed before the baseline
+  commit; retained visual references are catalogued in `ui-acceptance.md`.
+
+## Change control
+
+- A Frozen document changes only through an accepted ADR plus an explicit
+  specification update.
+- Draft requirements may be clarified without an ADR when behavior is not
+  changed.
+- All new business rules receive stable IDs.
+- Open questions are tracked in `open-questions.md`; accepted answers must move
+  into the relevant specification or an ADR.
+

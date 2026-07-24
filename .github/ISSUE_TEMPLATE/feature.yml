@@ -1,0 +1,40 @@
+name: Feature slice
+description: A reviewable vertical product or technical capability.
+title: "feat: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the user or operator outcome, not a list of files.
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Rules and decisions
+      description: List business rule IDs, ADRs, and relevant open questions.
+      placeholder: "PUB-006, INV-003; ADR-0002; OQ-..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include success, failure, authorization, and edge behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Required evidence
+      description: Tests, screenshots, accessibility, performance or migration proof.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risks and rollback
+      description: Data, security, operational, compatibility and rollback concerns.
+

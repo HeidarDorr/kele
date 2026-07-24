@@ -1,6 +1,11 @@
-\# 1. Frontend Principles
+# Frontend System Architecture
 
-\## Purpose
+Canonical file: `08-frontend-system-architecture.md`  
+Status: Accepted
+
+# 1. Frontend Principles
+
+## Purpose
 
 Defines the architectural principles governing the Frontend
 implementation.
@@ -8,62 +13,62 @@ implementation.
 The Frontend SHALL remain scalable, maintainable and aligned with the
 Backend Architecture.
 
-\### Business-driven Structure
+### Business-driven Structure
 
 The Frontend SHALL be organized around Business Features rather than
 technical Layers.
 
-\### Feature Isolation
+### Feature Isolation
 
 Every Feature SHALL remain independent.
 
 Internal implementation details SHALL remain private to the Feature
 whenever possible.
 
-\### Backend Alignment
+### Backend Alignment
 
 Frontend Features SHALL mirror Backend Modules whenever applicable.
 
 Shared Business terminology SHALL remain consistent across the system.
 
-\### Presentation First
+### Presentation First
 
 The Frontend SHALL focus on Presentation and User Interaction.
 
 Business Rules SHALL remain implemented in the Backend.
 
-\### Stateless UI
+### Stateless UI
 
 User Interface Components SHOULD remain stateless whenever possible.
 
 State SHALL be owned by Features rather than individual Components.
 
-\### Reusability
+### Reusability
 
 Reusable Components SHALL remain generic.
 
 Business-specific Components SHALL remain inside their corresponding
 Feature.
 
-\### Simplicity
+### Simplicity
 
 Frontend Architecture SHALL avoid unnecessary abstractions.
 
 Complexity SHALL only be introduced when justified by Business
 requirements.
 
-\### Technology Independence
+### Technology Independence
 
 Business-oriented Frontend organization SHALL remain valid regardless of
 the chosen UI Framework.
 
-\# 2. Solution Structure
+# 2. Solution Structure
 
-\## Purpose
+## Purpose
 
 Defines the high-level organization of the Frontend Solution.
 
-\### app
+### app
 
 Application entry points.
 
@@ -71,19 +76,19 @@ Global routing.
 
 Application bootstrapping.
 
-\### features
+### features
 
 Contains all Business Features.
 
 Every Feature SHALL remain independently maintainable.
 
-\### shared
+### shared
 
 Contains generic UI Components and cross-feature utilities.
 
 Business-specific logic SHALL NOT exist here.
 
-\### layouts
+### layouts
 
 Application Layouts.
 
@@ -93,7 +98,7 @@ CMS Layout.
 
 Authentication Layout.
 
-\### providers
+### providers
 
 Application-wide Providers.
 
@@ -107,7 +112,7 @@ Localization
 
 Query Client
 
-\### styles
+### styles
 
 Global styles.
 
@@ -117,7 +122,7 @@ Typography.
 
 Spacing.
 
-\### lib
+### lib
 
 Framework integrations.
 
@@ -127,25 +132,25 @@ External libraries.
 
 Infrastructure adapters.
 
-\# 3. Feature Structure
+# 3. Feature Structure
 
-\## Purpose
+## Purpose
 
 Defines the internal organization of every Frontend Feature.
 
-\### api
+### api
 
 Contains communication with Backend APIs.
 
 Business logic SHALL NOT exist here.
 
-\### components
+### components
 
 Contains UI Components specific to the Feature.
 
 Components SHOULD remain focused on presentation.
 
-\### hooks
+### hooks
 
 Contains reusable Feature-specific Hooks.
 
@@ -153,37 +158,37 @@ Hooks MAY coordinate UI behavior and API interactions.
 
 Business Rules SHALL remain in the Backend.
 
-\### pages
+### pages
 
 Contains Feature entry pages.
 
 Pages SHOULD compose Components rather than implement Business Logic.
 
-\### types
+### types
 
 Contains Feature-specific Type Definitions.
 
 Shared types SHALL remain in the Shared layer.
 
-\### utils
+### utils
 
 Contains small Feature-specific helper functions.
 
 Utilities SHALL remain pure whenever possible.
 
-\# 4. State Management
+# 4. State Management
 
-\## Purpose
+## Purpose
 
 Defines Frontend state ownership.
 
 The Frontend SHALL distinguish between:
 
-\- Server State
+- Server State
 
-\- UI State
+- UI State
 
-\- Form State
+- Form State
 
 Server State
 
@@ -198,13 +203,13 @@ Represents temporary interface state.
 
 Examples:
 
-\- Dialog visibility
+- Dialog visibility
 
-\- Selected Tabs
+- Selected Tabs
 
-\- Expanded Sections
+- Expanded Sections
 
-\- Active Filters
+- Active Filters
 
 Form State
 
@@ -223,21 +228,21 @@ Global State SHALL NOT become the default solution.
 
 Duplicate copies of Server State SHALL be avoided.
 
-\# 5. Component Design
+# 5. Component Design
 
-\## Purpose
+## Purpose
 
 Defines Component design principles.
 
 Components SHOULD:
 
-\- remain small
+- remain small
 
-\- have one responsibility
+- have one responsibility
 
-\- receive explicit inputs
+- receive explicit inputs
 
-\- avoid hidden dependencies
+- avoid hidden dependencies
 
 Container Components MAY coordinate data retrieval.
 
@@ -251,9 +256,9 @@ Reusable Components SHALL remain framework-agnostic whenever practical.
 
 Business Components SHALL remain inside their corresponding Feature.
 
-\# 6. API Integration
+# 6. API Integration
 
-\## Purpose
+## Purpose
 
 Defines communication between the Frontend and Backend APIs.
 
@@ -263,29 +268,29 @@ Features SHALL NOT directly communicate with HTTP libraries.
 
 The API Client SHALL manage:
 
-\- Base URL
+- Base URL
 
-\- Authentication
+- Authentication
 
-\- Common Headers
+- Common Headers
 
-\- Correlation Identifier
+- Correlation Identifier
 
-\- Error Mapping
+- Error Mapping
 
-\- Retry Policies (where applicable)
+- Retry Policies (where applicable)
 
-\- Request Configuration
+- Request Configuration
 
 Each Feature SHALL expose its own API layer.
 
 Examples:
 
-\- product/api
+- product/api
 
-\- order/api
+- order/api
 
-\- journal/api
+- journal/api
 
 Features SHALL depend on the API Client.
 
@@ -299,9 +304,9 @@ The API Client SHALL normalize transport errors.
 
 Features SHALL handle only Business-specific scenarios.
 
-\# 7. Routing Strategy
+# 7. Routing Strategy
 
-\## Purpose
+## Purpose
 
 Defines navigation principles across the application.
 
@@ -316,21 +321,21 @@ content.
 
 Independent Features SHOULD support lazy loading whenever practical.
 
-\# 8. Performance Strategy
+# 8. Performance Strategy
 
-\## Purpose
+## Purpose
 
 Defines performance-related architectural principles.
 
 The Frontend SHOULD prioritize:
 
-\- Fast initial rendering
+- Fast initial rendering
 
-\- Minimal JavaScript
+- Minimal JavaScript
 
-\- Efficient asset loading
+- Efficient asset loading
 
-\- Responsive interactions
+- Responsive interactions
 
 Performance optimizations SHALL remain measurable.
 
@@ -338,22 +343,22 @@ Premature optimization SHALL be avoided.
 
 Images SHOULD:
 
-\- use responsive sizes
+- use responsive sizes
 
-\- support lazy loading where appropriate
+- support lazy loading where appropriate
 
-\- preserve visual quality
+- preserve visual quality
 
-\- avoid unnecessary downloads
+- avoid unnecessary downloads
 
 Caching SHALL follow Backend cache policies.
 
 Frontend SHALL NOT cache Business-critical data beyond acceptable
 freshness limits.
 
-\# 9. Accessibility
+# 9. Accessibility
 
-\## Purpose
+## Purpose
 
 Defines accessibility principles for the Frontend.
 
@@ -372,11 +377,11 @@ Keyboard focus SHALL remain visible.
 
 Form controls SHALL provide:
 
-\- Associated Labels
+- Associated Labels
 
-\- Validation Feedback
+- Validation Feedback
 
-\- Clear Error Messages
+- Clear Error Messages
 
 Required fields SHALL be communicated consistently.
 
@@ -392,27 +397,27 @@ contrast.
 Accessibility SHALL remain consistent across Desktop, Tablet and Mobile
 experiences.
 
-\# 10. Architectural Guidelines
+# 10. Architectural Guidelines
 
-\## General Guidelines
+## General Guidelines
 
-\- Prefer Feature ownership over Global ownership.
+- Prefer Feature ownership over Global ownership.
 
-\- Prefer composition over duplication.
+- Prefer composition over duplication.
 
-\- Prefer explicit data flow.
+- Prefer explicit data flow.
 
-\- Keep Components focused.
+- Keep Components focused.
 
-\- Keep Features independent.
+- Keep Features independent.
 
-\- Keep Business Rules inside the Backend.
+- Keep Business Rules inside the Backend.
 
-\- Keep the User Experience predictable.
+- Keep the User Experience predictable.
 
-\- Keep the architecture simple.
+- Keep the architecture simple.
 
-\- Optimize only when measurable.
+- Optimize only when measurable.
 
 Before introducing a new dependency or abstraction, verify:
 
@@ -432,14 +437,14 @@ Before introducing a new dependency or abstraction, verify:
 
 The Frontend Architecture SHALL support future evolution including:
 
-\- Additional Business Features
+- Additional Business Features
 
-\- Alternative UI Frameworks
+- Alternative UI Frameworks
 
-\- Multiple Sales Channels
+- Multiple Sales Channels
 
-\- Progressive enhancement
+- Progressive enhancement
 
-\- Internationalization
+- Internationalization
 
 without requiring fundamental architectural redesign.

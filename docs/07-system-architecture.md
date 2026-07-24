@@ -1,66 +1,66 @@
-\# 1. Architecture Principles
+# 1. Architecture Principles
 
-\## Purpose
+## Purpose
 
 Defines the architectural principles governing the implementation of the
 system.
 
 These principles SHALL take precedence over implementation preferences.
 
-\### Business First
+### Business First
 
 Business requirements SHALL drive architectural decisions.
 
 Technology choices SHALL support business goals rather than dictate
 them.
 
-\### Modular Monolith
+### Modular Monolith
 
 The system SHALL be implemented as a Modular Monolith.
 
 Each Module SHALL own its own business logic, persistence contracts and
 application services.
 
-\### Clean Architecture
+### Clean Architecture
 
 Every Module SHALL implement Clean Architecture.
 
 Dependencies SHALL always point toward the Domain Layer.
 
-\### Independent Modules
+### Independent Modules
 
 Modules SHALL communicate through well-defined Application Contracts.
 
 Domain Models SHALL NOT directly depend on other Modules.
 
-\### Technology Independence
+### Technology Independence
 
 Business Logic SHALL remain independent from Frameworks, Databases and
 External Services.
 
-\### Explicit Boundaries
+### Explicit Boundaries
 
 Every Module SHALL expose a clearly defined Public Surface.
 
 Internal implementation SHALL remain hidden.
 
-\### Simplicity
+### Simplicity
 
 Architectural complexity SHALL only be introduced when solving an
 existing problem.
 
 Premature optimization SHALL be avoided.
 
-\# 2. Solution Structure
+# 2. Solution Structure
 
-\## Purpose
+## Purpose
 
 Defines the high-level structure of the Backend Solution.
 
 The structure SHALL maximize maintainability, modularity and long-term
 scalability.
 
-\## Solution Layout
+## Solution Layout
 
 src/
 
@@ -94,7 +94,7 @@ Journal/
 
 Settings/
 
-\## Module Structure
+## Module Structure
 
 Every Module SHALL be isolated.
 
@@ -110,87 +110,87 @@ Product
 
 └── Product.Presentation
 
-\### Domain Layer
+### Domain Layer
 
 Responsibilities
 
-\- Business Entities
+- Business Entities
 
-\- Value Objects
+- Value Objects
 
-\- Domain Services
+- Domain Services
 
-\- Domain Events
+- Domain Events
 
-\- Business Rules
+- Business Rules
 
-\- Repository Interfaces
+- Repository Interfaces
 
-\- Database
+- Database
 
-\- Framework
+- Framework
 
-\- HTTP
+- HTTP
 
-\- Messaging
+- Messaging
 
-\- Cache
+- Cache
 
-\- External Services
+- External Services
 
-\### Application Layer
-
-Responsibilities
-
-\- Commands
-
-\- Queries
-
-\- Use Cases
-
-\- DTOs
-
-\- Validators
-
-\- Application Services
-
-\### Infrastructure Layer
+### Application Layer
 
 Responsibilities
 
-\- Persistence
+- Commands
 
-\- Repository Implementations
+- Queries
 
-\- Storage
+- Use Cases
 
-\- Payment Gateway
+- DTOs
 
-\- SMS Provider
+- Validators
 
-\- Logging Provider
+- Application Services
 
-\- Cache Provider
-
-\- External Integrations
-
-\### Presentation Layer
+### Infrastructure Layer
 
 Responsibilities
 
-\- HTTP APIs
+- Persistence
 
-\- Request Mapping
+- Repository Implementations
 
-\- Response Mapping
+- Storage
 
-\- Authentication
+- Payment Gateway
 
-\- Authorization
+- SMS Provider
 
-\- API Documentation
+- Logging Provider
 
-\## Shared Kernel
+- Cache Provider
+
+- External Integrations
+
+### Presentation Layer
+
+Responsibilities
+
+- HTTP APIs
+
+- Request Mapping
+
+- Response Mapping
+
+- Authentication
+
+- Authorization
+
+- API Documentation
+
+## Shared Kernel
 
 Purpose
 
@@ -198,31 +198,31 @@ Contains only cross-module abstractions.
 
 Allowed Content
 
-\- Result
+- Result
 
-\- Error
+- Error
 
-\- Identifier
+- Identifier
 
-\- Clock
+- Clock
 
-\- Pagination
+- Pagination
 
-\- Base Domain Event
+- Base Domain Event
 
-\- Common Interfaces
+- Common Interfaces
 
 Forbidden Content
 
-\- Business Logic
+- Business Logic
 
-\- Business Entities
+- Business Entities
 
-\- Repositories
+- Repositories
 
-\- Module-specific Services
+- Module-specific Services
 
-\## CQRS Strategy
+## CQRS Strategy
 
 The system SHALL implement In-Process CQRS.
 
@@ -237,9 +237,9 @@ CQRS SHALL remain in-process.
 Separate Read and Write Databases SHALL NOT be introduced unless
 justified by future scalability requirements.
 
-\# 3. Dependency Rules
+# 3. Dependency Rules
 
-\## Purpose
+## Purpose
 
 Defines the allowed dependencies between architectural layers and
 modules.
@@ -290,7 +290,7 @@ Infrastructure
 
 ✓ Application
 
-\## Module Dependencies
+## Module Dependencies
 
 Modules SHALL remain loosely coupled.
 
@@ -299,11 +299,11 @@ exist.
 
 Cross-module communication SHALL occur through:
 
-\- Commands
+- Commands
 
-\- Queries
+- Queries
 
-\- Domain Events
+- Domain Events
 
 Every Module SHALL expose a minimal Public Surface.
 
@@ -317,32 +317,32 @@ Modules MAY depend on SharedKernel.
 
 SharedKernel SHALL NOT depend on any Module.
 
-\- Common Abstractions
+- Common Abstractions
 
-\- Shared Value Types
+- Shared Value Types
 
-\- Base Contracts
+- Base Contracts
 
-\- Cross-cutting Utilities
+- Cross-cutting Utilities
 
-\- Product Logic
+- Product Logic
 
-\- Order Logic
+- Order Logic
 
-\- Inventory Logic
+- Inventory Logic
 
-\- Business Rules
+- Business Rules
 
-\- Module-specific Services
+- Module-specific Services
 
 Architecture validation SHOULD be automated.
 
 Violations of dependency rules SHOULD fail during CI validation whenever
 possible.
 
-\# 4. Module Communication
+# 4. Module Communication
 
-\## Purpose
+## Purpose
 
 Defines communication patterns between independent Modules.
 
@@ -350,13 +350,13 @@ Modules SHALL remain loosely coupled.
 
 Modules MAY communicate using:
 
-\- Commands
+- Commands
 
-\- Queries
+- Queries
 
-\- Domain Events
+- Domain Events
 
-\### Commands
+### Commands
 
 Commands SHALL request another Module to perform a Business Action.
 
@@ -372,7 +372,7 @@ Publish Product
 
 Archive Product
 
-\### Queries
+### Queries
 
 Queries SHALL retrieve Business Data.
 
@@ -388,7 +388,7 @@ Get Inventory
 
 Get Outfit Details
 
-\### Domain Events
+### Domain Events
 
 Domain Events SHALL represent completed Business Facts.
 
@@ -464,29 +464,29 @@ Generate Statistics
 
 Modules SHALL NOT:
 
-\- Access another Module\'s Database
+- Access another Module's Database
 
-\- Access another Module\'s Infrastructure
+- Access another Module's Infrastructure
 
-\- Access another Module\'s Domain Entities
+- Access another Module's Domain Entities
 
-\- Bypass Application Layer
+- Bypass Application Layer
 
-\# 5. Domain Events
+# 5. Domain Events
 
-\## Purpose
+## Purpose
 
 Defines architectural rules governing Domain Events.
 
 Domain Events SHALL:
 
-\- represent Business Facts
+- represent Business Facts
 
-\- remain immutable
+- remain immutable
 
-\- contain sufficient Business Context
+- contain sufficient Business Context
 
-\- avoid Infrastructure concerns
+- avoid Infrastructure concerns
 
 Business Action
 
@@ -506,9 +506,9 @@ Persist Transaction
 
 Publish Domain Event
 
-\# 6. Transaction Boundaries
+# 6. Transaction Boundaries
 
-\## Purpose
+## Purpose
 
 Defines transactional consistency boundaries across the system.
 
@@ -537,9 +537,9 @@ No partial Business State SHALL remain.
 
 Long-running operations SHALL NOT remain inside Transactions.
 
-\# 7. Background Processing
+# 7. Background Processing
 
-\## Purpose
+## Purpose
 
 Defines asynchronous processing rules.
 
@@ -553,9 +553,9 @@ Retries SHALL remain idempotent whenever possible.
 
 Background Job failures SHALL NOT compromise Business Data consistency.
 
-\# 8. Error Handling
+# 8. Error Handling
 
-\## Purpose
+## Purpose
 
 Defines error propagation and recovery rules.
 
@@ -577,15 +577,15 @@ API responses SHALL expose standardized error structures.
 
 Internal stack traces SHALL never be exposed.
 
-\# 9. Observability
+# 9. Observability
 
-\## Purpose
+## Purpose
 
 Defines how the system exposes operational visibility.
 
 Observability SHALL remain independent from implementation technologies.
 
-\### Logging
+### Logging
 
 Technical Logs SHALL record operational events.
 
@@ -593,70 +593,70 @@ Logs SHOULD support troubleshooting and diagnostics.
 
 Logs SHALL NOT be considered Business History.
 
-\### Metrics
+### Metrics
 
 The system SHOULD expose operational Metrics.
 
 Metrics MAY include:
 
-\- Request Rate
+- Request Rate
 
-\- Error Rate
+- Error Rate
 
-\- Response Time
+- Response Time
 
-\- Background Job Status
+- Background Job Status
 
-\- Queue Length
+- Queue Length
 
-\- Cache Performance
+- Cache Performance
 
-\### Audit Logs
+### Audit Logs
 
 Audit Logs SHALL record Business-critical actions.
 
 Every Audit Record SHOULD include:
 
-\- Actor
+- Actor
 
-\- Action
+- Action
 
-\- Target Entity
+- Target Entity
 
-\- Timestamp
+- Timestamp
 
-\- Context
+- Context
 
 Audit Logs SHALL remain immutable.
 
-\### Correlation
+### Correlation
 
 Every Request SHOULD receive a Correlation Identifier.
 
 Logs generated during the same Request SHOULD share the same Correlation
 Identifier.
 
-\# 10. Architectural Guidelines
+# 10. Architectural Guidelines
 
-\## General Guidelines
+## General Guidelines
 
-\- Keep Modules independent.
+- Keep Modules independent.
 
-\- Keep Domain pure.
+- Keep Domain pure.
 
-\- Prefer explicit dependencies.
+- Prefer explicit dependencies.
 
-\- Prefer composition over coupling.
+- Prefer composition over coupling.
 
-\- Prefer Business clarity over technical cleverness.
+- Prefer Business clarity over technical cleverness.
 
-\- Avoid premature optimization.
+- Avoid premature optimization.
 
-\- Prefer evolution over redesign.
+- Prefer evolution over redesign.
 
-\- Technology SHALL serve the Architecture.
+- Technology SHALL serve the Architecture.
 
-\- Architecture SHALL serve the Business.
+- Architecture SHALL serve the Business.
 
 Before introducing a new dependency or technology, verify:
 
@@ -676,14 +676,14 @@ Before introducing a new dependency or technology, verify:
 
 The Architecture SHALL support future evolution including:
 
-\- Independent Module extraction
+- Independent Module extraction
 
-\- Additional Sales Channels
+- Additional Sales Channels
 
-\- Alternative Persistence Technologies
+- Alternative Persistence Technologies
 
-\- Alternative Infrastructure Providers
+- Alternative Infrastructure Providers
 
-\- Increased operational scale
+- Increased operational scale
 
 without requiring Business Domain redesign.

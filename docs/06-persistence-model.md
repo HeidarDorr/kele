@@ -1,6 +1,16 @@
-\# 1. Persistence Principles
+# Persistence Model
 
-\## Purpose
+Status: Draft / Partially superseded
+
+> Hardening note (2026-07-24): This imported proposal conflicts with the Frozen
+> Domain Model in its Product/Image/SKU and Outfit persistence shapes. Use
+> `data-model.md`, ADR-0002, ADR-0003 and ADR-0004 as the canonical baseline.
+> The general persistence, history, audit and archiving principles below remain
+> applicable.
+
+# 1. Persistence Principles
+
+## Purpose
 
 Defines how business data SHALL be persisted independently of any
 database technology.
@@ -8,46 +18,46 @@ database technology.
 This document SHALL describe data structures, relationships, constraints
 and persistence rules without relying on a specific storage engine.
 
-\### Technology Independence
+### Technology Independence
 
 Persistence SHALL remain independent from database vendors.
 
 No database-specific features SHALL be required by the Domain Model.
 
-\### Stable Identifiers
+### Stable Identifiers
 
 Every persistent Entity SHALL have a globally unique Identifier.
 
 Identifier implementation SHALL remain technology independent.
 
-\### Immutable History
+### Immutable History
 
 Historical business data SHALL NOT be modified or removed.
 
 Corrections SHALL create new records whenever business history must be
 preserved.
 
-\### Explicit Relationships
+### Explicit Relationships
 
 Relationships between Models SHALL be explicitly defined.
 
 Hidden references SHALL NOT exist.
 
-\### Auditability
+### Auditability
 
 Every business-critical change SHALL remain traceable.
 
 The system SHALL preserve:
 
-\- who
+- who
 
-\- when
+- when
 
-\- what
+- what
 
 -   why
 
-\### Soft Lifecycle
+### Soft Lifecycle
 
 Business Entities SHALL prefer Lifecycle transitions over Physical
 Deletion.
@@ -64,9 +74,9 @@ Published
 
 Archived
 
-\# 2. Aggregate Boundaries
+# 2. Aggregate Boundaries
 
-\## Purpose
+## Purpose
 
 Defines transactional consistency boundaries.
 
@@ -76,21 +86,21 @@ invariants.
 Cross-Aggregate communication SHOULD occur through Business Events
 whenever possible.
 
-\### Product Aggregate
+### Product Aggregate
 
 Root
 
-\- Product
+- Product
 
 Owned Models
 
-\- Product SKU
+- Product SKU
 
-\- Product Image
+- Product Image
 
-\- Product Attribute
+- Product Attribute
 
-\- Product Price
+- Product Price
 
 Referenced Models
 
@@ -98,65 +108,65 @@ Referenced Models
 
 Business Invariants
 
-\- Product SHALL contain at least one SKU.
+- Product SHALL contain at least one SKU.
 
-\- Published Product SHALL contain at least one Price.
+- Published Product SHALL contain at least one Price.
 
 -   Published Product SHALL contain at least one Image.
 
-\### Outfit Aggregate
+### Outfit Aggregate
 
 Root
 
-\- Outfit
+- Outfit
 
 Owned Models
 
-\- Outfit SKU
+- Outfit SKU
 
-\- Outfit Price
+- Outfit Price
 
 Referenced Models
 
-\- Product SKU
+- Product SKU
 
 -   Category
 
-\### Order Aggregate
+### Order Aggregate
 
 Root
 
-\- Order
+- Order
 
 Owned Models
 
-\- Order Item
+- Order Item
 
-\- Payment Snapshot
+- Payment Snapshot
 
-\- Customer Snapshot
+- Customer Snapshot
 
 Referenced Models
 
-\- Product SKU
+- Product SKU
 
 -   Outfit SKU
 
 Business Invariants
 
-\- Order SHALL NOT exist before successful Payment.
+- Order SHALL NOT exist before successful Payment.
 
 -   Order Items SHALL preserve purchased Price.
 
-\### Return Aggregate
+### Return Aggregate
 
 Root
 
-\- Return
+- Return
 
 Owned Models
 
-\- Return Item
+- Return Item
 
 Referenced Models
 
@@ -168,56 +178,56 @@ Approved Returns SHALL increase Inventory.
 
 Approved Returns SHALL adjust Revenue.
 
-\### Journal Aggregate
+### Journal Aggregate
 
 Root
 
-\- Article
+- Article
 
 Referenced Models
 
-\- Product
+- Product
 
 -   Outfit
 
-\### Category Aggregate
+### Category Aggregate
 
 Root
 
-\- Category
+- Category
 
 Referenced Models
 
 -   Parent Category
 
-\### User Aggregate
+### User Aggregate
 
 Root
 
 -   User
 
-\### Media Aggregate
+### Media Aggregate
 
 Root
 
 -   Media Asset
 
-\# 3. Data Models
+# 3. Data Models
 
-\## Purpose
+## Purpose
 
 Defines every persistent Business Model together with its attributes,
 relationships, constraints and persistence requirements.
 
 Data Models SHALL remain independent from database implementation.
 
-\## Product
+## Product
 
 Purpose
 
 Represents a sellable Product.
 
-\-\--
+---
 
 Fields
 
@@ -237,7 +247,7 @@ UpdatedAt
 
 ArchivedAt
 
-\-\--
+---
 
 Relationships
 
@@ -259,7 +269,7 @@ Many Products
 
 Many Categories
 
-\-\--
+---
 
 Constraints
 
@@ -269,7 +279,7 @@ Published Products SHALL contain at least one SKU.
 
 Published Products SHALL contain at least one Image.
 
-\-\--
+---
 
 Audit
 
@@ -277,13 +287,13 @@ CreatedBy
 
 UpdatedBy
 
-\## Product SKU
+## Product SKU
 
 Purpose
 
 Represents a purchasable Product Variant.
 
-\-\--
+---
 
 Fields
 
@@ -301,7 +311,7 @@ Current Inventory
 
 Status
 
-\-\--
+---
 
 Relationships
 
@@ -319,7 +329,7 @@ One SKU
 
 Many Price History Records
 
-\-\--
+---
 
 Constraints
 
@@ -329,13 +339,13 @@ Price SHALL be greater than zero.
 
 Inventory SHALL NOT become negative.
 
-\## Outfit
+## Outfit
 
 Purpose
 
 Represents a predefined Product Combination.
 
-\-\--
+---
 
 Fields
 
@@ -351,7 +361,7 @@ CreatedAt
 
 ArchivedAt
 
-\-\--
+---
 
 Relationships
 
@@ -367,19 +377,19 @@ Many Outfit SKUs
 
 Many Product SKUs
 
-\-\--
+---
 
 Constraints
 
 Every Outfit SHALL contain at least one Product SKU.
 
-\## Outfit SKU
+## Outfit SKU
 
 Purpose
 
 Represents a purchasable Outfit Size.
 
-\-\--
+---
 
 Fields
 
@@ -391,7 +401,7 @@ Current Price
 
 Status
 
-\-\--
+---
 
 Relationships
 
@@ -399,19 +409,19 @@ Belongs to Outfit
 
 References Product SKUs
 
-\-\--
+---
 
 Constraints
 
 **Inventory SHALL NOT be stored.**
 
-\## Order
+## Order
 
 Purpose
 
 Represents a completed Purchase.
 
-\-\--
+---
 
 Fields
 
@@ -429,7 +439,7 @@ CreatedAt
 
 CompletedAt
 
-\-\--
+---
 
 Relationships
 
@@ -445,19 +455,19 @@ One Order
 
 Many Return Requests
 
-\-\--
+---
 
 Constraints
 
 Orders SHALL be immutable after creation except Fulfillment Status.
 
-\## Order Item
+## Order Item
 
 Purpose
 
 Represents one purchased SKU.
 
-\-\--
+---
 
 Fields
 
@@ -469,13 +479,13 @@ Price Snapshot
 
 Quantity
 
-\-\--
+---
 
 Constraints
 
 Snapshots SHALL remain immutable.
 
-\## Return
+## Return
 
 Fields
 
@@ -491,7 +501,7 @@ ApprovedAt
 
 RejectedAt
 
-\## Media
+## Media
 
 Fields
 
@@ -509,7 +519,7 @@ Height
 
 CreatedAt
 
-\## User
+## User
 
 Fields
 
@@ -525,7 +535,7 @@ Status
 
 CreatedAt
 
-\## Category
+## Category
 
 Fields
 
@@ -541,7 +551,7 @@ Parent Category
 
 Status
 
-\## Journal Article
+## Journal Article
 
 Fields
 
@@ -557,15 +567,15 @@ Status
 
 PublishedAt
 
-\# 4. Relationships
+# 4. Relationships
 
-\## Purpose
+## Purpose
 
 Defines relationships between persistent Business Models.
 
 Relationships SHALL remain technology independent.
 
-\### Product Relationships
+### Product Relationships
 
 Product
 
@@ -577,7 +587,7 @@ Many
 
 Product SKU
 
-\-\--
+---
 
 Product
 
@@ -589,7 +599,7 @@ Many
 
 Product Image
 
-\-\--
+---
 
 Product
 
@@ -601,7 +611,7 @@ Many
 
 Category
 
-\### Outfit Relationships
+### Outfit Relationships
 
 Outfit
 
@@ -613,7 +623,7 @@ Many
 
 Outfit SKU
 
-\-\--
+---
 
 Outfit SKU
 
@@ -625,7 +635,7 @@ Many
 
 Product SKU
 
-\### Category Relationships
+### Category Relationships
 
 Category
 
@@ -637,7 +647,7 @@ Many
 
 Child Categories
 
-\### Order Relationships
+### Order Relationships
 
 Order
 
@@ -649,7 +659,7 @@ Many
 
 Order Items
 
-\-\--
+---
 
 Order
 
@@ -661,7 +671,7 @@ Many
 
 Returns
 
-\### Return Relationships
+### Return Relationships
 
 Return
 
@@ -673,7 +683,7 @@ Many
 
 Order
 
-\### Journal Relationships
+### Journal Relationships
 
 Article
 
@@ -685,7 +695,7 @@ Many
 
 Product
 
-\-\--
+---
 
 Article
 
@@ -697,7 +707,7 @@ Many
 
 Outfit
 
-\### User Relationships
+### User Relationships
 
 User
 
@@ -709,7 +719,7 @@ Many
 
 Audit Logs
 
-\### Media Relationships
+### Media Relationships
 
 Media
 
@@ -721,189 +731,189 @@ Outfits
 
 Journal Articles
 
-\# 5. Constraints
+# 5. Constraints
 
-\## Global Constraints
+## Global Constraints
 
-\### Identity
+### Identity
 
 Every Entity SHALL have one stable Identifier.
 
-\### Slugs
+### Slugs
 
 Slugs SHALL be unique within their own Resource.
 
-\### Archive
+### Archive
 
 Archived Entities SHALL remain queryable by Administration.
 
 Archived Entities SHALL NOT appear in Storefront APIs.
 
-\### Audit
+### Audit
 
 Business-critical changes SHALL remain auditable.
 
-\### Inventory
+### Inventory
 
 Inventory SHALL NEVER become negative.
 
-\### Pricing
+### Pricing
 
 Historical Prices SHALL remain immutable.
 
-\### Orders
+### Orders
 
 Orders SHALL NEVER be physically deleted.
 
-\### Returns
+### Returns
 
 Approved Returns SHALL adjust Inventory and Revenue simultaneously.
 
-\# 6. Indexing Requirements
+# 6. Indexing Requirements
 
-\## Purpose
+## Purpose
 
 Defines lookup and query optimization requirements.
 
 Implementation SHALL remain database independent.
 
-\### Product
+### Product
 
 Lookup
 
-\- Identifier
+- Identifier
 
-\- Slug
+- Slug
 
-\- Status
+- Status
 
 Search
 
-\- Name
+- Name
 
 -   Slug
 
-\### Product SKU
+### Product SKU
 
 Lookup
 
-\- Identifier
+- Identifier
 
-\- Barcode
+- Barcode
 
 Search
 
-\- Color
+- Color
 
 -   Size
 
-\### Outfit
+### Outfit
 
 Lookup
 
-\- Identifier
+- Identifier
 
-\- Slug
+- Slug
 
 Search
 
 -   Name
 
-\### Category
+### Category
 
 Lookup
 
-\- Identifier
+- Identifier
 
 -   Slug
 
-\### Order
+### Order
 
 Lookup
 
-\- Identifier
+- Identifier
 
-\- Order Number
+- Order Number
 
 Search
 
-\- Customer Mobile
+- Customer Mobile
 
-\- Channel
+- Channel
 
-\- Fulfillment Status
+- Fulfillment Status
 
 -   Payment Status
 
-\### Return
+### Return
 
 Lookup
 
-\- Identifier
+- Identifier
 
 Search
 
-\- Status
+- Status
 
 -   Order Number
 
-\### User
+### User
 
 Lookup
 
-\- Identifier
+- Identifier
 
 -   Mobile
 
-\### Media
+### Media
 
 Lookup
 
 -   Identifier
 
-\# 7. Audit Strategy
+# 7. Audit Strategy
 
-\## Purpose
+## Purpose
 
 Defines audit requirements for business-critical operations.
 
 Every audit record SHALL contain:
 
-\- Entity
+- Entity
 
-\- Entity Identifier
+- Entity Identifier
 
-\- Action
+- Action
 
-\- Performed By
+- Performed By
 
-\- Performed At
+- Performed At
 
-\- Previous State (Optional)
+- Previous State (Optional)
 
-\- New State (Optional)
+- New State (Optional)
 
 -   Reason (Optional)
 
 The following operations SHALL be audited:
 
-\- Product Publish
+- Product Publish
 
-\- Product Archive
+- Product Archive
 
-\- Inventory Change
+- Inventory Change
 
-\- Price Change
+- Price Change
 
-\- Order Creation
+- Order Creation
 
-\- Return Approval
+- Return Approval
 
-\- User Management
+- User Management
 
 -   Settings Update
 
-\# 8. Versioning Strategy
+# 8. Versioning Strategy
 
 Business Models SHALL preserve historical business information.
 
@@ -917,15 +927,15 @@ Price Snapshot
 
 Customer Snapshot
 
-\-\--
+---
 
 Inventory History
 
 Price History
 
-\# 9. Archiving Strategy
+# 9. Archiving Strategy
 
-\## Purpose
+## Purpose
 
 Defines lifecycle rules for archived Business Entities.
 
@@ -939,47 +949,47 @@ Archived Entities SHALL NOT appear in Storefront APIs.
 
 The following Models support Archiving:
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Category
+- Category
 
 -   Journal Article
 
 The following Models SHALL NOT support Archiving:
 
-\- Order
+- Order
 
-\- Return
+- Return
 
-\- Inventory History
+- Inventory History
 
-\- Price History
+- Price History
 
 -   Audit Log
 
-\# 10. Persistence Guidelines
+# 10. Persistence Guidelines
 
-\## General Principles
+## General Principles
 
-\- Persistence SHALL remain technology independent.
+- Persistence SHALL remain technology independent.
 
-\- Business Rules SHALL NOT depend on database features.
+- Business Rules SHALL NOT depend on database features.
 
-\- Data integrity SHALL be preserved regardless of storage engine.
+- Data integrity SHALL be preserved regardless of storage engine.
 
-\- Historical information SHALL remain recoverable.
+- Historical information SHALL remain recoverable.
 
-\- Business Snapshots SHALL be immutable.
+- Business Snapshots SHALL be immutable.
 
-\- Business Events SHALL be traceable.
+- Business Events SHALL be traceable.
 
-\- Identifiers SHALL remain stable.
+- Identifiers SHALL remain stable.
 
-\- Relationships SHALL be explicit.
+- Relationships SHALL be explicit.
 
-\- Physical deletion SHOULD be avoided for business entities.
+- Physical deletion SHOULD be avoided for business entities.
 
 -   Query optimization SHALL NOT change business behavior.
 

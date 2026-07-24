@@ -1,0 +1,1479 @@
+openapi: 3.1.0
+info:
+  title: KELE API
+  version: 0.1.0
+  summary: Baseline contract for the KELE storefront and administration API.
+  description: |
+    This contract is the transport-level source of truth for version 1.
+    Operations marked with an open-question reference are provisional and must
+    not be exposed as final customer behavior until the question is resolved.
+servers:
+  - url: /api/v1
+    description: Same-origin API
+tags:
+  - name: Catalog
+  - name: Identity
+  - name: Customer
+  - name: Cart
+  - name: Checkout
+  - name: Orders
+  - name: Admin Catalog
+  - name: Admin Inventory
+  - name: Admin Content
+
+paths:
+  /catalog/products:
+    get:
+      operationId: listCatalogProducts
+      tags: [Catalog]
+      summary: List published product color variants.
+      parameters:
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageSize"
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+      responses:
+        "200":
+          description: Published catalog page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductCardPage"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /catalog/products/{slug}:
+    get:
+      operationId: getCatalogProduct
+      tags: [Catalog]
+      summary: Get a published product by slug.
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+        - name: color
+          in: query
+          description: Optional color-variant identifier to select initially.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Product detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDetail"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /catalog/outfits:
+    get:
+      operationId: listCatalogOutfits
+      tags: [Catalog]
+      summary: List published outfits.
+      parameters:
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageSize"
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Published outfit page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutfitCardPage"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /catalog/outfits/{slug}:
+    get:
+      operationId: getCatalogOutfit
+      tags: [Catalog]
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Published outfit detail with derived availability.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutfitDetail"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/otp/challenges:
+    post:
+      operationId: createOtpChallenge
+      tags: [Identity]
+      summary: Start or rate-limit a mobile OTP challenge.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [mobile]
+              properties:
+                mobile:
+                  $ref: "#/components/schemas/Mobile"
+      responses:
+        "202":
+          description: Generic accepted response; does not reveal account state.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [challengeId, retryAfterSeconds]
+                properties:
+                  challengeId:
+                    type: string
+                    format: uuid
+                  retryAfterSeconds:
+                    type: integer
+                    minimum: 1
+        "429":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/otp/verifications:
+    post:
+      operationId: verifyOtpChallenge
+      tags: [Identity]
+      summary: Verify an OTP and create/rotate a secure session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [challengeId, code]
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+                code:
+                  type: string
+                  pattern: "^[0-9]{4,8}$"
+      responses:
+        "204":
+          description: Session cookie created or rotated.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /auth/session:
+    delete:
+      operationId: deleteSession
+      tags: [Identity]
+      summary: Revoke the current session.
+      responses:
+        "204":
+          description: Session revoked.
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /me:
+    get:
+      operationId: getCurrentCustomer
+      tags: [Customer]
+      responses:
+        "200":
+          description: Current customer profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateCurrentCustomer
+      tags: [Customer]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                firstName:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                lastName:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+      responses:
+        "200":
+          description: Updated profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /me/addresses:
+    get:
+      operationId: listCurrentCustomerAddresses
+      tags: [Customer]
+      responses:
+        "200":
+          description: Customer-owned addresses.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Address"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createCurrentCustomerAddress
+      tags: [Customer]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressInput"
+      responses:
+        "201":
+          description: Address created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /me/orders:
+    get:
+      operationId: listCurrentCustomerOrders
+      tags: [Orders]
+      parameters:
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Customer-owned order summaries.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderPage"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /me/orders/{orderNumber}:
+    get:
+      operationId: getCurrentCustomerOrder
+      tags: [Orders]
+      parameters:
+        - name: orderNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 40
+      responses:
+        "200":
+          description: Customer-owned order detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /cart:
+    get:
+      operationId: getCart
+      tags: [Cart]
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      responses:
+        "200":
+          description: Current cart with informational prices and availability.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: clearCart
+      tags: [Cart]
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      responses:
+        "204":
+          description: Cart cleared.
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /cart/lines:
+    post:
+      operationId: addCartLine
+      tags: [Cart]
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ProductCartLineInput"
+                - $ref: "#/components/schemas/OutfitCartLineInput"
+              discriminator:
+                propertyName: kind
+      responses:
+        "200":
+          description: Updated cart. Adding a line does not reserve inventory.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /cart/lines/{lineId}:
+    patch:
+      operationId: updateCartLine
+      tags: [Cart]
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      parameters:
+        - $ref: "#/components/parameters/LineId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+      responses:
+        "200":
+          description: Updated cart.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteCartLine
+      tags: [Cart]
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      parameters:
+        - $ref: "#/components/parameters/LineId"
+      responses:
+        "204":
+          description: Line removed.
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /checkout-sessions:
+    post:
+      operationId: createCheckoutSession
+      tags: [Checkout]
+      summary: Reprice, validate and atomically reserve cart components.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cartId, addressId, deliveryMethod]
+              properties:
+                cartId:
+                  type: string
+                  format: uuid
+                addressId:
+                  type: string
+                  format: uuid
+                deliveryMethod:
+                  type: string
+                  minLength: 1
+                  maxLength: 40
+      responses:
+        "201":
+          description: Checkout quote and reservations active for 30 minutes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutSession"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /checkout-sessions/{checkoutSessionId}:
+    get:
+      operationId: getCheckoutSession
+      tags: [Checkout]
+      parameters:
+        - $ref: "#/components/parameters/CheckoutSessionId"
+      responses:
+        "200":
+          description: Current session status and quote.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutSession"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /checkout-sessions/{checkoutSessionId}/payment-attempts:
+    post:
+      operationId: createPaymentAttempt
+      tags: [Checkout]
+      summary: Start payment through the configured provider.
+      parameters:
+        - $ref: "#/components/parameters/CheckoutSessionId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          description: Payment attempt created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentAttempt"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /payment-callbacks/{provider}:
+    post:
+      operationId: processPaymentCallback
+      tags: [Checkout]
+      summary: Provider callback; provider-specific signature is required.
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9-]{2,40}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          description: Verified callback processed idempotently.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [paid, failed, pending_reconciliation]
+                  orderNumber:
+                    type: [string, "null"]
+        "400":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/products:
+    get:
+      operationId: listAdminProducts
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageSize"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/PublicationStatus"
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+      responses:
+        "200":
+          description: Administrative product page.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProductPage"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createAdminProduct
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductInput"
+      responses:
+        "201":
+          description: Draft product created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProduct"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/products/{productId}:
+    get:
+      operationId: getAdminProduct
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "200":
+          description: Administrative product.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProduct"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateAdminProduct
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:write]
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProductInput"
+      responses:
+        "200":
+          description: Product updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProduct"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/products/{productId}/publish:
+    post:
+      operationId: publishAdminProduct
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:publish]
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Product and eligible child state published.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProduct"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/products/{productId}/archive:
+    post:
+      operationId: archiveAdminProduct
+      tags: [Admin Catalog]
+      security:
+        - SessionCookie: [catalog:publish]
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Product archived without removing history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminProduct"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/inventory/{skuId}:
+    get:
+      operationId: getAdminInventory
+      tags: [Admin Inventory]
+      security:
+        - SessionCookie: [inventory:read]
+      parameters:
+        - $ref: "#/components/parameters/SkuId"
+      responses:
+        "200":
+          description: Current inventory projection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inventory"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/inventory/{skuId}/actions:
+    post:
+      operationId: createAdminInventoryAction
+      tags: [Admin Inventory]
+      security:
+        - SessionCookie: [inventory:write]
+      parameters:
+        - $ref: "#/components/parameters/SkuId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, quantity, reason]
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - production
+                    - instagram_sale
+                    - customer_return
+                    - manual_correction
+                    - damaged_goods
+                quantity:
+                  type: integer
+                  not:
+                    const: 0
+                reason:
+                  type: string
+                  minLength: 3
+                  maxLength: 500
+      responses:
+        "201":
+          description: Inventory movement and updated projection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inventory"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/homepage:
+    get:
+      operationId: getAdminHomepage
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      responses:
+        "200":
+          description: Homepage composition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Homepage"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateAdminHomepage
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:write]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Homepage"
+      responses:
+        "200":
+          description: Homepage saved and publicly visible.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Homepage"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+components:
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: kele_session
+      description: Secure server-managed customer or administrator session.
+    AnonymousCart:
+      type: apiKey
+      in: cookie
+      name: kele_cart
+      description: Signed high-entropy anonymous cart identifier.
+
+  parameters:
+    PageCursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+        maxLength: 500
+    PageSize:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 24
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        maxLength: 160
+    LineId:
+      name: lineId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CheckoutSessionId:
+      name: checkoutSessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProductId:
+      name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SkuId:
+      name: skuId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 120
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Optimistic resource version.
+      schema:
+        type: string
+
+  responses:
+    Problem:
+      description: RFC 9457-style problem response.
+      headers:
+        X-Correlation-Id:
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    PublicationStatus:
+      type: string
+      enum: [draft, published, archived]
+
+    Money:
+      type: object
+      additionalProperties: false
+      required: [amountRial, currency, display]
+      properties:
+        amountRial:
+          type: integer
+          minimum: 0
+          description: Authoritative integer amount in Iranian rials.
+        currency:
+          type: string
+          const: IRR
+        display:
+          type: string
+          description: Localized display string, such as a toman presentation.
+
+    Mobile:
+      type: string
+      description: Normalized Iranian mobile number in E.164 form.
+      pattern: "^\\+98[0-9]{10}$"
+
+    Media:
+      type: object
+      required: [id, url, width, height, alt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri-reference
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        alt:
+          type: string
+        focalPoint:
+          type: object
+          required: [x, y]
+          properties:
+            x:
+              type: number
+              minimum: 0
+              maximum: 1
+            y:
+              type: number
+              minimum: 0
+              maximum: 1
+
+    ProductCard:
+      type: object
+      required: [productId, slug, name, selectedVariant, price]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        selectedVariant:
+          $ref: "#/components/schemas/ColorVariantSummary"
+        availableColors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ColorSwatch"
+        price:
+          $ref: "#/components/schemas/Money"
+
+    ProductCardPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductCard"
+        page:
+          $ref: "#/components/schemas/CursorPage"
+
+    CursorPage:
+      type: object
+      required: [hasMore]
+      properties:
+        nextCursor:
+          type: [string, "null"]
+        hasMore:
+          type: boolean
+
+    ColorSwatch:
+      type: object
+      required: [variantId, name, available]
+      properties:
+        variantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hex:
+          type: [string, "null"]
+          pattern: "^#[0-9A-Fa-f]{6}$"
+        available:
+          type: boolean
+
+    ColorVariantSummary:
+      type: object
+      required: [id, name, featuredMedia]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        featuredMedia:
+          $ref: "#/components/schemas/Media"
+
+    SkuOption:
+      type: object
+      required: [id, code, size, available, price]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        size:
+          type: string
+        available:
+          type: boolean
+        price:
+          $ref: "#/components/schemas/Money"
+
+    ProductDetail:
+      allOf:
+        - $ref: "#/components/schemas/ProductCard"
+        - type: object
+          required: [description, variants]
+          properties:
+            description:
+              type: string
+            details:
+              type: array
+              items:
+                type: string
+            variants:
+              type: array
+              items:
+                type: object
+                required: [id, name, gallery, skus]
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  gallery:
+                    type: array
+                    minItems: 1
+                    items:
+                      $ref: "#/components/schemas/Media"
+                  skus:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SkuOption"
+            seo:
+              $ref: "#/components/schemas/Seo"
+
+    OutfitCard:
+      type: object
+      required: [id, slug, name, featuredMedia, startingPrice]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        featuredMedia:
+          $ref: "#/components/schemas/Media"
+        startingPrice:
+          $ref: "#/components/schemas/Money"
+
+    OutfitCardPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutfitCard"
+        page:
+          $ref: "#/components/schemas/CursorPage"
+
+    OutfitDetail:
+      allOf:
+        - $ref: "#/components/schemas/OutfitCard"
+        - type: object
+          required: [revisionId, description, sizes, items]
+          properties:
+            revisionId:
+              type: string
+              format: uuid
+            description:
+              type: string
+            sizes:
+              type: array
+              items:
+                type: object
+                required: [code, price, available, availableQuantity]
+                properties:
+                  code:
+                    type: string
+                  price:
+                    $ref: "#/components/schemas/Money"
+                  available:
+                    type: boolean
+                  availableQuantity:
+                    type: integer
+                    minimum: 0
+            items:
+              type: array
+              items:
+                type: object
+                required: [productId, variantId, name, quantity]
+                properties:
+                  productId:
+                    type: string
+                    format: uuid
+                  variantId:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  quantity:
+                    type: integer
+                    minimum: 1
+
+    Seo:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        canonicalPath:
+          type: string
+
+    Customer:
+      type: object
+      required: [id, mobile]
+      properties:
+        id:
+          type: string
+          format: uuid
+        mobile:
+          $ref: "#/components/schemas/Mobile"
+        firstName:
+          type: [string, "null"]
+        lastName:
+          type: [string, "null"]
+
+    AddressInput:
+      type: object
+      additionalProperties: false
+      required: [recipientName, recipientMobile, province, city, addressLine, postalCode]
+      properties:
+        recipientName:
+          type: string
+          minLength: 2
+          maxLength: 160
+        recipientMobile:
+          $ref: "#/components/schemas/Mobile"
+        province:
+          type: string
+          minLength: 1
+          maxLength: 100
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+        addressLine:
+          type: string
+          minLength: 5
+          maxLength: 500
+        postalCode:
+          type: string
+          pattern: "^[0-9]{10}$"
+        isDefault:
+          type: boolean
+          default: false
+
+    Address:
+      allOf:
+        - $ref: "#/components/schemas/AddressInput"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    ProductCartLineInput:
+      type: object
+      additionalProperties: false
+      required: [kind, skuId, quantity]
+      properties:
+        kind:
+          type: string
+          const: product
+        skuId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+
+    OutfitCartLineInput:
+      type: object
+      additionalProperties: false
+      required: [kind, outfitRevisionId, size, quantity]
+      properties:
+        kind:
+          type: string
+          const: outfit
+        outfitRevisionId:
+          type: string
+          format: uuid
+        size:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+
+    Cart:
+      type: object
+      required: [id, version, lines, informationalTotal]
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 0
+        lines:
+          type: array
+          items:
+            type: object
+            required: [id, kind, title, quantity, available, unitPrice]
+            properties:
+              id:
+                type: string
+                format: uuid
+              kind:
+                type: string
+                enum: [product, outfit]
+              title:
+                type: string
+              selection:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+              available:
+                type: boolean
+              unitPrice:
+                $ref: "#/components/schemas/Money"
+        informationalTotal:
+          $ref: "#/components/schemas/Money"
+
+    CheckoutSession:
+      type: object
+      required: [id, status, expiresAt, quote]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, payment_pending, paid, expired, cancelled, reconciliation]
+        expiresAt:
+          type: string
+          format: date-time
+        quote:
+          type: object
+          required: [itemsTotal, shippingTotal, payableTotal]
+          properties:
+            itemsTotal:
+              $ref: "#/components/schemas/Money"
+            shippingTotal:
+              $ref: "#/components/schemas/Money"
+            payableTotal:
+              $ref: "#/components/schemas/Money"
+
+    PaymentAttempt:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [created, redirected, verified, failed, reconciliation]
+        redirectUrl:
+          type: [string, "null"]
+          format: uri
+
+    OrderPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderSummary"
+        page:
+          $ref: "#/components/schemas/CursorPage"
+
+    OrderSummary:
+      type: object
+      required: [orderNumber, createdAt, fulfillmentStatus, paidTotal]
+      properties:
+        orderNumber:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        fulfillmentStatus:
+          type: string
+          enum: [paid, preparing, shipped, delivered, cancelled, returned]
+        paidTotal:
+          $ref: "#/components/schemas/Money"
+
+    Order:
+      allOf:
+        - $ref: "#/components/schemas/OrderSummary"
+        - type: object
+          required: [items, address]
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                required: [title, quantity, unitPrice]
+                properties:
+                  title:
+                    type: string
+                  selection:
+                    type: string
+                  quantity:
+                    type: integer
+                    minimum: 1
+                  unitPrice:
+                    $ref: "#/components/schemas/Money"
+            address:
+              type: object
+              additionalProperties: true
+
+    Inventory:
+      type: object
+      required: [skuId, physicalQuantity, reservedQuantity, availableQuantity, version]
+      properties:
+        skuId:
+          type: string
+          format: uuid
+        physicalQuantity:
+          type: integer
+          minimum: 0
+        reservedQuantity:
+          type: integer
+          minimum: 0
+        availableQuantity:
+          type: integer
+          minimum: 0
+        version:
+          type: integer
+          minimum: 0
+
+    AdminProductInput:
+      type: object
+      additionalProperties: false
+      required: [name, slug, description]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 180
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 10000
+        categoryIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        seo:
+          $ref: "#/components/schemas/Seo"
+
+    AdminProduct:
+      allOf:
+        - $ref: "#/components/schemas/AdminProductInput"
+        - type: object
+          required: [id, status, version, variants]
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: "#/components/schemas/PublicationStatus"
+            version:
+              type: integer
+              minimum: 0
+            variants:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+
+    AdminProductPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminProduct"
+        page:
+          $ref: "#/components/schemas/CursorPage"
+
+    Homepage:
+      type: object
+      required: [version, sections]
+      properties:
+        version:
+          type: integer
+          minimum: 0
+        sections:
+          type: array
+          items:
+            type: object
+            required: [id, type, enabled, order, content]
+            properties:
+              id:
+                type: string
+                format: uuid
+              type:
+                type: string
+              enabled:
+                type: boolean
+              order:
+                type: integer
+                minimum: 0
+              content:
+                type: object
+                additionalProperties: true
+
+    Problem:
+      type: object
+      required: [type, title, status, code, correlationId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          pattern: "^[A-Z0-9_]+$"
+        correlationId:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required: [path, code, message]
+            properties:
+              path:
+                type: string
+              code:
+                type: string
+              message:
+                type: string
+
+security:
+  - SessionCookie: []

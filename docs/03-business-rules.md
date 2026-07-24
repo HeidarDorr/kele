@@ -1,26 +1,32 @@
-\# KELE Website Specification
+# KELE Website Specification
 
-\## Document Information
+## Document Information
 
-\| Field \| Value \|
+| Field | Value |
 
-\|\-\-\-\-\-\-\--\|\-\-\-\-\-\--\|
+|--------|-------|
 
-\| Document \| 02-business-rules.md \|
+| Document | 03-business-rules.md |
 
-\| Title \| Business Rules \|
+| Title | Business Rules |
 
-\| Version \| 1.0 \|
+| Version | 1.0 |
 
-\| Status \| Draft \|
+| Status | Draft |
 
-\| Depends On \| 00-glossary.md, 01-domain-model.md \|
+| Depends On | 00-glossary.md, 02-domain-model.md |
 
-\| Last Updated \| 2026-07-13 \|
+| Last Updated | 2026-07-13 |
 
-\-\--
+---
 
-\# Purpose
+> Hardening note (2026-07-24): ADR-0004 moves `Pending Payment` from the Order
+> lifecycle to CheckoutSession/PaymentAttempt while preserving ORD-001. See
+> `requirements-traceability.md` for implementation ownership and test
+> evidence.
+
+
+# Purpose
 
 This document defines the business behavior of the KELE ecommerce
 platform.
@@ -31,121 +37,121 @@ specifies how those objects behave.
 All application logic SHALL comply with the rules defined in this
 document.
 
-\-\--
+---
 
-\# Rule Priority
+# Rule Priority
 
 The following requirement levels are used throughout this document.
 
-\| Level \| Meaning \|
+| Level | Meaning |
 
-\|\-\-\-\-\-\-\--\|\-\-\-\-\-\-\-\--\|
+|--------|---------|
 
-\| SHALL \| Mandatory \|
+| SHALL | Mandatory |
 
-\| SHOULD \| Recommended \|
+| SHOULD | Recommended |
 
-\| MAY \| Optional \|
+| MAY | Optional |
 
-\-\--
+---
 
-\# 1. Catalog Rules
+# 1. Catalog Rules
 
-\-\--
+---
 
-\## CAT-001
+## CAT-001
 
-\### Statement
+### Statement
 
 Products and Outfits SHALL be treated as independent catalog objects.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CAT-002
+## CAT-002
 
-\### Statement
+### Statement
 
 A Product MAY belong to multiple Categories.
 
 An Outfit MAY belong to multiple Categories.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Category
+- Category
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CAT-003
+## CAT-003
 
-\### Statement
+### Statement
 
 Categories SHALL organize catalog content only.
 
 They SHALL NOT own Products or Outfits.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Category
+- Category
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CAT-004
+## CAT-004
 
-\### Statement
+### Statement
 
 Frontend MAY present Color Variants as independent catalog cards.
 
 Backend SHALL continue treating them as variants of the same Product.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Color Variant
+- Color Variant
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CAT-005
+## CAT-005
 
-\### Statement
+### Statement
 
 Deleting a Category SHALL NOT affect any Product or Outfit.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Category
+- Category
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 2. Publication Rules
+# 2. Publication Rules
 
 Publication Rules define when business objects become publicly
 available.
@@ -153,44 +159,44 @@ available.
 Publication state affects visibility but does not affect historical
 business data.
 
-\-\--
+---
 
-\## PUB-001
+## PUB-001
 
-\### Statement
+### Statement
 
 Every publishable business object SHALL support the following
 publication states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Color Variant
+- Color Variant
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\- Category
+- Category
 
-\- Journal Article
+- Journal Article
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-002
+## PUB-002
 
-\### Statement
+### Statement
 
 Draft objects SHALL NOT be visible on the public website.
 
@@ -198,193 +204,193 @@ Draft objects MAY remain incomplete.
 
 Mandatory information is only required before publication.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- All Publishable Objects
+- All Publishable Objects
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-003
+## PUB-003
 
-\### Statement
+### Statement
 
 Published objects SHALL become publicly visible immediately after
 publication.
 
 No additional approval workflow is required.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- All Publishable Objects
+- All Publishable Objects
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-004
+## PUB-004
 
-\### Statement
+### Statement
 
 Archived objects SHALL be hidden from customers while remaining fully
 available inside the Administration Panel.
 
 Historical references SHALL remain valid.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- All Publishable Objects
+- All Publishable Objects
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-005
+## PUB-005
 
-\### Statement
+### Statement
 
 Deleting a published object SHALL NOT be permitted if the object is
 referenced by historical Orders.
 
 Archiving SHALL be used instead.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-006
+## PUB-006
 
-\### Statement
+### Statement
 
 A Product SHALL NOT be published unless:
 
-\- At least one Category is assigned.
+- At least one Category is assigned.
 
-\- At least one Color Variant exists.
+- At least one Color Variant exists.
 
-\- At least one SKU exists.
+- At least one SKU exists.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-007
+## PUB-007
 
-\### Statement
+### Statement
 
 A Color Variant SHALL NOT be published unless:
 
-\- Its parent Product exists.
+- Its parent Product exists.
 
-\- At least one SKU exists.
+- At least one SKU exists.
 
-\- At least one image has been assigned.
+- At least one image has been assigned.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Color Variant
+- Color Variant
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-008
+## PUB-008
 
-\### Statement
+### Statement
 
 A SKU SHALL NOT be published unless:
 
-\- Its parent Product is Published.
+- Its parent Product is Published.
 
-\- Its parent Color Variant is Published.
+- Its parent Color Variant is Published.
 
-\- A selling price has been defined.
+- A selling price has been defined.
 
 Inventory MAY be zero.
 
 Publication and stock availability are independent concepts.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-009
+## PUB-009
 
-\### Statement
+### Statement
 
 An Outfit SHALL NOT be published unless:
 
-\- At least one Outfit Item exists.
+- At least one Outfit Item exists.
 
-\- Every referenced Product exists.
+- Every referenced Product exists.
 
-\- Pricing has been configured.
+- Pricing has been configured.
 
-\- At least one editorial image has been assigned.
+- At least one editorial image has been assigned.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-010
+## PUB-010
 
-\### Statement
+### Statement
 
 Publication SHALL NOT modify inventory, pricing or historical business
 data.
 
 Publishing only changes public visibility.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- All Publishable Objects
+- All Publishable Objects
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PUB-011
+## PUB-011
 
-\### Statement
+### Statement
 
 Changes made to Published objects SHALL become visible immediately after
 saving.
@@ -392,292 +398,292 @@ saving.
 No manual deployment or cache refresh SHALL be required from
 administrators.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- All Publishable Objects
+- All Publishable Objects
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 3. Pricing Rules
+# 3. Pricing Rules
 
 Pricing Rules define how purchasable objects receive, maintain and apply
 pricing.
 
 Pricing is always evaluated immediately before payment.
 
-\-\--
+---
 
-\## PRC-001
+## PRC-001
 
-\### Statement
+### Statement
 
 Every Product SKU SHALL maintain its own selling price.
 
 Pricing SHALL be assigned at SKU level.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-002
+## PRC-002
 
-\### Statement
+### Statement
 
 Every Outfit SHALL maintain pricing independently from its constituent
 Products.
 
 Outfit pricing SHALL NOT be calculated as the sum of Product prices.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-003
+## PRC-003
 
-\### Statement
+### Statement
 
 Every supported Outfit Size SHALL define its own selling price.
 
 Different Outfit Sizes MAY have different prices.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-004
+## PRC-004
 
-\### Statement
+### Statement
 
 Changing the selling price of one SKU SHALL NOT affect any other SKU.
 
 Pricing SHALL always be managed independently.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-005
+## PRC-005
 
-\### Statement
+### Statement
 
 Changing the selling price of one Outfit Size SHALL NOT affect any other
 Outfit Size.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-006
+## PRC-006
 
-\### Statement
+### Statement
 
 The final payable amount SHALL be calculated immediately before payment.
 
 Prices displayed in the Shopping Cart SHALL be considered informational
 until payment begins.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-007
+## PRC-007
 
-\### Statement
+### Statement
 
 If the selling price changes while an item exists inside a Shopping
 Cart, the new price SHALL automatically apply during Checkout.
 
 No previous price SHALL be guaranteed.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-008
+## PRC-008
 
-\### Statement
+### Statement
 
 The Administration Panel SHALL support bulk price updates based on
 configurable filters.
 
 Supported filters SHOULD include:
 
-\- Category
+- Category
 
-\- Product Type
+- Product Type
 
-\- Publication Status
+- Publication Status
 
-\- Size
+- Size
 
-\- Brand Collection (Future)
+- Brand Collection (Future)
 
-\- Manual Selection
+- Manual Selection
 
 Price adjustment MAY be defined as:
 
-\- Fixed Amount
+- Fixed Amount
 
-\- Percentage Increase
+- Percentage Increase
 
-\- Percentage Decrease
+- Percentage Decrease
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHOULD
 
-\-\--
+---
 
-\## PRC-009
+## PRC-009
 
-\### Statement
+### Statement
 
 Every pricing modification SHALL be recorded in the Audit History.
 
 Each pricing log SHALL include:
 
-\- Timestamp
+- Timestamp
 
-\- User
+- User
 
-\- Previous Price
+- Previous Price
 
-\- New Price
+- New Price
 
-\- Modified Object
+- Modified Object
 
-\- Reason (Optional)
+- Reason (Optional)
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## PRC-010
+## PRC-010
 
-\### Statement
+### Statement
 
 Pricing SHALL be manually managed through the Administration Panel.
 
 No automatic pricing engine is included in the current system scope.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 4. Inventory Rules
+# 4. Inventory Rules
 
 Inventory Rules define how stock quantities are maintained, reserved and
 consumed throughout the purchasing lifecycle.
 
 Inventory SHALL always be managed at SKU level.
 
-\-\--
+---
 
-\## INV-001
+## INV-001
 
-\### Statement
+### Statement
 
 Inventory SHALL be maintained exclusively for Product SKUs.
 
 Neither Products nor Outfits SHALL own independent inventory.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- SKU
+- SKU
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-002
+## INV-002
 
-\### Statement
+### Statement
 
 Every inventory record SHALL maintain the following values:
 
-\- Physical Quantity
+- Physical Quantity
 
-\- Reserved Quantity
+- Reserved Quantity
 
 Available Quantity SHALL always be calculated as:
 
@@ -685,84 +691,84 @@ Physical Quantity − Reserved Quantity
 
 Available Quantity SHALL NOT be stored independently.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-003
+## INV-003
 
-\### Statement
+### Statement
 
 Adding an item to the Shopping Cart SHALL NOT reserve inventory.
 
 Inventory reservation SHALL begin only when the customer enters
 Checkout.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-004
+## INV-004
 
-\### Statement
+### Statement
 
 Before entering Checkout, the system SHALL validate inventory
 availability for every requested SKU.
 
 If any SKU is unavailable, Checkout SHALL be rejected.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Checkout
+- Checkout
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-005
+## INV-005
 
-\### Statement
+### Statement
 
 Successful entry into Checkout SHALL create an inventory reservation.
 
 Reservation SHALL reduce Available Quantity without changing Physical
 Quantity.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Checkout
+- Checkout
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-006
+## INV-006
 
-\### Statement
+### Statement
 
 Inventory reservations SHALL expire automatically after 30 minutes
 unless payment has been completed.
@@ -771,23 +777,23 @@ Expired reservations SHALL immediately restore Available Quantity.
 
 Shopping Cart contents SHALL remain unchanged.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Reservation
+- Reservation
 
-\- Inventory
+- Inventory
 
-\- Cart
+- Cart
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-007
+## INV-007
 
-\### Statement
+### Statement
 
 Payment completion SHALL convert an active reservation into a completed
 sale.
@@ -796,105 +802,105 @@ Reserved Quantity SHALL decrease.
 
 Physical Quantity SHALL decrease.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-008
+## INV-008
 
-\### Statement
+### Statement
 
 Inventory SHALL only be modified through predefined Inventory Actions.
 
 Direct modification of inventory quantities SHALL NOT be permitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-009
+## INV-009
 
-\### Statement
+### Statement
 
 The system SHALL support the following Inventory Actions:
 
-\- Production
+- Production
 
-\- Sale
+- Sale
 
-\- Customer Return
+- Customer Return
 
-\- Manual Correction
+- Manual Correction
 
-\- Damaged Goods
+- Damaged Goods
 
 Additional Inventory Actions MAY be introduced in future versions.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-010
+## INV-010
 
-\### Statement
+### Statement
 
 Every Inventory Action SHALL generate an Audit Event.
 
 Each event SHALL record:
 
-\- Timestamp
+- Timestamp
 
-\- User
+- User
 
-\- Inventory Action
+- Inventory Action
 
-\- SKU
+- SKU
 
-\- Quantity
+- Quantity
 
-\- Previous Physical Quantity
+- Previous Physical Quantity
 
-\- New Physical Quantity
+- New Physical Quantity
 
-\- Related Order (Optional)
+- Related Order (Optional)
 
-\- Reason (Required)
+- Reason (Required)
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- Audit
+- Audit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-011
+## INV-011
 
-\### Statement
+### Statement
 
 Customer Returns SHALL be processed through the Order Management
 workflow.
@@ -904,60 +910,60 @@ Inventory SHALL NOT be increased directly.
 The system SHALL execute all business effects associated with a return,
 including inventory restoration and financial adjustments.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-012
+## INV-012
 
-\### Statement
+### Statement
 
 Production inventory updates SHALL increase Physical Quantity only.
 
 Production events SHALL NOT modify financial reports or Order history.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-013
+## INV-013
 
-\### Statement
+### Statement
 
 Manual Corrections SHALL be permitted only for authorized administrative
 users.
 
 Every Manual Correction SHALL require a mandatory reason.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- User Permissions
+- User Permissions
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-014
+## INV-014
 
-\### Statement
+### Statement
 
 Inventory calculations SHALL remain consistent regardless of sales
 channel.
@@ -965,79 +971,79 @@ channel.
 Website Orders, Instagram Sales and future ERP integrations SHALL use
 the same inventory engine.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-015
+## INV-015
 
-\### Statement
+### Statement
 
 Outfit availability SHALL be calculated dynamically.
 
 An Outfit Size SHALL be considered available only when every required
 Product SKU for that size is available.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-016
+## INV-016
 
-\### Statement
+### Statement
 
 The available size range of an Outfit SHALL be determined by the
 intersection of the supported size ranges of all required Products.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## INV-017
+## INV-017
 
-\### Statement
+### Statement
 
 Inventory SHALL be the single source of truth for product availability.
 
 No other object SHALL independently determine stock availability.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- Product
+- Product
 
-\- SKU
+- SKU
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 5. Outfit Rules
+# 5. Outfit Rules
 
 Outfit Rules define how curated styling compositions are created,
 managed and sold.
@@ -1045,52 +1051,52 @@ managed and sold.
 An Outfit represents an independent commercial product composed of
 multiple Products.
 
-\-\--
+---
 
-\## OTF-001
+## OTF-001
 
-\### Statement
+### Statement
 
 An Outfit SHALL be created by selecting one or more existing Products.
 
 Products SHALL always exist before an Outfit can be created.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-002
+## OTF-002
 
-\### Statement
+### Statement
 
 A Product MAY participate in multiple Outfits.
 
 No ownership relationship SHALL exist between a Product and a single
 Outfit.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-003
+## OTF-003
 
-\### Statement
+### Statement
 
 An Outfit SHALL maintain its own commercial identity independent of its
 constituent Products.
@@ -1098,75 +1104,75 @@ constituent Products.
 Outfit presentation, editorial assets and pricing SHALL be managed
 independently.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-004
+## OTF-004
 
-\### Statement
+### Statement
 
 Outfit pricing SHALL be configured independently for each supported
 size.
 
 Outfit prices SHALL NOT be derived from Product prices.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-005
+## OTF-005
 
-\### Statement
+### Statement
 
 An Outfit SHALL NOT support Color Variants.
 
 Color selection SHALL only exist at Product level.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-006
+## OTF-006
 
-\### Statement
+### Statement
 
 The available sizes of an Outfit SHALL be determined automatically by
 the intersection of the supported sizes of all required Products.
 
 Manual size definition SHALL NOT be permitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-007
+## OTF-007
 
-\### Statement
+### Statement
 
 For each Outfit Size, availability SHALL be determined dynamically based
 on the availability of every required Product SKU.
@@ -1174,235 +1180,235 @@ on the availability of every required Product SKU.
 If any required SKU is unavailable, the corresponding Outfit Size SHALL
 be unavailable.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-008
+## OTF-008
 
-\### Statement
+### Statement
 
 Customers SHALL be able to purchase an Outfit only as originally
 curated.
 
 Modification of Outfit composition SHALL NOT be permitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Cart
+- Cart
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-009
+## OTF-009
 
-\### Statement
+### Statement
 
 The Outfit Product Detail Page SHALL present all constituent Products
 individually.
 
 Each Product SHALL remain independently purchasable.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-010
+## OTF-010
 
-\### Statement
+### Statement
 
 Purchasing individual Products SHALL NOT modify the composition or
 pricing of the Outfit.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-011
+## OTF-011
 
-\### Statement
+### Statement
 
 Editorial images MAY be associated with an Outfit.
 
 Homepage editorial content MAY navigate directly to the corresponding
 Outfit.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Homepage CMS
+- Homepage CMS
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-012
+## OTF-012
 
-\### Statement
+### Statement
 
 Removing a Product from an Outfit SHALL immediately affect Outfit
 availability and supported sizes.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## OTF-013
+## OTF-013
 
-\### Statement
+### Statement
 
 Publishing an Outfit SHALL NOT require its constituent Products to be
 purchased together elsewhere.
 
 Products SHALL remain fully independent commercial objects.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Outfit
+- Outfit
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 6. Customer Rules
+# 6. Customer Rules
 
 Customer Rules define how customers interact with the KELE platform.
 
 These rules govern authentication, profile ownership and
 customer-generated content.
 
-\-\--
+---
 
-\## CUS-001
+## CUS-001
 
-\### Statement
+### Statement
 
 Customers MAY browse the catalog without authentication.
 
 Authentication SHALL only be required when performing customer-specific
 actions.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-002
+## CUS-002
 
-\### Statement
+### Statement
 
 Authentication SHALL be required before:
 
-\- Placing an Order
+- Placing an Order
 
-\- Saving Addresses
+- Saving Addresses
 
-\- Viewing Order History
+- Viewing Order History
 
-\- Submitting Reviews
+- Submitting Reviews
 
-\- Managing Personal Information
+- Managing Personal Information
 
-\- Receiving Stock Availability Notifications
+- Receiving Stock Availability Notifications
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-003
+## CUS-003
 
-\### Statement
+### Statement
 
 Each Customer SHALL maintain an independent profile.
 
 Customer data SHALL NOT be shared between accounts.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-004
+## CUS-004
 
-\### Statement
+### Statement
 
 Each Customer MAY maintain multiple delivery addresses.
 
 One address MAY be designated as the default delivery address.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-005
+## CUS-005
 
-\### Statement
+### Statement
 
 Customers SHALL only access their own Orders, Reviews, Addresses and
 Personal Information.
@@ -1410,23 +1416,23 @@ Personal Information.
 Administrative authorization SHALL be required to access customer
 information belonging to other users.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-006
+## CUS-006
 
-\### Statement
+### Statement
 
 Customers MAY subscribe to stock availability notifications for
 unavailable SKUs.
@@ -1434,82 +1440,82 @@ unavailable SKUs.
 Notifications SHALL be sent automatically when the SKU becomes available
 again.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- SKU
+- SKU
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-007
+## CUS-007
 
-\### Statement
+### Statement
 
 A Customer MAY subscribe only once to the same SKU availability
 notification.
 
 Duplicate subscriptions SHALL NOT be permitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- SKU
+- SKU
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-008
+## CUS-008
 
-\### Statement
+### Statement
 
 Customers SHALL be able to update their profile information.
 
 Profile modifications SHALL NOT affect historical Orders.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-009
+## CUS-009
 
-\### Statement
+### Statement
 
 Deleting a Customer account SHALL NOT remove historical Orders.
 
 Historical business records SHALL remain immutable.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CUS-010
+## CUS-010
 
-\### Statement
+### Statement
 
 Customer authentication SHALL be performed using mobile phone number
 verification.
@@ -1517,15 +1523,15 @@ verification.
 Password-based authentication is out of scope for the current system
 version.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 7. Cart Rules
+# 7. Cart Rules
 
 Cart Rules define how customers collect Products and Outfits prior to
 Checkout.
@@ -1533,52 +1539,52 @@ Checkout.
 The Shopping Cart is a temporary customer workspace and SHALL NOT
 represent a reservation of inventory.
 
-\-\--
+---
 
-\## CRT-001
+## CRT-001
 
-\### Statement
+### Statement
 
 Customers MAY add both Products and Outfits to the same Shopping Cart.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-002
+## CRT-002
 
-\### Statement
+### Statement
 
 Adding an item to the Shopping Cart SHALL NOT reserve inventory.
 
 Inventory reservation SHALL begin only after the customer successfully
 enters Checkout.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-003
+## CRT-003
 
-\### Statement
+### Statement
 
 The Shopping Cart SHALL allow quantity modification for both Product
 SKUs and Outfits.
@@ -1589,132 +1595,132 @@ SKU based on the requested quantity.
 For Outfit purchases, the requested quantity SHALL be validated against
 the availability of every Product SKU composing the Outfit.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\## CRT-004
+## CRT-004
 
-\### Statement
+### Statement
 
 Before Checkout begins, the system SHALL validate:
 
-\- Product publication status
+- Product publication status
 
-\- SKU availability
+- SKU availability
 
-\- Outfit availability
+- Outfit availability
 
-\- Current pricing
+- Current pricing
 
 If any validation fails, Checkout SHALL be rejected.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-005
+## CRT-005
 
-\### Statement
+### Statement
 
 Successful entry into Checkout SHALL create inventory reservations for
 all purchasable SKUs.
 
 Reservations SHALL remain valid for 30 minutes.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Checkout
+- Checkout
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-006
+## CRT-006
 
-\### Statement
+### Statement
 
 Expired reservations SHALL automatically release reserved inventory.
 
 Shopping Cart contents SHALL remain unchanged.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-007
+## CRT-007
 
-\### Statement
+### Statement
 
 Prices displayed in the Shopping Cart SHALL be informational only.
 
 The final payable amount SHALL always be recalculated immediately before
 payment.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-008
+## CRT-008
 
-\### Statement
+### Statement
 
 If any Cart item becomes unavailable before Checkout begins, the
 customer SHALL be informed before reservation is attempted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-009
+## CRT-009
 
-\### Statement
+### Statement
 
 Customers MAY remove individual line items from the Shopping Cart at any
 time.
@@ -1722,34 +1728,34 @@ time.
 Removing a line item SHALL immediately release any active reservation
 associated with that item.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CRT-010
+## CRT-010
 
-\### Statement
+### Statement
 
 The Shopping Cart SHALL persist across customer sessions until manually
 cleared, successfully purchased or administratively removed.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Cart
+- Cart
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 8. Order Rules
+# 8. Order Rules
 
 Order Rules define the lifecycle of customer purchases from successful
 payment through fulfillment, cancellation and return.
@@ -1757,396 +1763,396 @@ payment through fulfillment, cancellation and return.
 An Order represents the official commercial record of a completed
 purchase.
 
-\-\--
+---
 
-\## ORD-001
+## ORD-001
 
-\### Statement
+### Statement
 
 An Order SHALL be created only after successful payment confirmation.
 
 Failed or abandoned payments SHALL NOT create Orders.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Payment
+- Payment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-002
+## ORD-002
 
-\### Statement
+### Statement
 
 Every Order SHALL receive a unique Order Number.
 
 Order Numbers SHALL remain immutable.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-003
+## ORD-003
 
-\### Statement
+### Statement
 
 Once created, an Order SHALL permanently preserve:
 
-\- Purchased Items
+- Purchased Items
 
-\- Purchased Quantities
+- Purchased Quantities
 
-\- Unit Prices
+- Unit Prices
 
-\- Final Paid Amount
+- Final Paid Amount
 
 Subsequent catalog changes SHALL NOT modify historical Orders.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-004
+## ORD-004
 
-\### Statement
+### Statement
 
 Successful payment SHALL convert all active inventory reservations into
 completed inventory deductions.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-005
+## ORD-005
 
-\### Statement
+### Statement
 
 Customers SHALL NOT cancel Orders directly.
 
 Order cancellation SHALL be performed only by authorized administrators
 through the Administration Panel.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-006
+## ORD-006
 
-\### Statement
+### Statement
 
 Cancelling an Order SHALL execute all associated business operations
 automatically, including:
 
-\- Inventory restoration
+- Inventory restoration
 
-\- Revenue adjustment
+- Revenue adjustment
 
-\- Order status update
+- Order status update
 
-\- Business Event logging
+- Business Event logging
 
 Manual inventory modification SHALL NOT be required.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-007
+## ORD-007
 
-\### Statement
+### Statement
 
 Customer Returns SHALL be processed exclusively through the Order
 workflow.
 
 Direct inventory increases SHALL NOT be permitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-008
+## ORD-008
 
-\### Statement
+### Statement
 
 Returned items SHALL automatically:
 
-\- Restore inventory
+- Restore inventory
 
-\- Reduce recognized revenue
+- Reduce recognized revenue
 
-\- Generate Business Events
+- Generate Business Events
 
-\- Preserve historical Order records
+- Preserve historical Order records
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Inventory
+- Inventory
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-009
+## ORD-009
 
-\### Statement
+### Statement
 
 Every Order SHALL maintain a lifecycle status.
 
 The initial supported statuses SHALL include:
 
-\- Pending Payment
+- Pending Payment
 
-\- Paid
+- Paid
 
-\- Preparing
+- Preparing
 
-\- Shipped
+- Shipped
 
-\- Delivered
+- Delivered
 
-\- Cancelled
+- Cancelled
 
-\- Returned
+- Returned
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-010
+## ORD-010
 
-\### Statement
+### Statement
 
 Order status changes SHALL generate Business Events and SHALL be
 recorded in the Audit History.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-011
+## ORD-011
 
-\### Statement
+### Statement
 
 Every Order SHALL define exactly one delivery method.
 
 The initial supported delivery methods SHALL include:
 
-\- Postal Service
+- Postal Service
 
-\- Tipax
+- Tipax
 
-\- Tehran Courier
+- Tehran Courier
 
 Additional delivery methods MAY be introduced in future versions.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Shipment
+- Shipment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-012
+## ORD-012
 
-\### Statement
+### Statement
 
 Delivery costs SHALL be calculated independently from Product pricing.
 
 Shipment pricing SHALL NOT modify Product or Outfit prices.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Shipment
+- Shipment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-013
+## ORD-013
 
-\### Statement
+### Statement
 
 Shipment tracking information MAY be attached to an Order after
 dispatch.
 
 Tracking information SHALL remain editable by authorized administrators.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Shipment
+- Shipment
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-014
+## ORD-014
 
-\### Statement
+### Statement
 
 Shipment progress SHALL be maintained independently from Order payment
 status.
 
 Shipment status SHALL NOT modify financial records.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Shipment
+- Shipment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-015
+## ORD-015
 
-\### Statement
+### Statement
 
 Customers SHALL be able to view the current shipment status from their
 Order History.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Shipment
+- Shipment
 
-\- Customer
+- Customer
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-016
+## ORD-016
 
-\### Statement
+### Statement
 
 If shipment cannot be completed using available delivery methods, Order
 fulfillment MAY continue through Customer Support.
 
 Such Orders SHALL remain fully traceable through Business Events.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Shipment
+- Shipment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## ORD-017
+## ORD-017
 
-\### Statement
+### Statement
 
 Shipment status changes SHALL generate Business Events.
 
 Every shipment event SHALL include:
 
-\- Timestamp
+- Timestamp
 
-\- User
+- User
 
-\- Previous Status
+- Previous Status
 
-\- New Status
+- New Status
 
-\- Related Order
+- Related Order
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Shipment
+- Shipment
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 9. Review Rules
+# 9. Review Rules
 
 Review Rules define how customers submit and interact with product
 reviews.
@@ -2154,202 +2160,202 @@ reviews.
 Reviews contribute to customer trust while remaining subject to
 administrative moderation.
 
-\-\--
+---
 
-\## REV-001
+## REV-001
 
-\### Statement
+### Statement
 
 Only authenticated Customers SHALL be permitted to submit Reviews.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-002
+## REV-002
 
-\### Statement
+### Statement
 
 A Review SHALL be associated with exactly one Product or one Outfit.
 
 Reviews SHALL NOT be shared across multiple catalog objects.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-003
+## REV-003
 
-\### Statement
+### Statement
 
 Customers MAY submit multiple Reviews over time for the same Product or
 Outfit.
 
 Each new Review SHALL remain an independent historical record.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Customer
+- Customer
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-004
+## REV-004
 
-\### Statement
+### Statement
 
 Newly submitted Reviews SHALL require administrative approval before
 becoming publicly visible.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-005
+## REV-005
 
-\### Statement
+### Statement
 
 Rejected Reviews SHALL remain available within the Administration Panel.
 
 Rejected Reviews SHALL NOT be publicly visible.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-006
+## REV-006
 
-\### Statement
+### Statement
 
 Administrators MAY edit Review visibility status.
 
 The original customer content SHALL remain preserved in Business Events.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-007
+## REV-007
 
-\### Statement
+### Statement
 
 Deleting a Review SHALL NOT remove its historical moderation records.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-008
+## REV-008
 
-\### Statement
+### Statement
 
 Customers SHALL NOT edit Reviews after submission.
 
 If a correction is required, a new Review SHALL be submitted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-009
+## REV-009
 
-\### Statement
+### Statement
 
 Reviews MAY include:
 
-\- Rating
+- Rating
 
-\- Title
+- Title
 
-\- Comment
+- Comment
 
 Image attachments are out of scope for the current system version.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## REV-010
+## REV-010
 
-\### Statement
+### Statement
 
 Published Reviews SHALL remain publicly visible unless removed by
 authorized administrators.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\### Priority
+### Priority
 
 SHALL
 
-\## REV-011
+## REV-011
 
-\### Statement
+### Statement
 
 Reviews submitted by Customers who have previously purchased the
 reviewed Product or Outfit SHALL be identified as Verified Purchase.
@@ -2357,19 +2363,19 @@ reviewed Product or Outfit SHALL be identified as Verified Purchase.
 Verification SHALL be determined automatically based on completed
 Orders.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Review
+- Review
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 10. CMS Rules
+# 10. CMS Rules
 
 CMS Rules define how administrative users manage commercial, editorial
 and system content.
@@ -2377,108 +2383,108 @@ and system content.
 The Administration Panel SHALL provide a unified interface for managing
 all business objects.
 
-\-\--
+---
 
-\## CMS-001
+## CMS-001
 
-\### Statement
+### Statement
 
 The Administration Panel SHALL be organized into three functional
 domains:
 
-\- Commerce
+- Commerce
 
-\- Editorial
+- Editorial
 
-\- System
+- System
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Administration Panel
+- Administration Panel
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-002
+## CMS-002
 
-\### Statement
+### Statement
 
 The system SHALL support the following administrative roles:
 
-\- Super Admin
+- Super Admin
 
-\- Inventory Admin
+- Inventory Admin
 
-\- Instagram Admin
+- Instagram Admin
 
 The permission model SHALL remain extensible for future roles.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- User
+- User
 
-\- Permission
+- Permission
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-003
+## CMS-003
 
-\### Statement
+### Statement
 
 Only Super Administrators SHALL manage Products, Outfits, Categories,
 Homepage content, Journal articles and Site Settings.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- User
+- User
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Category
+- Category
 
-\- Homepage
+- Homepage
 
-\- Journal
+- Journal
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-004
+## CMS-004
 
-\### Statement
+### Statement
 
 Inventory Administrators SHALL only manage Inventory Actions and
 inventory-related operations.
 
 They SHALL NOT modify commercial catalog information.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- User
+- User
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-005
+## CMS-005
 
-\### Statement
+### Statement
 
 Instagram Administrators SHALL only perform inventory changes generated
 by Instagram sales and customer returns.
@@ -2486,21 +2492,21 @@ by Instagram sales and customer returns.
 Instagram Administrators SHALL NOT modify Products, Orders, Pricing or
 Editorial content.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- User
+- User
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-006
+## CMS-006
 
-\### Statement
+### Statement
 
 The Homepage SHALL support configurable editorial sections.
 
@@ -2508,297 +2514,297 @@ Changes SHALL become publicly visible immediately after saving.
 
 Draft mode is out of scope for Homepage management.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Homepage
+- Homepage
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-007
+## CMS-007
 
-\### Statement
+### Statement
 
 Homepage editorial items MAY link directly to an Outfit or a Product.
 
 The destination SHALL be configurable by administrators.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Homepage
+- Homepage
 
-\- Outfit
+- Outfit
 
-\- Product
+- Product
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-008
+## CMS-008
 
-\### Statement
+### Statement
 
 The system SHALL provide a centralized Media Library.
 
 Media assets MAY be reused across multiple business objects.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Media Library
+- Media Library
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-009
+## CMS-009
 
-\### Statement
+### Statement
 
 Media assets SHALL support logical grouping, including but not limited
 to:
 
-\- Product Images
+- Product Images
 
-\- Outfit Editorial
+- Outfit Editorial
 
-\- Homepage
+- Homepage
 
-\- Journal
+- Journal
 
-\- Shared Assets
+- Shared Assets
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Media Library
+- Media Library
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-010
+## CMS-010
 
-\### Statement
+### Statement
 
 Categories SHALL support configurable display order.
 
 Display order SHALL NOT affect business relationships.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Category
+- Category
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-011
+## CMS-011
 
-\### Statement
+### Statement
 
 Journal Articles SHALL support the following publication lifecycle:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Deleting published Journal Articles is discouraged and SHALL require
 explicit administrator confirmation.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Journal
+- Journal
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-012
+## CMS-012
 
-\### Statement
+### Statement
 
 The system SHALL provide centralized Site Settings for managing global
 platform configuration.
 
 Site Settings SHALL include, but not be limited to:
 
-\- Brand Information
+- Brand Information
 
-\- Contact Information
+- Contact Information
 
-\- Social Links
+- Social Links
 
-\- Footer Content
+- Footer Content
 
-\- SEO Defaults
+- SEO Defaults
 
-\- Shipping Settings
+- Shipping Settings
 
-\- Payment Settings
+- Payment Settings
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Site Settings
+- Site Settings
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-013
+## CMS-013
 
-\### Statement
+### Statement
 
 Products, Outfits and Journal Articles SHALL support Preview before
 publication.
 
 Preview SHALL NOT expose unpublished content to public users.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Journal
+- Journal
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-014
+## CMS-014
 
-\### Statement
+### Statement
 
 The Administration Panel SHALL provide search and filtering capabilities
 across managed business objects.
 
 Filtering MAY include:
 
-\- Status
+- Status
 
-\- Category
+- Category
 
-\- Publication State
+- Publication State
 
-\- Inventory Status
+- Inventory Status
 
-\- Date
+- Date
 
-\- Keyword
+- Keyword
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Administration Panel
+- Administration Panel
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-015
+## CMS-015
 
-\### Statement
+### Statement
 
 Bulk Operations SHALL be supported where appropriate, including:
 
-\- Price Updates
+- Price Updates
 
-\- Publication
+- Publication
 
-\- Archiving
+- Archiving
 
-\- Category Assignment
+- Category Assignment
 
 All Bulk Operations SHALL generate Business Events.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-016
+## CMS-016
 
-\### Statement
+### Statement
 
 Media assets SHALL NOT be permanently deleted while actively referenced
 by any business object.
 
 The system SHALL identify all usage locations before allowing deletion.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Media Library
+- Media Library
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-017
+## CMS-017
 
-\### Statement
+### Statement
 
 Administrative actions affecting commercial or editorial data SHALL
 generate Business Events.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Events
+- Business Events
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## CMS-018
+## CMS-018
 
-\### Statement
+### Statement
 
 The Administration Panel SHALL preserve interface simplicity.
 
 Administrative workflows SHALL prioritize clarity and consistency over
 minimizing the number of clicks.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Administration Panel
+- Administration Panel
 
-\### Priority
+### Priority
 
 SHALL
 
-\# 11. Business Event Rules
+# 11. Business Event Rules
 
 Business Events provide a complete historical record of significant
 business activities.
@@ -2806,277 +2812,277 @@ business activities.
 Business Events SHALL support operational analysis, auditing and
 business intelligence.
 
-\-\--
+---
 
-\## EVT-001
+## EVT-001
 
-\### Statement
+### Statement
 
 Every significant business action SHALL generate a Business Event.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-002
+## EVT-002
 
-\### Statement
+### Statement
 
 Each Business Event SHALL include at minimum:
 
-\- Event ID
+- Event ID
 
-\- Event Type
+- Event Type
 
-\- Timestamp
+- Timestamp
 
-\- User
+- User
 
-\- Related Entity
+- Related Entity
 
-\- Related Entity ID
+- Related Entity ID
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-003
+## EVT-003
 
-\### Statement
+### Statement
 
 Business Events SHALL be immutable.
 
 Recorded Events SHALL NOT be edited or deleted.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-004
+## EVT-004
 
-\### Statement
+### Statement
 
 Business Events SHALL support chronological reconstruction of business
 activities.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-005
+## EVT-005
 
-\### Statement
+### Statement
 
 The system SHALL generate Business Events for inventory operations,
 including:
 
-\- Inventory Increase
+- Inventory Increase
 
-\- Inventory Decrease
+- Inventory Decrease
 
-\- Reservation
+- Reservation
 
-\- Reservation Release
+- Reservation Release
 
-\- Order Fulfillment
+- Order Fulfillment
 
-\- Customer Return
+- Customer Return
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Inventory
+- Inventory
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-006
+## EVT-006
 
-\### Statement
+### Statement
 
 The system SHALL generate Business Events for pricing operations,
 including:
 
-\- Price Creation
+- Price Creation
 
-\- Price Modification
+- Price Modification
 
-\- Bulk Price Update
+- Bulk Price Update
 
 Each event SHALL preserve both previous and new values.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Price
+- Price
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-007
+## EVT-007
 
-\### Statement
+### Statement
 
 The system SHALL generate Business Events for catalog operations,
 including:
 
-\- Product Creation
+- Product Creation
 
-\- Product Publication
+- Product Publication
 
-\- Product Archive
+- Product Archive
 
-\- Product Deletion
+- Product Deletion
 
-\- Outfit Creation
+- Outfit Creation
 
-\- Category Changes
+- Category Changes
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Category
+- Category
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-008
+## EVT-008
 
-\### Statement
+### Statement
 
 Administrative actions affecting Site Settings, Homepage or Journal
 content SHALL generate Business Events.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Site Settings
+- Site Settings
 
-\- Homepage
+- Homepage
 
-\- Journal
+- Journal
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-009
+## EVT-009
 
-\### Statement
+### Statement
 
 Order lifecycle changes SHALL generate Business Events, including:
 
-\- Payment Confirmation
+- Payment Confirmation
 
-\- Shipment Creation
+- Shipment Creation
 
-\- Shipment Status Change
+- Shipment Status Change
 
-\- Cancellation
+- Cancellation
 
-\- Return
+- Return
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Order
+- Order
 
-\- Shipment
+- Shipment
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-010
+## EVT-010
 
-\### Statement
+### Statement
 
 Business Events SHALL support advanced filtering.
 
 Filtering SHALL include, but not be limited to:
 
-\- Date Range
+- Date Range
 
-\- Event Type
+- Event Type
 
-\- User
+- User
 
-\- Entity Type
+- Entity Type
 
-\- Entity Identifier
+- Entity Identifier
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-011
+## EVT-011
 
-\### Statement
+### Statement
 
 Business Events SHALL remain accessible for business reporting and
 operational analytics.
 
 Historical records SHALL support long-term business decision making.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\### Priority
+### Priority
 
 SHALL
 
-\-\--
+---
 
-\## EVT-012
+## EVT-012
 
-\### Statement
+### Statement
 
 Business Events SHALL serve as the authoritative source for historical
 business analysis.
@@ -3085,12 +3091,12 @@ Operational reports, pricing analysis, inventory analysis and audit
 reports SHOULD derive historical information from Business Events
 whenever applicable.
 
-\### Impacted Objects
+### Impacted Objects
 
-\- Business Event
+- Business Event
 
-\- Reporting
+- Reporting
 
-\### Priority
+### Priority
 
 SHOULD

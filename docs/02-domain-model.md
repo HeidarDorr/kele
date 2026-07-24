@@ -1,28 +1,34 @@
-\# KELE Website Specification
+# KELE Website Specification
 
-\## Document Information
+## Document Information
 
-\| Field \| Value \|
+| Field | Value |
 
-\|\-\-\-\-\-\-\--\|\-\-\-\-\-\--\|
+|--------|-------|
 
-\| Document \| 01-domain-model.md \|
+| Document | 02-domain-model.md |
 
-\| Title \| Domain Model \|
+| Title | Domain Model |
 
-\| Version \| 1.0 \|
+| Version | 1.0 |
 
-\| Status \| Frozen \|
+| Status | Frozen |
 
-\| Depends On \| 00-project-overview.md \|
+| Depends On | 01-project-overview.md |
 
-\| Required By \| All Documents \|
+| Required By | All Documents |
 
-\| Last Updated \| 2026-07-13 \|
+| Last Updated | 2026-07-13 |
 
-\-\--
+---
 
-\# Purpose
+> Amendment notice (2026-07-24): ADR-0002 is authoritative for the
+> Product → ColorVariant → SKU hierarchy. ADR-0003 is authoritative for
+> versioned Outfit composition. ADR-0004 clarifies pre-order checkout/payment
+> entities.
+
+
+# Purpose
 
 This document defines the business domain of the KELE ecommerce
 platform.
@@ -38,13 +44,13 @@ design or frontend implementation.
 Every subsequent specification document SHALL comply with the
 definitions established in this document.
 
-\-\--
+---
 
-\# Domain Design Principles
+# Domain Design Principles
 
 The KELE domain follows the principles below.
 
-\## Single Source of Truth
+## Single Source of Truth
 
 Each business fact SHALL have exactly one owner.
 
@@ -53,27 +59,27 @@ objects.
 
 Whenever possible, information SHALL be referenced instead of copied.
 
-\-\--
+---
 
-\## Separation of Business and Presentation
+## Separation of Business and Presentation
 
 Business entities SHALL remain independent from frontend representation.
 
 Frontend interfaces MAY display the same business object in different
 ways without changing the underlying business model.
 
-\-\--
+---
 
-\## Composition Over Duplication
+## Composition Over Duplication
 
 New business objects SHOULD reuse existing business objects whenever
 possible.
 
 Relationships are preferred over duplication.
 
-\-\--
+---
 
-\## Independent Lifecycle
+## Independent Lifecycle
 
 Each business object SHALL manage its own lifecycle.
 
@@ -87,65 +93,65 @@ Deleting a Category SHALL NOT delete Products.
 
 Publishing a Product SHALL NOT automatically publish an Outfit.
 
-\-\--
+---
 
-\# Commercial Objects
+# Commercial Objects
 
 KELE defines two independently sellable business objects.
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
 Both business objects:
 
-\- are independently published
+- are independently published
 
-\- have dedicated URLs
+- have dedicated URLs
 
-\- have dedicated SEO metadata
+- have dedicated SEO metadata
 
-\- appear inside catalog pages
+- appear inside catalog pages
 
-\- may be searched
+- may be searched
 
-\- may be purchased
+- may be purchased
 
-\- may be archived
+- may be archived
 
 Although both are sellable, they follow different business rules.
 
-\-\--
+---
 
-\# Domain Overview
+# Domain Overview
 
 Version 1 defines the following business objects.
 
-\- Category
+- Category
 
-\- Product
+- Product
 
-\- Color Variant
+- Color Variant
 
-\- SKU
+- SKU
 
-\- Inventory
+- Inventory
 
-\- Outfit
+- Outfit
 
-\- Outfit Item
+- Outfit Item
 
-\- Customer
+- Customer
 
-\- Order
+- Order
 
-\- Review
+- Review
 
-\- Journal Article
+- Journal Article
 
-\# Category
+# Category
 
-\## Definition
+## Definition
 
 A Category is a navigational and organizational object used to group
 Products and Outfits.
@@ -155,25 +161,25 @@ throughout the website.
 
 Categories do not own Products or Outfits.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 A Category SHALL define:
 
-\- Name
+- Name
 
-\- Slug
+- Slug
 
-\- Description (optional)
+- Description (optional)
 
-\- Display Order
+- Display Order
 
-\- Visibility Status
+- Visibility Status
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 A Category owns only its own metadata.
 
@@ -181,9 +187,9 @@ It does not own any Product, Outfit or Journal Article.
 
 Relationships are maintained through references.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 A Category MAY contain zero or more Products.
 
@@ -195,9 +201,9 @@ An Outfit MAY belong to multiple Categories.
 
 Journal Articles MAY reference one or more Categories.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 Deleting a Category SHALL NOT delete Products or Outfits.
 
@@ -206,91 +212,91 @@ related Products or Outfits.
 
 Categories MAY be used by CMS components for dynamic content selection.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Supported lifecycle states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Only Published Categories SHALL appear on the public website.
 
-\-\--
+---
 
-\# Product
+# Product
 
-\## Definition
+## Definition
 
 A Product represents a commercial clothing model independent of color,
 size and inventory.
 
 Examples include:
 
-\- Jacket
+- Jacket
 
-\- Shirt
+- Shirt
 
-\- Vest
+- Vest
 
-\- Pants
+- Pants
 
-\- T-Shirt
+- T-Shirt
 
-\- Shorts
+- Shorts
 
-\- Shoes
+- Shoes
 
 A Product defines the commercial identity of a clothing item.
 
 Customers purchase Product SKUs derived from the Product.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 A Product SHALL own:
 
-\- Name
+- Name
 
-\- Slug
+- Slug
 
-\- Description
+- Description
 
-\- Categories
+- Categories
 
-\- SEO Metadata
+- SEO Metadata
 
-\- Publication Status
+- Publication Status
 
 A Product SHALL NOT own:
 
-\- Images
+- Images
 
-\- Price
+- Price
 
-\- Inventory
+- Inventory
 
-\- Size
+- Size
 
 These responsibilities belong to lower-level business objects.
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 A Product owns its commercial identity.
 
 It does not own presentation assets that vary by color, nor commercial
 attributes that vary by size.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 A Product SHALL contain one or more Color Variants.
 
@@ -300,9 +306,9 @@ A Product MAY participate in multiple Outfits.
 
 A Product MAY be referenced by Journal Articles.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 A Product SHALL contain at least one Color Variant before publication.
 
@@ -312,25 +318,25 @@ Archiving a Product SHALL preserve all historical Orders.
 
 Deleting a Product that has historical Orders SHALL NOT be permitted.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Supported lifecycle states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Only Published Products SHALL appear on the public website.
 
-\-\--
+---
 
-\# Color Variant
+# Color Variant
 
-\## Definition
+## Definition
 
 A Color Variant represents one color of a Product.
 
@@ -338,39 +344,39 @@ Each Color Variant defines the visual identity of that color.
 
 Examples:
 
-\- White
+- White
 
-\- Navy
+- Navy
 
-\- Cream
+- Cream
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 A Color Variant SHALL own:
 
-\- Color
+- Color
 
-\- Image Gallery
+- Image Gallery
 
-\- Featured Image
+- Featured Image
 
-\- Display Order
+- Display Order
 
 An optional Color Code MAY be stored for administrative purposes.
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 A Color Variant owns every visual asset associated with its color.
 
 Images SHALL belong to the Color Variant rather than the Product.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 Each Color Variant belongs to exactly one Product.
 
@@ -379,9 +385,9 @@ Each Color Variant SHALL contain one or more SKUs.
 Outfit Items MAY reference a Color Variant as their Default Color
 Variant.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 Every published Product SHALL contain at least one published Color
 Variant.
@@ -393,64 +399,64 @@ Backend SHALL continue treating them as part of the same Product.
 Changing a Color Variant SHALL NOT affect other Color Variants belonging
 to the same Product.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Supported lifecycle states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Only Published Color Variants SHALL appear on the public website.
 
-\-\--
+---
 
-\# SKU
+# SKU
 
-\## Definition
+## Definition
 
 A SKU (Stock Keeping Unit) represents one purchasable variation of a
 Product.
 
 A SKU is uniquely identified by:
 
-\- Product
+- Product
 
-\- Color Variant
+- Color Variant
 
-\- Size
+- Size
 
 Each SKU represents one physical inventory item.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 A SKU SHALL own:
 
-\- SKU Code
+- SKU Code
 
-\- Size
+- Size
 
-\- Selling Price
+- Selling Price
 
-\- Inventory Status
+- Inventory Status
 
 Future versions MAY include:
 
-\- Barcode
+- Barcode
 
-\- Weight
+- Weight
 
-\- Dimensions
+- Dimensions
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 A SKU owns every commercial property that varies by size.
 
@@ -458,9 +464,9 @@ Price belongs exclusively to the SKU.
 
 Inventory belongs exclusively to the SKU through its Inventory record.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 Each SKU belongs to exactly one Color Variant.
 
@@ -468,9 +474,9 @@ Each SKU has exactly one Inventory record.
 
 Each SKU MAY appear within historical Orders.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 Every purchasable Product SHALL be represented by at least one SKU.
 
@@ -483,23 +489,23 @@ Removing a SKU that exists in historical Orders SHALL NOT be permitted.
 A SKU with zero inventory SHALL become unavailable for purchase while
 remaining visible to customers unless explicitly archived.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Supported lifecycle states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Only Published SKUs MAY be purchased.
 
-\# Inventory
+# Inventory
 
-\## Definition
+## Definition
 
 Inventory represents the available stock of a SKU.
 
@@ -509,32 +515,32 @@ Inventory SHALL always be managed at SKU level.
 
 Products and Outfits do not own inventory directly.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 An Inventory record SHALL own:
 
-\- Available Quantity
+- Available Quantity
 
-\- Reserved Quantity (Future)
+- Reserved Quantity (Future)
 
-\- Adjustment History
+- Adjustment History
 
-\- Last Updated Timestamp
+- Last Updated Timestamp
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 Inventory belongs exclusively to one SKU.
 
 Neither Products nor Outfits SHALL maintain independent inventory
 values.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 Each SKU SHALL have exactly one Inventory record.
 
@@ -544,9 +550,9 @@ Inventory adjustments are performed by authorized administrative users.
 
 Future ERP integrations SHALL synchronize with Inventory.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 Every inventory adjustment SHALL be logged.
 
@@ -561,82 +567,82 @@ Historical inventory adjustments SHALL remain preserved.
 
 Deleting Inventory records SHALL NOT be permitted.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Inventory records do not have publication states.
 
 Inventory exists for every SKU regardless of publication status.
 
-\-\--
+---
 
-\# Outfit
+# Outfit
 
-\## Definition
+## Definition
 
 An Outfit represents a complete styling recommendation created by KELE.
 
 Unlike traditional product bundles, an Outfit is an independently
 sellable commercial object.
 
-Its purpose is to simplify purchasing decisions while expressing KELE\'s
+Its purpose is to simplify purchasing decisions while expressing KELE's
 styling expertise.
 
 An Outfit consists of one or more Products arranged in a curated
 combination.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 An Outfit SHALL own:
 
-\- Name
+- Name
 
-\- Slug
+- Slug
 
-\- Description
+- Description
 
-\- Selling Price
+- Selling Price
 
-\- Editorial Gallery
+- Editorial Gallery
 
-\- Featured Image
+- Featured Image
 
-\- Categories
+- Categories
 
-\- SEO Metadata
+- SEO Metadata
 
-\- Publication Status
+- Publication Status
 
 An Outfit SHALL NOT own:
 
-\- Product Images
+- Product Images
 
-\- Product Inventory
+- Product Inventory
 
-\- Product Descriptions
+- Product Descriptions
 
 These remain owned by their respective business objects.
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 An Outfit owns:
 
-\- Editorial presentation
+- Editorial presentation
 
-\- Commercial identity
+- Commercial identity
 
-\- Selling price
+- Selling price
 
 An Outfit does not own the Products from which it is composed.
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 An Outfit SHALL contain one or more Outfit Items.
 
@@ -646,9 +652,9 @@ An Outfit MAY appear on the Homepage.
 
 An Outfit MAY be referenced by Journal Articles.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 Every Outfit SHALL reference existing Products.
 
@@ -662,9 +668,9 @@ Deleting an Outfit SHALL NOT affect any Product.
 
 Archiving an Outfit SHALL preserve historical Orders.
 
-\-\--
+---
 
-\## Availability
+## Availability
 
 An Outfit is considered available only when every required SKU for the
 selected size is available.
@@ -674,25 +680,25 @@ Product SKUs.
 
 The Outfit itself SHALL NOT maintain inventory quantities.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Supported lifecycle states:
 
-\- Draft
+- Draft
 
-\- Published
+- Published
 
-\- Archived
+- Archived
 
 Only Published Outfits SHALL appear on the public website.
 
-\-\--
+---
 
-\# Outfit Item
+# Outfit Item
 
-\## Definition
+## Definition
 
 An Outfit Item represents one Product inside an Outfit.
 
@@ -702,37 +708,37 @@ Outfit Items exist only within their parent Outfit.
 
 They are not independently purchasable.
 
-\-\--
+---
 
-\## Responsibilities
+## Responsibilities
 
 Each Outfit Item SHALL define:
 
-\- Product
+- Product
 
-\- Default Color Variant
+- Default Color Variant
 
-\- Display Order
+- Display Order
 
-\-\--
+---
 
-\## Ownership
+## Ownership
 
 Outfit Items own only composition metadata.
 
 They do not own:
 
-\- Price
+- Price
 
-\- Inventory
+- Inventory
 
-\- Images
+- Images
 
-\- Product Information
+- Product Information
 
-\-\--
+---
 
-\## Relationships
+## Relationships
 
 Each Outfit Item belongs to exactly one Outfit.
 
@@ -743,9 +749,9 @@ Each Outfit Item MAY specify one Default Color Variant.
 A Product MAY participate in multiple Outfit Items across different
 Outfits.
 
-\-\--
+---
 
-\## Business Rules
+## Business Rules
 
 The Default Color Variant defines the editorial appearance of the
 Outfit.
@@ -762,9 +768,9 @@ Outfit Items SHALL inherit Product information dynamically.
 
 They SHALL NOT duplicate Product information.
 
-\-\--
+---
 
-\## Lifecycle
+## Lifecycle
 
 Outfit Items inherit the lifecycle of their parent Outfit.
 
@@ -774,10 +780,10 @@ They cannot exist independently.
 
 Category
 
-\+ Scope
++ Scope
 
-\- Product
+- Product
 
-\- Outfit
+- Outfit
 
-\- Both
+- Both

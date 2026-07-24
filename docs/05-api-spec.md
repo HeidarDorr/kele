@@ -1,17 +1,22 @@
-\# 04-api-spec.md
+# 05-api-spec.md
 
-\# API Specification
+# API Specification
 
 Version: 1.0
 
-Status: Draft
+Status: Draft / Superseded for transport details
 
-\# 1. Purpose
+> Hardening note (2026-07-24): `openapi.yaml` is the machine-readable,
+> normative transport contract. This narrative document remains useful for
+> intent and imported workflow detail. Conflicts are resolved in favor of the
+> OpenAPI contract and accepted ADRs.
+
+# 1. Purpose
 
 This document defines the official communication contract between the
 Storefront, Administration Panel and Backend services.
 
-The specification SHALL be treated as the single source of truth for API
+The API specification set SHALL be treated as the source of truth for API
 behavior.
 
 Every endpoint defined in this document SHALL comply with the Business
@@ -19,29 +24,29 @@ Rules and Domain Model defined in previous specifications.
 
 This document is intended for:
 
-\- Backend Developers
+- Backend Developers
 
-\- Frontend Developers
+- Frontend Developers
 
-\- QA Engineers
+- QA Engineers
 
 -   AI Development Agents
 
-\# 2. Design Principles
+# 2. Design Principles
 
 The API SHALL be:
 
-\- Resource-oriented
+- Resource-oriented
 
-\- Stateless
+- Stateless
 
-\- Versioned
+- Versioned
 
-\- Predictable
+- Predictable
 
-\- Consistent
+- Consistent
 
-\- Backward-compatible whenever possible
+- Backward-compatible whenever possible
 
 Business Rules SHALL be enforced by the Backend.
 
@@ -52,7 +57,7 @@ requests.
 
 Validation SHALL always occur on the Backend.
 
-\# 3. API Versioning
+# 3. API Versioning
 
 The API SHALL be versioned.
 
@@ -68,7 +73,7 @@ Future breaking changes SHALL require a new API version.
 
 Non-breaking changes SHOULD preserve backward compatibility.
 
-\# 4. Authentication
+# 4. Authentication
 
 Storefront APIs
 
@@ -88,7 +93,7 @@ Authorization
 
 Bearer \<token\>
 
-\# 5. Request Standards
+# 5. Request Standards
 
 Every request SHALL use JSON unless otherwise specified.
 
@@ -106,7 +111,7 @@ Example
 
 }
 
-\-\--
+---
 
 Query Parameters SHALL also use camelCase.
 
@@ -114,7 +119,7 @@ Example
 
 ?page=1&pageSize=20&sortBy=name
 
-\-\--
+---
 
 Identifiers SHALL be passed as URL Parameters.
 
@@ -122,7 +127,7 @@ Example
 
 GET /products/{productId}
 
-\# 6. Response Standards
+# 6. Response Standards
 
 Successful responses SHALL follow a consistent structure.
 
@@ -138,7 +143,7 @@ Example
 
 }
 
-\-\--
+---
 
 Error responses SHALL follow the same structure.
 
@@ -160,13 +165,13 @@ Example
 
 }
 
-\# 7. Error Handling
+# 7. Error Handling
 
 Every Business Error SHALL expose:
 
-\- Error Code
+- Error Code
 
-\- Human-readable Message
+- Human-readable Message
 
 Validation Errors SHOULD include affected fields.
 
@@ -194,7 +199,7 @@ Example
 
 }
 
-\# 8. Pagination
+# 8. Pagination
 
 List endpoints SHALL support pagination.
 
@@ -222,7 +227,7 @@ Response Metadata
 
 }
 
-\# 9. Filtering & Sorting
+# 9. Filtering & Sorting
 
 Collection endpoints SHOULD support filtering.
 
@@ -244,83 +249,83 @@ Example
 
 GET /products?page=1&pageSize=20&search=shirt&status=published
 
-\# 10. Resource Overview
+# 10. Resource Overview
 
 The API exposes the following Resources.
 
-\-\--
+---
 
 Commerce
 
-\- Categories
+- Categories
 
-\- Products
+- Products
 
-\- Outfits
+- Outfits
 
-\- Inventory
+- Inventory
 
-\- Pricing
+- Pricing
 
-\-\--
+---
 
 Editorial
 
-\- Homepage
+- Homepage
 
-\- Journal
+- Journal
 
-\- Media
+- Media
 
-\-\--
+---
 
 Sales
 
-\- Cart
+- Cart
 
-\- Checkout
+- Checkout
 
-\- Orders
+- Orders
 
-\- Returns
+- Returns
 
-\-\--
+---
 
 System
 
-\- Users
+- Users
 
-\- Settings
+- Settings
 
 -   Authentication
 
-\# 11. Product Resource
+# 11. Product Resource
 
-\## Purpose
+## Purpose
 
 Provides CRUD operations for Product management.
 
 Pricing and Inventory are managed through dedicated Resources.
 
-\-\--
+---
 
 Supported Operations
 
-\- Create Product
+- Create Product
 
-\- Get Product
+- Get Product
 
-\- List Products
+- List Products
 
-\- Update Product
+- Update Product
 
-\- Delete Product
+- Delete Product
 
-\- Publish Product
+- Publish Product
 
 -   Archive Product
 
-\### Create Product
+### Create Product
 
 POST
 
@@ -330,9 +335,9 @@ Permission
 
 Super Admin
 
-\-\--
+---
 
-\### List Products
+### List Products
 
 GET
 
@@ -340,77 +345,77 @@ GET
 
 Supports
 
-\- Pagination
+- Pagination
 
-\- Filtering
+- Filtering
 
-\- Sorting
+- Sorting
 
-\- Search
+- Search
 
-\-\--
+---
 
-\### Get Product
+### Get Product
 
 GET
 
 /api/v1/products/{productId}
 
-\-\--
+---
 
-\### Update Product
+### Update Product
 
 PATCH
 
 /api/v1/products/{productId}
 
-\-\--
+---
 
-\### Delete Product
+### Delete Product
 
 DELETE
 
 /api/v1/products/{productId}
 
-\-\--
+---
 
-\### Publish Product
+### Publish Product
 
 POST
 
 /api/v1/products/{productId}/publish
 
-\-\--
+---
 
-\### Archive Product
+### Archive Product
 
 POST
 
 /api/v1/products/{productId}/archive
 
-\## Create Product
+## Create Product
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/products
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Creates a new Draft Product.
 
 The Product SHALL be created with Status = Draft.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -424,21 +429,21 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Product Name is required.
+- Product Name is required.
 
-\- At least one Category is required.
+- At least one Category is required.
 
-\- Duplicate Product Name is allowed.
+- Duplicate Product Name is allowed.
 
-\- Category IDs must exist.
+- Category IDs must exist.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Product SHALL be created as Draft.
 
@@ -448,9 +453,9 @@ Inventory SHALL NOT be created automatically.
 
 Publication SHALL require a separate operation.
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 201 Created
 
@@ -468,9 +473,9 @@ Publication SHALL require a separate operation.
 
 }
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 INVALID_CATEGORY
 
@@ -478,33 +483,33 @@ INVALID_REQUEST
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ProductCreated
 
-\## Get Product
+## Get Product
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/products/{productId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns complete Product information.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Authenticated Administrator
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 200 OK
 
@@ -520,47 +525,47 @@ Authenticated Administrator
 
 }
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 PRODUCT_NOT_FOUND
 
 UNAUTHORIZED
 
-\## List Products
+## List Products
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/products
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns paginated Products.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Authenticated Administrator
 
-\-\--
+---
 
-\### Supports
+### Supports
 
-\- Pagination
+- Pagination
 
-\- Search
+- Search
 
-\- Filtering
+- Filtering
 
-\- Sorting
+- Sorting
 
-\-\--
+---
 
-\### Filters
+### Filters
 
 categoryIds
 
@@ -572,15 +577,15 @@ sortBy
 
 sortDirection
 
-\## Update Product
+## Update Product
 
-\### Endpoint
+### Endpoint
 
 PATCH /api/v1/products/{productId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates editable Product information.
 
@@ -588,37 +593,37 @@ Only Draft or Archived Products MAY be updated.
 
 Published Products SHALL NOT allow structural modifications.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Product must exist.
+- Product must exist.
 
-\- Category IDs must exist.
+- Category IDs must exist.
 
-\- Immutable fields SHALL NOT be modified.
+- Immutable fields SHALL NOT be modified.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Updating a Product SHALL NOT modify:
 
-\- Inventory
+- Inventory
 
-\- Pricing
+- Pricing
 
-\- Published Outfit compositions
+- Published Outfit compositions
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 200 OK
 
@@ -636,9 +641,9 @@ Updating a Product SHALL NOT modify:
 
 }
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 PRODUCT_NOT_FOUND
 
@@ -648,61 +653,61 @@ INVALID_CATEGORY
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ProductUpdated
 
-\## Publish Product
+## Publish Product
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/products/{productId}/publish
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Publishes a Draft Product.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 The Product SHALL include:
 
-\- At least one Category
+- At least one Category
 
-\- At least one Image
+- At least one Image
 
-\- At least one Product SKU
+- At least one Product SKU
 
-\- A Price for every SKU
+- A Price for every SKU
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Product Status changes to Published.
 
 Published Products become available for Storefront usage.
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 200 OK
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 PRODUCT_NOT_PUBLISHABLE
 
@@ -714,91 +719,91 @@ MISSING_PRICE
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ProductPublished
 
-\## Archive Product
+## Archive Product
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/products/{productId}/archive
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Archives a Product.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Archived Products SHALL:
 
-\- Be hidden from the Storefront.
+- Be hidden from the Storefront.
 
-\- Remain available for historical Orders.
+- Remain available for historical Orders.
 
-\- Remain available for Reports.
+- Remain available for Reports.
 
-\- Preserve all References.
+- Preserve all References.
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 200 OK
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 PRODUCT_NOT_FOUND
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ProductArchived
 
-\## Restore Product
+## Restore Product
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/products/{productId}/restore
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Restores an Archived Product.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 The Product SHALL satisfy all current publication requirements.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 If validation succeeds:
 
@@ -808,9 +813,9 @@ Otherwise:
 
 Restoration is rejected.
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 PRODUCT_NOT_RESTORABLE
 
@@ -818,15 +823,15 @@ PRODUCT_NOT_FOUND
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ProductRestored
 
-\# 12. Outfit Resource
+# 12. Outfit Resource
 
-\## Purpose
+## Purpose
 
 Provides CRUD operations for Outfit management.
 
@@ -837,27 +842,27 @@ Inventory SHALL be calculated from Product SKU availability.
 
 Pricing SHALL be maintained independently for each Outfit SKU.
 
-\## Create Outfit
+## Create Outfit
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/outfits
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Creates a new Draft Outfit.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -871,19 +876,19 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Outfit Name is required.
+- Outfit Name is required.
 
-\- At least one Category is required.
+- At least one Category is required.
 
-\- Product Mappings SHALL reference existing Product SKUs.
+- Product Mappings SHALL reference existing Product SKUs.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Outfit SHALL be created as Draft.
 
@@ -893,15 +898,15 @@ Inventory SHALL NOT be stored.
 
 Inventory SHALL always be calculated dynamically.
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 201 Created
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 INVALID_PRODUCT_SKU
 
@@ -911,21 +916,21 @@ INVALID_REQUEST
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OutfitCreated
 
-\## Update Outfit
+## Update Outfit
 
-\### Endpoint
+### Endpoint
 
 PATCH /api/v1/outfits/{outfitId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates editable Outfit information.
 
@@ -933,205 +938,205 @@ Only Draft or Archived Outfits MAY be updated.
 
 Published Outfits SHALL NOT allow composition changes.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Outfit must exist.
+- Outfit must exist.
 
-\- Product Mappings SHALL reference existing Product SKUs.
+- Product Mappings SHALL reference existing Product SKUs.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Updating a Published Outfit SHALL NOT change:
 
-\- Product Composition
+- Product Composition
 
-\- Available Sizes
+- Available Sizes
 
 A new Outfit SHALL be created if structural changes are required.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OutfitUpdated
 
-\## Publish Outfit
+## Publish Outfit
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/outfits/{outfitId}/publish
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 The Outfit SHALL include:
 
-\- At least one Category
+- At least one Category
 
-\- At least one Image
+- At least one Image
 
-\- At least one Outfit Size
+- At least one Outfit Size
 
-\- Valid Product Mapping
+- Valid Product Mapping
 
-\- A Price for every Outfit SKU
+- A Price for every Outfit SKU
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Published Outfits become available on the Storefront.
 
 Availability SHALL be calculated dynamically.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OutfitPublished
 
-\## Archive Outfit
+## Archive Outfit
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/outfits/{outfitId}/archive
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Archived Outfits SHALL:
 
-\- Be hidden from the Storefront.
+- Be hidden from the Storefront.
 
-\- Remain available for historical Orders.
+- Remain available for historical Orders.
 
-\- Preserve all References.
+- Preserve all References.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OutfitArchived
 
-\## Restore Outfit
+## Restore Outfit
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/outfits/{outfitId}/restore
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 The Outfit SHALL satisfy all publication requirements.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Restoration SHALL execute the same validations as Publish.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OutfitRestored
 
-\# 13. Category Resource
+# 13. Category Resource
 
-\## Purpose
+## Purpose
 
 Provides management operations for Product and Outfit Categories.
 
 Categories organize Products and Outfits for navigation and filtering.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Create Category
+- Create Category
 
-\- Get Category
+- Get Category
 
-\- List Categories
+- List Categories
 
-\- Update Category
+- Update Category
 
-\- Archive Category
+- Archive Category
 
 -   Restore Category
 
-\## Create Category
+## Create Category
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/categories
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Creates a new Category.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
 \"name\": \"\...\",
 
-\"scope\": \"Product \| Outfit \| Shared\",
+\"scope\": \"Product | Outfit | Shared\",
 
 \"parentCategoryId\": null
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Category Name is required.
+- Category Name is required.
 
-\- Scope is required.
+- Scope is required.
 
-\- Parent Category MUST exist when provided.
+- Parent Category MUST exist when provided.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Category names MAY be duplicated under different parent Categories.
 
 Category hierarchy SHALL remain acyclic.
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 201 Created
 
-\-\--
+---
 
-\### Possible Errors
+### Possible Errors
 
 INVALID_PARENT_CATEGORY
 
@@ -1139,53 +1144,53 @@ INVALID_SCOPE
 
 UNAUTHORIZED
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 CategoryCreated
 
-\## Update Category
+## Update Category
 
-\### Endpoint
+### Endpoint
 
 PATCH /api/v1/categories/{categoryId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates Category information.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Category hierarchy SHALL remain valid.
 
 Circular references SHALL be rejected.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 CategoryUpdated
 
-\## Archive Category
+## Archive Category
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/categories/{categoryId}/archive
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Archived Categories SHALL NOT appear in the Storefront.
 
@@ -1194,39 +1199,39 @@ Archived Categories SHALL remain available for historical references.
 Products and Outfits already assigned to the Category SHALL preserve
 their references.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 CategoryArchived
 
-\## Restore Category
+## Restore Category
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/categories/{categoryId}/restore
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Parent Category (if any) MUST still exist and be active.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Restored Categories become selectable immediately.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 CategoryRestored
 
-\# 14. Inventory Resource
+# 14. Inventory Resource
 
-\## Purpose
+## Purpose
 
 Provides inventory operations for Product SKUs.
 
@@ -1235,43 +1240,43 @@ Inventory SHALL be maintained only for Product SKUs.
 Outfit availability SHALL be calculated dynamically and SHALL NOT
 maintain independent inventory.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Get Inventory
+- Get Inventory
 
-\- Increase Stock
+- Increase Stock
 
-\- Adjust Stock
+- Adjust Stock
 
-\- Reserve Stock
+- Reserve Stock
 
 -   Release Reservation
 
-\## Get Inventory
+## Get Inventory
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/inventory/{skuId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns current inventory status for a Product SKU.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Inventory Admin
 
 Super Admin
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 {
 
@@ -1283,29 +1288,29 @@ Super Admin
 
 }
 
-\## Increase Stock
+## Increase Stock
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/inventory/{skuId}/increase
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Adds inventory for a Product SKU.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Inventory Admin
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1315,47 +1320,47 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Quantity SHALL be greater than zero.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Available inventory SHALL increase.
 
 Inventory History SHALL be recorded.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 InventoryIncreased
 
-\## Adjust Stock
+## Adjust Stock
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/inventory/{skuId}/adjust
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Corrects inventory after stock counting.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1365,41 +1370,41 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 New Quantity SHALL NOT be negative.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Inventory Adjustment SHALL create an Inventory History record.
 
 Adjustment SHALL NOT modify Order History.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 InventoryAdjusted
 
-\## Reserve Stock
+## Reserve Stock
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/inventory/{skuId}/reserve
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Reserves inventory during Checkout.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Reservation Duration:
 
@@ -1409,41 +1414,41 @@ Reservation SHALL expire automatically.
 
 Reserved inventory SHALL NOT be available for other Customers.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 InventoryReserved
 
-\## Release Reservation
+## Release Reservation
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/inventory/{skuId}/release
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Releases expired reservations.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Released inventory SHALL become immediately available.
 
 Shopping Cart SHALL remain unchanged.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ReservationReleased
 
-\# 15. Pricing Resource
+# 15. Pricing Resource
 
-\## Purpose
+## Purpose
 
 Provides pricing operations for Product SKUs and Outfit SKUs.
 
@@ -1451,41 +1456,41 @@ Every SKU SHALL maintain an independent Price.
 
 Price History SHALL be preserved for every Price Change.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Get Price
+- Get Price
 
-\- Set Price
+- Set Price
 
-\- Bulk Update Prices
+- Bulk Update Prices
 
 -   Get Price History
 
-\## Get Price
+## Get Price
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/pricing/{skuId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns the current Price assigned to a SKU.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Inventory Admin
 
 Super Admin
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 {
 
@@ -1497,27 +1502,27 @@ Super Admin
 
 }
 
-\## Set Price
+## Set Price
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/pricing/{skuId}/set
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Assigns a new Price to a SKU.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1527,15 +1532,15 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Price SHALL be greater than zero.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Previous Price SHALL be preserved.
 
@@ -1543,33 +1548,33 @@ Price History SHALL be created.
 
 New Price SHALL become effective immediately.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 PriceUpdated
 
-\## Bulk Update Prices
+## Bulk Update Prices
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/pricing/bulk-update
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates Prices for multiple SKUs.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1583,43 +1588,43 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Every affected SKU SHALL receive an independent Price History record.
 
 Bulk Operations SHALL require confirmation.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 BulkPriceUpdated
 
-\## Get Price History
+## Get Price History
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/pricing/{skuId}/history
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns historical Price Changes for a SKU.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
 Inventory Admin
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 \[
 
@@ -1649,9 +1654,9 @@ Inventory Admin
 
 \]
 
-\# 16. Homepage Resource
+# 16. Homepage Resource
 
-\## Purpose
+## Purpose
 
 Provides management operations for Homepage content.
 
@@ -1659,37 +1664,37 @@ Homepage content SHALL be managed as independent Sections.
 
 Each Section MAY be enabled, disabled or reordered independently.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Get Homepage
+- Get Homepage
 
-\- Update Homepage
+- Update Homepage
 
 -   Reorder Sections
 
-\## Get Homepage
+## Get Homepage
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/homepage
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns Homepage configuration.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 {
 
@@ -1697,67 +1702,67 @@ Super Admin
 
 }
 
-\## Update Homepage
+## Update Homepage
 
-\### Endpoint
+### Endpoint
 
 PATCH /api/v1/homepage
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates Homepage Sections.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Every Section SHALL satisfy its own validation rules.
 
 Disabled Sections SHALL remain stored.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Changes SHALL become visible immediately.
 
 Homepage SHALL preserve Section ordering.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 HomepageUpdated
 
-\## Reorder Sections
+## Reorder Sections
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/homepage/reorder
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Changes Homepage Section ordering.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1765,37 +1770,37 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Ordering SHALL be reflected immediately.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 HomepageReordered
 
-\### Hero Validation
+### Hero Validation
 
 Hero SHALL include:
 
-\- Title
+- Title
 
-\- Image
+- Image
 
 Optional Fields
 
-\- Subtitle
+- Subtitle
 
-\- CTA Label
+- CTA Label
 
 -   Destination Link
 
-\# 17. Journal Resource
+# 17. Journal Resource
 
-\## Purpose
+## Purpose
 
 Provides management operations for Journal Articles.
 
@@ -1804,45 +1809,45 @@ Outfits.
 
 Referenced entities SHALL remain dynamically linked.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Create Article
+- Create Article
 
-\- Get Article
+- Get Article
 
-\- List Articles
+- List Articles
 
-\- Update Article
+- Update Article
 
-\- Publish Article
+- Publish Article
 
-\- Archive Article
+- Archive Article
 
 -   Delete Article
 
-\## Create Article
+## Create Article
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/journal
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Creates a Draft Journal Article.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -1856,21 +1861,21 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
-\- Title is required.
+- Title is required.
 
-\- Cover Image is required.
+- Cover Image is required.
 
-\- Content is required.
+- Content is required.
 
-\- Referenced Products and Outfits MUST exist.
+- Referenced Products and Outfits MUST exist.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Article SHALL be created as Draft.
 
@@ -1878,134 +1883,134 @@ Referenced entities SHALL NOT be copied.
 
 References SHALL remain dynamic.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Article becomes available for future publication.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 JournalArticleCreated
 
-\## Publish Article
+## Publish Article
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/journal/{articleId}/publish
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Publishes a Draft Article.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 The Article SHALL include:
 
-\- Title
+- Title
 
-\- Cover Image
+- Cover Image
 
-\- Content
+- Content
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Published Articles become visible on the Storefront.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Search index updated.
 
 Homepage references (if any) remain valid.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 JournalArticlePublished
 
-\## Archive Article
+## Archive Article
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/journal/{articleId}/archive
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Archived Articles SHALL NOT appear on the Storefront.
 
 Article content SHALL remain preserved.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Homepage references (if any) SHALL hide the archived Article
 automatically.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 JournalArticleArchived
 
-\## Delete Article
+## Delete Article
 
-\### Endpoint
+### Endpoint
 
 DELETE /api/v1/journal/{articleId}
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Deletion SHALL require confirmation.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 The Article SHALL be permanently removed.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Internal references SHALL be removed automatically.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 JournalArticleDeleted
 
-\# 18. Order Resource
+# 18. Order Resource
 
-\## Purpose
+## Purpose
 
 Provides operations for managing customer Orders.
 
@@ -2013,41 +2018,41 @@ Orders SHALL be created only after successful payment.
 
 Orders SHALL NOT be created manually.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Get Order
+- Get Order
 
-\- List Orders
+- List Orders
 
-\- Cancel Order
+- Cancel Order
 
 -   Update Fulfillment Status
 
-\## Get Order
+## Get Order
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/orders/{orderId}
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Returns complete Order information.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
 Inventory Admin
 
-\-\--
+---
 
-\### Success Response
+### Success Response
 
 {
 
@@ -2063,27 +2068,27 @@ Inventory Admin
 
 }
 
-\## List Orders
+## List Orders
 
-\### Endpoint
+### Endpoint
 
 GET /api/v1/orders
 
-\-\--
+---
 
-\### Supports
+### Supports
 
-\- Pagination
+- Pagination
 
-\- Search
+- Search
 
-\- Filtering
+- Filtering
 
-\- Sorting
+- Sorting
 
-\-\--
+---
 
-\### Filters
+### Filters
 
 status
 
@@ -2095,29 +2100,29 @@ createdFrom
 
 createdTo
 
-\## Update Fulfillment Status
+## Update Fulfillment Status
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/orders/{orderId}/fulfillment
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Updates fulfillment progress.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Inventory Admin
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -2125,25 +2130,25 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Only valid status transitions SHALL be allowed.
 
-\### Allowed Fulfillment Statuses
+### Allowed Fulfillment Statuses
 
-\- Processing
+- Processing
 
-\- Packed
+- Packed
 
-\- Shipped
+- Shipped
 
-\- Delivered
+- Delivered
 
-\-\--
+---
 
-\### Valid Status Flow
+### Valid Status Flow
 
 Processing
 
@@ -2161,75 +2166,75 @@ Delivered
 
 Backward transitions SHALL NOT be allowed.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Every status transition SHALL be recorded.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Customer Notification MAY be sent.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OrderFulfillmentUpdated
 
-\## Cancel Order
+## Cancel Order
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/orders/{orderId}/cancel
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Cancels an existing Order.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
 Inventory Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Cancellation SHALL only be allowed before Shipment.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Inventory SHALL be restored.
 
 Financial Reports SHALL be updated.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Customer Notification sent.
 
 Order Timeline updated.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 OrderCancelled
 
-\# 19. Return Resource
+# 19. Return Resource
 
-\## Purpose
+## Purpose
 
 Provides operations for processing returned Orders.
 
@@ -2237,41 +2242,41 @@ Returns SHALL adjust both Inventory and Financial Reports.
 
 Returns SHALL always reference an existing Order.
 
-\## Supported Operations
+## Supported Operations
 
-\- Create Return
+- Create Return
 
-\- Get Return
+- Get Return
 
-\- List Returns
+- List Returns
 
-\- Approve Return
+- Approve Return
 
 -   Reject Return
 
-\## Create Return
+## Create Return
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/returns
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Creates a Return Request.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Inventory Admin
 
 Super Admin
 
-\-\--
+---
 
-\### Request
+### Request
 
 {
 
@@ -2283,61 +2288,61 @@ Super Admin
 
 }
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Referenced Order MUST exist.
 
 Returned Quantity SHALL NOT exceed purchased Quantity.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Return SHALL initially be created with Status = Pending.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Return Timeline created.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ReturnCreated
 
-\## Approve Return
+## Approve Return
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/returns/{returnId}/approve
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Approves a Return Request.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
 Inventory Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Return MUST still be Pending.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Returned Product Inventory SHALL increase.
 
@@ -2345,9 +2350,9 @@ Revenue Reports SHALL be adjusted.
 
 Return Status changes to Approved.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Customer Notification sent.
 
@@ -2355,27 +2360,27 @@ Inventory History created.
 
 Financial Audit Log created.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ReturnApproved
 
-\## Reject Return
+## Reject Return
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/returns/{returnId}/reject
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Return MUST still be Pending.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Inventory SHALL remain unchanged.
 
@@ -2383,21 +2388,21 @@ Revenue SHALL remain unchanged.
 
 Return Status changes to Rejected.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Customer Notification sent.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 ReturnRejected
 
-\# 20. Media Resource
+# 20. Media Resource
 
-\## Purpose
+## Purpose
 
 Provides operations for uploading and managing Media Assets.
 
@@ -2405,113 +2410,113 @@ Media Assets MAY be referenced by multiple Resources.
 
 Referenced Media SHALL NOT be deleted.
 
-\- Upload Media
+- Upload Media
 
-\- Get Media
+- Get Media
 
-\- List Media
+- List Media
 
 -   Delete Media
 
-\## Upload Media
+## Upload Media
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/media
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Uploads a new Media Asset.
 
-\-\--
+---
 
-\### Permission
+### Permission
 
 Super Admin
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Supported file formats only.
 
 Maximum file size SHALL be enforced.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Media SHALL become immediately available.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Thumbnail generation.
 
 Image optimization.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 MediaUploaded
 
-\## Delete Media
+## Delete Media
 
-\### Endpoint
+### Endpoint
 
 DELETE /api/v1/media/{mediaId}
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Referenced Media SHALL NOT be deleted.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Deletion SHALL be rejected if references exist.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Unused storage SHALL be released.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 MediaDeleted
 
-\# 21. Users Resource
+# 21. Users Resource
 
-\## Purpose
+## Purpose
 
 Provides administration user management.
 
 Authentication SHALL be handled separately.
 
-\-\--
+---
 
-\## Supported Operations
+## Supported Operations
 
-\- Create User
+- Create User
 
-\- Get User
+- Get User
 
-\- List Users
+- List Users
 
-\- Update User
+- Update User
 
 -   Deactivate User
 
-\## Create User
+## Create User
 
 POST /api/v1/users
 
@@ -2541,7 +2546,7 @@ Business Events
 
 UserCreated
 
-\## Deactivate User
+## Deactivate User
 
 POST /api/v1/users/{userId}/deactivate
 
@@ -2555,17 +2560,17 @@ Business Events
 
 UserDeactivated
 
-\# 22. Settings Resource
+# 22. Settings Resource
 
-\## Purpose
+## Purpose
 
 Provides Site Configuration management.
 
-\-\--
+---
 
 Supported Operations
 
-\- Get Settings
+- Get Settings
 
 -   Update Settings
 
@@ -2579,9 +2584,9 @@ Business Events
 
 SettingsUpdated
 
-\# 23. Internal APIs
+# 23. Internal APIs
 
-\## Purpose
+## Purpose
 
 Provides internal system operations.
 
@@ -2590,43 +2595,43 @@ Storefront.
 
 Authentication SHALL require internal service credentials.
 
-\- Checkout
+- Checkout
 
-\- OTP Authentication
+- OTP Authentication
 
-\- Payment Callback
+- Payment Callback
 
-\- Reserve Inventory
+- Reserve Inventory
 
 -   Release Reservation
 
-\## Checkout
+## Checkout
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/internal/checkout
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Validates Shopping Cart before Payment.
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Every SKU SHALL:
 
-\- Exist
+- Exist
 
-\- Have sufficient Inventory
+- Have sufficient Inventory
 
-\- Have a valid Price
+- Have a valid Price
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Current Prices SHALL be used.
 
@@ -2634,79 +2639,79 @@ Inventory SHALL be reserved for 30 minutes.
 
 Reservation SHALL be created per SKU.
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 Reservation Timer started.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 CheckoutStarted
 
-\## Payment Callback
+## Payment Callback
 
-\### Endpoint
+### Endpoint
 
 POST /api/v1/internal/payment/callback
 
-\-\--
+---
 
-\### Purpose
+### Purpose
 
 Processes Payment Gateway response.
 
-\-\--
+---
 
-\### Validation
+### Validation
 
 Payment SHALL be verified.
 
 Duplicate callbacks SHALL be ignored.
 
-\-\--
+---
 
-\### Business Rules
+### Business Rules
 
 Successful Payment SHALL:
 
-\- Create Order
+- Create Order
 
-\- Reduce Inventory
+- Reduce Inventory
 
-\- Clear Shopping Cart
+- Clear Shopping Cart
 
 Failed Payment SHALL:
 
-\- Release Reservations
+- Release Reservations
 
-\-\--
+---
 
-\### Side Effects
+### Side Effects
 
 SMS sent.
 
 Invoice generated.
 
-\-\--
+---
 
-\### Business Events
+### Business Events
 
 PaymentSucceeded
 
 PaymentFailed
 
-\## OTP Authentication
+## OTP Authentication
 
-\### Send OTP
+### Send OTP
 
 POST /api/v1/internal/auth/send-otp
 
-\-\--
+---
 
-\### Verify OTP
+### Verify OTP
 
 POST /api/v1/internal/auth/verify-otp
 
@@ -2716,7 +2721,7 @@ OTP attempts SHALL be limited.
 
 Successful Verification SHALL issue Access Token.
 
-\## Reserve Inventory
+## Reserve Inventory
 
 POST /api/v1/internal/inventory/reserve
 
@@ -2724,7 +2729,7 @@ Purpose
 
 Internal Checkout Reservation.
 
-\## Release Reservation
+## Release Reservation
 
 POST /api/v1/internal/inventory/release
 
@@ -2732,9 +2737,9 @@ Purpose
 
 Release expired Reservations.
 
-\# Appendix A
+# Appendix A
 
-\## Standard Error Codes
+## Standard Error Codes
 
 UNAUTHORIZED
 
@@ -2752,9 +2757,9 @@ RATE_LIMITED
 
 INTERNAL_ERROR
 
-\# Appendix B
+# Appendix B
 
-\## Business Error Codes
+## Business Error Codes
 
 PRODUCT_NOT_PUBLISHABLE
 
@@ -2786,9 +2791,9 @@ OTP_EXPIRED
 
 OTP_INVALID
 
-\# Appendix C
+# Appendix C
 
-\## Naming Conventions
+## Naming Conventions
 
 Resources
 
@@ -2800,7 +2805,7 @@ Plural
 
 /users
 
-\-\--
+---
 
 Business Actions
 
@@ -2820,15 +2825,15 @@ Verb
 
 /cancel
 
-\-\--
+---
 
 Internal APIs
 
 /internal/\*
 
-\# Appendix D
+# Appendix D
 
-\## Status Codes  Product
+## Status Codes  Product
 
 Draft
 
@@ -2836,7 +2841,7 @@ Published
 
 Archived
 
-\-\--
+---
 
 Outfit
 
@@ -2846,7 +2851,7 @@ Published
 
 Archived
 
-\-\--
+---
 
 Order Fulfillment
 
@@ -2858,7 +2863,7 @@ Shipped
 
 Delivered
 
-\-\--
+---
 
 Payment
 
@@ -2870,7 +2875,7 @@ Failed
 
 Refunded
 
-\-\--
+---
 
 Return
 

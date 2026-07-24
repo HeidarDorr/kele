@@ -1,0 +1,32 @@
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and runtime data
+*.log
+tmp/
+.tmp-*/
+.turbo/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+playwright-report/
+test-results/
+screenshots/actual/
+screenshots/diff/
+
+# Local object storage and database volumes
+.data/
