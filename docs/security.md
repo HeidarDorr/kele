@@ -24,6 +24,9 @@ Status: Required baseline
 
 ## Authentication
 
+- Development and automated tests use a Fake SMS Provider through the same
+  centralized adapter contract as production. Fake OTP values must never be
+  enabled in production configuration.
 - OTP codes are cryptographically random, single-use, short-lived, and stored
   as a verifier rather than plaintext.
 - Apply rate limits by mobile number, IP/risk signal, and device/session.
@@ -46,6 +49,8 @@ Status: Required baseline
 
 ## Payment
 
+- Development and automated tests use a Fake Payment Adapter. Production startup
+  must fail closed if the fake adapter is selected.
 - Verify callback authenticity with the provider through its supported secure
   mechanism.
 - Do not trust amount, status, or order references from the browser.
@@ -62,6 +67,22 @@ Status: Required baseline
 - All stock, price, return, cancellation, and refund actions are auditable.
 - API idempotency keys are required for retryable state-changing operations.
 - Job leases and transitions are compare-and-set/idempotent.
+- Outfit component reservations execute atomically; partial component holds are
+  forbidden.
+
+## Shipping and returns
+
+- Shipping prices and thresholds are permission-protected, versioned and
+  audited. The client cannot submit an authoritative shipping price or
+  free-shipping result.
+- Tehran Local Courier eligibility is determined from server-side normalized
+  address data.
+- Orders retain immutable address and shipping-policy snapshots; address-book
+  edits cannot rewrite history.
+- Return eligibility is computed from the recorded delivery-confirmation
+  timestamp and server time.
+- Customer condition declarations are evidence for review, not automatic
+  approval. Only authorized administrators may approve a return.
 
 ## Application security
 
@@ -115,4 +136,3 @@ Status: Required baseline
 - Backup restore exercised.
 - No critical/high dependency finding without an accepted exception.
 - Privacy, returns, shipping and terms content approved by the business.
-

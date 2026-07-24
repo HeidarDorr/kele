@@ -25,20 +25,28 @@ business copy.
 - curated “New In” product row/grid;
 - editorial detail module;
 - newsletter prompt and dark footer;
-- mobile drawer with navigation, account, wishlist, orders and language row.
+- mobile drawer with navigation, account and orders. Wishlist and language
+  switching shown in the reference are omitted in version 1.
 
-Unapproved capabilities shown in the references:
+Reference-only capabilities not included in version 1:
 
 - wishlist;
 - newsletter subscription;
 - language switching;
+
+Approved capabilities whose exact customer copy remains configurable:
+
 - free-shipping threshold;
-- delivery promises;
-- return window;
+- Iran Post, Tipax and Tehran Local Courier;
+- return requests within 24 hours after confirmed delivery.
+
+Unapproved reference claims:
+
+- exact free-shipping amount shown in the image;
+- exact delivery timing promises;
 - social networks.
 
-They must not be treated as implemented scope until open questions are
-resolved.
+Unapproved claims must not be copied into the product.
 
 ## Extracted product-detail behavior
 
@@ -48,7 +56,7 @@ resolved.
 - label, name, price and short description;
 - color swatches;
 - size grid and size-guide link;
-- Add to Bag and wishlist controls;
+- Add to Bag control; wishlist is omitted in version 1;
 - service reassurance block;
 - description/details/size-and-fit/shipping-and-returns content;
 - related-product carousel;
@@ -61,7 +69,7 @@ Missing states that implementation must design:
 - price variation by size;
 - loading and gallery error;
 - no reviews and review errors;
-- long Persian copy/RTL;
+- long Persian copy and RTL wrapping;
 - product archived between load and cart action;
 - authentication requirement;
 - mobile product-detail layout.
@@ -111,6 +119,16 @@ Every page includes:
 - analytics events only after consent policy is approved;
 - approved copy and price/currency formatting.
 
+## RTL acceptance
+
+- Root language is `fa-IR` and document direction is RTL.
+- Reading order, keyboard order, drawer origin, breadcrumbs, gallery controls,
+  carousels and directional icons follow RTL semantics.
+- Mixed Persian/Latin content, SKU codes, mobile numbers and order identifiers
+  remain legible using explicit bidi isolation where necessary.
+- Internal values remain IRR; customer-facing prices use one approved toman
+  formatter and label.
+
 ## Assets still required
 
 - logo SVG variants and favicon;
@@ -120,4 +138,3 @@ Every page includes:
 - complete UI flows for listing, search, cart, checkout, account, Journal and
   administration;
 - legal and operational copy.
-

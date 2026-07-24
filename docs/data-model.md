@@ -34,6 +34,8 @@ erDiagram
     CHECKOUT_SESSION ||--|{ RESERVATION : reserves
     RESERVATION }o--|| SKU : holds
     CHECKOUT_SESSION ||--o{ PAYMENT_ATTEMPT : attempts
+    SHIPPING_POLICY ||--|{ SHIPPING_METHOD : configures
+    CHECKOUT_SESSION }o--|| SHIPPING_METHOD : quotes
     PAYMENT_ATTEMPT ||--o| ORDER : creates
     ORDER ||--|{ ORDER_ITEM : contains
     ORDER ||--o{ RETURN_REQUEST : receives
@@ -55,7 +57,8 @@ erDiagram
 - Historical and ledger records have no delete operation.
 - User-visible slugs are unique within resource type and retained through
   redirects after changes.
-- Money is integer rial plus ISO-like internal currency code `IRR`.
+- Money is integer rial with canonical currency code `IRR`. Toman is a
+  presentation conversion only.
 - Quantities are non-negative integers.
 
 ## Catalog
@@ -118,12 +121,44 @@ An outfit order snapshot includes:
 
 - Anonymous carts use a high-entropy signed identifier.
 - A customer has at most one active server cart per sales channel.
+- Guest and authenticated cart merge is one idempotent command. Exact
+  line-conflict rules remain blocked by OQ-014.
 - Cart prices are informational and not guaranteed.
 - CheckoutSession stores a quote snapshot, shipping choice, address snapshot,
   expiry, status, and idempotency key.
 - Reservation has explicit `active`, `consumed`, `released`, and `expired`
   states.
 - A reservation transition is conditional and idempotent.
+- An Outfit reservation expands to its mapped component SKU reservations and
+  succeeds or fails atomically.
+
+## Shipping
+
+Shipping configuration is versioned so historical quotes remain reproducible.
+
+### ShippingMethod
+
+Fields: stable code (`iran_post`, `tipax`, `tehran_local_courier`), localized
+name, fixed `priceRial`, enabled state, service-area rule, display order, and
+configuration version.
+
+Local Courier eligibility requires the selected address to be within Tehran.
+
+### ShippingPolicy
+
+Fields: configuration version, optional `freeShippingThresholdRial`,
+eligibility basis, effective timestamp, actor, and audit reason.
+
+The eligibility basis remains blocked by OQ-013. A published configuration
+cannot be changed in place; updating values produces a new effective version.
+
+CheckoutSession snapshots:
+
+- shipping method code/name;
+- quoted shipping price in IRR;
+- free-shipping threshold and eligibility result;
+- policy/configuration version;
+- immutable address snapshot used for eligibility.
 
 ## Payment and order
 
@@ -133,13 +168,26 @@ An outfit order snapshot includes:
 - One successful CheckoutSession creates at most one Order.
 - Order number is unique, immutable, and separate from internal ID.
 - Order, customer, address, price, item and payment facts are snapshots.
+- The address snapshot includes recipient, mobile, province, city, postal
+  code, address text, and any normalized delivery-zone fields used for the
+  quote.
+- The Order preserves applied shipping method, shipping price, free-shipping
+  decision and policy version.
 - Fulfillment state changes append timeline events.
 
 ## Returns and refunds
 
-Return quantities cannot exceed fulfilled quantity minus already approved
-returns. Approval updates return status, inventory movement, financial record,
-and business events atomically or through a recoverable orchestrated workflow.
+ReturnRequest records `requestedAt`, the Order delivery-confirmation timestamp,
+eligibility deadline, customer condition declarations (`unused`, `unwashed`,
+`tagsAttached`), reason, requested items, status, administrator decision,
+decision timestamp, and audit context.
+
+A request is eligible only when received no later than 24 hours after confirmed
+delivery and all required declarations are true. Return quantities cannot
+exceed fulfilled quantity minus already approved returns. Submission does not
+restore inventory or recognize a refund. Approval updates return status,
+inventory movement, financial record, and business events atomically or
+through a recoverable orchestrated workflow.
 
 ## Audit and business events
 
@@ -158,6 +206,7 @@ forbidden.
 - Reservation by status/expiry and checkout session.
 - PaymentAttempt by provider/reference and checkout session.
 - Order by number, customer/date, fulfillment status.
+- Shipping method by stable code and effective configuration.
+- Return request by order, customer, status and eligibility deadline.
 - Audit event by entity, actor, event type, timestamp.
 - Search indexes for approved product, outfit, category, and article fields.
-

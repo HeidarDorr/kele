@@ -1,8 +1,8 @@
 # ADR-0003: Versioned Outfit composition and derived availability
 
-Status: Accepted with one open mapping decision  
+Status: Accepted
 Date: 2026-07-24  
-Related question: OQ-006
+Employer confirmation: Open Questions Resolution v1
 
 ## Context
 
@@ -42,12 +42,12 @@ Outfit
 - Order items store an Outfit snapshot plus component SKU snapshots.
 - Individual component products remain independently purchasable.
 
-## Open point
+## Confirmed size mapping
 
-The business mapping from a customer-facing Outfit size to component garment
-sizes is not inferable from the existing documents. OQ-006 must be approved.
-The proposed implementation stores the mapping explicitly rather than relying
-on string equality between sizes.
+The employer approved an explicit mapping for every Outfit Revision. The
+implementation stores each customer-facing Outfit size and the exact component
+SKUs and quantities required for that size. It SHALL NOT rely on string
+equality between Outfit and garment sizes.
 
 ## Consequences
 
@@ -57,4 +57,3 @@ on string equality between sizes.
 - A component price change does not change Outfit price.
 - A component archive prevents new publication/reservation but does not damage
   historical orders.
-

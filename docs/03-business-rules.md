@@ -3100,3 +3100,200 @@ whenever applicable.
 ### Priority
 
 SHOULD
+
+# 12. Approved Clarification Rules
+
+The following rules incorporate the employer-approved
+`Open Questions Resolution v1` dated 2026-07-24. They have the same normative
+force as other SHALL rules in this document.
+
+## Localization
+
+## LOC-001
+
+Version 1 SHALL support only Persian (`fa-IR`) customer-facing content and
+Right-to-Left layout.
+
+## LOC-002
+
+The architecture SHALL remain locale-ready so future localization does not
+require redesign of business modules or persisted business history.
+
+## Payment provider
+
+## PAY-001
+
+Development and automated testing SHALL use a Fake Payment Adapter.
+
+## PAY-002
+
+Payment business logic SHALL depend on a provider-neutral application contract
+and SHALL NOT depend directly on a payment provider SDK.
+
+## PAY-003
+
+A production payment provider SHALL be selected, integrated, verified, and
+approved before production deployment.
+
+## SMS provider
+
+## SMS-001
+
+Development and automated testing SHALL use a Fake SMS Provider.
+
+## SMS-002
+
+OTP and notification messages SHALL pass through one centralized,
+provider-neutral SMS adapter.
+
+## Shipping
+
+## SHP-001
+
+Version 1 SHALL support Iran Post, Tipax, and Local Courier.
+
+## SHP-002
+
+Local Courier SHALL be available only for delivery addresses within Tehran.
+
+## SHP-003
+
+Shipping cost SHALL be paid by the customer unless the Order qualifies for
+free shipping.
+
+## SHP-004
+
+Each shipping method SHALL have a configurable fixed price managed through the
+Administration Panel.
+
+## SHP-005
+
+The platform SHALL support a configurable free-shipping threshold.
+
+## SHP-006
+
+When the approved eligibility amount equals or exceeds the configured
+free-shipping threshold, shipping cost SHALL be zero.
+
+The exact eligibility amount is tracked by OQ-013 and SHALL be resolved before
+shipping quote implementation.
+
+## SHP-007
+
+Shipping prices and the free-shipping threshold SHALL be changeable without a
+software deployment. Checkout and Order snapshots SHALL preserve the applied
+shipping method, price, and policy values.
+
+## Returns
+
+## RTE-001
+
+A Customer MAY submit a return request only within 24 hours after confirmed
+delivery.
+
+## RTE-002
+
+A return request SHALL declare that the Product has not been used.
+
+## RTE-003
+
+A return request SHALL declare that the Product has not been washed.
+
+## RTE-004
+
+A return request SHALL declare that original tags and labels remain attached.
+
+## RTE-005
+
+Final return approval SHALL be performed by an authorized Administrator.
+Submitting a request SHALL NOT automatically restore inventory or recognize a
+refund.
+
+## Outfit clarification
+
+## OTF-014
+
+Every Outfit Revision SHALL explicitly map each supported Outfit Size to the
+exact component SKUs and quantities required for that size.
+
+## OTF-015
+
+Outfit inventory SHALL be calculated from the explicit component mapping and
+SHALL NOT be stored independently.
+
+## OTF-016
+
+An Outfit reservation SHALL reserve every required component SKU and quantity
+simultaneously in one transaction.
+
+## OTF-017
+
+Published Outfit compositions SHALL be immutable.
+
+## OTF-018
+
+Changing a published Outfit composition SHALL create a new Outfit Revision.
+Historical Outfit Revisions SHALL never be modified.
+
+## Guest cart clarification
+
+## CRT-011
+
+Anonymous visitors MAY create and manage a Shopping Cart.
+
+## CRT-012
+
+Customer authentication SHALL be required before Checkout begins.
+
+## CRT-013
+
+After successful authentication, the Guest Cart SHALL merge into the
+authenticated Customer Cart using deterministic rules. The exact conflict and
+quantity algorithm is tracked by OQ-014 and SHALL be resolved before merge
+implementation.
+
+## Version 1 scope exclusions
+
+## SCP-001
+
+Wishlist APIs, UI, and Administration functionality SHALL NOT be implemented
+in version 1.
+
+## SCP-002
+
+Newsletter and marketing-subscription functionality SHALL NOT be implemented
+in version 1.
+
+## Currency clarification
+
+## PRC-011
+
+All persisted prices, calculations, payment reconciliation, and commercial
+snapshots SHALL use Iranian Rial (`IRR`) as the single canonical monetary unit.
+
+## PRC-012
+
+The customer interface MAY display prices in toman. Conversion between rial and
+toman SHALL be centralized, exact, and covered by automated tests.
+
+## Order address clarification
+
+## ORD-018
+
+Every Order SHALL preserve an immutable snapshot of its shipping address.
+Changes to the Customer Address Book SHALL NOT modify historical Orders.
+
+## Search clarification
+
+## CAT-006
+
+Version 1 SHALL use PostgreSQL-backed catalog search. A dedicated search engine
+is outside version 1.
+
+## Reservation clarification
+
+## INV-018
+
+Reservation SHALL occur at SKU level. If any Product or Outfit component SKU
+cannot be reserved, the entire requested line reservation SHALL fail without
+leaving a partial reservation.

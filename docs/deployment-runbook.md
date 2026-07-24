@@ -13,6 +13,10 @@ Status: Baseline; provider details pending
 Staging and production must not share credentials, databases, buckets, callback
 URLs, or customer data.
 
+Production configuration MUST reject Fake Payment and Fake SMS adapters during
+startup. Production deployment remains blocked until both real providers pass
+sandbox/verification acceptance.
+
 ## Release artifact
 
 Build immutable, versioned container images for API, storefront and admin.
@@ -24,9 +28,10 @@ Containers run as non-root and expose health endpoints.
 1. Confirm CI and security gates.
 2. Review migration lock time, table rewrites, backfill and rollback strategy.
 3. Verify environment variables and provider callback URLs.
-4. Confirm recent successful backup and restore-test status.
-5. Define release owner, observer, rollback threshold and communication path.
-6. Run staging smoke tests using the exact release artifact.
+4. Verify `fa-IR`/RTL configuration and approved Persian assets.
+5. Confirm recent successful backup and restore-test status.
+6. Define release owner, observer, rollback threshold and communication path.
+7. Run staging smoke tests using the exact release artifact.
 
 ## Migration policy
 
@@ -99,4 +104,3 @@ by technical logs.
 4. Reconcile inventory, payment and orders.
 5. Communicate confirmed facts only.
 6. Write a blameless incident review with corrective actions.
-

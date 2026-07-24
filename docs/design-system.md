@@ -5,7 +5,8 @@ Status: Provisional, derived from supplied visual references
 Scope: Storefront. Administration UI uses the same tokens with denser layouts.
 
 This document converts the visual references into implementable constraints.
-Exact fonts, logo assets, and final RTL direction remain open questions.
+Version 1 is Persian (`fa-IR`) and Right-to-Left. Exact fonts and logo assets
+remain open design inputs.
 
 ## Creative direction
 
@@ -57,13 +58,17 @@ intended background.
 
 ## Typography
 
-- Display: high-contrast editorial serif with licensed web files.
-- UI/body: humanist or neo-grotesque sans-serif with clear Persian support if
-  RTL is selected.
+- Display: an approved Persian-capable editorial display face with licensed web
+  files; Latin display text may use a paired high-contrast serif.
+- UI/body: a legible Persian sans-serif with correct shaping and numerals.
 - Logo is an asset, not typed text.
 - Display headings use controlled line lengths and intentional breaks.
 - Body copy targets roughly 45–75 characters per line.
 - Uppercase and letter-spacing are for short Latin labels only, never Persian.
+- Components use logical CSS properties (`margin-inline`, `inset-inline`,
+  `text-align: start`) and are tested under `dir="rtl"`.
+- Directional icons and navigation motion mirror where meaning requires it;
+  universal icons such as search and account do not.
 - Price numerals must align and remain readable at mobile sizes.
 
 Provisional scale:
@@ -140,15 +145,15 @@ Motion is restrained and functional:
 
 ### Header
 
-Desktop: announcement bar, balanced navigation, centered or compositionally
-anchored logo, search/account/bag actions. Mobile: menu, centered logo, search
-and bag; preserve 44 px minimum interactive targets.
+Desktop: announcement bar, balanced RTL navigation, centered or
+compositionally anchored logo, search/account/bag actions. Mobile: menu,
+centered logo, search and bag; preserve 44 px minimum interactive targets.
 
 ### Product card
 
-Image dominates. Show name, formatted price, color availability and optional
-wishlist only if OQ-009 is accepted. Avoid card borders and shadows. All card
-states must preserve layout.
+Image dominates. Show name, formatted toman presentation, and color
+availability. Wishlist is intentionally absent in version 1. Avoid card borders
+and shadows. All card states must preserve layout.
 
 ### Product detail
 
@@ -164,9 +169,9 @@ arrow. Never place unreadable text over a busy focal area.
 
 ### Footer
 
-Dark espresso inverse surface, restrained newsletter area if approved,
-semantic navigation groups, social links and legal links. Mobile groups may
-collapse but remain keyboard accessible.
+Dark espresso inverse surface with semantic navigation groups, social links
+and legal links. Newsletter collection is absent in version 1. Mobile groups
+may collapse but remain keyboard accessible.
 
 ### Forms
 
@@ -183,4 +188,3 @@ Use the same colors and typography sparingly, but prioritize clarity:
 - filters that retain URL state;
 - audit context visible near risky actions;
 - no attempt to make operational screens resemble the editorial storefront.
-

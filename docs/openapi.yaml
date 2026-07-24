@@ -5,6 +5,9 @@ info:
   summary: Baseline contract for the KELE storefront and administration API.
   description: |
     This contract is the transport-level source of truth for version 1.
+    Customer-facing version 1 content is Persian (fa-IR) and RTL. Monetary
+    amounts are authoritative integer IRR values; display strings may use
+    toman.
     Operations marked with an open-question reference are provisional and must
     not be exposed as final customer behavior until the question is resolved.
 servers:
@@ -15,10 +18,13 @@ tags:
   - name: Identity
   - name: Customer
   - name: Cart
+  - name: Shipping
   - name: Checkout
   - name: Orders
+  - name: Returns
   - name: Admin Catalog
   - name: Admin Inventory
+  - name: Admin Returns
   - name: Admin Content
 
 paths:
@@ -319,6 +325,56 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
 
+  /me/returns:
+    get:
+      operationId: listCurrentCustomerReturns
+      tags: [Returns]
+      parameters:
+        - $ref: "#/components/parameters/PageCursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Customer-owned return requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, page]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReturnRequest"
+                  page:
+                    $ref: "#/components/schemas/CursorPage"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createCurrentCustomerReturn
+      tags: [Returns]
+      summary: Submit a return request within 24 hours after confirmed delivery.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnRequestInput"
+      responses:
+        "201":
+          description: Return request submitted for administrator review.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReturnRequest"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
   /cart:
     get:
       operationId: getCart
@@ -407,6 +463,38 @@ paths:
                 $ref: "#/components/schemas/Cart"
         default:
           $ref: "#/components/responses/Problem"
+
+  /shipping-options:
+    get:
+      operationId: listShippingOptions
+      tags: [Shipping]
+      summary: Quote eligible configured shipping methods for a cart and address.
+      parameters:
+        - name: cartId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: addressId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Eligible server-calculated shipping options.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShippingOption"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
     delete:
       operationId: deleteCartLine
       tags: [Cart]
@@ -444,9 +532,7 @@ paths:
                   type: string
                   format: uuid
                 deliveryMethod:
-                  type: string
-                  minLength: 1
-                  maxLength: 40
+                  $ref: "#/components/schemas/ShippingMethodCode"
       responses:
         "201":
           description: Checkout quote and reservations active for 30 minutes.
@@ -735,6 +821,60 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
 
+  /admin/returns/{returnId}/approve:
+    post:
+      operationId: approveAdminReturn
+      tags: [Admin Returns]
+      security:
+        - SessionCookie: [returns:decide]
+      parameters:
+        - $ref: "#/components/parameters/ReturnId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnDecisionInput"
+      responses:
+        "200":
+          description: Return approved and downstream inventory/financial workflow applied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReturnRequest"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/returns/{returnId}/reject:
+    post:
+      operationId: rejectAdminReturn
+      tags: [Admin Returns]
+      security:
+        - SessionCookie: [returns:decide]
+      parameters:
+        - $ref: "#/components/parameters/ReturnId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnDecisionInput"
+      responses:
+        "200":
+          description: Return rejected without inventory restoration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReturnRequest"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+
   /admin/homepage:
     get:
       operationId: getAdminHomepage
@@ -748,6 +888,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Homepage"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /admin/settings/shipping:
+    get:
+      operationId: getAdminShippingSettings
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [settings:read]
+      responses:
+        "200":
+          description: Effective shipping configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingSettings"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateAdminShippingSettings
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [settings:write]
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShippingSettingsInput"
+      responses:
+        "200":
+          description: New effective version of shipping settings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShippingSettings"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
     patch:
@@ -834,6 +1016,13 @@ components:
         format: uuid
     SkuId:
       name: skuId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ReturnId:
+      name: returnId
       in: path
       required: true
       schema:
@@ -1177,6 +1366,102 @@ components:
               type: string
               format: uuid
 
+    AddressSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - recipientName
+        - recipientMobile
+        - province
+        - city
+        - addressLine
+        - postalCode
+      properties:
+        recipientName:
+          type: string
+        recipientMobile:
+          $ref: "#/components/schemas/Mobile"
+        province:
+          type: string
+        city:
+          type: string
+        addressLine:
+          type: string
+        postalCode:
+          type: string
+        normalizedZone:
+          type: [string, "null"]
+
+    ShippingMethodCode:
+      type: string
+      enum: [iran_post, tipax, tehran_local_courier]
+
+    ShippingOption:
+      type: object
+      additionalProperties: false
+      required:
+        - method
+        - name
+        - eligible
+        - quotedPrice
+        - freeShippingApplied
+        - settingsVersion
+      properties:
+        method:
+          $ref: "#/components/schemas/ShippingMethodCode"
+        name:
+          type: string
+        eligible:
+          type: boolean
+        ineligibilityCode:
+          type: [string, "null"]
+        quotedPrice:
+          $ref: "#/components/schemas/Money"
+        freeShippingApplied:
+          type: boolean
+        settingsVersion:
+          type: integer
+          minimum: 1
+
+    ShippingSettingsInput:
+      type: object
+      additionalProperties: false
+      required: [methods]
+      properties:
+        methods:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            type: object
+            additionalProperties: false
+            required: [code, enabled, fixedPriceRial]
+            properties:
+              code:
+                $ref: "#/components/schemas/ShippingMethodCode"
+              enabled:
+                type: boolean
+              fixedPriceRial:
+                type: integer
+                minimum: 0
+        freeShippingThresholdRial:
+          type: [integer, "null"]
+          minimum: 0
+          description: Eligibility amount basis remains governed by OQ-013.
+
+    ShippingSettings:
+      allOf:
+        - $ref: "#/components/schemas/ShippingSettingsInput"
+        - type: object
+          required: [version, effectiveAt]
+          properties:
+            version:
+              type: integer
+              minimum: 1
+            effectiveAt:
+              type: string
+              format: date-time
+
     ProductCartLineInput:
       type: object
       additionalProperties: false
@@ -1249,7 +1534,7 @@ components:
 
     CheckoutSession:
       type: object
-      required: [id, status, expiresAt, quote]
+      required: [id, status, expiresAt, quote, shipping]
       properties:
         id:
           type: string
@@ -1270,6 +1555,8 @@ components:
               $ref: "#/components/schemas/Money"
             payableTotal:
               $ref: "#/components/schemas/Money"
+        shipping:
+          $ref: "#/components/schemas/ShippingOption"
 
     PaymentAttempt:
       type: object
@@ -1315,7 +1602,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/OrderSummary"
         - type: object
-          required: [items, address]
+          required: [items, address, shipping]
           properties:
             items:
               type: array
@@ -1333,8 +1620,111 @@ components:
                   unitPrice:
                     $ref: "#/components/schemas/Money"
             address:
+              $ref: "#/components/schemas/AddressSnapshot"
+            shipping:
               type: object
-              additionalProperties: true
+              additionalProperties: false
+              required:
+                - method
+                - name
+                - chargedPrice
+                - freeShippingApplied
+                - settingsVersion
+              properties:
+                method:
+                  $ref: "#/components/schemas/ShippingMethodCode"
+                name:
+                  type: string
+                chargedPrice:
+                  $ref: "#/components/schemas/Money"
+                freeShippingApplied:
+                  type: boolean
+                settingsVersion:
+                  type: integer
+                  minimum: 1
+
+    ReturnStatus:
+      type: string
+      enum: [submitted, approved, rejected, completed]
+
+    ReturnRequestInput:
+      type: object
+      additionalProperties: false
+      required:
+        - orderNumber
+        - items
+        - reason
+        - unused
+        - unwashed
+        - tagsAttached
+      properties:
+        orderNumber:
+          type: string
+          minLength: 1
+          maxLength: 40
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [orderItemId, quantity]
+            properties:
+              orderItemId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
+        unused:
+          type: boolean
+          const: true
+        unwashed:
+          type: boolean
+          const: true
+        tagsAttached:
+          type: boolean
+          const: true
+
+    ReturnRequest:
+      allOf:
+        - $ref: "#/components/schemas/ReturnRequestInput"
+        - type: object
+          required:
+            - id
+            - status
+            - requestedAt
+            - deliveryConfirmedAt
+            - eligibilityDeadline
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: "#/components/schemas/ReturnStatus"
+            requestedAt:
+              type: string
+              format: date-time
+            deliveryConfirmedAt:
+              type: string
+              format: date-time
+            eligibilityDeadline:
+              type: string
+              format: date-time
+
+    ReturnDecisionInput:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 1000
 
     Inventory:
       type: object

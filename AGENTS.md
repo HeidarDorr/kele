@@ -41,6 +41,8 @@ currency shown in a screenshot must be confirmed in a requirement or setting.
 - Database: PostgreSQL.
 - ORM: Prisma. Prisma types must not leak into domain or application contracts.
 - Frontend: Next.js App Router with React Server Components by default.
+- Locale: version 1 is Persian (`fa-IR`) with RTL layout. Architecture remains
+  locale-ready, but multilingual UI is outside version 1.
 - Styling: Tailwind CSS with KELE design tokens.
 - UI primitives: shadcn/ui only when the copied primitive is simplified and
   restyled for KELE. A default shadcn appearance is not acceptable.
@@ -92,6 +94,12 @@ separate read database require a measurable need and an accepted ADR.
 - A pre-payment `CheckoutSession` and `PaymentAttempt` may exist. A commercial
   `Order` is created only after verified successful payment.
 - External callbacks must be authenticated, replay-safe, and idempotent.
+- Anonymous carts are supported; checkout requires authentication.
+- Version 1 shipping methods are Iran Post, Tipax, and Tehran Local Courier,
+  with versioned CMS-configured fixed prices and a free-shipping threshold.
+- Return requests are accepted only within 24 hours after confirmed delivery
+  and require customer condition declarations plus administrator approval.
+- Wishlist and Newsletter are outside version 1 and must not be implemented.
 
 ## 6. Git workflow
 
@@ -160,6 +168,8 @@ Critical flows require concurrency and idempotency tests.
 ## 10. Frontend and visual quality
 
 - Follow `docs/design-system.md` and `docs/ui-acceptance.md`.
+- Render version 1 with `lang="fa-IR"` and `dir="rtl"`; test mixed-direction
+  identifiers and use logical CSS properties.
 - Storefront is editorial, calm, image-led, and premium; do not use generic
   SaaS dashboards, excessive cards, gradients, or default component-library
   styling.
@@ -190,4 +200,3 @@ ADR for routine implementation details.
 `docs/definition-of-done.md` is mandatory. A task is not complete because code
 was generated; it is complete only when its acceptance, tests, evidence,
 documentation, and operational impact are addressed.
-

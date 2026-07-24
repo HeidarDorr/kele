@@ -260,6 +260,8 @@ Version 1 includes:
 
 - Public ecommerce website
 
+- Persian (`fa-IR`) customer experience with Right-to-Left layout
+
 - Customer authentication
 
 - Product catalog
@@ -269,6 +271,12 @@ Version 1 includes:
 - Shopping cart
 
 - Checkout
+
+- Anonymous shopping carts with authentication required at Checkout
+
+- Iran Post, Tipax and Tehran Local Courier delivery methods
+
+- Customer return requests subject to the approved 24-hour policy
 
 - Inventory management
 
@@ -295,6 +303,12 @@ Version 1 does NOT include:
 - Multi-language support
 
 - Multi-currency support
+
+- Wishlist
+
+- Newsletter and marketing subscriptions
+
+- Dedicated search engine
 
 - Native mobile application
 

@@ -1,6 +1,6 @@
 # KELE specification index
 
-Version: 1.0  
+Version: 1.1
 Status: Active  
 Last reviewed: 2026-07-24
 
@@ -20,6 +20,7 @@ authoritative; older names embedded in imported documents are legacy metadata.
 | 8 | `07-system-architecture.md` | Backend architecture principles | Accepted | Normative |
 | 9 | `08-frontend-system-architecture.md` | Frontend architecture principles | Accepted | Normative |
 | 10 | `adr/` | Accepted decisions | Accepted individually | Highest authority |
+| 11 | `decisions/2026-07-24-employer-open-questions-v1.md` | Approved employer answers incorporated into rules | Incorporated | Decision evidence |
 
 ## Known import corrections
 
@@ -38,6 +39,8 @@ authoritative; older names embedded in imported documents are legacy metadata.
 - Draft requirements may be clarified without an ADR when behavior is not
   changed.
 - All new business rules receive stable IDs.
+- Employer answers are preserved under `decisions/` and incorporated into
+  normative specifications; source numbering collisions are normalized without
+  changing decision meaning.
 - Open questions are tracked in `open-questions.md`; accepted answers must move
   into the relevant specification or an ADR.
-

@@ -1383,13 +1383,15 @@ purchase lifecycle.
 
 | 2 | System | Validate SKU availability | Reservation created |
 
-| 3 | Customer | Enter Shipping Information | Order Draft updated |
+| 3 | Customer | Select address and eligible shipping method | CheckoutSession
+quote and immutable address snapshot updated |
 
 | 4 | Customer | Select Payment Method | Payment initialized |
 
 | 5 | Customer | Complete Payment | Payment verified |
 
-| 6 | System | Create Order | Order Number generated |
+| 6 | System | Create paid Order from verified payment | Order Number and
+shipping/address snapshots generated |
 
 | 7 | System | Confirm Inventory Consumption | Reserved inventory
 converted to sold inventory |
@@ -1440,11 +1442,14 @@ Returns MAY originate from:
 
 ## Preconditions
 
-- User is authenticated.
-
-- User has Inventory Admin or Super Admin permission.
-
-- Returned SKU exists.
+- For a Website Order, the authenticated Customer owns the delivered Order.
+- Delivery has been confirmed.
+- A Website return request is submitted no later than 24 hours after confirmed
+  delivery.
+- The Customer declares that the Product is unused and unwashed.
+- The Customer declares that original tags and labels remain attached.
+- The returned SKU and eligible remaining quantity exist.
+- Final review requires Inventory Admin or Super Admin permission.
 
 ---
 
@@ -1454,22 +1459,21 @@ Returns MAY originate from:
 
 |------|-------|--------|-----------------|
 
-| 1 | Admin | Open Returns Module | Return Dashboard displayed |
+| 1 | Customer | Open delivered Order | Eligible items and deadline displayed |
 
-| 2 | Admin | Select Return Source | Website / Instagram |
+| 2 | Customer | Select items, quantities and reason | Eligibility validated |
 
-| 3 | Admin | Search Order or Product | Matching records displayed
-|
+| 3 | Customer | Confirm required condition declarations | Return request submitted |
 
-| 4 | Admin | Select Returned SKU | Return Form opens |
+| 4 | Admin | Open Returns Module and review request | Evidence and history displayed |
 
-| 5 | Admin | Enter Returned Quantity | Validation performed |
+| 5 | Admin | Approve or reject with reason | Decision recorded |
 
-| 6 | Admin | Confirm Return | Inventory restored |
+| 6 | System | If approved, restore inventory | Inventory movement recorded |
 
-| 7 | System | Adjust Revenue Reports | Financial reports updated |
+| 7 | System | If approved, adjust financial records | Refund/revenue workflow updated |
 
-| 8 | System | Generate Business Event | Return History recorded |
+| 8 | System | Generate Business Events | Submission and decision history recorded |
 
 ---
 
@@ -1485,6 +1489,16 @@ Required Information:
 
 - Quantity
 
+- Reason
+
+- Unused declaration
+
+- Unwashed declaration
+
+- Original tags and labels declaration
+
+- Recorded delivery-confirmation timestamp
+
 ---
 
 ### Instagram Order
@@ -1496,6 +1510,10 @@ Required Information:
 - Quantity
 
 Order Number is not required.
+
+Instagram returns remain an authorized administrative workflow. The 24-hour
+customer self-service window applies to Website Orders; any distinct Instagram
+policy requires an explicit business rule.
 
 # 10. Media Library Workflow
 
@@ -1697,6 +1715,12 @@ The system SHALL support configuring:
 
 - OTP Configuration
 
+- Shipping Method Enablement
+
+- Fixed Price for Iran Post, Tipax and Tehran Local Courier
+
+- Free Shipping Threshold
+
 -   SEO Defaults
 
 ---
@@ -1730,6 +1754,23 @@ Administrator changes threshold value.
 ↓
 
 Inventory warning logic updated immediately.
+
+---
+
+### A4. Update Shipping Settings
+
+Administrator enables or disables supported methods, changes fixed prices, or
+changes the free-shipping threshold.
+
+↓
+
+A new effective configuration version is created and audited.
+
+↓
+
+New Checkout quotes use the updated configuration without software deployment.
+
+Existing CheckoutSessions and Orders preserve their snapshots.
 
 ---
 

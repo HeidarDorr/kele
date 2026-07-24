@@ -5,10 +5,11 @@ boyswear. The system includes a public storefront, customer accounts,
 checkout, inventory and pricing, editorial content, and an
 administration panel.
 
-The repository is currently in the specification-hardening phase. Product
-code must not be scaffolded until the blocking decisions in
-[`docs/open-questions.md`](docs/open-questions.md) are resolved or explicitly
-accepted as assumptions.
+Specification hardening is complete and the first employer decision set has
+been incorporated. Engineering foundation and catalog work may begin. Features
+affected by the remaining blocking clarifications in
+[`docs/open-questions.md`](docs/open-questions.md) must stop at their defined
+decision gates.
 
 ## Authoritative documents
 
@@ -35,7 +36,6 @@ dependencies. They require evidence and an ADR.
 
 ## Repository state
 
-This branch contains planning and specification artifacts only. The first
-implementation milestone is the product-to-order vertical slice described in
-[`docs/roadmap.md`](docs/roadmap.md).
-
+The current specification package is ready for Milestone 1. The first complete
+business implementation target remains the product-to-order vertical slice
+described in [`docs/roadmap.md`](docs/roadmap.md).

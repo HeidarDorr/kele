@@ -31,6 +31,14 @@ Frontend Features SHALL mirror Backend Modules whenever applicable.
 
 Shared Business terminology SHALL remain consistent across the system.
 
+### Persian RTL Baseline
+
+Version 1 SHALL render customer-facing experiences using `fa-IR` and
+Right-to-Left direction.
+
+Layout primitives SHALL use logical properties and SHALL NOT encode assumptions
+that make future locale direction changes require feature redesign.
+
 ### Presentation First
 
 The Frontend SHALL focus on Presentation and User Interaction.
@@ -396,6 +404,9 @@ contrast.
 
 Accessibility SHALL remain consistent across Desktop, Tablet and Mobile
 experiences.
+
+Mixed-direction Persian and Latin content, including SKU codes, mobile numbers
+and Order identifiers, SHALL remain readable and correctly isolated.
 
 # 10. Architectural Guidelines
 

@@ -1,37 +1,49 @@
 # Open questions and decision register
 
-Version: 1.0  
+Version: 1.1
 Status: Active  
 Owner: Product owner  
 Last reviewed: 2026-07-24
 
+The employer-approved answers in
+`decisions/2026-07-24-employer-open-questions-v1.md` resolve the original
+OQ-001 through OQ-010. Two additional decisions in that response reused the
+identifiers OQ-011 and OQ-012, which were already assigned to design inputs in
+this register. They are normalized here as RQ-017 and RQ-018; no decision
+meaning was changed.
+
 Blocking questions prevent implementation of the affected feature, not the
 entire project.
 
-## Blocking product decisions
+## Blocking product clarifications
 
 | ID | Question | Why it matters | Required before | Proposed default |
 |---|---|---|---|---|
-| OQ-001 | Is version 1 Persian RTL, English LTR, or Persian-first with dormant English support? | Routing, fonts, layout, SEO, copy and testing differ. | Storefront UI implementation | Persian RTL; architecture remains locale-ready. |
-| OQ-002 | Which Iranian payment gateway and settlement behavior are required? | Callback verification, refunds, reconciliation and credentials are provider-specific. | Real payment integration | Use a fake adapter in development; decide provider before production. |
-| OQ-003 | Which SMS provider sends OTP, and what sender/retention rules apply? | Authentication cannot be production-ready without provider and abuse limits. | Production authentication | Provider-neutral adapter with fake development transport. |
-| OQ-004 | What are the official shipping zones, methods, prices, free-shipping threshold and delivery estimates? | Screenshot claims are not approved rules. | Checkout pricing | Store all values in versioned settings; publish no threshold yet. |
-| OQ-005 | What is the official return window and eligibility policy? | The screenshot says 14 days but business rules do not. | Customer-facing copy and return workflow | Do not show “14 days” until approved. |
-| OQ-006 | How do garment sizes map across products in an Outfit? | Exact component SKUs are required for availability and reservation. | Outfit checkout | Use an explicit `OutfitSizeComponent` mapping per composition revision. |
-| OQ-007 | Can an admin change an Outfit's default colors after customers have purchased it? | Historical presentation and fulfillment must remain reproducible. | Outfit editing | Create a new immutable composition revision. |
-| OQ-008 | Are guest carts required, and how are they merged after OTP login? | Affects cookies, identity, privacy and cart API. | Cart implementation | Anonymous signed cart ID; deterministic merge on login. |
-| OQ-009 | Is wishlist in version 1? | It appears in references but not project scope. | Navigation and product card completion | Exclude until explicitly approved. |
-| OQ-010 | Is newsletter collection in version 1 and which consent text/provider applies? | Personal data and marketing consent are involved. | Homepage completion | Render only after consent and provider are defined. |
+| OQ-013 | Which amount is compared with the free-shipping threshold: merchandise subtotal before shipping, or final payable amount including shipping? | Including shipping creates a circular calculation and can produce inconsistent eligibility. | Shipping quote implementation | Merchandise subtotal after product/outfit pricing and before shipping. |
+| OQ-014 | What are the exact deterministic Guest Cart merge rules for identical lines, quantity limits, unavailable items and conflicting Outfit revisions? | “Deterministic merge” is approved, but the algorithm must be testable and customer-visible. | Authenticated cart merge | Match exact sellable selections, sum quantities up to allowed/available limit, retain unavailable lines with an error, and prefer the newest published Outfit revision only after customer confirmation. |
+
+## Blocking production-provider decisions
+
+Development may proceed with adapters. These items block staging/production
+integration, not domain or UI development.
+
+| ID | Missing decision | Required before |
+|---|---|---|
+| OQ-002-PROD | Iranian payment provider, refund API, verification and settlement behavior | Production payment integration |
+| OQ-003-PROD | SMS provider, sender identity, delivery reports, retention and commercial limits | Production OTP/notification integration |
 
 ## Blocking design inputs
 
+Design identifiers use the `DES` prefix to avoid collision with the
+employer-returned decision numbering.
+
 | ID | Missing input | Impact | Proposed action |
 |---|---|---|---|
-| OQ-011 | Final logo files in SVG | Header/footer sharpness and spacing | Request primary, monochrome and favicon variants. |
-| OQ-012 | Licensed Latin and Persian fonts | Brand fidelity and performance | Provide font files and licenses; use documented fallbacks meanwhile. |
-| OQ-013 | Product photography and usage rights | Storefront cannot ship with generated product imagery | Prepare an asset inventory with ownership and focal points. |
-| OQ-014 | Designs for PLP, search, cart, checkout, account, journal and CMS | Reference images cover only homepage and desktop PDP | Approve low-fidelity flows before high-fidelity implementation. |
-| OQ-015 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise be subjective | Use provisional breakpoints in `design-system.md`, then approve. |
+| DES-001 | Final logo files in SVG | Header/footer sharpness and spacing | Request primary, monochrome and favicon variants. |
+| DES-002 | Licensed Latin and Persian fonts | Brand fidelity, RTL shaping and performance | Provide font files and licenses; use documented fallbacks meanwhile. |
+| DES-003 | Product photography and usage rights | Storefront cannot ship with generated product imagery | Prepare an asset inventory with ownership and focal points. |
+| DES-004 | Designs for PLP, search, cart, checkout, account, Journal and CMS | References cover only homepage and desktop PDP | Approve low-fidelity flows before high-fidelity implementation. |
+| DES-005 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise remain subjective | Use provisional breakpoints in `design-system.md`, then approve. |
 
 ## Non-blocking decisions
 
@@ -40,7 +52,7 @@ entire project.
 | OQ-016 | Analytics provider | Define neutral events; select provider before production. |
 | OQ-017 | Error monitoring provider | Use an adapter and structured logging; decide during infrastructure phase. |
 | OQ-018 | Production S3-compatible provider/CDN | MinIO locally; provider selected before staging. |
-| OQ-019 | Exact search ranking and Persian normalization | Start with approved fields and collect real queries before tuning. |
+| OQ-019 | Exact search ranking and Persian normalization | PostgreSQL search with documented normalization; tune after collecting real queries. |
 | OQ-020 | Review verified-purchase time window | Any delivered order containing the catalog object. |
 
 ## Resolved during hardening
@@ -53,6 +65,20 @@ entire project.
 | RQ-004 | Outfit stock is derived from exact component SKUs and never stored. | ADR-0003 |
 | RQ-005 | Order is created only after verified payment; checkout/payment attempts precede it. | ADR-0004 |
 | RQ-006 | Short-lived branches and atomic Conventional Commits are required. | `AGENTS.md` |
+| RQ-007 | Version 1 is Persian (`fa-IR`) and RTL; architecture remains locale-ready. | LOC-001–LOC-002 |
+| RQ-008 | Development/testing use a Fake Payment Adapter; production provider remains replaceable. | PAY-001–PAY-003 |
+| RQ-009 | Development/testing use a Fake SMS Provider behind a centralized adapter. | SMS-001–SMS-002 |
+| RQ-010 | Iran Post, Tipax and Tehran Local Courier are supported with CMS-configured fixed prices and a configurable free-shipping threshold. | SHP-001–SHP-007 |
+| RQ-011 | Return requests are accepted within 24 hours after confirmed delivery subject to item-condition rules and administrator approval. | RTE-001–RTE-005 |
+| RQ-012 | Every Outfit Revision explicitly maps Outfit sizes to exact component SKUs. | OTF-014–OTF-016 |
+| RQ-013 | Published Outfit revisions are immutable and historical revisions never change. | OTF-017–OTF-018 |
+| RQ-014 | Anonymous carts are supported; authentication is required for checkout; carts merge deterministically after authentication. | CRT-011–CRT-013 |
+| RQ-015 | Wishlist is outside version 1. | SCP-001 |
+| RQ-016 | Newsletter is outside version 1. | SCP-002 |
+| RQ-017 | Internal currency is IRR; UI may display toman. | PRC-011–PRC-012 |
+| RQ-018 | Orders store immutable shipping-address snapshots. | ORD-018 |
+| RQ-019 | PostgreSQL search is sufficient for version 1; a dedicated search engine is deferred. | CAT-006 |
+| RQ-020 | Outfit reservations reserve all component SKUs atomically and fail as a whole. | INV-018 |
 
 ## Resolution protocol
 
@@ -63,4 +89,3 @@ For each answer:
 3. Update the affected normative specification.
 4. Update OpenAPI, data model, test plan, and traceability as applicable.
 5. Remove provisional UI copy that conflicts with the accepted answer.
-

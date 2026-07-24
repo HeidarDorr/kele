@@ -3,7 +3,7 @@
 Version: 0.1  
 Status: Coverage ownership assigned; implementation links pending
 
-All 134 identified rules in `03-business-rules.md` are assigned to a module,
+All 168 identified rules in `03-business-rules.md` are assigned to a module,
 contract area and automated test suite below. When code exists, replace
 `Pending` with links to handlers/endpoints and tests for each rule. A rule must
 not be marked Implemented without automated evidence unless explicitly noted as
@@ -26,7 +26,7 @@ manual UX acceptance.
 | INV-008–INV-014 | Inventory Admin, Audit | inventory action API | `inventory-actions.integration` | Pending |
 | INV-015–INV-017 | Outfit, Inventory | outfit availability | `outfit-availability.domain` | Pending |
 | OTF-001–OTF-005 | Outfit | admin outfit API | `outfit-composition.domain` | Pending |
-| OTF-006–OTF-007 | Outfit, Inventory | outfit size/availability | `outfit-size-map.domain` | Blocked OQ-006 |
+| OTF-006–OTF-007 | Outfit, Inventory | outfit size/availability | `outfit-size-map.domain` | Pending |
 | OTF-008–OTF-013 | Outfit, Cart, Catalog | storefront/outfit checkout | `outfit-purchase.integration` | Pending |
 | CUS-001–CUS-005 | Identity, Customer | auth/profile/address API | `customer-access.e2e` | Pending |
 | CUS-006–CUS-007 | Notification, Inventory | stock subscription API | `stock-notification.integration` | Pending |
@@ -37,7 +37,7 @@ manual UX acceptance.
 | ORD-001 | Checkout, Payment, Order | payment callback | `paid-order-creation.integration` | Clarified ADR-0004 |
 | ORD-002–ORD-004 | Order, Inventory | order creation/read | `order-snapshot.integration` | Pending |
 | ORD-005–ORD-010 | Order Admin, Return, Audit | order transitions | `order-state-machine.domain` | Pending |
-| ORD-011–ORD-017 | Shipping, Order | delivery/fulfillment API | `shipping-fulfillment.integration` | Blocked OQ-004 |
+| ORD-011–ORD-017 | Shipping, Order | delivery/fulfillment API | `shipping-fulfillment.integration` | Pending |
 | REV-001–REV-003 | Review, Identity | review submit API | `review-ownership.integration` | Pending |
 | REV-004–REV-010 | Review Admin, Audit | moderation API | `review-moderation.integration` | Pending |
 | REV-011 | Review, Order | review projection | `verified-purchase.integration` | Pending |
@@ -50,6 +50,21 @@ manual UX acceptance.
 | EVT-001–EVT-004 | Audit/Event | event store/read API | `business-event.domain` | Pending |
 | EVT-005–EVT-009 | Inventory, Pricing, Catalog, Order | module commands | module integration suites | Pending |
 | EVT-010–EVT-012 | Reporting, Audit | event query API | `business-event-query.integration` | Pending |
+| LOC-001–LOC-002 | Storefront, Admin, Content | HTML/routing/content contracts | `rtl-localization.e2e` | Pending |
+| PAY-001–PAY-003 | Payment, Configuration | payment adapter/callback | `payment-adapter.contract` | Production provider deferred |
+| SMS-001–SMS-002 | Identity, Notification | SMS adapter | `sms-adapter.contract` | Production provider deferred |
+| SHP-001–SHP-005 | Shipping, Settings, Checkout | shipping options/settings API | `shipping-quote.integration` | Pending |
+| SHP-006 | Shipping, Checkout | shipping quote | `free-shipping-boundary.integration` | Blocked OQ-013 |
+| SHP-007 | Shipping, Order, Audit | settings and Order snapshot | `shipping-versioning.integration` | Pending |
+| RTE-001–RTE-005 | Return, Order, Inventory | customer/admin return API | `return-eligibility.integration` | Pending |
+| OTF-014–OTF-018 | Outfit, Inventory | outfit revision/publish/reserve | `outfit-revision.integration` | Pending |
+| CRT-011–CRT-012 | Cart, Identity, Checkout | cart/session API | `guest-cart.e2e` | Pending |
+| CRT-013 | Cart, Identity | cart merge command | `cart-merge.integration` | Blocked OQ-014 |
+| SCP-001–SCP-002 | Storefront, API | scope/route absence | architecture/scope assertion | Accepted exclusion |
+| PRC-011–PRC-012 | Pricing, Payment, Presentation | money schemas/formatter | `irr-toman.contract` | Pending |
+| ORD-018 | Order, Customer | Order read/snapshot | `order-address-snapshot.integration` | Pending |
+| CAT-006 | Catalog, Search | catalog list/search API | `postgres-search.integration` | Pending |
+| INV-018 | Inventory, Outfit, Checkout | reservation command | `atomic-outfit-reservation.integration` | Pending |
 
 ## Additional hardening requirements
 
@@ -65,4 +80,3 @@ merged into the business specification:
 | HRD-005 | Order is created only after verified payment. | integration test |
 | HRD-006 | Reservation jobs are leased, retryable and idempotent. | job integration test |
 | HRD-007 | Storefront public pages render useful server HTML. | build/E2E/SEO test |
-

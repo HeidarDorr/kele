@@ -33,6 +33,7 @@ A task is done only when every applicable item below is satisfied.
 ## Frontend
 
 - Desktop, tablet, and mobile acceptance viewports are checked.
+- Persian (`fa-IR`) RTL layout and mixed-direction identifiers are checked.
 - Loading, empty, error, unavailable, disabled, and success states exist.
 - Keyboard navigation, visible focus, accessible names, and contrast are
   checked.
@@ -54,4 +55,3 @@ A task is done only when every applicable item below is satisfied.
 - Commits are coherent and do not mix unrelated formatting.
 - PR description contains scope, risks, tests, screenshots, and rollback notes.
 - Review comments and failing checks are resolved.
-

@@ -33,6 +33,8 @@ Suggested issues:
 5. Add CI, test harness, OpenAPI validation and secret scanning.
 6. Add configuration validation, structured logging and correlation IDs.
 7. Implement health checks and development seed framework.
+8. Configure Persian (`fa-IR`) and RTL application foundations.
+9. Implement provider-neutral Fake Payment and Fake SMS adapters.
 
 Exit: clean clone can start, test and build all applications reproducibly.
 
@@ -57,7 +59,7 @@ Suggested issues:
 1. OTP challenge/session security with fake provider.
 2. Customer profile and address ownership.
 3. Anonymous and authenticated carts.
-4. Cart merge on login.
+4. Cart merge on login after OQ-014 is resolved.
 5. Current price/availability revalidation.
 6. Cart UI and failure states.
 
@@ -68,19 +70,20 @@ Exit: a customer can browse, authenticate and maintain a valid cart.
 Suggested issues:
 
 1. CheckoutSession quote and shipping contracts.
-2. Transactional SKU reservation.
-3. Database-backed reservation expiry job.
-4. Payment provider abstraction and fake adapter.
-5. Verified/idempotent callback.
-6. Atomic paid Order creation and stock deduction.
-7. Concurrency, replay and reconciliation tests.
-8. Checkout/payment result UI.
+2. Versioned shipping settings for Iran Post, Tipax and Tehran Local Courier.
+3. Tehran eligibility validation for Local Courier.
+4. Configurable free-shipping threshold after OQ-013 is resolved.
+5. Transactional SKU reservation.
+6. Database-backed reservation expiry job.
+7. Payment provider abstraction and fake adapter.
+8. Verified/idempotent callback.
+9. Atomic paid Order creation, address/shipping snapshot and stock deduction.
+10. Concurrency, replay and reconciliation tests.
+11. Checkout/payment result UI.
 
 Exit: the complete product-to-paid-order vertical slice passes adversarial tests.
 
 ## Milestone 5 — Outfit
-
-Blocked by OQ-006.
 
 Suggested issues:
 
@@ -96,6 +99,7 @@ Suggested issues:
 - order administration and fulfillment state machine;
 - shipping tracking;
 - cancellation, return and refund workflows;
+- 24-hour return-request eligibility and condition declarations;
 - Instagram inventory actions;
 - audit/event explorer;
 - price and inventory bulk operations.
@@ -121,6 +125,6 @@ Suggested issues:
 ## Scope control
 
 Wishlist, newsletter, multilingual UI, loyalty, gift cards, marketplace,
-external ERP and advanced search remain outside version 1 unless scope is
-explicitly changed with requirements, acceptance criteria and roadmap impact.
-
+external ERP, dedicated search engines and advanced search remain outside
+version 1 unless scope is explicitly changed with requirements, acceptance
+criteria and roadmap impact.

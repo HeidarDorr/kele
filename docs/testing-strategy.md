@@ -52,6 +52,13 @@ Use a real browser and production-like applications for:
 | Price changes after cart | Checkout uses current quote and informs customer |
 | Outfit component unavailable | Whole outfit size unavailable; no partial reservation |
 | Return submitted twice | Idempotent decision; quantity never exceeds purchased |
+| Return after 24-hour deadline | Rejected using server time and recorded delivery timestamp |
+| Return condition declaration missing | Request rejected without inventory/refund changes |
+| Local Courier outside Tehran | Method absent/rejected server-side |
+| Shipping setting changes after checkout | Checkout/Order retains original policy snapshot |
+| Free-shipping threshold boundary | Equality qualifies; amount basis follows OQ-013 resolution |
+| Guest/user cart collision | Deterministic, idempotent result after OQ-014 resolution |
+| Fake provider in production config | Application fails closed before accepting traffic |
 | Admin outside role | API denies and records appropriate security/audit signal |
 | Published object edited | storefront freshness behavior meets PUB-011 |
 
@@ -69,6 +76,9 @@ Acceptance viewports:
 - 768 × 1024 tablet
 - 1280 × 800 small laptop
 - 1440 × 900 desktop
+
+All frontend suites run with `lang="fa-IR"` and `dir="rtl"`. Include mixed
+Persian/Latin values such as SKU codes, mobile numbers and Order identifiers.
 
 Initial budgets, subject to measurement:
 
@@ -91,6 +101,8 @@ Each test title or metadata includes applicable rule IDs, for example:
 ```text
 [INV-003][CRT-002] adding to cart does not reserve stock
 [INV-006] expired checkout releases reserved quantity once
+[RTE-001] return at exactly the 24-hour boundary remains eligible
+[SHP-002] Tehran Local Courier is unavailable outside Tehran
 ```
 
 The traceability document is updated when a rule becomes implemented.
@@ -102,4 +114,3 @@ The traceability document is updated when a rule becomes implemented.
 - Main: full E2E, accessibility, visual regression and migration test.
 - Release: security scans, backup/restore readiness, staging smoke and manual
   business acceptance.
-
