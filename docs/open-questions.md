@@ -1,6 +1,6 @@
 # Open questions and decision register
 
-Version: 1.1
+Version: 1.2
 Status: Active  
 Owner: Product owner  
 Last reviewed: 2026-07-24
@@ -15,12 +15,10 @@ meaning was changed.
 Blocking questions prevent implementation of the affected feature, not the
 entire project.
 
-## Blocking product clarifications
+## Product implementation readiness
 
-| ID | Question | Why it matters | Required before | Proposed default |
-|---|---|---|---|---|
-| OQ-013 | Which amount is compared with the free-shipping threshold: merchandise subtotal before shipping, or final payable amount including shipping? | Including shipping creates a circular calculation and can produce inconsistent eligibility. | Shipping quote implementation | Merchandise subtotal after product/outfit pricing and before shipping. |
-| OQ-014 | What are the exact deterministic Guest Cart merge rules for identical lines, quantity limits, unavailable items and conflicting Outfit revisions? | “Deterministic merge” is approved, but the algorithm must be testable and customer-visible. | Authenticated cart merge | Match exact sellable selections, sum quantities up to allowed/available limit, retain unavailable lines with an error, and prefer the newest published Outfit revision only after customer confirmation. |
+No unresolved product-behavior question currently blocks Milestones 1–5.
+Production-provider decisions and final design assets remain gated below.
 
 ## Blocking production-provider decisions
 
@@ -79,6 +77,8 @@ employer-returned decision numbering.
 | RQ-018 | Orders store immutable shipping-address snapshots. | ORD-018 |
 | RQ-019 | PostgreSQL search is sufficient for version 1; a dedicated search engine is deferred. | CAT-006 |
 | RQ-020 | Outfit reservations reserve all component SKUs atomically and fail as a whole. | INV-018 |
+| RQ-021 | Free-shipping eligibility uses Order Subtotal containing Products and Outfits only; shipping, discounts and taxes are excluded. | SHP-006, SHP-008 |
+| RQ-022 | Guest Cart merge adds missing lines, combines matching SKUs with inventory caps and notices, preserves unavailable lines, and never replaces Outfit Revisions automatically. | CRT-013–CRT-018 |
 
 ## Resolution protocol
 

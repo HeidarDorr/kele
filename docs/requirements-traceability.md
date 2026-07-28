@@ -3,7 +3,7 @@
 Version: 0.1  
 Status: Coverage ownership assigned; implementation links pending
 
-All 168 identified rules in `03-business-rules.md` are assigned to a module,
+All 174 identified rules in `03-business-rules.md` are assigned to a module,
 contract area and automated test suite below. When code exists, replace
 `Pending` with links to handlers/endpoints and tests for each rule. A rule must
 not be marked Implemented without automated evidence unless explicitly noted as
@@ -54,12 +54,11 @@ manual UX acceptance.
 | PAY-001–PAY-003 | Payment, Configuration | payment adapter/callback | `payment-adapter.contract` | Production provider deferred |
 | SMS-001–SMS-002 | Identity, Notification | SMS adapter | `sms-adapter.contract` | Production provider deferred |
 | SHP-001–SHP-005 | Shipping, Settings, Checkout | shipping options/settings API | `shipping-quote.integration` | Pending |
-| SHP-006 | Shipping, Checkout | shipping quote | `free-shipping-boundary.integration` | Blocked OQ-013 |
-| SHP-007 | Shipping, Order, Audit | settings and Order snapshot | `shipping-versioning.integration` | Pending |
+| SHP-006–SHP-008 | Shipping, Checkout, Order, Audit | shipping quote/settings/snapshot | `free-shipping-boundary.integration`, `shipping-versioning.integration` | Pending |
 | RTE-001–RTE-005 | Return, Order, Inventory | customer/admin return API | `return-eligibility.integration` | Pending |
 | OTF-014–OTF-018 | Outfit, Inventory | outfit revision/publish/reserve | `outfit-revision.integration` | Pending |
 | CRT-011–CRT-012 | Cart, Identity, Checkout | cart/session API | `guest-cart.e2e` | Pending |
-| CRT-013 | Cart, Identity | cart merge command | `cart-merge.integration` | Blocked OQ-014 |
+| CRT-013–CRT-018 | Cart, Identity | cart merge command/result | `cart-merge.integration` | Pending |
 | SCP-001–SCP-002 | Storefront, API | scope/route absence | architecture/scope assertion | Accepted exclusion |
 | PRC-011–PRC-012 | Pricing, Payment, Presentation | money schemas/formatter | `irr-toman.contract` | Pending |
 | ORD-018 | Order, Customer | Order read/snapshot | `order-address-snapshot.integration` | Pending |

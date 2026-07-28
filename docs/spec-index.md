@@ -1,6 +1,6 @@
 # KELE specification index
 
-Version: 1.1
+Version: 1.2
 Status: Active  
 Last reviewed: 2026-07-24
 
@@ -21,6 +21,7 @@ authoritative; older names embedded in imported documents are legacy metadata.
 | 9 | `08-frontend-system-architecture.md` | Frontend architecture principles | Accepted | Normative |
 | 10 | `adr/` | Accepted decisions | Accepted individually | Highest authority |
 | 11 | `decisions/2026-07-24-employer-open-questions-v1.md` | Approved employer answers incorporated into rules | Incorporated | Decision evidence |
+| 12 | `decisions/2026-07-28-checkout-clarifications.md` | Approved shipping-threshold and cart-merge rules | Incorporated | Decision evidence |
 
 ## Known import corrections
 

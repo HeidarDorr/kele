@@ -75,6 +75,9 @@ Status: Required baseline
 - Shipping prices and thresholds are permission-protected, versioned and
   audited. The client cannot submit an authoritative shipping price or
   free-shipping result.
+- The server computes Order Subtotal from current Product and Outfit prices.
+  Client-supplied subtotal, shipping, discount, and tax values are never trusted
+  for free-shipping eligibility.
 - Tehran Local Courier eligibility is determined from server-side normalized
   address data.
 - Orders retain immutable address and shipping-policy snapshots; address-book

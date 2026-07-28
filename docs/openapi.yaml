@@ -184,12 +184,16 @@ paths:
                   type: string
                   pattern: "^[0-9]{4,8}$"
       responses:
-        "204":
-          description: Session cookie created or rotated.
+        "200":
+          description: Session created or rotated and Guest Cart merge reported.
           headers:
             Set-Cookie:
               schema:
                 type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticationResult"
         "400":
           $ref: "#/components/responses/Problem"
         "429":
@@ -1326,6 +1330,16 @@ components:
         lastName:
           type: [string, "null"]
 
+    AuthenticationResult:
+      type: object
+      additionalProperties: false
+      required: [customer, cart]
+      properties:
+        customer:
+          $ref: "#/components/schemas/Customer"
+        cart:
+          $ref: "#/components/schemas/Cart"
+
     AddressInput:
       type: object
       additionalProperties: false
@@ -1404,6 +1418,7 @@ components:
         - name
         - eligible
         - quotedPrice
+        - eligibilitySubtotal
         - freeShippingApplied
         - settingsVersion
       properties:
@@ -1417,6 +1432,8 @@ components:
           type: [string, "null"]
         quotedPrice:
           $ref: "#/components/schemas/Money"
+        eligibilitySubtotal:
+          $ref: "#/components/schemas/Money"
         freeShippingApplied:
           type: boolean
         settingsVersion:
@@ -1426,8 +1443,12 @@ components:
     ShippingSettingsInput:
       type: object
       additionalProperties: false
-      required: [methods]
+      required: [methods, eligibilityBasis]
       properties:
+        eligibilityBasis:
+          type: string
+          const: order_subtotal
+          description: Products and Outfits only; excludes shipping, discounts, and taxes.
         methods:
           type: array
           minItems: 3
@@ -1447,7 +1468,7 @@ components:
         freeShippingThresholdRial:
           type: [integer, "null"]
           minimum: 0
-          description: Eligibility amount basis remains governed by OQ-013.
+          description: Compared with Order Subtotal.
 
     ShippingSettings:
       allOf:
@@ -1498,7 +1519,7 @@ components:
 
     Cart:
       type: object
-      required: [id, version, lines, informationalTotal]
+      required: [id, version, lines, informationalTotal, mergeNotices]
       properties:
         id:
           type: string
@@ -1510,7 +1531,7 @@ components:
           type: array
           items:
             type: object
-            required: [id, kind, title, quantity, available, unitPrice]
+            required: [id, kind, title, quantity, status, checkoutBlocking, unitPrice]
             properties:
               id:
                 type: string
@@ -1525,12 +1546,33 @@ components:
               quantity:
                 type: integer
                 minimum: 1
-              available:
+              status:
+                type: string
+                enum: [available, unavailable, requires_review]
+              checkoutBlocking:
                 type: boolean
               unitPrice:
                 $ref: "#/components/schemas/Money"
         informationalTotal:
           $ref: "#/components/schemas/Money"
+        mergeNotices:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [code, lineId, message]
+            properties:
+              code:
+                type: string
+                enum:
+                  - quantity_reduced_to_inventory
+                  - sku_unavailable
+                  - outfit_revision_requires_review
+              lineId:
+                type: string
+                format: uuid
+              message:
+                type: string
 
     CheckoutSession:
       type: object

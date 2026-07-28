@@ -56,8 +56,8 @@ Use a real browser and production-like applications for:
 | Return condition declaration missing | Request rejected without inventory/refund changes |
 | Local Courier outside Tehran | Method absent/rejected server-side |
 | Shipping setting changes after checkout | Checkout/Order retains original policy snapshot |
-| Free-shipping threshold boundary | Equality qualifies; amount basis follows OQ-013 resolution |
-| Guest/user cart collision | Deterministic, idempotent result after OQ-014 resolution |
+| Free-shipping threshold boundary | Equality qualifies against Products/Outfits subtotal; shipping, discounts and taxes do not affect eligibility |
+| Guest/user cart collision | Deterministic and idempotent; quantity caps notify, unavailable lines block, Outfit Revision is preserved |
 | Fake provider in production config | Application fails closed before accepting traffic |
 | Admin outside role | API denies and records appropriate security/audit signal |
 | Published object edited | storefront freshness behavior meets PUB-011 |

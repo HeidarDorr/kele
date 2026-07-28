@@ -3172,17 +3172,19 @@ The platform SHALL support a configurable free-shipping threshold.
 
 ## SHP-006
 
-When the approved eligibility amount equals or exceeds the configured
-free-shipping threshold, shipping cost SHALL be zero.
-
-The exact eligibility amount is tracked by OQ-013 and SHALL be resolved before
-shipping quote implementation.
+When the Order Subtotal equals or exceeds the configured free-shipping
+threshold, shipping cost SHALL be zero.
 
 ## SHP-007
 
 Shipping prices and the free-shipping threshold SHALL be changeable without a
 software deployment. Checkout and Order snapshots SHALL preserve the applied
 shipping method, price, and policy values.
+
+## SHP-008
+
+For free-shipping eligibility, Order Subtotal SHALL contain Products and
+Outfits only. Shipping charges, discounts, and taxes SHALL NOT be included.
 
 ## Returns
 
@@ -3248,9 +3250,32 @@ Customer authentication SHALL be required before Checkout begins.
 ## CRT-013
 
 After successful authentication, the Guest Cart SHALL merge into the
-authenticated Customer Cart using deterministic rules. The exact conflict and
-quantity algorithm is tracked by OQ-014 and SHALL be resolved before merge
-implementation.
+authenticated Customer Cart using the deterministic rules below.
+
+## CRT-014
+
+Guest Cart items not already present in the Customer Cart SHALL be added.
+
+## CRT-015
+
+Matching Product SKU quantities SHALL be combined.
+
+## CRT-016
+
+If a combined quantity exceeds available inventory, it SHALL be reduced to the
+maximum reservable amount and the Customer SHALL be notified.
+
+## CRT-017
+
+Unavailable SKUs SHALL remain in the Cart with `Unavailable` status and SHALL
+block Checkout until resolved.
+
+## CRT-018
+
+Outfit Revisions SHALL NOT be automatically replaced during Cart merge. If a
+referenced Outfit Revision is no longer purchasable, the Cart line SHALL enter
+`Requires Review` status and SHALL block Checkout until the Customer resolves
+it.
 
 ## Version 1 scope exclusions
 

@@ -6,10 +6,10 @@ checkout, inventory and pricing, editorial content, and an
 administration panel.
 
 Specification hardening is complete and the first employer decision set has
-been incorporated. Engineering foundation and catalog work may begin. Features
-affected by the remaining blocking clarifications in
-[`docs/open-questions.md`](docs/open-questions.md) must stop at their defined
-decision gates.
+been incorporated. Approved product behavior is sufficient to begin
+Milestones 1–5. Production provider integration and final visual acceptance
+remain gated by the inputs in
+[`docs/open-questions.md`](docs/open-questions.md).
 
 ## Authoritative documents
 

@@ -52,11 +52,9 @@ input register. They are recorded as RQ-017 and RQ-018 in
 
 ## Residual clarifications
 
-The approved decisions do not define:
+The free-shipping eligibility basis and deterministic Guest Cart merge were
+resolved by `2026-07-28-checkout-clarifications.md`.
 
-- the exact amount used to test free-shipping eligibility;
-- the exact deterministic Guest Cart merge algorithm;
-- production payment/SMS providers;
-- final brand assets and missing screen designs.
-
-Those items remain explicitly tracked and block only their affected work.
+Production payment/SMS providers and final brand/design assets remain tracked
+in `docs/open-questions.md` and block only production integration or final
+visual acceptance.

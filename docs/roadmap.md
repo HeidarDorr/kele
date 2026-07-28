@@ -59,7 +59,8 @@ Suggested issues:
 1. OTP challenge/session security with fake provider.
 2. Customer profile and address ownership.
 3. Anonymous and authenticated carts.
-4. Cart merge on login after OQ-014 is resolved.
+4. Deterministic Cart merge on login with inventory caps, notices and
+   Outfit Revision review states.
 5. Current price/availability revalidation.
 6. Cart UI and failure states.
 
@@ -72,7 +73,7 @@ Suggested issues:
 1. CheckoutSession quote and shipping contracts.
 2. Versioned shipping settings for Iran Post, Tipax and Tehran Local Courier.
 3. Tehran eligibility validation for Local Courier.
-4. Configurable free-shipping threshold after OQ-013 is resolved.
+4. Configurable free-shipping threshold evaluated against Order Subtotal.
 5. Transactional SKU reservation.
 6. Database-backed reservation expiry job.
 7. Payment provider abstraction and fake adapter.

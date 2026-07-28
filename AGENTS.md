@@ -97,6 +97,11 @@ separate read database require a measurable need and an accepted ADR.
 - Anonymous carts are supported; checkout requires authentication.
 - Version 1 shipping methods are Iran Post, Tipax, and Tehran Local Courier,
   with versioned CMS-configured fixed prices and a free-shipping threshold.
+- Free-shipping eligibility uses Order Subtotal containing Products and
+  Outfits only; shipping, discounts, and taxes are excluded.
+- Guest Cart merge combines matching SKU quantities up to available inventory,
+  retains unavailable lines, and never replaces Outfit Revisions automatically.
+  `unavailable` and `requires_review` lines block Checkout.
 - Return requests are accepted only within 24 hours after confirmed delivery
   and require customer condition declarations plus administrator approval.
 - Wishlist and Newsletter are outside version 1 and must not be implemented.

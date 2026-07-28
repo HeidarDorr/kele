@@ -121,8 +121,15 @@ An outfit order snapshot includes:
 
 - Anonymous carts use a high-entropy signed identifier.
 - A customer has at most one active server cart per sales channel.
-- Guest and authenticated cart merge is one idempotent command. Exact
-  line-conflict rules remain blocked by OQ-014.
+- Guest and authenticated cart merge is one idempotent command.
+- Missing lines are added and matching Product SKU quantities are combined.
+- Combined quantities are capped at current reservable inventory and produce a
+  customer-visible merge notice when reduced.
+- Unavailable SKU lines remain with `unavailable` status.
+- Outfit Revisions are never automatically replaced; a no-longer-purchasable
+  revision enters `requires_review`.
+- Cart line status is `available`, `unavailable`, or `requires_review`. Only a
+  Cart whose lines are all `available` may enter Checkout.
 - Cart prices are informational and not guaranteed.
 - CheckoutSession stores a quote snapshot, shipping choice, address snapshot,
   expiry, status, and idempotency key.
@@ -149,8 +156,10 @@ Local Courier eligibility requires the selected address to be within Tehran.
 Fields: configuration version, optional `freeShippingThresholdRial`,
 eligibility basis, effective timestamp, actor, and audit reason.
 
-The eligibility basis remains blocked by OQ-013. A published configuration
-cannot be changed in place; updating values produces a new effective version.
+The eligibility basis is immutable `order_subtotal`, containing Products and
+Outfits only and excluding shipping, discounts, and taxes. A published
+configuration cannot be changed in place; updating values produces a new
+effective version.
 
 CheckoutSession snapshots:
 
