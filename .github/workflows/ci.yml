@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.9-alpine
+        env:
+          POSTGRES_USER: kele
+          POSTGRES_PASSWORD: kele
+          POSTGRES_DB: kele
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kele -d kele"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Enable pinned pnpm
+        run: corepack enable && corepack prepare pnpm@11.18.0 --activate
+      - name: Install exact dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Configure development environment
+        run: cp .env.example .env
+      - name: Start isolated MinIO and create its development bucket
+        run: |
+          docker run -d --name kele-minio -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=kele-minio \
+            -e MINIO_ROOT_PASSWORD=kele-minio-secret \
+            minio/minio:RELEASE.2025-04-22T22-12-26Z server /data --console-address ':9001'
+          until curl --fail --silent http://127.0.0.1:9000/minio/health/live; do sleep 1; done
+          docker exec kele-minio mc alias set local http://127.0.0.1:9000 kele-minio kele-minio-secret
+          docker exec kele-minio mc mb --ignore-existing local/kele-development
+      - name: Validate and regenerate OpenAPI types
+        run: |
+          pnpm openapi:validate
+          pnpm openapi:generate
+          git diff --exit-code -- packages/api-contract/src/generated.ts
+      - name: Formatting, lint, strict types and unit tests
+        run: |
+          pnpm format:check
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm test:architecture
+      - name: PostgreSQL integration and contract tests
+        run: |
+          pnpm test:integration
+          pnpm test:contract
+      - name: Production builds
+        run: pnpm build
+      - name: Install browser for smoke test
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end smoke
+        run: pnpm test:e2e
+      - name: Dependency audit
+        run: pnpm audit --prod --audit-level=high
+
+  secret-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

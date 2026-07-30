@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test';
+
+test('storefront foundation is Persian RTL and preserves mixed-direction SKU text', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByText('SKU-KELE-001')).toBeVisible();
+});
+
+test('administration foundation is Persian RTL', async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 768, height: 1024 } });
+  await page.goto('http://127.0.0.1:3002');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByText('ADM-KELE-001')).toBeVisible();
+});
+
+test('API liveness preserves a valid correlation ID', async ({ request }) => {
+  const correlationId = '00000000-0000-4000-8000-000000000001';
+  const response = await request.get('http://127.0.0.1:3001/api/v1/health/live', {
+    headers: { 'x-correlation-id': correlationId },
+  });
+  await expect(response).toBeOK();
+  expect(response.headers()['x-correlation-id']).toBe(correlationId);
+  await expect(response.json()).resolves.toMatchObject({ status: 'ok', correlationId });
+});
+
+test('API readiness is dependency-aware and replaces an invalid correlation ID', async ({
+  request,
+}) => {
+  const response = await request.get('http://127.0.0.1:3001/api/v1/health/ready', {
+    headers: { 'x-correlation-id': 'not-a-uuid' },
+  });
+  await expect(response).toBeOK();
+  expect(response.headers()['x-correlation-id']).toMatch(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  );
+});

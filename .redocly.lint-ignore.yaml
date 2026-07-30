@@ -17,6 +17,8 @@ docs/openapi.yaml:
     - '#/tags/10/description'
     - '#/tags/11/description'
   operation-4xx-response:
+    - '#/paths/~1health~1live/get/responses'
+    - '#/paths/~1health~1ready/get/responses'
     - '#/paths/~1catalog~1products/get/responses'
     - '#/paths/~1catalog~1outfits/get/responses'
     - '#/paths/~1auth~1session/delete/responses'

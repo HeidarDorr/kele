@@ -1,0 +1,24 @@
+:root {
+  --kele-canvas: #f5efe7;
+  --kele-surface: #fbf7f1;
+  --kele-surface-muted: #eee5d9;
+  --kele-ink: #30251e;
+  --kele-ink-muted: #776b61;
+  --kele-line: #ded3c7;
+  --kele-accent: #c86f2c;
+  --kele-accent-strong: #a8541d;
+  --kele-inverse: #2b1f18;
+  --kele-inverse-text: #f8f1e9;
+  --kele-danger: #9d302b;
+  --kele-success: #426348;
+  --kele-space-1: 0.25rem;
+  --kele-space-2: 0.5rem;
+  --kele-space-3: 0.75rem;
+  --kele-space-4: 1rem;
+  --kele-space-6: 1.5rem;
+  --kele-space-8: 2rem;
+  --kele-space-12: 3rem;
+  --kele-space-16: 4rem;
+  --kele-space-24: 6rem;
+  --kele-radius: 0.25rem;
+}

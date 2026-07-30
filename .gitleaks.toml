@@ -1,0 +1,12 @@
+title = "KELE secret scanning policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Development-only documented credentials and test values"
+paths = [
+  '''\.env\.example$''',
+  '''docker-compose\.yml$''',
+  '''docs/''',
+]

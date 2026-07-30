@@ -1,0 +1,45 @@
+{
+  "name": "kele",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": "11.18.0"
+  },
+  "scripts": {
+    "preinstall": "node scripts/verify-runtime.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "corepack pnpm@11.18.0 -r --if-present typecheck",
+    "test": "vitest run --config vitest.config.ts",
+    "test:integration": "corepack pnpm@11.18.0 --filter @kele/api prisma:generate && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api prisma:deploy && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api test:integration",
+    "test:architecture": "node scripts/check-architecture.mjs",
+    "openapi:validate": "redocly lint docs/openapi.yaml",
+    "openapi:generate": "openapi-typescript docs/openapi.yaml -o packages/api-contract/src/generated.ts && prettier --write packages/api-contract/src/generated.ts",
+    "test:contract": "vitest run --config vitest.contract.config.ts",
+    "build": "corepack pnpm@11.18.0 -r --if-present build",
+    "test:e2e": "dotenv -e .env -- playwright test",
+    "audit": "pnpm audit --prod --audit-level=high",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "services:up": "docker compose up -d postgres minio",
+    "services:down": "docker compose down",
+    "seed": "corepack pnpm@11.18.0 --filter @kele/api prisma:generate && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api prisma:deploy && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.0",
+    "@redocly/cli": "2.43.0",
+    "@types/node": "26.1.2",
+    "@typescript-eslint/utils": "8.65.0",
+    "dotenv-cli": "11.0.0",
+    "dotenv": "16.6.1",
+    "eslint": "10.8.0",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.65.0",
+    "vitest": "4.1.10"
+  }
+}

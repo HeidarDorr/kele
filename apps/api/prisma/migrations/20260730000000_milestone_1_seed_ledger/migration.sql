@@ -1,0 +1,6 @@
+CREATE TABLE "SeedLedger" (
+    "key" TEXT NOT NULL,
+    "appliedAt" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SeedLedger_pkey" PRIMARY KEY ("key")
+);

@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+@import '../../../packages/design-system/src/tokens.css';
+
+:root {
+  color: var(--kele-ink);
+  background: var(--kele-surface);
+  font-family: Tahoma, Arial, sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-block-size: 100vh;
+}
+.admin-shell {
+  max-inline-size: 80rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3rem);
+}
+.admin-panel {
+  border: 1px solid var(--kele-line);
+  border-radius: var(--kele-radius);
+  background: var(--kele-surface);
+  padding: var(--kele-space-8);
+}
+.identifier {
+  unicode-bidi: isolate;
+  direction: ltr;
+  display: inline-block;
+  font-family: ui-monospace, monospace;
+}
+:focus-visible {
+  outline: 3px solid var(--kele-accent);
+  outline-offset: 3px;
+}
