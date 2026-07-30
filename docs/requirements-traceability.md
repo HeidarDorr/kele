@@ -79,3 +79,14 @@ merged into the business specification:
 | HRD-005 | Order is created only after verified payment. | integration test |
 | HRD-006 | Reservation jobs are leased, retryable and idempotent. | job integration test |
 | HRD-007 | Storefront public pages render useful server HTML. | build/E2E/SEO test |
+
+## Milestone 1 implementation evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+|---|---|---|---|
+| LOC-001, LOC-002 | `apps/storefront/app/layout.tsx`, `apps/admin/app/layout.tsx`, shared logical token CSS | `e2e/foundation.spec.ts` | Foundation implemented; feature content pending |
+| PAY-001 to PAY-003 | provider-neutral fake payment port and production configuration guard | `apps/api/test/foundation.unit.test.ts`, `packages/config/src/index.test.ts` | Fake foundation implemented; production provider deferred |
+| SMS-001 to SMS-002 | provider-neutral fake SMS port and production configuration guard | `apps/api/test/foundation.unit.test.ts`, `packages/config/src/index.test.ts` | Fake foundation implemented; production provider deferred |
+| HRD-001 | API application ports and automated forbidden-import scan | `scripts/check-architecture.mjs`, `apps/api/test/architecture.unit.test.ts` | Implemented |
+| HRD-008 | Validated startup configuration and fail-closed fake-provider policy | `packages/config/src/index.ts`, `packages/config/src/index.test.ts` | Implemented |
+| HRD-009 | Contract-first health, dependency readiness and correlation propagation | `docs/openapi.yaml`, `e2e/foundation.spec.ts` | Implemented |

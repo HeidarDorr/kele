@@ -114,3 +114,17 @@ The traceability document is updated when a rule becomes implemented.
 - Main: full E2E, accessibility, visual regression and migration test.
 - Release: security scans, backup/restore readiness, staging smoke and manual
   business acceptance.
+
+## Milestone 1 harnesses
+
+- `test` covers configuration rejection and provider-port behavior without a
+  Nest container or database.
+- `test:integration` applies Prisma migrations to PostgreSQL 16 and verifies
+  the technical seed ledger is idempotent; it cannot fall back to SQLite.
+- `test:architecture` scans API domain/application source for prohibited
+  NestJS, Prisma, HTTP and storage imports.
+- `openapi:validate`, generated transport types and `test:contract` keep the
+  foundation health transport shape checked against the contract.
+- `test:e2e` starts production builds in a browser, checks both `fa-IR` RTL
+  roots and mixed-direction identifiers, then checks correlation propagation
+  on API liveness.

@@ -131,6 +131,18 @@ Status: Required baseline
 - Malicious rich text and file uploads.
 - Checkout amount, SKU and shipping tampering.
 
+## Milestone 1 enforcement
+
+- `@kele/config` rejects any production startup while Fake Payment or Fake SMS
+  is selected; no production provider or credential is present in this
+  repository.
+- The API emits structured JSON logs with request correlation IDs and redacts
+  fields whose names indicate credentials, tokens, mobile numbers or addresses.
+- CI runs a production dependency audit and Gitleaks. The local `scan:secrets`
+  command adds a fast policy scan before CI; it does not replace the CI scan.
+- Local PostgreSQL/MinIO credentials are explicitly development-only examples;
+  `.env` remains ignored.
+
 ## Pre-production security exit
 
 - Provider-specific payment threat review completed.

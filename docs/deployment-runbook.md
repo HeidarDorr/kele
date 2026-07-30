@@ -96,6 +96,16 @@ dependencies without performing expensive work. Monitor:
 Every request and job carries a correlation ID. Audit history is not replaced
 by technical logs.
 
+## Milestone 1 local operations
+
+Use `docker compose up -d --wait postgres minio` followed by `docker compose
+run --rm minio-init` for the local dependency baseline. API liveness is
+`/api/v1/health/live`; readiness is `/api/v1/health/ready` and checks
+PostgreSQL. Readiness failure is not a reason to restart a live process until
+the dependency failure has been investigated. The first schema migration is
+additive (`SeedLedger`); do not reverse it in an environment that may contain a
+later migration or a seed record needed for diagnosis.
+
 ## Incident minimum
 
 1. Stabilize customer and business data.

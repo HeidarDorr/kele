@@ -34,9 +34,9 @@ remain gated by the inputs in
 Redis, a message broker, Elasticsearch, and microservices are not baseline
 dependencies. They require evidence and an ADR.
 
-## Repository state
+## Local development
 
-The current specification package is ready for Milestone 1. The sequential
-version-1 plan is defined in [`docs/roadmap.md`](docs/roadmap.md), and the
-copy-ready monitor and implementation prompts are maintained in
-[`docs/execution/v1-milestone-playbook.md`](docs/execution/v1-milestone-playbook.md).
+Milestone 1 is implemented. Setup, required runtime versions, all environment
+variables and every verification command are documented in
+[`docs/engineering-foundation.md`](docs/engineering-foundation.md). The
+sequential version-1 plan remains in [`docs/roadmap.md`](docs/roadmap.md).
