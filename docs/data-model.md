@@ -1,7 +1,7 @@
 # Canonical data model
 
-Version: 0.1  
-Status: Baseline for implementation  
+Version: 0.1
+Status: Baseline for implementation
 Authority: ADR-0002, ADR-0003, ADR-0004
 
 This model is conceptual. Prisma names and physical indexes may differ, but

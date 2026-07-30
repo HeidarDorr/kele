@@ -31,4 +31,3 @@ The response labelled these OQ-014 and OQ-015. In the repository they resolve
 the previously tracked OQ-013 (free-shipping basis) and OQ-014 (Guest Cart
 merge). They are recorded as RQ-021 and RQ-022 in the decision register without
 changing their meaning.
-

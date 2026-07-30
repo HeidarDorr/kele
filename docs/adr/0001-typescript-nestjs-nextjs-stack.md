@@ -1,8 +1,8 @@
 # ADR-0001: TypeScript, NestJS, PostgreSQL, Prisma, and Next.js
 
-Status: Accepted  
-Date: 2026-07-24  
-Decision owners: Product owner and architecture  
+Status: Accepted
+Date: 2026-07-24
+Decision owners: Product owner and architecture
 Supersedes: Framework-specific recommendations in the imported stack proposal
 
 ## Context

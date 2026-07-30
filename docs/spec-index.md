@@ -1,7 +1,7 @@
 # KELE specification index
 
 Version: 1.2
-Status: Active  
+Status: Active
 Last reviewed: 2026-07-24
 
 This index defines canonical names, authority, and readiness. File names are

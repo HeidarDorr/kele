@@ -1,7 +1,7 @@
 # KELE storefront design system
 
-Version: 0.1  
-Status: Provisional, derived from supplied visual references  
+Version: 0.1
+Status: Provisional, derived from supplied visual references
 Scope: Storefront. Administration UI uses the same tokens with denser layouts.
 
 This document converts the visual references into implementable constraints.

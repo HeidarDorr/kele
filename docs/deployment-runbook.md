@@ -1,6 +1,6 @@
 # Deployment, migration, backup, and rollback runbook
 
-Version: 0.1  
+Version: 0.1
 Status: Baseline; provider details pending
 
 ## Environments

@@ -37,4 +37,3 @@ body:
     attributes:
       label: Risks and rollback
       description: Data, security, operational, compatibility and rollback concerns.
-

@@ -1,6 +1,6 @@
 # Frontend System Architecture
 
-Canonical file: `08-frontend-system-architecture.md`  
+Canonical file: `08-frontend-system-architecture.md`
 Status: Accepted
 
 # 1. Frontend Principles

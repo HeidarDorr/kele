@@ -1,8 +1,8 @@
 # Open questions and decision register
 
 Version: 1.2
-Status: Active  
-Owner: Product owner  
+Status: Active
+Owner: Product owner
 Last reviewed: 2026-07-24
 
 The employer-approved answers in

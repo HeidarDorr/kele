@@ -1,7 +1,7 @@
 # Visual references and UI acceptance
 
-Version: 0.1  
-Status: Provisional  
+Version: 0.1
+Status: Provisional
 Last reviewed: 2026-07-24
 
 ## Reference inventory

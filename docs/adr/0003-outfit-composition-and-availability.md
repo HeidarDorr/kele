@@ -1,7 +1,7 @@
 # ADR-0003: Versioned Outfit composition and derived availability
 
 Status: Accepted
-Date: 2026-07-24  
+Date: 2026-07-24
 Employer confirmation: Open Questions Resolution v1
 
 ## Context

@@ -1,6 +1,6 @@
 # Testing strategy
 
-Version: 0.1  
+Version: 0.1
 Status: Required baseline
 
 ## Test pyramid

@@ -1,6 +1,6 @@
 # Requirements traceability baseline
 
-Version: 0.1  
+Version: 0.1
 Status: Coverage ownership assigned; implementation links pending
 
 All 174 identified rules in `03-business-rules.md` are assigned to a module,

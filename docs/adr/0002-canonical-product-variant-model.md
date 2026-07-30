@@ -1,8 +1,8 @@
 # ADR-0002: Canonical Product, ColorVariant, and SKU model
 
-Status: Accepted  
-Date: 2026-07-24  
-Amends: `02-domain-model.md`  
+Status: Accepted
+Date: 2026-07-24
+Amends: `02-domain-model.md`
 Supersedes conflicting sections of: `06-persistence-model.md`
 
 ## Context
@@ -63,4 +63,3 @@ Product
 
 No production schema exists. The first Prisma schema must implement this ADR,
 not the flattened imported persistence proposal.
-

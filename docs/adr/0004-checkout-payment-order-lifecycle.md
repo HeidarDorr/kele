@@ -1,7 +1,7 @@
 # ADR-0004: Checkout and payment precede Order creation
 
-Status: Accepted  
-Date: 2026-07-24  
+Status: Accepted
+Date: 2026-07-24
 Amends: ORD-001 and clarifies ORD-009
 
 ## Context
@@ -62,4 +62,3 @@ return as allowed by a state machine.
 - Payment operations have their own auditable lifecycle.
 - Reporting distinguishes checkout abandonment from orders.
 - API and persistence need explicit CheckoutSession and PaymentAttempt models.
-

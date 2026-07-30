@@ -42,4 +42,3 @@ reference deviations, and loading/error/unavailable states.
 - Deployment ordering:
 - Monitoring:
 - Rollback/reconciliation:
-
