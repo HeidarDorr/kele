@@ -144,7 +144,8 @@ Every page includes:
 Milestone 1 supplies only static storefront and administration shells, not a
 data-backed customer or operational workflow. Reviewable production-build
 captures are maintained in `output/playwright/milestone-1/` for desktop
-(1440 × 900), tablet (768 × 1024), and mobile (390 × 844).
+(1440 × 900), small laptop (1280 × 800), tablet (768 × 1024), and mobile
+(390 × 844).
 
 Loading, empty, error, unavailable, disabled, and success states are therefore
 not applicable to the static M1 shell: it neither fetches domain data nor

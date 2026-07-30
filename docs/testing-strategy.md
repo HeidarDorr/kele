@@ -129,6 +129,6 @@ The traceability document is updated when a rule becomes implemented.
   foundation health transport shape checked against the contract.
 - `test:e2e` starts production builds in a browser, checks both `fa-IR` RTL
   roots and mixed-direction identifiers, then checks correlation propagation
-  on API liveness. It also writes six reviewable production screenshots to
-  `output/playwright/milestone-1/` at desktop, tablet and mobile acceptance
-  viewports.
+  on API liveness. It also writes eight reviewable production screenshots to
+  `output/playwright/milestone-1/` at desktop, small-laptop, tablet, and mobile
+  acceptance viewports.

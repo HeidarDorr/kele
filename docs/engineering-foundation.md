@@ -37,6 +37,12 @@ configuration or its credentials outside local development.
 | All quality gates          | `corepack pnpm@11.18.0 format:check`, `lint`, `typecheck`, `test`, `test:integration`, `test:architecture`, `openapi:validate`, `test:contract`, `build`, `test:e2e`, `audit`, `scan:secrets` |
 | Stop local services        | `docker compose down`                                                                                                                                                                         |
 
+If another local service owns one of the E2E defaults (API `3001`, storefront
+`3000`, administration `3002`), use the test-only `E2E_API_PORT`,
+`E2E_STOREFRONT_PORT`, and/or `E2E_ADMIN_PORT` overrides. They affect only the
+isolated production-build harness; for example,
+`$env:E2E_STOREFRONT_PORT='3100'; corepack pnpm@11.18.0 test:e2e`.
+
 `test:integration` migrates a real PostgreSQL 16 database and never substitutes
 SQLite or a mock. Local Compose uses the configured PostgreSQL 16 mirror; CI
 uses the official `postgres:16-alpine` image. Both exercise the same supported
@@ -85,8 +91,8 @@ bidirectional isolation.
 
 Reviewable screenshots are captured from production builds in
 `output/playwright/milestone-1/`: storefront and administration roots at
-desktop (1440 × 900), tablet (768 × 1024), and mobile (390 × 844). The browser
-smoke test covers the same three viewports.
+desktop (1440 × 900), small laptop (1280 × 800), tablet (768 × 1024), and
+mobile (390 × 844). The browser smoke test covers the same four viewports.
 
 M1 renders only static engineering shells: no route fetches data, submits a
 command, selects inventory, or exposes a business action. Consequently,
