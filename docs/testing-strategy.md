@@ -120,11 +120,15 @@ The traceability document is updated when a rule becomes implemented.
 - `test` covers configuration rejection and provider-port behavior without a
   Nest container or database.
 - `test:integration` applies Prisma migrations to PostgreSQL 16 and verifies
-  the technical seed ledger is idempotent; it cannot fall back to SQLite.
+  the technical seed ledger is idempotent; it cannot fall back to SQLite. Local
+  Compose uses a PostgreSQL 16 mirror and CI uses `postgres:16-alpine`, so both
+  environments cover the same supported major version.
 - `test:architecture` scans API domain/application source for prohibited
   NestJS, Prisma, HTTP and storage imports.
 - `openapi:validate`, generated transport types and `test:contract` keep the
   foundation health transport shape checked against the contract.
 - `test:e2e` starts production builds in a browser, checks both `fa-IR` RTL
   roots and mixed-direction identifiers, then checks correlation propagation
-  on API liveness.
+  on API liveness. It also writes six reviewable production screenshots to
+  `output/playwright/milestone-1/` at desktop, tablet and mobile acceptance
+  viewports.

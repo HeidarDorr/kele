@@ -85,6 +85,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@kele/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@kele/config':
         specifier: workspace:*
         version: link:../../packages/config

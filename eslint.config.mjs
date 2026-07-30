@@ -30,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/**/test/**/*.ts'],
+    files: ['apps/**/test/**/*.ts', 'e2e/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',

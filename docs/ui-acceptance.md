@@ -138,3 +138,18 @@ Every page includes:
 - complete UI flows for listing, search, cart, checkout, account, Journal and
   administration;
 - legal and operational copy.
+
+## Milestone 1 shell evidence
+
+Milestone 1 supplies only static storefront and administration shells, not a
+data-backed customer or operational workflow. Reviewable production-build
+captures are maintained in `output/playwright/milestone-1/` for desktop
+(1440 × 900), tablet (768 × 1024), and mobile (390 × 844).
+
+Loading, empty, error, unavailable, disabled, and success states are therefore
+not applicable to the static M1 shell: it neither fetches domain data nor
+accepts a user command. Artificially rendering those states here would create
+fake behavior. The M1 smoke evidence instead proves the meaningful shell
+conditions (successful static render, `fa-IR`, RTL, mixed-direction identifiers
+and responsive viewport rendering). The state matrix becomes mandatory as soon
+as Milestone 2 introduces the first catalog/admin data flow.
