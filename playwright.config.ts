@@ -1,8 +1,5 @@
 import { defineConfig } from '@playwright/test';
-
-const apiPort = process.env.E2E_API_PORT ?? '3001';
-const storefrontPort = process.env.E2E_STOREFRONT_PORT ?? '3000';
-const administrationPort = process.env.E2E_ADMIN_PORT ?? '3002';
+import { e2eUrls } from './e2e/ports.mts';
 
 export default defineConfig({
   testDir: './e2e',
@@ -10,25 +7,25 @@ export default defineConfig({
   forbidOnly: true,
   retries: process.env.CI === 'true' ? 1 : 0,
   use: {
-    baseURL: `http://127.0.0.1:${storefrontPort}`,
+    baseURL: e2eUrls.storefront,
     trace: 'retain-on-failure',
   },
   webServer: [
     {
       command: 'node scripts/start-e2e.mjs api',
-      url: `http://127.0.0.1:${apiPort}/api/v1/health/live`,
+      url: `${e2eUrls.api}/health/live`,
       reuseExistingServer: process.env.CI !== 'true',
       timeout: 30_000,
     },
     {
       command: 'node scripts/start-e2e.mjs storefront',
-      url: `http://127.0.0.1:${storefrontPort}`,
+      url: e2eUrls.storefront,
       reuseExistingServer: process.env.CI !== 'true',
       timeout: 30_000,
     },
     {
       command: 'node scripts/start-e2e.mjs admin',
-      url: `http://127.0.0.1:${administrationPort}`,
+      url: e2eUrls.admin,
       reuseExistingServer: process.env.CI !== 'true',
       timeout: 30_000,
     },

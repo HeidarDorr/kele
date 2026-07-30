@@ -3,18 +3,19 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
+import { e2ePorts } from '../e2e/ports.mts';
 
 const app = process.argv[2];
 const applications = {
-  api: { directory: 'apps/api', defaultPort: '3001' },
-  storefront: { directory: 'apps/storefront', defaultPort: '3000' },
-  admin: { directory: 'apps/admin', defaultPort: '3002' },
+  api: { directory: 'apps/api', port: e2ePorts.api },
+  storefront: { directory: 'apps/storefront', port: e2ePorts.storefront },
+  admin: { directory: 'apps/admin', port: e2ePorts.admin },
 };
 
 if (!(app in applications)) throw new Error('Choose api, storefront, or admin for the E2E server.');
 
 const selected = applications[app];
-const port = process.env[`E2E_${app.toUpperCase()}_PORT`] ?? selected.defaultPort;
+const port = selected.port.toString();
 const applicationDirectory = path.resolve(selected.directory);
 const entry =
   app === 'api'

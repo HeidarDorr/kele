@@ -15,11 +15,11 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.{ts,mts,tsx}'],
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.config.ts', 'apps/api/vitest.integration.config.ts', 'e2e/*.ts'],
+          allowDefaultProject: ['*.config.ts', 'apps/api/vitest.integration.config.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },

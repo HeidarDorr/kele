@@ -41,7 +41,9 @@ If another local service owns one of the E2E defaults (API `3001`, storefront
 `3000`, administration `3002`), use the test-only `E2E_API_PORT`,
 `E2E_STOREFRONT_PORT`, and/or `E2E_ADMIN_PORT` overrides. They affect only the
 isolated production-build harness; for example,
-`$env:E2E_STOREFRONT_PORT='3100'; corepack pnpm@11.18.0 test:e2e`.
+`$env:E2E_STOREFRONT_PORT='3100'; corepack pnpm@11.18.0 test:e2e`. Each value
+is validated before the harness starts and must be an integer from `1` through
+`65535`.
 
 `test:integration` migrates a real PostgreSQL 16 database and never substitutes
 SQLite or a mock. Local Compose uses the configured PostgreSQL 16 mirror; CI
