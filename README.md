@@ -36,6 +36,7 @@ dependencies. They require evidence and an ADR.
 
 ## Repository state
 
-The current specification package is ready for Milestone 1. The first complete
-business implementation target remains the product-to-order vertical slice
-described in [`docs/roadmap.md`](docs/roadmap.md).
+The current specification package is ready for Milestone 1. The sequential
+version-1 plan is defined in [`docs/roadmap.md`](docs/roadmap.md), and the
+copy-ready monitor and implementation prompts are maintained in
+[`docs/execution/v1-milestone-playbook.md`](docs/execution/v1-milestone-playbook.md).

@@ -1,127 +1,213 @@
 # Delivery roadmap
 
-Version: 0.1  
+Version: 0.2
+
 Status: Proposed execution plan
 
-Each milestone must produce a reviewable, tested increment. Dates and staffing
-are intentionally absent until team capacity is known.
+Last reviewed: 2026-07-30
+
+Each milestone must produce a reviewable, tested increment. Milestones are
+executed sequentially. Dates and staffing are intentionally absent until
+capacity is known.
+
+The copy-ready operating prompts and model recommendations are maintained in
+`execution/v1-milestone-playbook.md`.
 
 ## Milestone 0 — specification hardening
+
+Status: Complete
 
 Deliverables:
 
 - canonical document index and normalized Markdown;
 - accepted stack and domain ADRs;
-- open-question register;
+- resolved product questions and a remaining production/design register;
 - baseline OpenAPI and data model;
 - security, testing, deployment, design and Definition of Done;
-- Git/agent operating contract.
+- Git and agent operating contract.
 
 Exit:
 
-- no undocumented contradiction blocks the first vertical slice;
-- product owner approves blocking assumptions for Milestone 1.
+- no undocumented contradiction blocks the first implementation slice;
+- remaining provider and design decisions have explicit gates.
 
 ## Milestone 1 — workspace and engineering foundation
 
-Suggested issues:
+Deliverables:
 
-1. Scaffold TypeScript workspace and pin runtime/package manager.
-2. Create NestJS API, Next.js storefront and Next.js admin.
-3. Add PostgreSQL/MinIO development environment.
-4. Enforce strict TypeScript, lint, formatting and architecture boundaries.
-5. Add CI, test harness, OpenAPI validation and secret scanning.
-6. Add configuration validation, structured logging and correlation IDs.
-7. Implement health checks and development seed framework.
-8. Configure Persian (`fa-IR`) and RTL application foundations.
+1. Scaffold the TypeScript workspace and pin the runtime and package manager.
+2. Create the NestJS API, Next.js storefront and Next.js administration app.
+3. Add PostgreSQL and MinIO development services.
+4. Enforce strict TypeScript, formatting, linting and architecture boundaries.
+5. Add CI, test harnesses, OpenAPI validation and dependency/secret scanning.
+6. Add validated configuration, structured logging and correlation IDs.
+7. Implement health checks and a development seed framework.
+8. Configure Persian (`fa-IR`) and RTL foundations.
 9. Implement provider-neutral Fake Payment and Fake SMS adapters.
 
-Exit: clean clone can start, test and build all applications reproducibly.
+Exit: a clean clone can start, test and build all applications reproducibly.
 
 ## Milestone 2 — catalog vertical slice
 
-Suggested issues:
+Deliverables:
 
-1. Product, ColorVariant, SKU, Media and Category persistence.
-2. Publication validators mapped to CAT/PUB rules.
-3. Price and inventory ledgers.
-4. Admin create/edit/publish product workflow.
-5. Public catalog and product-detail API.
-6. Storefront homepage shell, product card and PDP based on references.
-7. Responsive images, SEO metadata and accessibility evidence.
+1. Implement Product, ColorVariant, SKU, Media and Category persistence.
+2. Implement publication validators mapped to CAT/PUB rules.
+3. Implement price and inventory ledgers.
+4. Implement the administration create/edit/publish product workflow.
+5. Implement public catalog, category and product-detail APIs.
+6. Implement the storefront shell, category listing and product detail page
+   using the visual references.
+7. Add responsive images, metadata, structured data and accessibility evidence.
 
-Exit: admin publishes a product that appears correctly in the storefront.
+Exit: an administrator can publish a valid product and a customer can discover
+and view it correctly on all required viewports.
 
-## Milestone 3 — identity and cart
+## Milestone 3 — identity, customer and cart
 
-Suggested issues:
+Deliverables:
 
-1. OTP challenge/session security with fake provider.
-2. Customer profile and address ownership.
-3. Anonymous and authenticated carts.
-4. Deterministic Cart merge on login with inventory caps, notices and
-   Outfit Revision review states.
-5. Current price/availability revalidation.
-6. Cart UI and failure states.
+1. Implement OTP challenge/session security with the fake provider.
+2. Implement customer profile and address ownership.
+3. Implement anonymous and authenticated carts.
+4. Implement deterministic guest-cart merge with inventory caps, notices,
+   unavailable lines and Outfit Revision review states.
+5. Revalidate current price and availability.
+6. Implement sign-in, account, address, cart drawer/page and failure states.
 
-Exit: a customer can browse, authenticate and maintain a valid cart.
+Exit: a customer can browse anonymously, authenticate and retain a valid cart
+without bypassing ownership or checkout-blocking rules.
 
-## Milestone 4 — checkout, inventory reservation and payment
+## Milestone 4 — checkout, reservation, payment and order creation
 
-Suggested issues:
+Deliverables:
 
-1. CheckoutSession quote and shipping contracts.
-2. Versioned shipping settings for Iran Post, Tipax and Tehran Local Courier.
-3. Tehran eligibility validation for Local Courier.
-4. Configurable free-shipping threshold evaluated against Order Subtotal.
-5. Transactional SKU reservation.
-6. Database-backed reservation expiry job.
-7. Payment provider abstraction and fake adapter.
-8. Verified/idempotent callback.
-9. Atomic paid Order creation, address/shipping snapshot and stock deduction.
-10. Concurrency, replay and reconciliation tests.
-11. Checkout/payment result UI.
+1. Implement CheckoutSession quote and shipping contracts.
+2. Implement versioned shipping settings for Iran Post, Tipax and Tehran Local
+   Courier.
+3. Implement Tehran eligibility and configurable free-shipping threshold rules.
+4. Implement transactional SKU reservations and expiry.
+5. Implement the database-backed idempotent expiry job.
+6. Implement payment abstraction and the fake adapter.
+7. Implement authenticated, verified, replay-safe payment callbacks.
+8. Implement atomic paid Order creation, immutable address/shipping snapshots
+   and stock deduction.
+9. Implement checkout and payment-result UI.
+10. Add concurrency, replay, reconciliation and failure-recovery tests.
 
-Exit: the complete product-to-paid-order vertical slice passes adversarial tests.
+Exit: the product-to-paid-order path passes adversarial concurrency,
+idempotency and authorization tests.
 
 ## Milestone 5 — Outfit
 
-Suggested issues:
+Deliverables:
 
-1. Versioned Outfit composition.
-2. Explicit size-to-component mapping.
-3. Derived availability and price.
-4. Admin publish validation.
-5. Storefront Outfit listing/PDP.
-6. Atomic component reservations and immutable order snapshots.
+1. Implement immutable, versioned Outfit composition.
+2. Implement explicit Outfit-size to component-SKU mappings.
+3. Derive Outfit price and availability.
+4. Implement administration authoring, validation and publication.
+5. Implement Outfit listing and product-detail experiences.
+6. Implement atomic component reservations and immutable order snapshots.
+7. Integrate Outfit lines with cart merge, checkout and order history.
 
-## Milestone 6 — operations and fulfillment
+Exit: a published Outfit can be discovered, selected, purchased and audited
+without storing synthetic Outfit inventory.
 
-- order administration and fulfillment state machine;
-- shipping tracking;
-- cancellation, return and refund workflows;
-- 24-hour return-request eligibility and condition declarations;
-- Instagram inventory actions;
-- audit/event explorer;
-- price and inventory bulk operations.
+## Milestone 6 — operations, fulfillment and returns
 
-## Milestone 7 — editorial platform
+Deliverables:
 
-- homepage section management;
-- media reference safety;
-- Journal editor, preview, publish and SEO;
-- categories and occasion discovery;
-- site settings with audit.
+1. Implement order administration and the fulfillment state machine.
+2. Implement shipping tracking.
+3. Implement cancellation, return and refund workflows.
+4. Enforce the 24-hour return-request window and condition declarations.
+5. Implement Instagram inventory actions.
+6. Implement audit/event exploration.
+7. Implement safe price and inventory bulk operations.
+8. Implement customer order history, order detail and return-request UI.
 
-## Milestone 8 — launch hardening
+Exit: operations staff can fulfill and service an order with immutable history,
+authorization controls and auditable transitions.
 
-- complete UI coverage and approved copy/assets;
-- provider integrations and sandbox certification;
-- load, security, accessibility and visual regression testing;
-- observability dashboards and alerts;
-- migration rehearsal, backup restore and rollback rehearsal;
-- privacy/legal/returns/shipping approval;
-- staging business acceptance and launch checklist.
+## Milestone 7 — editorial platform and site settings
+
+Deliverables:
+
+1. Implement homepage section management and preview.
+2. Implement media reference safety.
+3. Implement Journal authoring, preview, publishing and SEO.
+4. Implement category and occasion discovery content.
+5. Implement versioned site settings with audit.
+6. Implement the corresponding storefront experiences.
+
+Exit: approved editorial content can be previewed, published, discovered and
+rolled forward safely without code changes.
+
+## Milestone 8 — storefront experience and visual fidelity
+
+Deliverables:
+
+1. Complete all version-1 storefront routes and cross-route navigation.
+2. Apply one coherent KELE design system to all prior vertical slices.
+3. Match the supplied references and approved extrapolations at desktop,
+   tablet and mobile viewports.
+4. Complete loading, empty, error, disabled, unavailable and success states.
+5. Complete keyboard, focus, contrast, reduced-motion and mixed-direction
+   behavior.
+6. Establish repeatable screenshot and visual-regression evidence.
+7. Close approved DES-001 through DES-005 inputs or record explicit launch
+   waivers for unresolved items.
+
+Exit: the full customer journey is visually coherent, responsive, accessible
+and approved against objective UI acceptance evidence.
+
+## Milestone 9 — production integrations and operational hardening
+
+Deliverables:
+
+1. Integrate the approved payment provider behind the existing adapter.
+2. Integrate the approved SMS provider behind the existing adapter.
+3. Integrate the approved object storage/CDN and error-monitoring providers.
+4. Complete provider sandbox certification and reconciliation behavior.
+5. Complete performance, load, security and abuse testing.
+6. Complete production observability, alerts, backup/restore and runbooks.
+7. Complete migration and rollback rehearsals.
+
+Exit: production dependencies are replaceable, verified in their sandbox or
+staging environments and covered by operational recovery procedures.
+
+## Milestone 10 — release candidate, UAT and launch
+
+Deliverables:
+
+1. Freeze the release-candidate scope and produce the requirements coverage
+   report.
+2. Import or prepare approved content and product data.
+3. Obtain explicit approval for legal, privacy, pricing, shipping and returns
+   copy.
+4. Run full regression, accessibility, visual and security gates.
+5. Run staging business acceptance and resolve release-blocking findings.
+6. Produce the launch, rollback and post-launch verification checklist.
+7. Tag the releasable version.
+8. Deploy only after explicit production approval.
+
+Exit: the accepted release candidate is traceable, recoverable and either
+deployed with explicit approval or ready for an authorized operator to deploy.
+
+## Sequential execution gate
+
+Before starting Milestone N:
+
+1. Milestone N-1 is reviewed against `definition-of-done.md`.
+2. Its branch is merged into the current local `main`.
+3. `main` is clean and all baseline checks pass.
+4. Any new blocking question is resolved or explicitly limits only an
+   independent feature.
+5. The monitor records a `GO`, `CONDITIONAL GO` or `NO-GO` decision.
+
+Do not run milestone implementation chats concurrently in the same working
+tree. A milestone may use tightly scoped subagents only when its active prompt
+explicitly permits them and their file ownership cannot overlap.
 
 ## Scope control
 
