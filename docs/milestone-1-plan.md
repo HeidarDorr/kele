@@ -1,7 +1,7 @@
 # Milestone 1 implementation plan
 
-Status: Complete — verified on 2026-07-30  
-Branch: `feat/m01-engineering-foundation`  
+Status: Complete — verified on 2026-07-30
+Branch: `feat/m01-engineering-foundation`
 Baseline: `main` at `e03d3cf242b393e131a376c3ae17b862b59076ba`
 
 ## Scope and traceability
