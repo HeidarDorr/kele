@@ -1045,7 +1045,6 @@ paths:
                   enum:
                     - production
                     - instagram_sale
-                    - customer_return
                     - manual_correction
                     - damaged_goods
                 quantity:

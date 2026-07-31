@@ -4,7 +4,6 @@
 :root {
   color: var(--kele-ink);
   background: #f1ebe3;
-  font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
   font-synthesis: none;
 }
 
@@ -20,6 +19,7 @@ body {
   margin: 0;
   min-block-size: 100vh;
   background: #f1ebe3;
+  font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
 }
 
 a {
@@ -89,7 +89,7 @@ button:disabled {
   flex-direction: column;
   gap: 0.25rem;
   margin-block-end: 3.5rem;
-  font-family: Georgia, serif;
+  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
   font-size: 2rem;
   line-height: 1;
   letter-spacing: 0.16em;

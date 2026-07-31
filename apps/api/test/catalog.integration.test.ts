@@ -169,14 +169,26 @@ describe('پایداری و انتشار کاتالوگ روی PostgreSQL', () =
   });
 
   it('حقایق قیمت را نگه می‌دارد و فقط projection جاری را عوض می‌کند', async () => {
+    const previousProjection = await prisma.currentSkuPrice.findUniqueOrThrow({
+      where: { skuId },
+    });
+    const previousFact = await prisma.priceRecord.findUniqueOrThrow({
+      where: { id: previousProjection.priceRecordId },
+    });
     const before = await prisma.priceRecord.count({ where: { skuId } });
     await repository.createPrice(skuId, 41_200_000, 'اصلاح قیمت آزمون', actor);
     const after = await prisma.priceRecord.count({ where: { skuId } });
     const current = await prisma.currentSkuPrice.findUniqueOrThrow({
       where: { skuId },
     });
+    const unchangedPreviousFact = await prisma.priceRecord.findUniqueOrThrow({
+      where: { id: previousFact.id },
+    });
 
     expect(after).toBe(before + 1);
+    expect(unchangedPreviousFact).toEqual(previousFact);
+    expect(unchangedPreviousFact.validTo).toBeNull();
+    expect(current.priceRecordId).not.toBe(previousFact.id);
     expect(current.amountRial).toBe(41_200_000n);
   });
 

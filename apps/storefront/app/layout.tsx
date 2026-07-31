@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fa-IR" dir="rtl">
-      <body className={`${peyda.variable} ${elize.variable}`}>{children}</body>
+      <body className={`${peyda.className} ${peyda.variable} ${elize.variable}`}>{children}</body>
     </html>
   );
 }

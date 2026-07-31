@@ -2,10 +2,7 @@ import type { InventoryActionInput, InventoryValue } from './catalog.types.js';
 
 export class InventoryInvariantError extends Error {}
 
-const increasesPhysical = new Set<InventoryActionInput['action']>([
-  'production',
-  'customer_return',
-]);
+const increasesPhysical = new Set<InventoryActionInput['action']>(['production']);
 
 export function applyInventoryDelta(
   current: InventoryValue,

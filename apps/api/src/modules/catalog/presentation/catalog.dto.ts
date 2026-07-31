@@ -333,14 +333,7 @@ export class AdminPriceDto {
 }
 
 export class InventoryActionDto {
-  @IsIn([
-    'production',
-    'sale',
-    'customer_return',
-    'manual_correction',
-    'damaged_goods',
-    'instagram_sale',
-  ])
+  @IsIn(['production', 'sale', 'manual_correction', 'damaged_goods', 'instagram_sale'])
   action!: InventoryActionInput['action'];
 
   @Type(() => Number)

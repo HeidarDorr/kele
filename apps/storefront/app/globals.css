@@ -5,7 +5,6 @@
   color-scheme: light;
   color: var(--kele-ink);
   background: var(--kele-canvas);
-  font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
   font-synthesis: none;
   --header-block: 7rem;
 }
@@ -23,6 +22,7 @@ body {
   margin: 0;
   background: var(--kele-canvas);
   color: var(--kele-ink);
+  font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
 }
 
 body,

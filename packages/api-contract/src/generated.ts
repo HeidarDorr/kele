@@ -2271,12 +2271,7 @@ export interface operations {
       content: {
         'application/json': {
           /** @enum {string} */
-          action:
-            | 'production'
-            | 'instagram_sale'
-            | 'customer_return'
-            | 'manual_correction'
-            | 'damaged_goods';
+          action: 'production' | 'instagram_sale' | 'manual_correction' | 'damaged_goods';
           quantity: number;
           reason: string;
         };

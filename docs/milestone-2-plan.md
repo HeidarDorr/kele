@@ -43,7 +43,9 @@ and demonstrate one complete vertical slice.
    ColorVariant owns ordered color-specific Media assignments. SKU owns its
    immutable globally unique code and normalized size.
 3. Price changes append immutable `PriceRecord` facts in integer IRR while a
-   current-price projection is available per SKU.
+   current-price projection is available per SKU. Appending a price must leave
+   every field of every preceding fact unchanged; validity is resolved by the
+   projection, not by closing or rewriting the preceding record.
 4. Inventory changes append immutable `InventoryMovement` facts and update the
    current projection transactionally. Physical and reserved quantities stay
    non-negative, reserved quantity never exceeds physical quantity, and
@@ -69,72 +71,84 @@ and demonstrate one complete vertical slice.
     Inventory Admin can perform allowed inventory actions but cannot change
     commercial catalog data. Anonymous and insufficiently privileged requests
     fail closed.
-11. Preview uses a protected administration operation and never makes a draft
+11. The generic inventory-action endpoint does not accept `customer_return`.
+    Return stock restoration remains reachable only through the Order/Return
+    workflow planned for Milestone 6, so a direct request cannot create an
+    inventory movement or change the current projection (INV-011).
+12. Preview uses a protected administration operation and never makes a draft
     discoverable through a public endpoint.
 
 ### Public discovery
 
-12. Public category discovery returns published Categories in configured
+13. Public category discovery returns published Categories in configured
     display order and only cards backed by published Product, ColorVariant, and
     SKU data.
-13. Catalog cards may represent a selected ColorVariant but retain Product
+14. Catalog cards may represent a selected ColorVariant but retain Product
     identity. They include useful responsive Media metadata, color
     availability, a current price, and derived availability.
-14. Version 1 search uses PostgreSQL over approved Product, ColorVariant, SKU,
+15. Version 1 search uses PostgreSQL over approved Product, ColorVariant, SKU,
     and Category fields with documented Persian normalization, deterministic
     ordering, category filtering, and safe bounded input.
-15. Product detail selects a valid published ColorVariant, returns its ordered
+16. Product detail selects a valid published ColorVariant, returns its ordered
     gallery and SKUs, exposes zero-stock SKUs as unavailable, and never exposes
     draft or archived children.
-16. Public money values remain integer IRR in transport contracts. The
+17. Public money values remain integer IRR in transport contracts. The
     storefront uses one exact, tested IRR-to-toman formatter.
 
 ### Administration experience
 
-17. The administration application provides an explicit create/edit flow for
+18. The administration application provides an explicit create/edit flow for
     Category, Product identity, variants, Media, SKUs, price, and inventory.
-18. Validation can be run before publication and renders all actionable
+19. Validation can be run before publication and renders all actionable
     failures without discarding entered data.
-19. Preview clearly identifies a non-public draft. Publish has a distinct
+20. Preview clearly identifies a non-public draft. Publish has a distinct
     success state and refreshes the authoritative persisted result.
-20. Forms have visible labels, inline errors, disabled and submitting states,
+21. Forms have visible labels, inline errors, disabled and submitting states,
     keyboard operation, useful focus treatment, and mixed-direction isolation
     for SKU and slug values.
 
 ### Storefront and visual acceptance
 
-21. Public pages produce useful server-rendered HTML with `lang="fa-IR"` and
+22. Public pages produce useful server-rendered HTML with `lang="fa-IR"` and
     `dir="rtl"`, semantic landmarks, one H1, useful link names, and logical CSS
     properties.
-22. The storefront shell, category listing, search result, and product detail
+23. The storefront shell, category listing, search result, and product detail
     follow the supplied references as visual direction: editorial image-led
     hierarchy, generous spacing, thin dividers, near-flat surfaces, restrained
     interaction, and no default component-library appearance.
-23. Product Media reserves aspect ratio, supplies responsive `sizes`, preserves
+24. Product Media reserves aspect ratio, supplies responsive `sizes`, preserves
     focal points through `object-position`, includes useful Persian alt text,
     and renders a stable error fallback.
-24. Category and product pages provide SEO title, description, canonical URL,
+25. Category and product pages provide SEO title, description, canonical URL,
     Open Graph data, and valid Product/BreadcrumbList structured data where
     applicable.
-25. Loading, empty, error, partial-data, unavailable, disabled, and success
+26. Loading, empty, error, partial-data, unavailable, disabled, and success
     states are implemented and reviewable without inventing cart behavior.
-26. Keyboard focus, minimum practical 44 px targets, reduced motion, contrast,
+27. Keyboard focus, minimum practical 44 px targets, reduced motion, contrast,
     RTL reading order, and mixed Persian/Latin identifiers pass browser
     acceptance.
-27. Deterministic screenshots are captured at 390 x 844, 768 x 1024,
-    1280 x 800, and 1440 x 900 under `output/playwright/milestone-2/`.
+28. Deterministic screenshots are captured from seeded fixtures at 390 x 844,
+    768 x 1024, 1280 x 800, and 1440 x 900 under
+    `output/playwright/milestone-2/`. The random publish-path fixture is removed
+    before visual capture, and two consecutive E2E runs leave this directory
+    byte-for-byte unchanged.
+29. Product and preview images decode successfully in both applications and
+    the E2E server log contains no Next image-validity warning.
 
 ### Temporary fonts and scope exclusions
 
-28. The supplied Elize webfont is used provisionally for storefront display
+30. The supplied Elize webfont is used provisionally for storefront display
     headings and the text stand-in for the future logo. Peyda is used
     provisionally for Persian UI and body text.
-29. Only production webfont files required by the applications are moved into
+31. Only production webfont files required by the applications are moved into
     application assets. Duplicate desktop, legacy WOFF, and unused weight files
     from the supplied top-level folder are removed as part of that move.
-30. Documentation continues to identify fonts and logo as provisional design
+32. Documentation continues to identify fonts and logo as provisional design
     inputs. No font choice is recorded as an accepted or frozen brand decision.
-31. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
+33. Browser acceptance verifies that computed body/control typography uses the
+    provisional Peyda face while storefront display headings and the typed
+    wordmark use provisional Elize.
+34. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
     speculative filters, and customer-facing shipping or return claims are not
     implemented.
 
@@ -149,8 +163,12 @@ and demonstrate one complete vertical slice.
 - Product or child status combinations would expose an invalid aggregate.
 - Price is zero, negative, non-integer, outside safe transport range, or not
   IRR.
+- A price append changes `validTo`, actor, reason, amount, timestamp, identity,
+  or any other field on a preceding `PriceRecord` fact.
 - Inventory action is zero, lacks a reason, is not authorized, would make a
   quantity negative, or reuses an idempotency key with different input.
+- A direct inventory-action request attempts `customer_return`, even from an
+  otherwise authorized administration session.
 - Media format, dimensions, alt text, focal point, or reference is invalid.
 - Referenced Media is requested for deletion.
 - Preview token or administration authorization is missing or invalid.
@@ -164,6 +182,9 @@ and demonstrate one complete vertical slice.
 - A repeated publish or inventory command is replayed.
 - Storefront copy overflows, clips, loses bidi isolation, or creates horizontal
   scrolling at an acceptance viewport.
+- A random publish-path fixture is visible in an administration baseline, an
+  E2E run changes versioned evidence, an image fails to decode, or body text
+  falls back instead of loading Peyda.
 
 ## Verification evidence
 
@@ -188,8 +209,8 @@ adds the first catalog persistence version:
 - SKU-scoped immutable PriceRecord and InventoryMovement facts with
   CurrentSkuPrice and Inventory projections;
 - immutable BusinessEvent facts and replay-safe CommandReceipt records;
-- uniqueness, quantity, focal-point, validity-window and one-current-price
-  constraints;
+- uniqueness, quantity, focal-point and validity-window constraints plus the
+  unique `CurrentSkuPrice` projection;
 - a PostgreSQL `simple`-configuration GIN index over normalized catalog search
   text.
 
@@ -199,6 +220,16 @@ selected disposable database: remove the migration's tables/types in reverse
 foreign-key order, then remove the migration record. Production rollback is
 forward-only: archive/hide the new routes and deploy a compensating migration;
 do not drop immutable price, inventory or event facts.
+
+Forward migration
+`apps/api/prisma/migrations/20260731193000_append_only_price_facts/migration.sql`
+removes the partial `validTo IS NULL` uniqueness index from immutable
+`PriceRecord` facts. It does not update or delete any fact. The unique
+`CurrentSkuPrice.skuId` projection remains the sole current-price selector.
+Rollback may recreate the index only if existing rows first satisfy it; because
+that would require rewriting immutable history, production rollback is instead
+the forward deployment of the preceding application version while retaining
+the append-only schema.
 
 `STOREFRONT_ORIGIN` is documented for the administration preview proxy when
 media contracts contain same-origin URI references. Production media may use

@@ -169,6 +169,9 @@ the supplied homepage and product-detail references:
   wordmark stand-in; this is not approval of either the font or a final logo;
 - Peyda is loaded locally for body, control and administration text; it also
   remains a provisional, non-frozen choice;
+- browser acceptance checks computed body/control families for Peyda and the
+  display/wordmark family for Elize, rather than relying on CSS declarations
+  alone;
 - desktop product detail uses a large focal-point-aware gallery beside product
   information; mobile places the gallery first and keeps thumbnails reachable;
 - unavailable sizes remain visible and disabled so stock state is clear without
@@ -192,6 +195,12 @@ Production-build evidence is stored in
 - loading, empty and error catalog states;
 - independent Playwright CLI captures for gallery interaction and mobile
   composition.
+
+The random aggregate created by the publish-path E2E test is deleted before
+visual capture. Versioned screenshots therefore contain only deterministic seed
+data. Browser checks also require every product/preview image to finish decoding
+with a positive natural width; the acceptance run must emit no Next
+image-validity warning.
 
 Generated linen-suit images are internal prototype assets used only to make
 layout, crop, focal-point and responsive acceptance objective. They do not

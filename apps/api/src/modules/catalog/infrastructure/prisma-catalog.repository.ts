@@ -88,7 +88,6 @@ const toPrismaGroup: Record<AdminMediaInput['group'], PrismaMediaGroup> = {
 const toPrismaInventoryAction: Record<InventoryActionInput['action'], PrismaInventoryAction> = {
   production: PrismaInventoryAction.PRODUCTION,
   sale: PrismaInventoryAction.SALE,
-  customer_return: PrismaInventoryAction.CUSTOMER_RETURN,
   manual_correction: PrismaInventoryAction.MANUAL_CORRECTION,
   damaged_goods: PrismaInventoryAction.DAMAGED_GOODS,
   instagram_sale: PrismaInventoryAction.INSTAGRAM_SALE,
@@ -1250,12 +1249,6 @@ export class PrismaCatalogRepository implements CatalogRepository {
     }
     const now = new Date();
     const previous = await transaction.currentSkuPrice.findUnique({ where: { skuId } });
-    if (previous !== null) {
-      await transaction.priceRecord.update({
-        where: { id: previous.priceRecordId },
-        data: { validTo: now },
-      });
-    }
     const record = await transaction.priceRecord.create({
       data: {
         skuId,

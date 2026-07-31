@@ -81,7 +81,10 @@ display size label, `status`, timestamps.
 ### PriceRecord
 
 Append-only fields: `id`, `skuId`, `amountRial`, `validFrom`, optional
-`validTo`, actor, reason. At most one active price per SKU.
+`validTo`, actor, reason. A fact is never closed or otherwise rewritten after
+insertion. `CurrentSkuPrice` is the single authoritative current projection per
+SKU and points to the latest applicable fact; `validTo` is only populated when
+it is known at insertion time.
 
 ### Inventory
 
