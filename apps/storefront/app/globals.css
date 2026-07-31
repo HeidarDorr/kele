@@ -18,11 +18,16 @@ html {
 }
 
 body {
+  --font-display: var(--font-elize);
   min-block-size: 100dvh;
   margin: 0;
   background: var(--kele-canvas);
   color: var(--kele-ink);
   font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
+}
+
+body[data-typography='markazi'] {
+  --font-display: var(--font-markazi);
 }
 
 body,
@@ -56,11 +61,32 @@ img {
 }
 
 h1,
-h2,
+h2 {
+  font-family: var(--font-display), var(--font-peyda), Georgia, serif;
+  font-weight: 400;
+}
+
 .wordmark,
 .footer-wordmark {
   font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
   font-weight: 400;
+}
+
+.brand-wordmark-fa {
+  display: none;
+}
+
+body[data-typography='markazi'] .brand-wordmark-latin {
+  display: none;
+}
+
+body[data-typography='markazi'] .brand-wordmark-fa {
+  display: inline;
+}
+
+body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
+  direction: rtl;
+  letter-spacing: 0;
 }
 
 .shell {
@@ -329,7 +355,7 @@ h2,
 }
 
 .category-links span {
-  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
+  font-family: var(--font-display), var(--font-peyda), Georgia, serif;
   font-size: 1.65rem;
 }
 
@@ -438,7 +464,7 @@ h2,
 .state-panel h2,
 .state-panel h3 {
   margin: 0;
-  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
+  font-family: var(--font-display), var(--font-peyda), Georgia, serif;
   font-size: 1.8rem;
   font-weight: 400;
 }

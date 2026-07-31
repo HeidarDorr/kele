@@ -27,6 +27,14 @@ const valid = {
 };
 
 describe('environment configuration', () => {
+  it('defaults typography to Elize and accepts the Markazi review variant', () => {
+    expect(parseEnvironment(valid).KELE_TYPOGRAPHY).toBe('elize');
+    expect(parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'markazi' }).KELE_TYPOGRAPHY).toBe(
+      'markazi',
+    );
+    expect(() => parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'other' })).toThrow();
+  });
+
   it('[PAY-001][SMS-001] rejects fake providers in production', () => {
     expect(() => parseEnvironment({ ...valid, NODE_ENV: 'production' })).toThrow(
       'The fake payment provider is forbidden in production.',

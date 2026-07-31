@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { resolveTypographyVariant } from '@kele/design-system/typography';
 import './globals.css';
 
 const peyda = localFont({
@@ -22,9 +23,16 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const typographyVariant = resolveTypographyVariant(process.env.KELE_TYPOGRAPHY);
+
   return (
     <html lang="fa-IR" dir="rtl">
-      <body className={`${peyda.className} ${peyda.variable} ${elize.variable}`}>{children}</body>
+      <body
+        className={`${peyda.className} ${peyda.variable} ${elize.variable}`}
+        data-typography={typographyVariant}
+      >
+        {children}
+      </body>
     </html>
   );
 }

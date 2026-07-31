@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { BrandWordmark } from './brand-wordmark';
 
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="shell footer-grid">
         <div>
-          <div className="footer-wordmark">KELE</div>
+          <BrandWordmark className="footer-wordmark" />
           <p>پوشاک رسمی پسرانه با نگاهی آرام به فرم و جزئیات.</p>
         </div>
         <nav aria-label="راهنمای فروشگاه">

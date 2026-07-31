@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandWordmark } from './brand-wordmark';
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +9,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </a>
       <aside className="admin-sidebar">
         <Link className="admin-brand" href="/">
-          KELE
+          <BrandWordmark />
           <small>مدیریت کاتالوگ</small>
         </Link>
         <nav aria-label="فهرست مدیریت">

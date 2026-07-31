@@ -4,7 +4,12 @@ import { expect, test } from '@playwright/test';
 import { cleanupCatalogTestData } from '../apps/api/test/support/catalog-cleanup.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
 
-const evidenceDirectory = resolve('output/playwright/milestone-2');
+const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
+const evidenceDirectory = resolve(
+  typographyVariant === 'markazi'
+    ? 'output/playwright/milestone-2-markazi'
+    : 'output/playwright/milestone-2',
+);
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
@@ -223,13 +228,25 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
     await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
     await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('bdi[dir="ltr"]', { hasText: 'KELE-LINEN-BEIGE-7Y' })).toBeAttached();
     await expect(page.getByRole('button', { name: /۷ سال KELE-LINEN-BEIGE-7Y/ })).toBeDisabled();
     await page.waitForFunction('document.fonts.status === "loaded"');
     await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
     await expect(page.locator('button').first()).toHaveCSS('font-family', /peyda/i);
-    await expect(page.locator('h1')).toHaveCSS('font-family', /elize/i);
+    await expect(page.locator('h1')).toHaveCSS(
+      'font-family',
+      typographyVariant === 'markazi' ? /markazi/i : /elize/i,
+    );
+    await expect(page.locator('.wordmark')).toHaveCSS('font-family', /elize/i);
+    if (typographyVariant === 'markazi') {
+      await expect(page.locator('.wordmark .brand-wordmark-fa')).toBeVisible();
+      await expect(page.locator('.wordmark .brand-wordmark-latin')).toBeHidden();
+    } else {
+      await expect(page.locator('.wordmark .brand-wordmark-fa')).toBeHidden();
+      await expect(page.locator('.wordmark .brand-wordmark-latin')).toBeVisible();
+    }
     await expect
       .poll(() =>
         page
@@ -292,9 +309,17 @@ test('administration is responsive and exposes validation and inventory states',
     await page.goto(e2eUrls.admin);
     await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { name: 'محصولات' })).toBeVisible();
     await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
     await expect(page.locator('.admin-brand')).toHaveCSS('font-family', /elize/i);
+    if (typographyVariant === 'markazi') {
+      await expect(page.locator('.admin-brand .brand-wordmark-fa')).toBeVisible();
+      await expect(page.locator('.admin-brand .brand-wordmark-latin')).toBeHidden();
+    } else {
+      await expect(page.locator('.admin-brand .brand-wordmark-fa')).toBeHidden();
+      await expect(page.locator('.admin-brand .brand-wordmark-latin')).toBeVisible();
+    }
     expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
       true,
     );

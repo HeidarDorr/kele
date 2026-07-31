@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./tokens.css": "./src/tokens.css",
-    "./money": "./src/money.ts"
+    "./money": "./src/money.ts",
+    "./typography": "./src/typography.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

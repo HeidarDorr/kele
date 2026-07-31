@@ -38,7 +38,7 @@ employer-returned decision numbering.
 | ID | Missing input | Impact | Proposed action |
 |---|---|---|---|
 | DES-001 | Final logo files in SVG | Header/footer sharpness and spacing | Request primary, monochrome and favicon variants; the current typed wordmark and `K` favicon are explicitly provisional. |
-| DES-002 | Final approved and licensed Latin/Persian fonts | Brand fidelity, RTL shaping and performance | Elize and Peyda files are integrated for Milestone 2 review only; confirm licensing and approve or replace them before production. |
+| DES-002 | Final approved and licensed Latin/Persian fonts | Brand fidelity, RTL shaping and performance | Elize and Peyda plus the SIL-OFL Markazi Text alternative are integrated for review only; compare the two display variants, confirm Elize licensing and approve or replace the pairing before production. |
 | DES-003 | Product photography and usage rights | Storefront cannot ship with generated product imagery | Prepare an asset inventory with ownership and focal points. |
 | DES-004 | Designs for PLP, search, cart, checkout, account, Journal and CMS | References cover only homepage and desktop PDP | Approve low-fidelity flows before high-fidelity implementation. |
 | DES-005 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise remain subjective | Use provisional breakpoints in `design-system.md`, then approve. |

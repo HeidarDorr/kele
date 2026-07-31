@@ -16,6 +16,7 @@ export const environmentSchema = z
     SMS_PROVIDER: z.literal('fake'),
     API_BASE_URL: z.url(),
     NEXT_PUBLIC_API_BASE_URL: z.url(),
+    KELE_TYPOGRAPHY: z.enum(['elize', 'markazi']).default('elize'),
     ADMIN_SUPER_SESSION_TOKEN: z
       .string()
       .min(32)

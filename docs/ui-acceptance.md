@@ -165,13 +165,17 @@ the supplied homepage and product-detail references:
   reference structure and is not an alternate theme. Automatic dark-mode
   palette changes remain unapproved and are not inferred;
 - editorial, image-led compositions rather than generic cards;
-- Elize is loaded locally for storefront display headings and the typed `KELE`
-  wordmark stand-in; this is not approval of either the font or a final logo;
+- Elize is loaded locally for storefront display headings in the default
+  review variant and the typed wordmark stand-in; this is not approval of
+  either the font or a final logo;
+- the optional Markazi review variant uses Markazi Text for display headings
+  while retaining Peyda for text; in that variant the visible wordmark is
+  Persian `کله` rendered with Elize in the storefront and administration app;
 - Peyda is loaded locally for body, control and administration text; it also
   remains a provisional, non-frozen choice;
-- browser acceptance checks computed body/control families for Peyda and the
-  display/wordmark family for Elize, rather than relying on CSS declarations
-  alone;
+- browser acceptance checks computed body/control families for Peyda, the
+  selected display family for headings, and Elize for the wordmark rather than
+  relying on CSS declarations alone;
 - desktop product detail uses a large focal-point-aware gallery beside product
   information; mobile places the gallery first and keeps thumbnails reachable;
 - unavailable sizes remain visible and disabled so stock state is clear without
@@ -201,6 +205,11 @@ visual capture. Versioned screenshots therefore contain only deterministic seed
 data. Browser checks also require every product/preview image to finish decoding
 with a positive natural width; the acceptance run must emit no Next
 image-validity warning.
+
+The Elize evidence remains under `output/playwright/milestone-2/`. Equivalent
+E2E Markazi-review captures are written to
+`output/playwright/milestone-2-markazi/`, preventing one typography variant
+from overwriting the other.
 
 Generated linen-suit images are internal prototype assets used only to make
 layout, crop, focal-point and responsive acceptance objective. They do not

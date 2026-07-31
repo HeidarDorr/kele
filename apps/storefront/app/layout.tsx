@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { resolveTypographyVariant } from '@kele/design-system/typography';
 import './globals.css';
 
 const peyda = localFont({
@@ -16,6 +17,13 @@ const elize = localFont({
   weight: '400',
 });
 
+const markazi = localFont({
+  src: '../../../packages/design-system/assets/fonts/provisional/MarkaziText-Arabic-VF.woff2',
+  variable: '--font-markazi',
+  display: 'swap',
+  weight: '400 700',
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.STOREFRONT_BASE_URL ?? 'http://localhost:3000'),
   title: {
@@ -26,9 +34,16 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const typographyVariant = resolveTypographyVariant(process.env.KELE_TYPOGRAPHY);
+
   return (
     <html lang="fa-IR" dir="rtl">
-      <body className={`${peyda.className} ${peyda.variable} ${elize.variable}`}>{children}</body>
+      <body
+        className={`${peyda.className} ${peyda.variable} ${elize.variable} ${markazi.variable}`}
+        data-typography={typographyVariant}
+      >
+        {children}
+      </body>
     </html>
   );
 }

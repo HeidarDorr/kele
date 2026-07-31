@@ -1,5 +1,7 @@
 'use client';
 
+import { BrandWordmark } from '../components/brand-wordmark';
+
 export default function StorefrontError({
   reset,
 }: {
@@ -8,7 +10,7 @@ export default function StorefrontError({
 }) {
   return (
     <main className="shell standalone-state" role="alert">
-      <p className="wordmark">KELE</p>
+      <BrandWordmark className="wordmark" />
       <h1>نمایش صفحه ممکن نشد</h1>
       <p>اتصال کاتالوگ را بررسی کنید و دوباره تلاش کنید.</p>
       <button className="button-primary" type="button" onClick={reset}>

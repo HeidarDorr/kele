@@ -36,6 +36,24 @@ Avoid:
 
 Final values must be sampled/approved with source design files.
 
+## Provisional typography review variants
+
+Typography remains an open design input. Two reviewable storefront display
+variants are available without changing layout, spacing, body type or business
+behavior:
+
+- `KELE_TYPOGRAPHY=elize` is the default. Elize renders display headings and
+  the temporary Latin `KELE` wordmark.
+- `KELE_TYPOGRAPHY=markazi` uses Markazi Text for Persian display headings.
+  Peyda remains the body/control face, while the temporary wordmark becomes
+  Persian `کله` but deliberately continues to render in Elize.
+
+Only the Arabic variable WOFF2 subset of Markazi Text is bundled, together with
+its SIL Open Font License. Because `next/font` creates build assets, change the
+setting before building or running development and restart both Next
+applications after changing it. Neither variant, spelling treatment nor font
+pairing is a frozen brand decision.
+
 ```css
 :root {
   --kele-canvas: #f5efe7;

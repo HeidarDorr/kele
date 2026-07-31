@@ -96,6 +96,23 @@ button:disabled {
   text-decoration: none;
 }
 
+.brand-wordmark-fa {
+  display: none;
+}
+
+body[data-typography='markazi'] .brand-wordmark-latin {
+  display: none;
+}
+
+body[data-typography='markazi'] .brand-wordmark-fa {
+  display: inline;
+}
+
+body[data-typography='markazi'] .admin-brand {
+  direction: rtl;
+  letter-spacing: 0;
+}
+
 .admin-brand small {
   color: #bfb1a4;
   font-family: var(--font-peyda), Tahoma, sans-serif;

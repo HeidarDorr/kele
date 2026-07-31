@@ -137,9 +137,11 @@ and demonstrate one complete vertical slice.
 
 ### Temporary fonts and scope exclusions
 
-30. The supplied Elize webfont is used provisionally for storefront display
-    headings and the text stand-in for the future logo. Peyda is used
-    provisionally for Persian UI and body text.
+30. The supplied Elize webfont is the default provisional storefront display
+    face and the text stand-in for the future logo. A configuration-only
+    Markazi review variant replaces display headings while its Persian `کله`
+    wordmark continues to use Elize. Peyda is used provisionally for Persian UI
+    and body text in both variants.
 31. Only production webfont files required by the applications are moved into
     application assets. Duplicate desktop, legacy WOFF, and unused weight files
     from the supplied top-level folder are removed as part of that move.
@@ -185,6 +187,10 @@ and demonstrate one complete vertical slice.
 - A random publish-path fixture is visible in an administration baseline, an
   E2E run changes versioned evidence, an image fails to decode, or body text
   falls back instead of loading Peyda.
+- A typography variant changes Peyda body text, lets Markazi replace the Elize
+  wordmark, shows the wrong Latin/Persian wordmark, fails to fall back safely to
+  Elize for an unsupported value, or overwrites the other variant's visual
+  evidence.
 
 ## Verification evidence
 
@@ -243,11 +249,14 @@ affected hierarchy behavior.
 
 ## Asset provenance and provisional typography
 
-The only retained supplied font files are
-`packages/design-system/assets/fonts/provisional/Elize-Regular.woff2` and
-`PeydaWebVF.woff2`. The source folder's unused desktop, legacy and duplicate
-files were moved to the Windows Recycle Bin and remain recoverable. These files
-are implementation inputs, not frozen brand decisions.
+The retained supplied font files are
+`packages/design-system/assets/fonts/provisional/Elize-Regular.woff2`,
+`PeydaWebVF.woff2`, and the Arabic variable subset
+`MarkaziText-Arabic-VF.woff2`. The Markazi SIL Open Font License is retained as
+`LICENSE-MarkaziText.txt`; its external source folder remains untouched. The
+earlier Elize/Peyda source folder's unused desktop, legacy and duplicate files
+were moved to the Windows Recycle Bin and remain recoverable. These files are
+implementation inputs, not frozen brand decisions.
 
 The three linen-suit WebP assets under
 `apps/storefront/public/media/catalog/` were generated as internal,

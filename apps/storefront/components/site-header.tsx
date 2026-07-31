@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Category } from '../lib/catalog-api';
+import { BrandWordmark } from './brand-wordmark';
 
 export function SiteHeader({ categories }: { categories: Category[] }) {
   return (
@@ -29,8 +30,9 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
               </Link>
             ))}
           </nav>
-          <Link className="wordmark" href="/" aria-label="صفحهٔ اصلی KELE">
-            KELE
+          <Link className="wordmark" href="/">
+            <span className="visually-hidden">صفحهٔ اصلی</span>
+            <BrandWordmark />
           </Link>
           <form className="header-search" action="/catalog" role="search">
             <label className="visually-hidden" htmlFor="header-search">
