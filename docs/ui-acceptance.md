@@ -154,3 +154,45 @@ fake behavior. The M1 smoke evidence instead proves the meaningful shell
 conditions (successful static render, `fa-IR`, RTL, mixed-direction identifiers
 and responsive viewport rendering). The state matrix becomes mandatory as soon
 as Milestone 2 introduces the first catalog/admin data flow.
+
+## Milestone 2 catalog vertical slice
+
+Milestone 2 establishes one coherent, provisional KELE storefront language for
+the supplied homepage and product-detail references:
+
+- warm ivory canvas, dark brown ink, thin dividers and near-flat surfaces;
+- the page theme is deliberately light; the dark footer follows the approved
+  reference structure and is not an alternate theme. Automatic dark-mode
+  palette changes remain unapproved and are not inferred;
+- editorial, image-led compositions rather than generic cards;
+- Elize is loaded locally for storefront display headings and the typed `KELE`
+  wordmark stand-in; this is not approval of either the font or a final logo;
+- Peyda is loaded locally for body, control and administration text; it also
+  remains a provisional, non-frozen choice;
+- desktop product detail uses a large focal-point-aware gallery beside product
+  information; mobile places the gallery first and keeps thumbnails reachable;
+- unavailable sizes remain visible and disabled so stock state is clear without
+  implying cart behavior;
+- the administration surface favors explicit labeled forms, validation output
+  and ledger actions over compressed dashboard cards;
+- cart, checkout, Wishlist, Newsletter, language switching and unapproved
+  shipping/returns copy are deliberately absent.
+
+The catalog page supports deterministic visual-review states at
+`?state=loading`, `?state=empty`, and `?state=error`. These parameters only
+select presentation fixtures for browser acceptance; they do not alter domain
+or API behavior.
+
+Production-build evidence is stored in
+`output/playwright/milestone-2/`. It includes:
+
+- storefront home with visible keyboard focus;
+- product detail at 390 × 844, 768 × 1024, 1280 × 800 and 1440 × 900;
+- administration at the same four representative viewports;
+- loading, empty and error catalog states;
+- independent Playwright CLI captures for gallery interaction and mobile
+  composition.
+
+Generated linen-suit images are internal prototype assets used only to make
+layout, crop, focal-point and responsive acceptance objective. They do not
+resolve DES-003 and must be replaced before production use.

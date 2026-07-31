@@ -90,3 +90,19 @@ merged into the business specification:
 | HRD-001 | API application ports and automated forbidden-import scan | `scripts/check-architecture.mjs`, `apps/api/test/architecture.unit.test.ts` | Implemented |
 | HRD-008 | Validated startup configuration and fail-closed fake-provider policy | `packages/config/src/index.ts`, `packages/config/src/index.test.ts` | Implemented |
 | HRD-009 | Contract-first health, dependency readiness and correlation propagation | `docs/openapi.yaml`, `e2e/foundation.spec.ts` | Implemented |
+
+## Milestone 2 catalog vertical-slice evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+|---|---|---|---|
+| CAT-001–CAT-004, CAT-006 | Product → ColorVariant → SKU aggregate, category joins, variant-backed cards and parameterized PostgreSQL search | `apps/api/src/modules/catalog/`, `apps/api/test/catalog.integration.test.ts` | Implemented for Product catalog slice |
+| CAT-005 | Category relationships cascade without deleting Product records; no destructive Category route is exposed | migration constraints, architecture/contract review | Structural safeguard implemented |
+| PUB-001–PUB-004, PUB-006–PUB-008, PUB-010–PUB-011 | lifecycle persistence, rule-ID publication validator, transactional publish/archive and immediate no-cache reads | `catalog.unit.test.ts`, `catalog.integration.test.ts`, `e2e/foundation.spec.ts` | Implemented for Product/ColorVariant/SKU/Category |
+| PUB-005 | No Product/SKU delete operation is exposed in this slice; Order-reference enforcement remains with the later Order module | OpenAPI absence/scope review | Safe exclusion; cross-module rule pending |
+| PRC-001, PRC-004, PRC-009–PRC-012 | append-only SKU price records, current projection, integer IRR contracts and centralized toman presentation | `catalog.integration.test.ts`, `packages/design-system/src/money.test.ts` | Implemented for individual SKU pricing; bulk pricing excluded |
+| INV-001–INV-002, INV-008–INV-010, INV-012–INV-014, INV-017 | SKU inventory projection, append-only movements, authorized predefined actions, idempotency and derived availability | `catalog.unit.test.ts`, `catalog.integration.test.ts` | Implemented for non-checkout catalog actions |
+| CMS-002–CMS-005, CMS-008–CMS-010, CMS-013, CMS-017–CMS-018 | fail-closed role guard, media/category/product forms, protected preview, event recording and restrained administration UI | unit, integration and Playwright evidence above | Implemented for this slice |
+| CMS-001, CMS-014, CMS-016 | catalog domain navigation/listing exists; cross-domain admin navigation, full filtering and media deletion/usage reporting remain later work | scope review | Partial; not claimed complete |
+| EVT-001–EVT-007 | immutable catalog, price and inventory business-event facts with actor/entity/correlation metadata | migration + `catalog.integration.test.ts` | Implemented for commands present in this slice |
+| LOC-001–LOC-002, SCP-001–SCP-002 | Persian RTL semantic pages, bidi isolation and absence of Wishlist/Newsletter surfaces | `e2e/foundation.spec.ts`, Playwright screenshots | Implemented |
+| HRD-001, HRD-002, HRD-007 | Prisma confined to infrastructure, tested IRR/toman boundary and useful server-rendered public HTML | architecture test, type-check/build, Playwright | Implemented |
