@@ -2,7 +2,15 @@
   "name": "@kele/design-system",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "exports": {
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./money": "./src/money.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2"
   }
 }

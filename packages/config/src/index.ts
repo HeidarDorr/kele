@@ -16,6 +16,18 @@ export const environmentSchema = z
     SMS_PROVIDER: z.literal('fake'),
     API_BASE_URL: z.url(),
     NEXT_PUBLIC_API_BASE_URL: z.url(),
+    ADMIN_SUPER_SESSION_TOKEN: z
+      .string()
+      .min(32)
+      .default('development-super-admin-session-token-00000001'),
+    ADMIN_INVENTORY_SESSION_TOKEN: z
+      .string()
+      .min(32)
+      .default('development-inventory-admin-session-token-00001'),
+    ADMIN_INSTAGRAM_SESSION_TOKEN: z
+      .string()
+      .min(32)
+      .default('development-instagram-admin-session-token-00001'),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === 'production') {
@@ -31,6 +43,17 @@ export const environmentSchema = z
         code: 'custom',
         path: ['SMS_PROVIDER'],
         message: 'The fake SMS provider is forbidden in production.',
+      });
+    }
+
+    if (
+      value.NODE_ENV === 'production' &&
+      value.ADMIN_SUPER_SESSION_TOKEN.startsWith('development-')
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['ADMIN_SUPER_SESSION_TOKEN'],
+        message: 'Development administrator sessions are forbidden in production.',
       });
     }
   });

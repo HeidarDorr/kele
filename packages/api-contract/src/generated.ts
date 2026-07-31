@@ -72,6 +72,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/catalog/categories': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List published catalog categories in display order. */
+    get: operations['listCatalogCategories'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/catalog/categories/{slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get one published category and its published product cards. */
+    get: operations['getCatalogCategory'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/catalog/outfits': {
     parameters: {
       query?: never;
@@ -369,6 +403,42 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/categories': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List categories for catalog administration. */
+    get: operations['listAdminCategories'];
+    put?: never;
+    /** Create a draft or published catalog category. */
+    post: operations['createAdminCategory'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/media': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List reusable media metadata. */
+    get: operations['listAdminMedia'];
+    put?: never;
+    /** Register reusable media metadata. */
+    post: operations['createAdminMedia'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/products': {
     parameters: {
       query?: never;
@@ -411,6 +481,57 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['publishAdminProduct'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/products/{productId}/validation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Validate a product aggregate for publication. */
+    get: operations['validateAdminProduct'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/products/{productId}/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Preview a product without exposing it publicly. */
+    get: operations['previewAdminProduct'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/skus/{skuId}/prices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Append a SKU price and update its current projection. */
+    post: operations['createAdminSkuPrice'];
     delete?: never;
     options?: never;
     head?: never;
@@ -548,7 +669,10 @@ export interface components {
     /** @enum {string} */
     PublicationStatus: 'draft' | 'published' | 'archived';
     Money: {
-      /** @description Authoritative integer amount in Iranian rials. */
+      /**
+       * Format: int64
+       * @description Authoritative integer amount in Iranian rials.
+       */
       amountRial: number;
       /** @constant */
       currency: 'IRR';
@@ -557,6 +681,21 @@ export interface components {
     };
     /** @description Normalized Iranian mobile number in E.164 form. */
     Mobile: string;
+    CategorySummary: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      name: string;
+      description: string | null;
+      displayOrder: number;
+    };
+    CategoryPage: {
+      items: components['schemas']['CategorySummary'][];
+    };
+    CategoryDetail: components['schemas']['CategorySummary'] & {
+      products: components['schemas']['ProductCardPage'];
+      seo: components['schemas']['Seo'];
+    };
     Media: {
       /** Format: uuid */
       id: string;
@@ -565,7 +704,7 @@ export interface components {
       width: number;
       height: number;
       alt: string;
-      focalPoint?: {
+      focalPoint: {
         x: number;
         y: number;
       };
@@ -576,8 +715,9 @@ export interface components {
       slug: string;
       name: string;
       selectedVariant: components['schemas']['ColorVariantSummary'];
-      availableColors?: components['schemas']['ColorSwatch'][];
+      availableColors: components['schemas']['ColorSwatch'][];
       price: components['schemas']['Money'];
+      available: boolean;
     };
     ProductCardPage: {
       items: components['schemas']['ProductCard'][];
@@ -618,7 +758,10 @@ export interface components {
         gallery: components['schemas']['Media'][];
         skus: components['schemas']['SkuOption'][];
       }[];
-      seo?: components['schemas']['Seo'];
+      categories: components['schemas']['CategorySummary'][];
+      seo: components['schemas']['Seo'];
+      /** Format: date-time */
+      updatedAt: string;
     };
     OutfitCard: {
       /** Format: uuid */
@@ -858,25 +1001,96 @@ export interface components {
       availableQuantity: number;
       version: number;
     };
+    AdminCategoryInput: {
+      name: string;
+      slug: string;
+      description?: string | null;
+      displayOrder: number;
+      status?: components['schemas']['PublicationStatus'];
+    };
+    AdminCategory: components['schemas']['AdminCategoryInput'] & {
+      /** Format: uuid */
+      id: string;
+      status: components['schemas']['PublicationStatus'];
+      version: number;
+    };
+    AdminMediaInput: {
+      /** Format: uri-reference */
+      url: string;
+      width: number;
+      height: number;
+      alt: string;
+      /** @enum {string} */
+      format: 'jpg' | 'png' | 'webp';
+      /** @enum {string} */
+      group: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+      focalPoint?: {
+        x: number;
+        y: number;
+      };
+    };
+    AdminSkuInput: {
+      /** Format: uuid */
+      id?: string;
+      code: string;
+      normalizedSize: string;
+      displaySize: string;
+      /** Format: int64 */
+      amountRial: number;
+      physicalQuantity: number;
+      status?: components['schemas']['PublicationStatus'];
+    };
+    AdminColorVariantInput: {
+      /** Format: uuid */
+      id?: string;
+      name: string;
+      normalizedColorCode: string;
+      hex?: string | null;
+      displayOrder: number;
+      mediaIds: string[];
+      /** Format: uuid */
+      featuredMediaId: string;
+      skus: components['schemas']['AdminSkuInput'][];
+      status?: components['schemas']['PublicationStatus'];
+    };
     AdminProductInput: {
       name: string;
       slug: string;
       description: string;
-      categoryIds?: string[];
+      categoryIds: string[];
       seo?: components['schemas']['Seo'];
+      details?: string[];
+      variants: components['schemas']['AdminColorVariantInput'][];
     };
     AdminProduct: components['schemas']['AdminProductInput'] & {
       /** Format: uuid */
       id: string;
       status: components['schemas']['PublicationStatus'];
       version: number;
-      variants: {
-        [key: string]: unknown;
-      }[];
+      variants: components['schemas']['AdminColorVariantInput'][];
     };
     AdminProductPage: {
       items: components['schemas']['AdminProduct'][];
       page: components['schemas']['CursorPage'];
+    };
+    AdminPriceInput: {
+      /** Format: int64 */
+      amountRial: number;
+      reason: string;
+    };
+    PublicationValidationError: {
+      path: string;
+      ruleId: string;
+      message: string;
+    };
+    PublicationValidation: {
+      valid: boolean;
+      errors: components['schemas']['PublicationValidationError'][];
+    };
+    AdminProductPreview: {
+      /** @constant */
+      preview: true;
+      product: components['schemas']['ProductDetail'];
     };
     Homepage: {
       version: number;
@@ -1042,6 +1256,55 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ProductDetail'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listCatalogCategories: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Published category navigation. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CategoryPage'];
+        };
+      };
+      400: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getCatalogCategory: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+      };
+      header?: never;
+      path: {
+        slug: components['parameters']['Slug'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Published category detail. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CategoryDetail'];
         };
       };
       404: components['responses']['Problem'];
@@ -1641,6 +1904,102 @@ export interface operations {
       default: components['responses']['Problem'];
     };
   };
+  listAdminCategories: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Administrative category list. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCategory'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdminCategory: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminCategoryInput'];
+      };
+    };
+    responses: {
+      /** @description Draft category created. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCategory'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Reusable media assets. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Media'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdminMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminMediaInput'];
+      };
+    };
+    responses: {
+      /** @description Reusable media metadata registered. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Media'];
+        };
+      };
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
   listAdminProducts: {
     parameters: {
       query?: {
@@ -1767,6 +2126,82 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AdminProduct'];
+        };
+      };
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  validateAdminProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        productId: components['parameters']['ProductId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Publication validation result with stable business-rule IDs. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicationValidation'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        productId: components['parameters']['ProductId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Protected storefront-shaped preview of a draft or published product. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminProductPreview'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdminSkuPrice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        skuId: components['parameters']['SkuId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminPriceInput'];
+      };
+    };
+    responses: {
+      /** @description Immutable price fact and updated current projection. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Money'];
         };
       };
       422: components['responses']['Problem'];

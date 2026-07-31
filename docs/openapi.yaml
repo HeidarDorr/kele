@@ -74,6 +74,7 @@ paths:
     get:
       operationId: listCatalogProducts
       tags: [Catalog]
+      security: []
       summary: List published product color variants.
       parameters:
         - $ref: '#/components/parameters/PageCursor'
@@ -106,6 +107,7 @@ paths:
     get:
       operationId: getCatalogProduct
       tags: [Catalog]
+      security: []
       summary: Get a published product by slug.
       parameters:
         - $ref: '#/components/parameters/Slug'
@@ -127,10 +129,51 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /catalog/categories:
+    get:
+      operationId: listCatalogCategories
+      tags: [Catalog]
+      security: []
+      summary: List published catalog categories in display order.
+      responses:
+        '200':
+          description: Published category navigation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryPage'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /catalog/categories/{slug}:
+    get:
+      operationId: getCatalogCategory
+      tags: [Catalog]
+      security: []
+      summary: Get one published category and its published product cards.
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Published category detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /catalog/outfits:
     get:
       operationId: listCatalogOutfits
       tags: [Catalog]
+      security: []
       summary: List published outfits.
       parameters:
         - $ref: '#/components/parameters/PageCursor'
@@ -153,6 +196,7 @@ paths:
     get:
       operationId: getCatalogOutfit
       tags: [Catalog]
+      security: []
       parameters:
         - $ref: '#/components/parameters/Slug'
       responses:
@@ -670,6 +714,94 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /admin/categories:
+    get:
+      operationId: listAdminCategories
+      tags: [Admin Catalog]
+      summary: List categories for catalog administration.
+      security:
+        - SessionCookie: [catalog:read]
+      responses:
+        '200':
+          description: Administrative category list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminCategory'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createAdminCategory
+      tags: [Admin Catalog]
+      summary: Create a draft or published catalog category.
+      security:
+        - SessionCookie: [catalog:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryInput'
+      responses:
+        '201':
+          description: Draft category created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/media:
+    get:
+      operationId: listAdminMedia
+      tags: [Admin Content]
+      summary: List reusable media metadata.
+      security:
+        - SessionCookie: [catalog:read]
+      responses:
+        '200':
+          description: Reusable media assets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Media'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createAdminMedia
+      tags: [Admin Content]
+      summary: Register reusable media metadata.
+      security:
+        - SessionCookie: [catalog:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminMediaInput'
+      responses:
+        '201':
+          description: Reusable media metadata registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /admin/products:
     get:
       operationId: listAdminProducts
@@ -779,6 +911,75 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminProduct'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/products/{productId}/validation:
+    get:
+      operationId: validateAdminProduct
+      tags: [Admin Catalog]
+      summary: Validate a product aggregate for publication.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Publication validation result with stable business-rule IDs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationValidation'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/products/{productId}/preview:
+    get:
+      operationId: previewAdminProduct
+      tags: [Admin Catalog]
+      summary: Preview a product without exposing it publicly.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Protected storefront-shaped preview of a draft or published product.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProductPreview'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/skus/{skuId}/prices:
+    post:
+      operationId: createAdminSkuPrice
+      tags: [Admin Catalog]
+      summary: Append a SKU price and update its current projection.
+      security:
+        - SessionCookie: [pricing:write]
+      parameters:
+        - $ref: '#/components/parameters/SkuId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPriceInput'
+      responses:
+        '201':
+          description: Immutable price fact and updated current projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Money'
         '422':
           $ref: '#/components/responses/Problem'
         default:
@@ -1144,6 +1345,7 @@ components:
       properties:
         amountRial:
           type: integer
+          format: int64
           minimum: 0
           description: Authoritative integer amount in Iranian rials.
         currency:
@@ -1158,9 +1360,49 @@ components:
       description: Normalized Iranian mobile number in E.164 form.
       pattern: "^\\+98[0-9]{10}$"
 
+    CategorySummary:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, description, displayOrder]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, 'null']
+        displayOrder:
+          type: integer
+          minimum: 0
+
+    CategoryPage:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+
+    CategoryDetail:
+      allOf:
+        - $ref: '#/components/schemas/CategorySummary'
+        - type: object
+          required: [products, seo]
+          properties:
+            products:
+              $ref: '#/components/schemas/ProductCardPage'
+            seo:
+              $ref: '#/components/schemas/Seo'
+
     Media:
       type: object
-      required: [id, url, width, height, alt]
+      additionalProperties: false
+      required: [id, url, width, height, alt, focalPoint]
       properties:
         id:
           type: string
@@ -1191,7 +1433,8 @@ components:
 
     ProductCard:
       type: object
-      required: [productId, slug, name, selectedVariant, price]
+      additionalProperties: false
+      required: [productId, slug, name, selectedVariant, availableColors, price, available]
       properties:
         productId:
           type: string
@@ -1208,6 +1451,8 @@ components:
             $ref: '#/components/schemas/ColorSwatch'
         price:
           $ref: '#/components/schemas/Money'
+        available:
+          type: boolean
 
     ProductCardPage:
       type: object
@@ -1276,7 +1521,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/ProductCard'
         - type: object
-          required: [description, variants]
+          required: [description, variants, categories, seo, updatedAt]
           properties:
             description:
               type: string
@@ -1304,8 +1549,15 @@ components:
                     type: array
                     items:
                       $ref: '#/components/schemas/SkuOption'
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/CategorySummary'
             seo:
               $ref: '#/components/schemas/Seo'
+            updatedAt:
+              type: string
+              format: date-time
 
     OutfitCard:
       type: object
@@ -1860,10 +2112,153 @@ components:
           type: integer
           minimum: 0
 
+    AdminCategoryInput:
+      type: object
+      additionalProperties: false
+      required: [name, slug, displayOrder]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 160
+        description:
+          type: [string, 'null']
+          maxLength: 2000
+        displayOrder:
+          type: integer
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/PublicationStatus'
+
+    AdminCategory:
+      allOf:
+        - $ref: '#/components/schemas/AdminCategoryInput'
+        - type: object
+          required: [id, status, version]
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: '#/components/schemas/PublicationStatus'
+            version:
+              type: integer
+              minimum: 0
+
+    AdminMediaInput:
+      type: object
+      additionalProperties: false
+      required: [url, width, height, alt, format, group]
+      properties:
+        url:
+          type: string
+          format: uri-reference
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        alt:
+          type: string
+          minLength: 1
+          maxLength: 500
+        format:
+          type: string
+          enum: [jpg, png, webp]
+        group:
+          type: string
+          enum: [product_images, outfit_editorial, homepage, journal, shared_assets]
+        focalPoint:
+          type: object
+          additionalProperties: false
+          required: [x, y]
+          properties:
+            x:
+              type: number
+              minimum: 0
+              maximum: 1
+            y:
+              type: number
+              minimum: 0
+              maximum: 1
+
+    AdminSkuInput:
+      type: object
+      additionalProperties: false
+      required: [code, normalizedSize, displaySize, amountRial, physicalQuantity]
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          pattern: '^[A-Z0-9][A-Z0-9_-]{2,63}$'
+        normalizedSize:
+          type: string
+          minLength: 1
+          maxLength: 40
+        displaySize:
+          type: string
+          minLength: 1
+          maxLength: 40
+        amountRial:
+          type: integer
+          format: int64
+          minimum: 1
+        physicalQuantity:
+          type: integer
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/PublicationStatus'
+
+    AdminColorVariantInput:
+      type: object
+      additionalProperties: false
+      required: [name, normalizedColorCode, displayOrder, mediaIds, featuredMediaId, skus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        normalizedColorCode:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9_-]{0,39}$'
+        hex:
+          type: [string, 'null']
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        displayOrder:
+          type: integer
+          minimum: 0
+        mediaIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        featuredMediaId:
+          type: string
+          format: uuid
+        skus:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AdminSkuInput'
+        status:
+          $ref: '#/components/schemas/PublicationStatus'
+
     AdminProductInput:
       type: object
       additionalProperties: false
-      required: [name, slug, description]
+      required: [name, slug, description, categoryIds, variants]
       properties:
         name:
           type: string
@@ -1884,6 +2279,16 @@ components:
             format: uuid
         seo:
           $ref: '#/components/schemas/Seo'
+        details:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 500
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminColorVariantInput'
 
     AdminProduct:
       allOf:
@@ -1902,8 +2307,7 @@ components:
             variants:
               type: array
               items:
-                type: object
-                additionalProperties: true
+                $ref: '#/components/schemas/AdminColorVariantInput'
 
     AdminProductPage:
       type: object
@@ -1915,6 +2319,56 @@ components:
             $ref: '#/components/schemas/AdminProduct'
         page:
           $ref: '#/components/schemas/CursorPage'
+
+    AdminPriceInput:
+      type: object
+      additionalProperties: false
+      required: [amountRial, reason]
+      properties:
+        amountRial:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+
+    PublicationValidationError:
+      type: object
+      additionalProperties: false
+      required: [path, ruleId, message]
+      properties:
+        path:
+          type: string
+        ruleId:
+          type: string
+          pattern: '^(CAT|PUB)-[0-9]{3}$'
+        message:
+          type: string
+
+    PublicationValidation:
+      type: object
+      additionalProperties: false
+      required: [valid, errors]
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicationValidationError'
+
+    AdminProductPreview:
+      type: object
+      additionalProperties: false
+      required: [preview, product]
+      properties:
+        preview:
+          type: boolean
+          const: true
+        product:
+          $ref: '#/components/schemas/ProductDetail'
 
     Homepage:
       type: object

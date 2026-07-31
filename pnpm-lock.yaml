@@ -57,6 +57,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@kele/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@kele/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
@@ -91,6 +94,9 @@ importers:
       '@kele/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@kele/design-system':
+        specifier: workspace:*
+        version: link:../../packages/design-system
       '@nestjs/common':
         specifier: 11.1.28
         version: 11.1.28(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
@@ -131,6 +137,9 @@ importers:
 
   apps/storefront:
     dependencies:
+      '@kele/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@kele/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
@@ -165,7 +174,11 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
-  packages/design-system: {}
+  packages/design-system:
+    devDependencies:
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
 
   packages/testing: {}
 

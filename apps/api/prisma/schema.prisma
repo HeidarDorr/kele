@@ -11,3 +11,250 @@ model SeedLedger {
   key       String   @id
   appliedAt DateTime @default(now()) @db.Timestamptz(6)
 }
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+
+  @@map("publication_status")
+}
+
+enum MediaFormat {
+  JPG
+  PNG
+  WEBP
+
+  @@map("media_format")
+}
+
+enum MediaGroup {
+  PRODUCT_IMAGES
+  OUTFIT_EDITORIAL
+  HOMEPAGE
+  JOURNAL
+  SHARED_ASSETS
+
+  @@map("media_group")
+}
+
+enum InventoryAction {
+  PRODUCTION
+  SALE
+  CUSTOMER_RETURN
+  MANUAL_CORRECTION
+  DAMAGED_GOODS
+  INSTAGRAM_SALE
+
+  @@map("inventory_action")
+}
+
+model Category {
+  id           String            @id @default(uuid()) @db.Uuid
+  name         String            @db.VarChar(120)
+  slug         String            @unique @db.VarChar(160)
+  description  String?           @db.Text
+  status       PublicationStatus @default(DRAFT)
+  displayOrder Int               @default(0) @map("display_order")
+  version      Int               @default(1)
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt   DateTime?         @map("archived_at") @db.Timestamptz(6)
+  products     ProductCategory[]
+
+  @@index([status, displayOrder])
+  @@map("categories")
+}
+
+model Product {
+  id             String            @id @default(uuid()) @db.Uuid
+  name           String            @db.VarChar(180)
+  slug           String            @unique @db.VarChar(160)
+  description    String            @db.Text
+  details        String[]          @default([])
+  status         PublicationStatus @default(DRAFT)
+  seoTitle       String?           @map("seo_title") @db.VarChar(180)
+  seoDescription String?           @map("seo_description") @db.VarChar(320)
+  searchText     String            @default("") @map("search_text") @db.Text
+  version        Int               @default(1)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  publishedAt    DateTime?         @map("published_at") @db.Timestamptz(6)
+  archivedAt     DateTime?         @map("archived_at") @db.Timestamptz(6)
+  categories     ProductCategory[]
+  variants       ColorVariant[]
+
+  @@index([status, createdAt])
+  @@index([status, slug])
+  @@map("products")
+}
+
+model ProductCategory {
+  productId  String   @map("product_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId, productId])
+  @@map("product_categories")
+}
+
+model ColorVariant {
+  id                  String            @id @default(uuid()) @db.Uuid
+  productId           String            @map("product_id") @db.Uuid
+  name                String            @db.VarChar(100)
+  normalizedColorCode String            @map("normalized_color_code") @db.VarChar(40)
+  displayHex          String?           @map("display_hex") @db.VarChar(7)
+  status              PublicationStatus @default(DRAFT)
+  displayOrder        Int               @default(0) @map("display_order")
+  version             Int               @default(1)
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt          DateTime?         @map("archived_at") @db.Timestamptz(6)
+  product             Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  mediaAssignments    MediaAssignment[]
+  skus                Sku[]
+
+  @@unique([productId, normalizedColorCode])
+  @@index([productId, status, displayOrder])
+  @@map("color_variants")
+}
+
+model MediaAsset {
+  id          String            @id @default(uuid()) @db.Uuid
+  url         String            @db.VarChar(500)
+  width       Int
+  height      Int
+  altText     String            @map("alt_text") @db.VarChar(500)
+  focalPointX Float             @default(0.5) @map("focal_point_x")
+  focalPointY Float             @default(0.5) @map("focal_point_y")
+  format      MediaFormat
+  group       MediaGroup
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  archivedAt  DateTime?         @map("archived_at") @db.Timestamptz(6)
+  assignments MediaAssignment[]
+
+  @@index([group, createdAt])
+  @@map("media_assets")
+}
+
+model MediaAssignment {
+  colorVariantId String       @map("color_variant_id") @db.Uuid
+  mediaAssetId   String       @map("media_asset_id") @db.Uuid
+  displayOrder   Int          @default(0) @map("display_order")
+  featured       Boolean      @default(false)
+  colorVariant   ColorVariant @relation(fields: [colorVariantId], references: [id], onDelete: Cascade)
+  mediaAsset     MediaAsset   @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@id([colorVariantId, mediaAssetId])
+  @@index([colorVariantId, displayOrder])
+  @@map("media_assignments")
+}
+
+model Sku {
+  id             String              @id @default(uuid()) @db.Uuid
+  colorVariantId String              @map("color_variant_id") @db.Uuid
+  code           String              @unique @db.VarChar(64)
+  normalizedSize String              @map("normalized_size") @db.VarChar(40)
+  displaySize    String              @map("display_size") @db.VarChar(40)
+  status         PublicationStatus   @default(DRAFT)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt     DateTime?           @map("archived_at") @db.Timestamptz(6)
+  colorVariant   ColorVariant        @relation(fields: [colorVariantId], references: [id], onDelete: Restrict)
+  priceRecords   PriceRecord[]
+  currentPrice   CurrentSkuPrice?
+  inventory      Inventory?
+  movements      InventoryMovement[]
+
+  @@unique([colorVariantId, normalizedSize])
+  @@index([colorVariantId, status])
+  @@map("skus")
+}
+
+model PriceRecord {
+  id         String           @id @default(uuid()) @db.Uuid
+  skuId      String           @map("sku_id") @db.Uuid
+  amountRial BigInt           @map("amount_rial")
+  validFrom  DateTime         @default(now()) @map("valid_from") @db.Timestamptz(6)
+  validTo    DateTime?        @map("valid_to") @db.Timestamptz(6)
+  actorId    String           @map("actor_id") @db.VarChar(120)
+  reason     String           @db.VarChar(500)
+  sku        Sku              @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  projection CurrentSkuPrice?
+
+  @@index([skuId, validFrom])
+  @@map("price_records")
+}
+
+model CurrentSkuPrice {
+  skuId         String      @id @map("sku_id") @db.Uuid
+  priceRecordId String      @unique @map("price_record_id") @db.Uuid
+  amountRial    BigInt      @map("amount_rial")
+  version       Int         @default(1)
+  updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sku           Sku         @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  priceRecord   PriceRecord @relation(fields: [priceRecordId], references: [id], onDelete: Restrict)
+
+  @@map("current_sku_prices")
+}
+
+model Inventory {
+  skuId            String   @id @map("sku_id") @db.Uuid
+  physicalQuantity Int      @default(0) @map("physical_quantity")
+  reservedQuantity Int      @default(0) @map("reserved_quantity")
+  version          Int      @default(1)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sku              Sku      @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  @@index([physicalQuantity, reservedQuantity])
+  @@map("inventory")
+}
+
+model InventoryMovement {
+  id                     String          @id @default(uuid()) @db.Uuid
+  skuId                  String          @map("sku_id") @db.Uuid
+  action                 InventoryAction
+  quantityDelta          Int             @map("quantity_delta")
+  beforePhysicalQuantity Int             @map("before_physical_quantity")
+  afterPhysicalQuantity  Int             @map("after_physical_quantity")
+  beforeReservedQuantity Int             @map("before_reserved_quantity")
+  afterReservedQuantity  Int             @map("after_reserved_quantity")
+  actorId                String          @map("actor_id") @db.VarChar(120)
+  reason                 String          @db.VarChar(500)
+  correlationId          String          @map("correlation_id") @db.Uuid
+  idempotencyKey         String          @unique @map("idempotency_key") @db.VarChar(120)
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  sku                    Sku             @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  @@index([skuId, createdAt])
+  @@map("inventory_movements")
+}
+
+model BusinessEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  type          String   @db.VarChar(120)
+  actorId       String   @map("actor_id") @db.VarChar(120)
+  entityType    String   @map("entity_type") @db.VarChar(80)
+  entityId      String   @map("entity_id") @db.VarChar(120)
+  correlationId String   @map("correlation_id") @db.Uuid
+  payload       Json
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("business_events")
+}
+
+model CommandReceipt {
+  idempotencyKey String   @id @map("idempotency_key") @db.VarChar(120)
+  commandType    String   @map("command_type") @db.VarChar(120)
+  requestHash    String   @map("request_hash") @db.VarChar(64)
+  entityId       String   @map("entity_id") @db.VarChar(120)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([commandType, entityId])
+  @@map("command_receipts")
+}
