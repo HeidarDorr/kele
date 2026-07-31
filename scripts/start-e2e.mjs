@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import process from 'node:process';
-import { e2ePorts } from '../e2e/ports.mts';
+import { e2ePorts, e2eUrls } from '../e2e/ports.mts';
 
 const app = process.argv[2];
 const applications = {
@@ -24,7 +24,14 @@ const entry =
 const argumentsForApp = app === 'api' ? [] : ['start', '--port', port];
 const child = spawn(process.execPath, [entry, ...argumentsForApp], {
   cwd: applicationDirectory,
-  env: { ...process.env, NODE_ENV: app === 'api' ? 'test' : 'production', PORT: port },
+  env: {
+    ...process.env,
+    NODE_ENV: app === 'api' ? 'test' : 'production',
+    PORT: port,
+    API_BASE_URL: e2eUrls.api,
+    NEXT_PUBLIC_API_BASE_URL: e2eUrls.api,
+    STOREFRONT_ORIGIN: e2eUrls.storefront,
+  },
   stdio: 'inherit',
 });
 
