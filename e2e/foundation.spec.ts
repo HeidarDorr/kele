@@ -46,12 +46,28 @@ async function completeOtp(page: Page, mobile: string, code = '111111'): Promise
 async function captureEvidence(
   page: Page,
   path: string,
-  options: { preserveFocus?: boolean } = {},
+  options: { preserveFocus?: boolean; stabilizePage?: boolean } = {},
 ): Promise<void> {
+  if (options.stabilizePage) await page.clock.setFixedTime('2026-08-01T09:00:00.000Z');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.waitForFunction(() => document.fonts.status === 'loaded');
   await page.evaluate(async (captureOptions) => {
     await document.fonts.ready;
+    if (captureOptions.stabilizePage) {
+      let captureStyle = document.querySelector<HTMLStyleElement>('#kele-evidence-stability');
+      if (captureStyle === null) {
+        captureStyle = document.createElement('style');
+        captureStyle.id = 'kele-evidence-stability';
+        captureStyle.textContent = `
+          *, *::before, *::after {
+            animation: none !important;
+            caret-color: transparent !important;
+            transition: none !important;
+          }
+        `;
+        document.head.append(captureStyle);
+      }
+    }
     if (!captureOptions.preserveFocus && document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
@@ -60,6 +76,7 @@ async function captureEvidence(
         skipLink.style.visibility = 'hidden';
       }
     }
+    if (captureOptions.stabilizePage) window.scrollTo(0, 0);
     await new Promise<void>((resolveFrame) => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -68,10 +85,33 @@ async function captureEvidence(
       });
     });
   }, options);
+  if (!options.stabilizePage) {
+    await page.screenshot({ path, fullPage: true, caret: 'hide' });
+    return;
+  }
+
+  await page.mouse.move(0, 0);
+  await page.evaluate(async () => {
+    let previousHeight = -1;
+    let stableFrames = 0;
+    for (let frame = 0; frame < 12; frame += 1) {
+      await new Promise<void>((resolveFrame) => {
+        requestAnimationFrame(() => {
+          resolveFrame();
+        });
+      });
+      const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+      if (height === previousHeight) stableFrames += 1;
+      else stableFrames = 0;
+      if (stableFrames >= 2) return;
+      previousHeight = height;
+    }
+    throw new Error('Evidence layout height did not stabilize before capture.');
+  });
   await page.screenshot({
     path,
-    fullPage: true,
     caret: 'hide',
+    fullPage: true,
   });
 }
 
@@ -482,9 +522,14 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await page.getByLabel('نشانی پیش‌فرض باشد').check();
     await page.getByRole('button', { name: 'ذخیره نشانی' }).click();
     await expect(page.getByText('خیابان ایران، کوچهٔ آزمون، پلاک ۱۲')).toBeVisible();
+    await expect(page.locator('.address-list > li')).toHaveCount(1);
+    await expect(page.getByRole('status')).toHaveText('نشانی ذخیره شد.');
+    await expect(page.getByLabel('نام گیرنده')).toHaveValue('');
+    await expect(page.getByRole('button', { name: 'ذخیره نشانی' })).toBeEnabled();
     await captureEvidence(
       page,
       resolve(milestoneThreeEvidence, 'account-profile-address-desktop.png'),
+      { stabilizePage: true },
     );
 
     const revokedToken = authenticatedCookie?.value;
