@@ -43,6 +43,38 @@ async function completeOtp(page: Page, mobile: string, code = '111111'): Promise
   await expect(page).toHaveURL(/\/account$/);
 }
 
+async function captureEvidence(
+  page: Page,
+  path: string,
+  options: { preserveFocus?: boolean } = {},
+): Promise<void> {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(() => document.fonts.status === 'loaded');
+  await page.evaluate(async (captureOptions) => {
+    await document.fonts.ready;
+    if (!captureOptions.preserveFocus && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    if (!captureOptions.preserveFocus) {
+      for (const skipLink of document.querySelectorAll<HTMLElement>('.skip-link')) {
+        skipLink.style.visibility = 'hidden';
+      }
+    }
+    await new Promise<void>((resolveFrame) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          resolveFrame();
+        });
+      });
+    });
+  }, options);
+  await page.screenshot({
+    path,
+    fullPage: true,
+    caret: 'hide',
+  });
+}
+
 async function cleanupAcceptanceFixture(): Promise<void> {
   await cleanupCatalogTestData({
     ...(acceptanceProductSlug ? { productSlug: acceptanceProductSlug } : {}),
@@ -315,10 +347,7 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
     expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
       true,
     );
-    await page.screenshot({
-      path: resolve(evidenceDirectory, `product-${viewport.name}.png`),
-      fullPage: true,
-    });
+    await captureEvidence(page, resolve(evidenceDirectory, `product-${viewport.name}.png`));
     await page.close();
   }
 
@@ -326,9 +355,8 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
   await desktop.goto(e2eUrls.storefront);
   await desktop.keyboard.press('Tab');
   await expect(desktop.getByRole('link', { name: 'رفتن به محتوای اصلی' })).toBeFocused();
-  await desktop.screenshot({
-    path: resolve(evidenceDirectory, 'storefront-home-desktop.png'),
-    fullPage: true,
+  await captureEvidence(desktop, resolve(evidenceDirectory, 'storefront-home-desktop.png'), {
+    preserveFocus: true,
   });
 
   const statePaths = [
@@ -340,13 +368,10 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
     await desktop.goto(`${e2eUrls.storefront}${state.path}`);
     await expect(
       state.name === 'loading'
-        ? desktop.getByLabel(state.label)
+        ? desktop.getByLabel(state.label).first()
         : desktop.getByRole('heading', { name: state.label }),
     ).toBeVisible();
-    await desktop.screenshot({
-      path: resolve(evidenceDirectory, `catalog-${state.name}-desktop.png`),
-      fullPage: true,
-    });
+    await captureEvidence(desktop, resolve(evidenceDirectory, `catalog-${state.name}-desktop.png`));
   }
   await desktop.close();
 });
@@ -379,10 +404,7 @@ test('administration is responsive and exposes validation and inventory states',
     expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
       true,
     );
-    await page.screenshot({
-      path: resolve(evidenceDirectory, `admin-${viewport.name}.png`),
-      fullPage: true,
-    });
+    await captureEvidence(page, resolve(evidenceDirectory, `admin-${viewport.name}.png`));
     await page.close();
   }
 });
@@ -440,6 +462,8 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await expect(page.getByRole('dialog', { name: 'سبد خرید' })).toBeHidden();
     await page.goto(`${e2eUrls.storefront}/sign-in`);
     await completeOtp(page, mobile);
+    await page.goto(`${e2eUrls.storefront}/account`);
+    await expect(page.getByRole('heading', { name: /سلام،|پروفایل شما/ }).first()).toBeVisible();
     const authenticatedCookie = (await context.cookies()).find(
       (item) => item.name === 'kele_session',
     );
@@ -458,10 +482,10 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await page.getByLabel('نشانی پیش‌فرض باشد').check();
     await page.getByRole('button', { name: 'ذخیره نشانی' }).click();
     await expect(page.getByText('خیابان ایران، کوچهٔ آزمون، پلاک ۱۲')).toBeVisible();
-    await page.screenshot({
-      path: resolve(milestoneThreeEvidence, 'account-profile-address-desktop.png'),
-      fullPage: true,
-    });
+    await captureEvidence(
+      page,
+      resolve(milestoneThreeEvidence, 'account-profile-address-desktop.png'),
+    );
 
     const revokedToken = authenticatedCookie?.value;
     await page.getByRole('button', { name: 'خروج از حساب' }).click();
@@ -485,20 +509,17 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await page.goto(`${e2eUrls.storefront}/cart`);
     await expect(page.getByText('تعداد با موجودی فعلی هماهنگ شد.')).toBeVisible();
     await expect(page.locator('.cart-page-lines select')).toHaveValue('4');
-    await page.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-merge-notice-laptop.png'),
-      fullPage: true,
-    });
+    await captureEvidence(page, resolve(milestoneThreeEvidence, 'cart-merge-notice-laptop.png'));
     for (const viewport of [
       { name: 'mobile', width: 390, height: 844 },
       { name: 'tablet', width: 768, height: 1024 },
       { name: 'desktop', width: 1440, height: 900 },
     ]) {
       await page.setViewportSize(viewport);
-      await page.screenshot({
-        path: resolve(milestoneThreeEvidence, `cart-authenticated-${viewport.name}.png`),
-        fullPage: true,
-      });
+      await captureEvidence(
+        page,
+        resolve(milestoneThreeEvidence, `cart-authenticated-${viewport.name}.png`),
+      );
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
@@ -521,10 +542,7 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     const empty = await emptyContext.newPage();
     await empty.goto(`${e2eUrls.storefront}/cart`);
     await expect(empty.getByText('هنوز چیزی برای نگه‌داشتن انتخاب نکرده‌اید.')).toBeVisible();
-    await empty.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-empty-mobile.png'),
-      fullPage: true,
-    });
+    await captureEvidence(empty, resolve(milestoneThreeEvidence, 'cart-empty-mobile.png'));
     await emptyContext.close();
 
     const errorContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
@@ -538,10 +556,7 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     });
     await errorPage.goto(`${e2eUrls.storefront}/cart`);
     await expect(errorPage.locator('.commerce-page-state.state-error')).toBeVisible();
-    await errorPage.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-error-tablet.png'),
-      fullPage: true,
-    });
+    await captureEvidence(errorPage, resolve(milestoneThreeEvidence, 'cart-error-tablet.png'));
     await errorContext.close();
 
     const loadingContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
@@ -552,10 +567,7 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     });
     await loadingPage.goto(`${e2eUrls.storefront}/cart`);
     await expect(loadingPage.getByText('در حال دریافت سبد…')).toBeVisible();
-    await loadingPage.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-loading-laptop.png'),
-      fullPage: true,
-    });
+    await captureEvidence(loadingPage, resolve(milestoneThreeEvidence, 'cart-loading-laptop.png'));
     await loadingContext.close();
 
     const unavailableContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -568,10 +580,10 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     await unavailable.goto(`${e2eUrls.storefront}/cart`);
     await expect(unavailable.getByText('این انتخاب اکنون ناموجود است.')).toBeVisible();
     await expect(unavailable.getByText(/ادامه خرید تا رفع/)).toBeVisible();
-    await unavailable.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-unavailable-desktop.png'),
-      fullPage: true,
-    });
+    await captureEvidence(
+      unavailable,
+      resolve(milestoneThreeEvidence, 'cart-unavailable-desktop.png'),
+    );
     await setE2EInventory(skuId, 4);
     await unavailableContext.close();
 
@@ -585,10 +597,10 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     await addE2EOutfitReviewLine(reviewCartId);
     await review.goto(`${e2eUrls.storefront}/cart`);
     await expect(review.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
-    await review.screenshot({
-      path: resolve(milestoneThreeEvidence, 'cart-outfit-requires-review.png'),
-      fullPage: true,
-    });
+    await captureEvidence(
+      review,
+      resolve(milestoneThreeEvidence, 'cart-outfit-requires-review.png'),
+    );
     await reviewContext.close();
   } finally {
     await setE2EInventory(skuId, 4);

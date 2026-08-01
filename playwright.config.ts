@@ -8,6 +8,7 @@ export default defineConfig({
   retries: process.env.CI === 'true' ? 1 : 0,
   use: {
     baseURL: e2eUrls.storefront,
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
 });

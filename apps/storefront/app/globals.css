@@ -1675,6 +1675,7 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
   *,
   *::before,
   *::after {
+    animation: none !important;
     transition-duration: 0.01ms !important;
   }
 }
