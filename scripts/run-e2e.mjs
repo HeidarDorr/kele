@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { config as loadEnvironment } from 'dotenv';
 import { readE2EPorts } from '../e2e/ports.mts';
+import { readE2EDatabaseConfiguration } from '../packages/config/src/e2e-database.ts';
 
 const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 loadEnvironment({ path: path.join(workspace, '.env'), override: false });
@@ -22,6 +23,7 @@ const requestedEnvironment = {
   E2E_STOREFRONT_PORT: process.env.E2E_STOREFRONT_PORT ?? '3100',
   E2E_ADMIN_PORT: process.env.E2E_ADMIN_PORT ?? '3102',
 };
+const databaseConfiguration = readE2EDatabaseConfiguration(requestedEnvironment);
 const ports = readE2EPorts(requestedEnvironment);
 const storefrontOrigin = `http://127.0.0.1:${String(ports.storefront)}`;
 const apiBaseUrl = `http://127.0.0.1:${String(ports.api)}/api/v1`;
@@ -33,6 +35,8 @@ const sharedEnvironment = {
   STOREFRONT_ORIGIN: storefrontOrigin,
   API_BASE_URL: apiBaseUrl,
   NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
+  DATABASE_URL: databaseConfiguration.databaseUrl,
+  E2E_DATABASE_URL: databaseConfiguration.databaseUrl,
 };
 const generatedDeclarationPaths = [
   path.join(workspace, 'apps/storefront/next-env.d.ts'),
@@ -89,6 +93,29 @@ async function runNode(entry, argumentsForEntry, environment) {
       );
     });
   });
+}
+
+async function ensureE2EDatabase() {
+  const apiPackage = path.join(workspace, 'apps/api/package.json');
+  const { PrismaClient } = createRequire(apiPackage)('@prisma/client');
+  const maintenanceClient = new PrismaClient({
+    datasources: { db: { url: databaseConfiguration.maintenanceUrl } },
+  });
+
+  try {
+    const databases = await maintenanceClient.$queryRawUnsafe(
+      'SELECT datname FROM pg_database WHERE datname = $1',
+      databaseConfiguration.databaseName,
+    );
+    if (databases.length === 0) {
+      await maintenanceClient.$executeRawUnsafe('CREATE DATABASE "kele_e2e"');
+      console.log('[e2e] Created isolated PostgreSQL database kele_e2e.');
+    } else {
+      console.log('[e2e] Reusing isolated PostgreSQL database kele_e2e.');
+    }
+  } finally {
+    await maintenanceClient.$disconnect();
+  }
 }
 
 function startServer({ entry, argumentsForServer = [], directory, environment }) {
@@ -154,6 +181,7 @@ try {
   await runPnpm(['--filter', '@kele/api', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/storefront', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/admin', 'build'], buildEnvironment);
+  await ensureE2EDatabase();
   await runPnpm(['--filter', '@kele/api', 'prisma:deploy'], {
     ...sharedEnvironment,
     NODE_ENV: 'test',

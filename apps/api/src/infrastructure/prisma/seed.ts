@@ -6,6 +6,7 @@ import {
   PrismaClient,
   PublicationStatus,
 } from '@prisma/client';
+import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
 
 const seedVersion = 'milestone-2-catalog';
 const categoryId = '20000000-0000-4000-8000-000000000001';
@@ -329,9 +330,7 @@ async function assertExactE2EFixture(): Promise<void> {
 
 async function seed(): Promise<void> {
   const resetForE2E = process.env.E2E_DATABASE_RESET === 'true';
-  if (resetForE2E && process.env.NODE_ENV !== 'test') {
-    throw new Error('E2E_DATABASE_RESET is allowed only when NODE_ENV=test.');
-  }
+  if (resetForE2E) assertE2EDatabaseResetEnvironment(process.env);
 
   await prisma.$transaction(async (transaction) => {
     if (resetForE2E) await resetCatalogForE2E(transaction);

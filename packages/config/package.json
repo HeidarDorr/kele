@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./e2e-database": {
+      "types": "./src/e2e-database.ts",
+      "default": "./src/e2e-database.ts"
     }
   },
   "dependencies": {

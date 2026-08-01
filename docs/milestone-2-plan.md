@@ -136,28 +136,33 @@ and demonstrate one complete vertical slice.
     the catalog contains exactly the one fixed Milestone 2 Product, Category,
     ColorVariant, three Media records and three SKUs. Repeated seed or E2E runs
     repair that fixture and never add duplicate Product or Category rows.
-30. Product and preview images decode successfully in both applications and
+30. E2E reset uses the dedicated `E2E_DATABASE_URL` database named exactly
+    `kele_e2e`, which must differ from the normal `DATABASE_URL`. The runner
+    creates that disposable database idempotently when absent, replaces the
+    active `DATABASE_URL` for every migration, seed, server and browser process,
+    and the seed independently rejects any URL/name mismatch before deletion.
+31. Product and preview images decode successfully in both applications and
     the E2E server log contains no Next image-validity warning.
 
 ### Temporary fonts and scope exclusions
 
-31. The supplied Elize webfont is the default provisional storefront display
+32. The supplied Elize webfont is the default provisional storefront display
     face and the text stand-in for the future logo. A configuration-only
     Markazi review variant replaces display headings while its Persian `کله`
     wordmark continues to use Elize. Peyda is used provisionally for Persian UI
     and body text in both variants.
-32. Only production webfont files required by the applications are moved into
+33. Only production webfont files required by the applications are moved into
     application assets. Duplicate desktop, legacy WOFF, and unused weight files
     from the supplied top-level folder are removed as part of that move.
-33. Documentation continues to identify fonts and logo as provisional design
+34. Documentation continues to identify fonts and logo as provisional design
     inputs. No font choice is recorded as an accepted or frozen brand decision.
-34. Browser acceptance verifies that computed body/control typography uses the
+35. Browser acceptance verifies that computed body/control typography uses the
     provisional Peyda face while storefront display headings and the typed
     wordmark use provisional Elize.
-35. Integration testing applies migrations and executes the PostgreSQL suite
+36. Integration testing applies migrations and executes the PostgreSQL suite
     through the public `pnpm test:integration` gate without regenerating or
     replacing the Prisma engine while a local API may hold it open.
-36. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
+37. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
     speculative filters, and customer-facing shipping or return claims are not
     implemented.
 
@@ -198,6 +203,10 @@ and demonstrate one complete vertical slice.
   repeated seed creates another slug; an E2E capture sees any non-fixture
   catalog row; or test preparation can reset data without the explicit test
   environment guard.
+- `E2E_DATABASE_URL` is missing, malformed, names anything other than
+  `kele_e2e`, resolves to the same database as normal `DATABASE_URL`, or the
+  seed sees an active `DATABASE_URL` that is not exactly `E2E_DATABASE_URL`.
+  Every case fails before any catalog reset statement executes.
 - `pnpm test:integration` tries to rewrite a generated Prisma engine at runtime,
   depends on stopping the API manually, or passes only through a direct/bypass
   command instead of the repository gate.

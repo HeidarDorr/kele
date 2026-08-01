@@ -55,9 +55,13 @@ runnable while a local API process holds the generated client open.
 
 `seed` may run repeatedly: its technical `SeedLedger` and fixed catalog rows are
 upserted and reconciled rather than skipped or duplicated. `test:e2e` builds
-against the centralized root `.env`, uses isolated ports by default, enables an
-explicit `NODE_ENV=test` reset guard, clears catalog-only test data, and then
-recreates exactly the documented Milestone 2 fixture before Playwright starts.
+against the centralized root `.env`, uses isolated ports by default, and
+replaces the active database URL with the dedicated `E2E_DATABASE_URL`. The
+runner requires the distinct database name `kele_e2e`, creates it idempotently
+when absent, and the seed independently verifies `NODE_ENV=test` plus exact URL
+equality before clearing catalog-only test data. The normal `DATABASE_URL` is
+therefore never a reset target. The runner then recreates exactly the documented
+Milestone 2 fixture before Playwright starts.
 Its internal `KELE_E2E_BUILD` flag keeps Next artifacts in ignored `.next-e2e`
 directories, and the runner owns and closes each isolated server process tree
 before restoring Next's generated declarations and returning the test result.
@@ -74,6 +78,7 @@ All variables are required and validated by `@kele/config` before API startup.
 | `NODE_ENV`                                             | `development`, `test`, or `production`; production is intentionally rejected until real provider adapters exist. |
 | `PORT`                                                 | API listener port.                                                                                               |
 | `DATABASE_URL`                                         | PostgreSQL connection string.                                                                                    |
+| `E2E_DATABASE_URL`                                     | Dedicated disposable PostgreSQL database; must be distinct and named exactly `kele_e2e`.                         |
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET` | S3-compatible storage target; MinIO locally.                                                                     |
 | `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`             | Storage credentials; secrets outside local development belong in secret management.                              |
 | `PAYMENT_PROVIDER`, `SMS_PROVIDER`                     | Currently only `fake` for development/test; rejected in production.                                              |

@@ -136,7 +136,10 @@ The traceability document is updated when a rule becomes implemented.
   `output/playwright/milestone-1/` at desktop, small-laptop, tablet, and mobile
   acceptance viewports.
 - Before browser startup, `test:e2e` performs a test-guarded catalog reset and
-  reconciles the one deterministic Milestone 2 Product/Category fixture. An API
-  assertion confirms no additional Product, Category or Media row exists before
-  any visual capture. Repeated runs therefore cannot accumulate random publish
-  workflow rows or overwrite evidence with a different catalog list.
+  reconciles the one deterministic Milestone 2 Product/Category fixture inside
+  the disposable `E2E_DATABASE_URL` database named `kele_e2e`. The runner never
+  resets normal `DATABASE_URL`; both runner and seed reject missing, shared or
+  incorrectly named database targets before deletion. An API assertion confirms
+  no additional Product, Category or Media row exists before any visual capture.
+  Repeated runs therefore cannot accumulate random publish workflow rows or
+  overwrite evidence with a different catalog list.
