@@ -214,3 +214,26 @@ from overwriting the other.
 Generated linen-suit images are internal prototype assets used only to make
 layout, crop, focal-point and responsive acceptance objective. They do not
 resolve DES-003 and must be replaced before production use.
+
+## Milestone 3 customer and cart vertical slice
+
+The customer experience extends the established quiet editorial language
+without dashboard styling: sign-in is a focused OTP panel; the account page
+uses numbered profile/address sections; cart content remains image-led with a
+flat summary surface and thin semantic state bands.
+
+Production-build evidence in `output/playwright/milestone-3/` includes:
+
+- authenticated cart at mobile, tablet and desktop plus the 1280 x 800 merge
+  notice state;
+- completed profile and strictly owned default address at desktop;
+- mobile empty, laptop loading and tablet dependency-error states;
+- desktop unavailable Product and exact Outfit Revision `requires_review`
+  blockers.
+
+The suite asserts `lang="fa-IR"`, `dir="rtl"`, mixed-direction mobile/SKU
+values, no horizontal overflow and keyboard Escape for the modal cart drawer.
+Controls expose disabled/busy states, announcements use status/alert live
+regions, and unavailable or review lines remain editable/removable while the
+cart reports that continuation is blocked. No checkout control is rendered in
+Milestone 3.

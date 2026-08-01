@@ -143,3 +143,24 @@ The traceability document is updated when a rule becomes implemented.
   no additional Product, Category or Media row exists before any visual capture.
   Repeated runs therefore cannot accumulate random publish workflow rows or
   overwrite evidence with a different catalog list.
+
+## Milestone 3 harnesses
+
+- Domain unit tests cover OTP verifier behavior and every CRT-013–CRT-018 merge
+  branch, including zero inventory and immutable Outfit Revision review.
+- PostgreSQL integration tests cover abuse limits, expiry, failed-attempt
+  exhaustion, replay, session fixation/logout, CSRF, horizontal address
+  authorization, current price/inventory, no reservation, stale concurrent
+  cart updates, deterministic/replayed/foreign merge and checkout blockers.
+- Browser tests use only the guarded `kele_e2e` database. They replace a single
+  challenge verifier after the Fake SMS boundary accepted dispatch; this
+  avoids a plaintext OTP store, log or test-only HTTP backdoor while still
+  exercising the real sign-in form and verification endpoint.
+- Production-build Playwright acceptance covers the anonymous-to-authenticated
+  journey, merge cap notification, profile/address management, revoked logout
+  token, missing-CSRF rejection, drawer Escape behavior, RTL and horizontal
+  overflow at 390 x 844, 768 x 1024, 1280 x 800 and 1440 x 900.
+- Separate contexts capture loading, empty, dependency error, unavailable SKU
+  and exact Outfit Revision `requires_review` states. Evidence is written to
+  `output/playwright/milestone-3/`; an independent Playwright CLI snapshot
+  verifies the mobile semantic tree and document direction.

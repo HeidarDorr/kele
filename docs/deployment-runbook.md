@@ -106,6 +106,23 @@ the dependency failure has been investigated. The first schema migration is
 additive (`SeedLedger`); do not reverse it in an environment that may contain a
 later migration or a seed record needed for diagnosis.
 
+## Milestone 3 identity operations
+
+- API startup now requires `IDENTITY_SIGNING_SECRET`, `OTP_VERIFIER_PEPPER` and
+  the exact `STOREFRONT_ORIGIN`; production rejects development-prefixed
+  identity secrets and the Fake SMS provider.
+- Deploy migrations `20260801083005_milestone_3_identity_customer_cart` and
+  `20260801123000_expand_merge_notice_quantity` before serving the M3 API.
+  Both are additive, but rollback after customer writes requires an approved
+  export/retention decision and must not be automated.
+- Monitor generic OTP dispatch failures, rate-limit outcomes and authentication
+  failures without logging mobile, OTP, session, CSRF, address or signed-cart
+  values. A provider migration must implement the existing `SmsGateway` port;
+  it must not change challenge/session semantics.
+- Treat abnormal cart-version conflicts and repeated merge receipts as abuse or
+  client-synchronization signals. They do not justify adding Redis, a queue or
+  a second state store without an accepted ADR and measured need.
+
 ## Incident minimum
 
 1. Stabilize customer and business data.

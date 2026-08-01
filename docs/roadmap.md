@@ -65,6 +65,9 @@ and view it correctly on all required viewports.
 
 ## Milestone 3 — identity, customer and cart
 
+Status: Complete and locally verified on `feat/m03-identity-customer-cart`
+(2026-08-01); not pushed, merged or deployed.
+
 Deliverables:
 
 1. Implement OTP challenge/session security with the fake provider.

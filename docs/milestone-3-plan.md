@@ -1,6 +1,6 @@
 # Milestone 3 implementation and acceptance plan
 
-Status: In progress
+Status: Complete and locally verified on 2026-08-01
 
 Branch: `feat/m03-identity-customer-cart`
 
@@ -156,3 +156,24 @@ constraints. The development rollback is the reverse migration before any
 dependent Milestone 4 data exists. In an environment containing customer data,
 rollback requires an export/retention decision and is not treated as a safe
 automatic operation.
+
+## Verification evidence
+
+- Contract and schema were updated before consumers in commit `15b80d8`.
+- Identity, customer, cart, migrations, transaction boundaries and automated
+  backend evidence were implemented in commit `d34e363`.
+- The storefront, BFF, browser journeys and documentation are delivered by the
+  final Milestone 3 commits on `feat/m03-identity-customer-cart`.
+- `pnpm test` passes 31 unit tests; `pnpm test:integration` passes 12 PostgreSQL
+  integration tests; `test:architecture`, `openapi:validate` and
+  `test:contract` pass.
+- `pnpm test:e2e` passes 9 production-build browser journeys against the
+  isolated `kele_e2e` database. It covers desktop, small laptop, tablet and
+  mobile, Persian RTL, keyboard dismissal/focus, session rotation/logout,
+  CSRF rejection, deterministic merge, profile/address ownership and all cart
+  blocking states.
+- Reviewable captures are in `output/playwright/milestone-3/`. Independent
+  Playwright CLI inspection also confirmed `lang=fa-IR`, `dir=rtl`, semantic
+  reading order and no horizontal overflow at 390 x 844.
+- No checkout, reservation, real SMS behavior, Wishlist, Newsletter or
+  automatic Outfit Revision replacement was introduced.

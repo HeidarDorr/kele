@@ -80,6 +80,18 @@ merged into the business specification:
 | HRD-006 | Reservation jobs are leased, retryable and idempotent. | job integration test |
 | HRD-007 | Storefront public pages render useful server HTML. | build/E2E/SEO test |
 
+## Milestone 3 identity, customer and cart evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+|---|---|---|---|
+| CUS-001–CUS-005, CUS-008, CUS-010 | OTP identity, opaque server sessions, owned profile and address application services/controllers | `identity-cart.unit.test.ts`, `identity-cart.integration.test.ts`, `e2e/foundation.spec.ts` | Implemented; CUS-006–CUS-007 and CUS-009 remain later scope |
+| CRT-001–CRT-004, CRT-007–CRT-008, CRT-010–CRT-012 | Anonymous/authenticated cart, signed cart cookie, current price/inventory reads, optimistic concurrency and persistence | `cart-merge.ts`, `cart.service.ts`, `identity-cart.integration.test.ts`, browser cart journey | Implemented for Product lines and Outfit-aware representation; checkout/reservation clauses remain M4 |
+| CRT-013–CRT-018 | Transactional deterministic merge, Product SKU combination, inventory cap/notice, unavailable retention, immutable Outfit Revision review blocker and replay receipt | merge unit/integration/concurrency tests and Playwright merge journey | Implemented |
+| INV-001–INV-004, INV-017 | Current `physical - reserved` availability contract, no cart reservation, non-negative constraints and Outfit review fallback | catalog/cart integration tests, Prisma checks, unavailable browser state | Implemented for the M3 cart boundary; reservation lifecycle remains M4/M5 |
+| PRC-001, PRC-006–PRC-007, PRC-011–PRC-012 | Current append-only SKU price projection, integer IRR total and centralized exact toman presentation | cart integration tests, money unit tests, browser captures | Implemented for informational cart repricing; authoritative checkout quote remains M4 |
+| SMS-001–SMS-002 | Replaceable Fake SMS adapter, random OTP dispatch, verifier-only persistence and production fake-provider guard | foundation/config unit tests plus OTP integration abuse tests | Fake test/local boundary implemented; production provider deferred |
+| LOC-001–LOC-002, HRD-001–HRD-002 | Persian RTL customer/cart surfaces, bidi isolation, inward dependencies and centralized money | architecture gate, type-check, Playwright viewport/keyboard evidence | Implemented for M3 surfaces |
+
 ## Milestone 1 implementation evidence
 
 | Requirement IDs | Implementation | Automated evidence | State |

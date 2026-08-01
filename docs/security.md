@@ -143,6 +143,36 @@ Status: Required baseline
 - Local PostgreSQL/MinIO credentials are explicitly development-only examples;
   `.env` remains ignored.
 
+## Milestone 3 identity and cart enforcement
+
+- OTP challenges use a cryptographically random six-digit value and a unique
+  salt plus server pepper with `scrypt`; PostgreSQL stores only the verifier.
+  Mobile, IP and device risk identifiers are HMAC-derived before persistence.
+- Challenge policy enforces a 60-second resend cooldown, five sends per mobile
+  per day, five per device per hour, twenty per IP per hour, five verification
+  failures and five-minute expiry. Consumed, expired and replayed challenges
+  cannot create a session.
+- Session and CSRF tokens are independent high-entropy opaque values. Only
+  hashes are persisted; successful sign-in rotates a presented session and
+  logout revokes it. Idle expiry is 30 minutes and absolute expiry is seven
+  days. Production cookies are `Secure`, and session cookies are always
+  `HttpOnly` and `SameSite=Lax`.
+- Cookie-authenticated mutations validate a double-submit value against the
+  server session hash. Anonymous cart mutations validate signed cart/device
+  cookies and anonymous CSRF. The Next same-origin BFF forwards only an
+  allowlist of transport headers and upstream cookies.
+- Address reads and writes include both `addressId` and authenticated
+  `customerId`; foreign and unknown identifiers produce the same not-found
+  result. Authenticated carts are resolved from the session customer, never a
+  client-supplied owner.
+- Cart writes lock the cart and require the observed version. Guest merge and
+  authentication share one transaction and a unique merge receipt, preventing
+  replay or partial identity/cart state. Invalid foreign replay does not expose
+  the other customer's merged cart.
+- Fake SMS is local/test only and does not invent a real delivery protocol.
+  Tests control the verifier inside the guarded disposable E2E database; no
+  OTP inspection endpoint, plaintext database field or OTP log was added.
+
 ## Pre-production security exit
 
 - Provider-specific payment threat review completed.
