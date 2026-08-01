@@ -82,6 +82,14 @@ const skuInputs = [
 ] as const;
 
 async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promise<void> {
+  await transaction.cartMergeReceipt.deleteMany();
+  await transaction.cartNotice.deleteMany();
+  await transaction.cartLine.deleteMany();
+  await transaction.cart.deleteMany();
+  await transaction.address.deleteMany();
+  await transaction.customerSession.deleteMany();
+  await transaction.otpChallenge.deleteMany();
+  await transaction.customer.deleteMany();
   await transaction.commandReceipt.deleteMany();
   await transaction.businessEvent.deleteMany();
   await transaction.inventoryMovement.deleteMany();

@@ -1,7 +1,14 @@
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { cleanupCatalogTestData } from '../apps/api/test/support/catalog-cleanup.js';
+import {
+  addE2EOutfitReviewLine,
+  ageE2EOtpChallenges,
+  cleanupE2ECustomer,
+  setE2EInventory,
+  setE2EOtpCode,
+} from '../apps/api/test/support/customer-e2e.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
 
 const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
@@ -10,11 +17,33 @@ const evidenceDirectory = resolve(
     ? 'output/playwright/milestone-2-markazi'
     : 'output/playwright/milestone-2',
 );
+const milestoneThreeEvidence = resolve('output/playwright/milestone-3');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
 let acceptanceCategoryId: string | undefined;
 let acceptanceMediaId: string | undefined;
+
+async function cartIdFromPage(page: Page): Promise<string> {
+  const cookie = (await page.context().cookies()).find((item) => item.name === 'kele_cart');
+  const cartId = cookie?.value.slice(0, cookie.value.lastIndexOf('.'));
+  if (!cartId) throw new Error('Expected a signed anonymous cart cookie.');
+  return cartId;
+}
+
+async function completeOtp(page: Page, mobile: string, code = '418205'): Promise<void> {
+  await page.getByRole('textbox', { name: 'شمارهٔ موبایل', exact: true }).fill(mobile);
+  const challengeResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/commerce/auth/otp/challenges') && response.status() === 202,
+  );
+  await page.getByRole('button', { name: 'دریافت کد' }).click();
+  const challenge = (await (await challengeResponse).json()) as { challengeId: string };
+  await setE2EOtpCode(challenge.challengeId, code);
+  await page.getByRole('textbox', { name: 'کد یک‌بارمصرف', exact: true }).fill(code);
+  await page.getByRole('button', { name: 'تأیید و ورود' }).click();
+  await expect(page).toHaveURL(/\/account$/);
+}
 
 async function cleanupAcceptanceFixture(): Promise<void> {
   await cleanupCatalogTestData({
@@ -200,7 +229,7 @@ test('an administrator creates, validates, previews and publishes a product disc
 
     await page.goto(`${e2eUrls.storefront}/products/${slug}`);
     await expect(page.getByRole('heading', { name: 'کت لینن پذیرش مرورگر' })).toBeVisible();
-    await expect(page.getByText(sku)).toBeAttached();
+    await expect(page.getByText(sku).first()).toBeAttached();
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(2);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
@@ -257,22 +286,24 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.locator('bdi[dir="ltr"]', { hasText: 'KELE-LINEN-BEIGE-7Y' })).toBeAttached();
+    await expect(
+      page.locator('bdi[dir="ltr"]', { hasText: 'KELE-LINEN-BEIGE-7Y' }).first(),
+    ).toBeAttached();
     await expect(page.getByRole('button', { name: /۷ سال KELE-LINEN-BEIGE-7Y/ })).toBeDisabled();
     await page.waitForFunction('document.fonts.status === "loaded"');
     await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
     await expect(page.locator('button').first()).toHaveCSS('font-family', /peyda/i);
-    await expect(page.locator('h1')).toHaveCSS(
+    await expect(page.locator('h1').first()).toHaveCSS(
       'font-family',
       typographyVariant === 'markazi' ? /markazi/i : /elize/i,
     );
-    await expect(page.locator('.wordmark')).toHaveCSS('font-family', /elize/i);
+    await expect(page.locator('.wordmark').first()).toHaveCSS('font-family', /elize/i);
     if (typographyVariant === 'markazi') {
-      await expect(page.locator('.wordmark .brand-wordmark-fa')).toBeVisible();
-      await expect(page.locator('.wordmark .brand-wordmark-latin')).toBeHidden();
+      await expect(page.locator('.wordmark .brand-wordmark-fa').first()).toBeVisible();
+      await expect(page.locator('.wordmark .brand-wordmark-latin').first()).toBeHidden();
     } else {
-      await expect(page.locator('.wordmark .brand-wordmark-fa')).toBeHidden();
-      await expect(page.locator('.wordmark .brand-wordmark-latin')).toBeVisible();
+      await expect(page.locator('.wordmark .brand-wordmark-fa').first()).toBeHidden();
+      await expect(page.locator('.wordmark .brand-wordmark-latin').first()).toBeVisible();
     }
     await expect
       .poll(() =>
@@ -355,5 +386,214 @@ test('administration is responsive and exposes validation and inventory states',
       fullPage: true,
     });
     await page.close();
+  }
+});
+
+test('anonymous cart, OTP merge, owned profile/address and logout pass the browser journey', async ({
+  browser,
+  request,
+}) => {
+  await mkdir(milestoneThreeEvidence, { recursive: true });
+  const mobile = '+989121234567';
+  const skuId = '20000000-0000-4000-8000-000000000041';
+  const cartIds: string[] = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  try {
+    await context.addCookies([
+      {
+        name: 'kele_session',
+        value: 'attacker-fixed-session-token-that-must-rotate',
+        domain: '127.0.0.1',
+        path: '/',
+      },
+    ]);
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    await page.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
+    await page.getByRole('button', { name: 'افزودن به سبد' }).click();
+    await expect(page.getByRole('dialog', { name: 'سبد خرید' })).toBeVisible();
+    await expect(
+      page
+        .getByRole('dialog', { name: 'سبد خرید' })
+        .getByRole('heading', { name: 'کت‌وشلوار لینن بژ' }),
+    ).toBeVisible();
+    cartIds.push(await cartIdFromPage(page));
+
+    const cart = (await (
+      await page.request.get(`${e2eUrls.storefront}/api/commerce/cart`)
+    ).json()) as { version: number };
+    const csrfRejected = await page.evaluate(
+      async ({ productSkuId, version }) => {
+        const response = await fetch('/api/commerce/cart/lines', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'if-match': `"${String(version)}"`,
+          },
+          body: JSON.stringify({ kind: 'product', skuId: productSkuId, quantity: 1 }),
+        });
+        return response.status;
+      },
+      { productSkuId: skuId, version: cart.version },
+    );
+    expect(csrfRejected).toBe(403);
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'سبد خرید' })).toBeHidden();
+    await page.goto(`${e2eUrls.storefront}/sign-in`);
+    await completeOtp(page, mobile);
+    const authenticatedCookie = (await context.cookies()).find(
+      (item) => item.name === 'kele_session',
+    );
+    expect(authenticatedCookie?.value).not.toBe('attacker-fixed-session-token-that-must-rotate');
+
+    await page.getByLabel('نام', { exact: true }).fill('آرمان');
+    await page.getByLabel('نام خانوادگی').fill('کلهر');
+    await page.getByRole('button', { name: 'ذخیره اطلاعات' }).click();
+    await expect(page.getByRole('status')).toContainText('اطلاعات حساب ذخیره شد');
+    await page.getByLabel('نام گیرنده').fill('آرمان کلهر');
+    await page.getByLabel('موبایل گیرنده').fill(mobile);
+    await page.getByLabel('استان').fill('تهران');
+    await page.getByLabel('شهر').fill('تهران');
+    await page.getByLabel('نشانی کامل').fill('خیابان ایران، کوچهٔ آزمون، پلاک ۱۲');
+    await page.getByLabel('کد پستی').fill('1234567890');
+    await page.getByLabel('نشانی پیش‌فرض باشد').check();
+    await page.getByRole('button', { name: 'ذخیره نشانی' }).click();
+    await expect(page.getByText('خیابان ایران، کوچهٔ آزمون، پلاک ۱۲')).toBeVisible();
+    await page.screenshot({
+      path: resolve(milestoneThreeEvidence, 'account-profile-address-desktop.png'),
+      fullPage: true,
+    });
+
+    const revokedToken = authenticatedCookie?.value;
+    await page.getByRole('button', { name: 'خروج از حساب' }).click();
+    await expect(page).toHaveURL(/\/sign-in$/);
+    if (revokedToken === undefined) throw new Error('Authenticated session cookie was not set.');
+    const revoked = await request.get(`${e2eUrls.api}/me`, {
+      headers: { cookie: `kele_session=${encodeURIComponent(revokedToken)}` },
+    });
+    expect(revoked.status()).toBe(401);
+
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    await page.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
+    await page.getByRole('button', { name: 'افزودن به سبد' }).click();
+    await page.locator('.cart-line select').selectOption('4');
+    await expect(page.locator('.cart-line select')).toHaveValue('4');
+    cartIds.push(await cartIdFromPage(page));
+    await page.keyboard.press('Escape');
+    await ageE2EOtpChallenges(mobile);
+    await page.goto(`${e2eUrls.storefront}/sign-in`);
+    await completeOtp(page, mobile, '418206');
+    await page.goto(`${e2eUrls.storefront}/cart`);
+    await expect(page.getByText('تعداد با موجودی فعلی هماهنگ شد.')).toBeVisible();
+    await expect(page.locator('.cart-page-lines select')).toHaveValue('4');
+    await page.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-merge-notice-laptop.png'),
+      fullPage: true,
+    });
+    for (const viewport of [
+      { name: 'mobile', width: 390, height: 844 },
+      { name: 'tablet', width: 768, height: 1024 },
+      { name: 'desktop', width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.screenshot({
+        path: resolve(milestoneThreeEvidence, `cart-authenticated-${viewport.name}.png`),
+        fullPage: true,
+      });
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
+        true,
+      );
+    }
+  } finally {
+    await context.close();
+    await cleanupE2ECustomer(mobile, cartIds);
+  }
+});
+
+test('cart UI exposes loading, empty, error, unavailable and Outfit review states', async ({
+  browser,
+}) => {
+  await mkdir(milestoneThreeEvidence, { recursive: true });
+  const skuId = '20000000-0000-4000-8000-000000000041';
+  const cartIds: string[] = [];
+  const mobile = '+989121234568';
+  try {
+    const emptyContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const empty = await emptyContext.newPage();
+    await empty.goto(`${e2eUrls.storefront}/cart`);
+    await expect(empty.getByText('هنوز چیزی برای نگه‌داشتن انتخاب نکرده‌اید.')).toBeVisible();
+    await empty.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-empty-mobile.png'),
+      fullPage: true,
+    });
+    await emptyContext.close();
+
+    const errorContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
+    const errorPage = await errorContext.newPage();
+    await errorPage.route('**/api/commerce/cart', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({ code: 'DEPENDENCY_UNAVAILABLE' }),
+      });
+    });
+    await errorPage.goto(`${e2eUrls.storefront}/cart`);
+    await expect(errorPage.locator('.commerce-page-state.state-error')).toBeVisible();
+    await errorPage.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-error-tablet.png'),
+      fullPage: true,
+    });
+    await errorContext.close();
+
+    const loadingContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const loadingPage = await loadingContext.newPage();
+    await loadingPage.route('**/api/commerce/cart', async (route) => {
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 4_000));
+      await route.continue();
+    });
+    await loadingPage.goto(`${e2eUrls.storefront}/cart`);
+    await expect(loadingPage.getByText('در حال دریافت سبد…')).toBeVisible();
+    await loadingPage.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-loading-laptop.png'),
+      fullPage: true,
+    });
+    await loadingContext.close();
+
+    const unavailableContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const unavailable = await unavailableContext.newPage();
+    await unavailable.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    await unavailable.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
+    await unavailable.getByRole('button', { name: 'افزودن به سبد' }).click();
+    cartIds.push(await cartIdFromPage(unavailable));
+    await setE2EInventory(skuId, 0);
+    await unavailable.goto(`${e2eUrls.storefront}/cart`);
+    await expect(unavailable.getByText('این انتخاب اکنون ناموجود است.')).toBeVisible();
+    await expect(unavailable.getByText(/ادامه خرید تا رفع/)).toBeVisible();
+    await unavailable.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-unavailable-desktop.png'),
+      fullPage: true,
+    });
+    await setE2EInventory(skuId, 4);
+    await unavailableContext.close();
+
+    const reviewContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const review = await reviewContext.newPage();
+    await review.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    await review.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
+    await review.getByRole('button', { name: 'افزودن به سبد' }).click();
+    const reviewCartId = await cartIdFromPage(review);
+    cartIds.push(reviewCartId);
+    await addE2EOutfitReviewLine(reviewCartId);
+    await review.goto(`${e2eUrls.storefront}/cart`);
+    await expect(review.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
+    await review.screenshot({
+      path: resolve(milestoneThreeEvidence, 'cart-outfit-requires-review.png'),
+      fullPage: true,
+    });
+    await reviewContext.close();
+  } finally {
+    await setE2EInventory(skuId, 4);
+    await cleanupE2ECustomer(mobile, cartIds);
   }
 });

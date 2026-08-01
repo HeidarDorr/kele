@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { resolveTypographyVariant } from '@kele/design-system/typography';
 import './globals.css';
+import { CartProvider } from '../components/cart-provider';
 
 const peyda = localFont({
   src: '../../../packages/design-system/assets/fonts/provisional/PeydaWebVF.woff2',
@@ -42,7 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className={`${peyda.className} ${peyda.variable} ${elize.variable} ${markazi.variable}`}
         data-typography={typographyVariant}
       >
-        {children}
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

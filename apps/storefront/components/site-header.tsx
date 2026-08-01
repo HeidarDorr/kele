@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Category } from '../lib/catalog-api';
 import { BrandWordmark } from './brand-wordmark';
+import { HeaderCommerceActions } from './header-commerce-actions';
 
 export function SiteHeader({ categories }: { categories: Category[] }) {
   return (
@@ -34,12 +35,15 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
             <span className="visually-hidden">صفحهٔ اصلی</span>
             <BrandWordmark />
           </Link>
-          <form className="header-search" action="/catalog" role="search">
-            <label className="visually-hidden" htmlFor="header-search">
-              جست‌وجوی کاتالوگ
-            </label>
-            <input id="header-search" name="q" type="search" placeholder="جستجو در محصولات" />
-          </form>
+          <div className="header-end">
+            <form className="header-search" action="/catalog" role="search">
+              <label className="visually-hidden" htmlFor="header-search">
+                جست‌وجوی کاتالوگ
+              </label>
+              <input id="header-search" name="q" type="search" placeholder="جستجو در محصولات" />
+            </form>
+            <HeaderCommerceActions />
+          </div>
         </div>
       </header>
     </>

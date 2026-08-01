@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProductGallery } from '../../../components/product-gallery';
+import { PurchaseControls } from '../../../components/purchase-controls';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getProduct } from '../../../lib/catalog-api';
@@ -135,25 +136,7 @@ export default async function ProductPage({
               </div>
             </div>
 
-            <fieldset className="option-group size-options">
-              <legend>اندازه</legend>
-              <div>
-                {selected.skus.map((sku) => (
-                  <button
-                    key={sku.id}
-                    type="button"
-                    disabled={!sku.available}
-                    aria-describedby={`sku-${sku.id}`}
-                  >
-                    {sku.size}
-                    <bdi id={`sku-${sku.id}`} className="visually-hidden" dir="ltr">
-                      {sku.code}
-                    </bdi>
-                  </button>
-                ))}
-              </div>
-              <p>اندازه‌های کم‌رنگ در حال حاضر موجود نیستند.</p>
-            </fieldset>
+            <PurchaseControls skus={selected.skus} />
 
             <div className={product.available ? 'stock-note' : 'stock-note unavailable'}>
               {product.available
