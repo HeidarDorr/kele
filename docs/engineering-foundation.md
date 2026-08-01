@@ -48,12 +48,21 @@ is validated before the harness starts and must be an integer from `1` through
 `test:integration` migrates a real PostgreSQL 16 database and never substitutes
 SQLite or a mock. Local Compose uses the configured PostgreSQL 16 mirror; CI
 uses the official `postgres:16-alpine` image. Both exercise the same supported
-major version. `seed` may run repeatedly: its technical
-`SeedLedger` record is upserted once per seed version. The first migration only
-creates that technical ledger; it creates no commercial/catalog data. For this
-additive local-only migration, rollback is dropping `SeedLedger` only when no
-later migration references it; production migrations require the runbook's
-expand-and-contract review.
+major version. Prisma Client generation is an install/bootstrap concern and is
+run explicitly in CI before application processes start; integration and seed
+runtime gates do not replace the Windows query-engine DLL, so they remain
+runnable while a local API process holds the generated client open.
+
+`seed` may run repeatedly: its technical `SeedLedger` and fixed catalog rows are
+upserted and reconciled rather than skipped or duplicated. `test:e2e` builds
+against the centralized root `.env`, uses isolated ports by default, enables an
+explicit `NODE_ENV=test` reset guard, clears catalog-only test data, and then
+recreates exactly the documented Milestone 2 fixture before Playwright starts.
+Its internal `KELE_E2E_BUILD` flag keeps Next artifacts in ignored `.next-e2e`
+directories, and the runner owns and closes each isolated server process tree
+before restoring Next's generated declarations and returning the test result.
+The first migration only creates the technical ledger; production migrations
+still require the runbook's expand-and-contract review.
 
 ## Configuration
 

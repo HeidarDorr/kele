@@ -122,7 +122,10 @@ The traceability document is updated when a rule becomes implemented.
 - `test:integration` applies Prisma migrations to PostgreSQL 16 and verifies
   the technical seed ledger is idempotent; it cannot fall back to SQLite. Local
   Compose uses a PostgreSQL 16 mirror and CI uses `postgres:16-alpine`, so both
-  environments cover the same supported major version.
+  environments cover the same supported major version. The gate intentionally
+  does not run `prisma generate`: generation happens before application
+  processes start, while the integration gate only migrates and tests. This
+  avoids attempting to replace a Windows Prisma DLL held by a running API.
 - `test:architecture` scans API domain/application source for prohibited
   NestJS, Prisma, HTTP and storage imports.
 - `openapi:validate`, generated transport types and `test:contract` keep the
@@ -132,3 +135,8 @@ The traceability document is updated when a rule becomes implemented.
   on API liveness. It also writes eight reviewable production screenshots to
   `output/playwright/milestone-1/` at desktop, small-laptop, tablet, and mobile
   acceptance viewports.
+- Before browser startup, `test:e2e` performs a test-guarded catalog reset and
+  reconciles the one deterministic Milestone 2 Product/Category fixture. An API
+  assertion confirms no additional Product, Category or Media row exists before
+  any visual capture. Repeated runs therefore cannot accumulate random publish
+  workflow rows or overwrite evidence with a different catalog list.

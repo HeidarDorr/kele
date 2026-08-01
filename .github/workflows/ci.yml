@@ -36,6 +36,8 @@ jobs:
         run: corepack enable && corepack prepare pnpm@11.18.0 --activate
       - name: Install exact dependencies
         run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client before application processes start
+        run: pnpm prisma:generate
       - name: Configure development environment
         run: cp .env.example .env
       - name: Start isolated MinIO and create its development bucket

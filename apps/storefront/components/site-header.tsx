@@ -38,7 +38,7 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
             <label className="visually-hidden" htmlFor="header-search">
               جست‌وجوی کاتالوگ
             </label>
-            <input id="header-search" name="q" type="search" placeholder="جست‌وجو" />
+            <input id="header-search" name="q" type="search" placeholder="جستجو در محصولات" />
           </form>
         </div>
       </header>

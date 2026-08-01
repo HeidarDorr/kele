@@ -212,6 +212,33 @@ test('an administrator creates, validates, previews and publishes a product disc
   }
 });
 
+test('visual capture starts from the exclusive deterministic catalog fixture', async ({
+  request,
+}) => {
+  const headers = { cookie: `kele_session=${encodeURIComponent(superSession)}` };
+  const [productsResponse, categoriesResponse, mediaResponse] = await Promise.all([
+    request.get(`${e2eUrls.api}/admin/products`, { headers }),
+    request.get(`${e2eUrls.api}/admin/categories`, { headers }),
+    request.get(`${e2eUrls.api}/admin/media`, { headers }),
+  ]);
+  await expect(productsResponse).toBeOK();
+  await expect(categoriesResponse).toBeOK();
+  await expect(mediaResponse).toBeOK();
+
+  const products = (await productsResponse.json()) as {
+    items: Array<{ slug: string }>;
+  };
+  const categories = (await categoriesResponse.json()) as Array<{ slug: string }>;
+  const media = (await mediaResponse.json()) as Array<{ id: string }>;
+  expect(products.items.map((item) => item.slug)).toEqual(['beige-linen-suit']);
+  expect(categories.map((item) => item.slug)).toEqual(['suits']);
+  expect(media.map((item) => item.id).sort()).toEqual([
+    '20000000-0000-4000-8000-000000000031',
+    '20000000-0000-4000-8000-000000000032',
+    '20000000-0000-4000-8000-000000000033',
+  ]);
+});
+
 test('storefront covers responsive, state, keyboard, RTL and mixed-direction acceptance evidence', async ({
   browser,
 }) => {

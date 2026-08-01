@@ -10,24 +10,4 @@ export default defineConfig({
     baseURL: e2eUrls.storefront,
     trace: 'retain-on-failure',
   },
-  webServer: [
-    {
-      command: 'node scripts/start-e2e.mjs api',
-      url: `${e2eUrls.api}/health/live`,
-      reuseExistingServer: process.env.CI !== 'true',
-      timeout: 30_000,
-    },
-    {
-      command: 'node scripts/start-e2e.mjs storefront',
-      url: e2eUrls.storefront,
-      reuseExistingServer: process.env.CI !== 'true',
-      timeout: 30_000,
-    },
-    {
-      command: 'node scripts/start-e2e.mjs admin',
-      url: e2eUrls.admin,
-      reuseExistingServer: process.env.CI !== 'true',
-      timeout: 30_000,
-    },
-  ],
 });

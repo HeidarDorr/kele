@@ -132,25 +132,32 @@ and demonstrate one complete vertical slice.
     `output/playwright/milestone-2/`. The random publish-path fixture is removed
     before visual capture, and two consecutive E2E runs leave this directory
     byte-for-byte unchanged.
-29. Product and preview images decode successfully in both applications and
+29. `pnpm test:e2e` prepares its own guarded test state before browser startup:
+    the catalog contains exactly the one fixed Milestone 2 Product, Category,
+    ColorVariant, three Media records and three SKUs. Repeated seed or E2E runs
+    repair that fixture and never add duplicate Product or Category rows.
+30. Product and preview images decode successfully in both applications and
     the E2E server log contains no Next image-validity warning.
 
 ### Temporary fonts and scope exclusions
 
-30. The supplied Elize webfont is the default provisional storefront display
+31. The supplied Elize webfont is the default provisional storefront display
     face and the text stand-in for the future logo. A configuration-only
     Markazi review variant replaces display headings while its Persian `کله`
     wordmark continues to use Elize. Peyda is used provisionally for Persian UI
     and body text in both variants.
-31. Only production webfont files required by the applications are moved into
+32. Only production webfont files required by the applications are moved into
     application assets. Duplicate desktop, legacy WOFF, and unused weight files
     from the supplied top-level folder are removed as part of that move.
-32. Documentation continues to identify fonts and logo as provisional design
+33. Documentation continues to identify fonts and logo as provisional design
     inputs. No font choice is recorded as an accepted or frozen brand decision.
-33. Browser acceptance verifies that computed body/control typography uses the
+34. Browser acceptance verifies that computed body/control typography uses the
     provisional Peyda face while storefront display headings and the typed
     wordmark use provisional Elize.
-34. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
+35. Integration testing applies migrations and executes the PostgreSQL suite
+    through the public `pnpm test:integration` gate without regenerating or
+    replacing the Prisma engine while a local API may hold it open.
+36. Wishlist, Newsletter, cart, checkout, multilingual UI, Outfit, reviews,
     speculative filters, and customer-facing shipping or return claims are not
     implemented.
 
@@ -187,6 +194,13 @@ and demonstrate one complete vertical slice.
 - A random publish-path fixture is visible in an administration baseline, an
   E2E run changes versioned evidence, an image fails to decode, or body text
   falls back instead of loading Peyda.
+- SeedLedger exists but its Product/Category fixture is missing or drifted; a
+  repeated seed creates another slug; an E2E capture sees any non-fixture
+  catalog row; or test preparation can reset data without the explicit test
+  environment guard.
+- `pnpm test:integration` tries to rewrite a generated Prisma engine at runtime,
+  depends on stopping the API manually, or passes only through a direct/bypass
+  command instead of the repository gate.
 - A typography variant changes Peyda body text, lets Markazi replace the Elize
   wordmark, shows the wrong Latin/Persian wordmark, fails to fall back safely to
   Elize for an unsupported value, or overwrites the other variant's visual
