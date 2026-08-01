@@ -1,30 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
-import { createOtpVerifier } from '../../src/modules/identity/application/identity-crypto.js';
 
 function guardedClient(): PrismaClient {
   assertE2EDatabaseResetEnvironment(process.env);
   return new PrismaClient();
-}
-
-export async function setE2EOtpCode(challengeId: string, code: string): Promise<void> {
-  const prisma = guardedClient();
-  try {
-    const salt = '0123456789abcdef0123456789abcdef';
-    await prisma.otpChallenge.update({
-      where: { id: challengeId },
-      data: {
-        codeSalt: salt,
-        codeVerifier: createOtpVerifier(
-          code,
-          salt,
-          process.env.OTP_VERIFIER_PEPPER ?? 'development-otp-verifier-pepper-000001',
-        ),
-      },
-    });
-  } finally {
-    await prisma.$disconnect();
-  }
 }
 
 export async function ageE2EOtpChallenges(mobile: string): Promise<void> {

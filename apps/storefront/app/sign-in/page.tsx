@@ -11,11 +11,13 @@ export const metadata: Metadata = {
 
 export default async function SignInPage() {
   const categories = await getCategories().catch(() => ({ items: [] }));
+  const fakeOtpCode =
+    process.env.NODE_ENV === 'production' ? undefined : (process.env.FAKE_SMS_OTP_CODE ?? '111111');
   return (
     <>
       <SiteHeader categories={categories.items} />
       <main id="main-content" className="shell commerce-page auth-page">
-        <SignInForm />
+        <SignInForm fakeOtpCode={fakeOtpCode} />
       </main>
       <SiteFooter />
     </>

@@ -36,11 +36,12 @@ export class IdentityService {
     private readonly unitOfWork: UnitOfWork,
     private readonly signingSecret: string,
     private readonly otpPepper: string,
+    private readonly otpCode: () => string = randomOtp,
   ) {}
 
   async createOtpChallenge(mobile: string, ip: string, deviceId: string) {
     const now = new Date();
-    const code = randomOtp();
+    const code = this.otpCode();
     const codeSalt = randomHex(16);
     const challenge = await this.unitOfWork.run(() =>
       this.repository.createChallenge({

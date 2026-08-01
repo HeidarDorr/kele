@@ -27,8 +27,10 @@ Status: Required baseline
 - Development and automated tests use a Fake SMS Provider through the same
   centralized adapter contract as production. Fake OTP values must never be
   enabled in production configuration.
-- OTP codes are cryptographically random, single-use, short-lived, and stored
-  as a verifier rather than plaintext.
+- Real-provider OTP codes must be cryptographically random, single-use and
+  short-lived. The development/test Fake SMS provider deliberately uses the
+  explicit fixed code `FAKE_SMS_OTP_CODE`; both paths store only a verifier,
+  never plaintext.
 - Apply rate limits by mobile number, IP/risk signal, and device/session.
 - Responses must not reveal whether an account exists.
 - Failed attempts are bounded; resend has cooldown and daily limits.
@@ -145,8 +147,10 @@ Status: Required baseline
 
 ## Milestone 3 identity and cart enforcement
 
-- OTP challenges use a cryptographically random six-digit value and a unique
-  salt plus server pepper with `scrypt`; PostgreSQL stores only the verifier.
+- Fake SMS challenges use the configured six-digit `FAKE_SMS_OTP_CODE`; a
+  future real provider must supply the cryptographically random generator.
+  Every challenge still uses a unique salt plus server pepper with `scrypt`;
+  PostgreSQL stores only the verifier.
   Mobile, IP and device risk identifiers are HMAC-derived before persistence.
 - Challenge policy enforces a 60-second resend cooldown, five sends per mobile
   per day, five per device per hour, twenty per IP per hour, five verification
@@ -170,8 +174,9 @@ Status: Required baseline
   replay or partial identity/cart state. Invalid foreign replay does not expose
   the other customer's merged cart.
 - Fake SMS is local/test only and does not invent a real delivery protocol.
-  Tests control the verifier inside the guarded disposable E2E database; no
-  OTP inspection endpoint, plaintext database field or OTP log was added.
+  Its fixed code is shown on the non-production sign-in page and exercised by
+  E2E directly; no OTP inspection endpoint, plaintext database field or OTP
+  log was added. Production startup continues to reject Fake SMS.
 
 ## Pre-production security exit
 

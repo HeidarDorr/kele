@@ -7,7 +7,6 @@ import {
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
   setE2EInventory,
-  setE2EOtpCode,
 } from '../apps/api/test/support/customer-e2e.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
 
@@ -31,15 +30,14 @@ async function cartIdFromPage(page: Page): Promise<string> {
   return cartId;
 }
 
-async function completeOtp(page: Page, mobile: string, code = '418205'): Promise<void> {
+async function completeOtp(page: Page, mobile: string, code = '111111'): Promise<void> {
   await page.getByRole('textbox', { name: 'شمارهٔ موبایل', exact: true }).fill(mobile);
   const challengeResponse = page.waitForResponse(
     (response) =>
       response.url().includes('/api/commerce/auth/otp/challenges') && response.status() === 202,
   );
   await page.getByRole('button', { name: 'دریافت کد' }).click();
-  const challenge = (await (await challengeResponse).json()) as { challengeId: string };
-  await setE2EOtpCode(challenge.challengeId, code);
+  await challengeResponse;
   await page.getByRole('textbox', { name: 'کد یک‌بارمصرف', exact: true }).fill(code);
   await page.getByRole('button', { name: 'تأیید و ورود' }).click();
   await expect(page).toHaveURL(/\/account$/);
@@ -483,7 +481,7 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await page.keyboard.press('Escape');
     await ageE2EOtpChallenges(mobile);
     await page.goto(`${e2eUrls.storefront}/sign-in`);
-    await completeOtp(page, mobile, '418206');
+    await completeOtp(page, mobile);
     await page.goto(`${e2eUrls.storefront}/cart`);
     await expect(page.getByText('تعداد با موجودی فعلی هماهنگ شد.')).toBeVisible();
     await expect(page.locator('.cart-page-lines select')).toHaveValue('4');

@@ -15,6 +15,10 @@ export const environmentSchema = z
     STORAGE_SECRET_KEY: z.string().min(1),
     PAYMENT_PROVIDER: z.literal('fake'),
     SMS_PROVIDER: z.literal('fake'),
+    FAKE_SMS_OTP_CODE: z
+      .string()
+      .regex(/^\d{6}$/)
+      .default('111111'),
     API_BASE_URL: z.url(),
     NEXT_PUBLIC_API_BASE_URL: z.url(),
     STOREFRONT_ORIGIN: z.url().default('http://localhost:3000'),

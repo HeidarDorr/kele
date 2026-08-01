@@ -401,6 +401,19 @@ button:disabled {
   font-size: clamp(2.2rem, 5vw, 3.6rem);
 }
 
+.auth-panel .auth-test-code {
+  margin-block-start: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-inline-start: 3px solid var(--kele-accent-strong);
+  background: var(--kele-accent-soft);
+  color: var(--kele-ink);
+}
+
+.auth-test-code bdi {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
 .auth-panel form,
 .commerce-form {
   margin-block-start: 2rem;

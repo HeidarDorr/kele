@@ -19,10 +19,11 @@ remain Outfit-Revision aware before that module is delivered.
 ### Identity and session
 
 1. Requesting an OTP with a normalized Iranian mobile creates a short-lived
-   challenge, sends it through the provider-neutral Fake SMS adapter in local
-   and test environments, and returns the same generic response whether or not
-   the customer already exists. The persisted record contains a salted
-   verifier, never the OTP value.
+   challenge, uses the explicit `FAKE_SMS_OTP_CODE` through the provider-neutral
+   Fake SMS adapter in local and test environments, and returns the same generic
+   response whether or not the customer already exists. The persisted record
+   contains a salted verifier, never the OTP value. A future real provider must
+   replace the fixed generator with a cryptographically random one.
 2. Challenge creation is limited independently by normalized mobile, a
    privacy-preserving IP risk hash, and a signed device identifier. Resend
    cooldown and rolling limits return a generic `429` problem without sending
@@ -164,7 +165,7 @@ automatic operation.
   backend evidence were implemented in commit `d34e363`.
 - The storefront, BFF, browser journeys and documentation are delivered by the
   final Milestone 3 commits on `feat/m03-identity-customer-cart`.
-- `pnpm test` passes 31 unit tests; `pnpm test:integration` passes 12 PostgreSQL
+- `pnpm test` passes 32 unit tests; `pnpm test:integration` passes 12 PostgreSQL
   integration tests; `test:architecture`, `openapi:validate` and
   `test:contract` pass.
 - `pnpm test:e2e` passes 9 production-build browser journeys against the

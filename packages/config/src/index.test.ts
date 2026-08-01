@@ -19,6 +19,7 @@ const valid = {
   STORAGE_SECRET_KEY: storagePrivateCredential,
   PAYMENT_PROVIDER: 'fake',
   SMS_PROVIDER: 'fake',
+  FAKE_SMS_OTP_CODE: '111111',
   API_BASE_URL: 'http://localhost:3001/api/v1',
   NEXT_PUBLIC_API_BASE_URL: 'http://localhost:3001/api/v1',
   ADMIN_SUPER_SESSION_TOKEN: superSession,
@@ -55,5 +56,13 @@ describe('environment configuration', () => {
 
   it('rejects malformed required configuration', () => {
     expect(() => parseEnvironment({ ...valid, DATABASE_URL: 'not-a-url' })).toThrow();
+    expect(() => parseEnvironment({ ...valid, FAKE_SMS_OTP_CODE: '12345' })).toThrow();
+  });
+
+  it('uses an explicit six-digit fake OTP code', () => {
+    expect(parseEnvironment(valid).FAKE_SMS_OTP_CODE).toBe('111111');
+    expect(parseEnvironment({ ...valid, FAKE_SMS_OTP_CODE: '654321' }).FAKE_SMS_OTP_CODE).toBe(
+      '654321',
+    );
   });
 });

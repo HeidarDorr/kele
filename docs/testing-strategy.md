@@ -152,10 +152,10 @@ The traceability document is updated when a rule becomes implemented.
   exhaustion, replay, session fixation/logout, CSRF, horizontal address
   authorization, current price/inventory, no reservation, stale concurrent
   cart updates, deterministic/replayed/foreign merge and checkout blockers.
-- Browser tests use only the guarded `kele_e2e` database. They replace a single
-  challenge verifier after the Fake SMS boundary accepted dispatch; this
-  avoids a plaintext OTP store, log or test-only HTTP backdoor while still
-  exercising the real sign-in form and verification endpoint.
+- Browser tests use only the guarded `kele_e2e` database and enter the same
+  configured fixed Fake SMS code shown by the non-production sign-in page.
+  They do not rewrite challenge records and require no plaintext OTP store,
+  log or test-only HTTP backdoor.
 - Production-build Playwright acceptance covers the anonymous-to-authenticated
   journey, merge cap notification, profile/address management, revoked logout
   token, missing-CSRF rejection, drawer Escape behavior, RTL and horizontal

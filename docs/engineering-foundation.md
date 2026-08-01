@@ -82,6 +82,7 @@ All variables are required and validated by `@kele/config` before API startup.
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET` | S3-compatible storage target; MinIO locally.                                                                     |
 | `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`             | Storage credentials; secrets outside local development belong in secret management.                              |
 | `PAYMENT_PROVIDER`, `SMS_PROVIDER`                     | Currently only `fake` for development/test; rejected in production.                                              |
+| `FAKE_SMS_OTP_CODE`                                    | Fixed six-digit local/test sign-in code; defaults to `111111` and is never allowed with Fake SMS in production.  |
 | `API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`             | API base URL for server/client transport configuration.                                                          |
 
 ## Boundaries and runtime behavior

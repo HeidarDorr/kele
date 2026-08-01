@@ -83,6 +83,7 @@ import {
           unitOfWork,
           environment.IDENTITY_SIGNING_SECRET,
           environment.OTP_VERIFIER_PEPPER,
+          () => environment.FAKE_SMS_OTP_CODE,
         ),
       inject: [IDENTITY_REPOSITORY, CartService, SMS_GATEWAY, UNIT_OF_WORK],
     },

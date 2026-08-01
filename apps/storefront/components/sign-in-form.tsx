@@ -13,7 +13,7 @@ function normalizeMobile(value: string): string {
   return latin;
 }
 
-export function SignInForm() {
+export function SignInForm({ fakeOtpCode }: { fakeOtpCode: string | undefined }) {
   const router = useRouter();
   const [mobile, setMobile] = useState('');
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -64,6 +64,11 @@ export function SignInForm() {
       <p className="commerce-eyebrow">حساب KELE</p>
       <h1 id="sign-in-title">ورود با شمارهٔ موبایل</h1>
       <p>رمز عبوری نگه‌داری نمی‌شود؛ هر کد کوتاه‌عمر و یک‌بارمصرف است.</p>
+      {fakeOtpCode ? (
+        <p className="auth-test-code" role="note">
+          کد ثابت ورود در محیط آزمایشی: <bdi dir="ltr">{fakeOtpCode}</bdi>
+        </p>
+      ) : null}
       {challengeId === null ? (
         <form onSubmit={(event) => void requestCode(event)}>
           <label htmlFor="mobile">شمارهٔ موبایل</label>

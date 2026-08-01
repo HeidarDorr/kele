@@ -109,7 +109,8 @@ later migration or a seed record needed for diagnosis.
 ## Milestone 3 identity operations
 
 - API startup now requires `IDENTITY_SIGNING_SECRET`, `OTP_VERIFIER_PEPPER` and
-  the exact `STOREFRONT_ORIGIN`; production rejects development-prefixed
+  the exact `STOREFRONT_ORIGIN`. Local/test Fake SMS uses the six-digit
+  `FAKE_SMS_OTP_CODE` (default `111111`); production rejects development-prefixed
   identity secrets and the Fake SMS provider.
 - Deploy migrations `20260801083005_milestone_3_identity_customer_cart` and
   `20260801123000_expand_merge_notice_quantity` before serving the M3 API.

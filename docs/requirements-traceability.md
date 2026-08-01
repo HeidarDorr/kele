@@ -89,7 +89,7 @@ merged into the business specification:
 | CRT-013–CRT-018 | Transactional deterministic merge, Product SKU combination, inventory cap/notice, unavailable retention, immutable Outfit Revision review blocker and replay receipt | merge unit/integration/concurrency tests and Playwright merge journey | Implemented |
 | INV-001–INV-004, INV-017 | Current `physical - reserved` availability contract, no cart reservation, non-negative constraints and Outfit review fallback | catalog/cart integration tests, Prisma checks, unavailable browser state | Implemented for the M3 cart boundary; reservation lifecycle remains M4/M5 |
 | PRC-001, PRC-006–PRC-007, PRC-011–PRC-012 | Current append-only SKU price projection, integer IRR total and centralized exact toman presentation | cart integration tests, money unit tests, browser captures | Implemented for informational cart repricing; authoritative checkout quote remains M4 |
-| SMS-001–SMS-002 | Replaceable Fake SMS adapter, random OTP dispatch, verifier-only persistence and production fake-provider guard | foundation/config unit tests plus OTP integration abuse tests | Fake test/local boundary implemented; production provider deferred |
+| SMS-001–SMS-002 | Replaceable Fake SMS adapter, explicit fixed local/test code, verifier-only persistence and production fake-provider guard | foundation/config unit tests plus OTP integration abuse tests | Fake test/local boundary implemented; production random-code provider deferred |
 | LOC-001–LOC-002, HRD-001–HRD-002 | Persian RTL customer/cart surfaces, bidi isolation, inward dependencies and centralized money | architecture gate, type-check, Playwright viewport/keyboard evidence | Implemented for M3 surfaces |
 
 ## Milestone 1 implementation evidence
