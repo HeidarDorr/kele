@@ -23,7 +23,7 @@ async function bootstrap(): Promise<void> {
   );
   app.useGlobalFilters(new ProblemDetailsFilter());
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002'],
+    origin: [environment.STOREFRONT_ORIGIN, 'http://localhost:3002'],
     credentials: true,
   });
   app.enableShutdownHooks();

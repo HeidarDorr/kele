@@ -1,0 +1,61 @@
+import type { CartLineRecord, CartNoticeCodeValue, MergeInstruction } from './cart.types.js';
+
+export type MergeMerchandiseState = Readonly<{
+  productAvailability: ReadonlyMap<string, Readonly<{ purchasable: boolean; available: number }>>;
+  outfitPurchasability: ReadonlyMap<string, boolean>;
+}>;
+
+export function planDeterministicMerge(
+  customerLines: readonly CartLineRecord[],
+  guestLines: readonly CartLineRecord[],
+  state: MergeMerchandiseState,
+): MergeInstruction[] {
+  const customerProducts = new Map(
+    customerLines
+      .filter((line) => line.kind === 'product' && line.skuId !== null)
+      .map((line) => [line.skuId as string, line]),
+  );
+  const orderedGuestLines = [...guestLines].sort(
+    (left, right) =>
+      left.createdAt.getTime() - right.createdAt.getTime() || left.id.localeCompare(right.id),
+  );
+
+  return orderedGuestLines.map((guestLine): MergeInstruction => {
+    if (guestLine.kind === 'outfit') {
+      const key = `${guestLine.outfitRevisionId ?? ''}:${guestLine.outfitSize ?? ''}`;
+      const purchasable = state.outfitPurchasability.get(key) ?? false;
+      return {
+        kind: 'move_outfit',
+        guestLineId: guestLine.id,
+        status: purchasable ? 'available' : 'requires_review',
+        notice: purchasable ? null : 'outfit_revision_requires_review',
+      };
+    }
+
+    if (guestLine.skuId === null) throw new Error('Product cart line requires a SKU ID.');
+    const customerLine = customerProducts.get(guestLine.skuId);
+    const requestedQuantity = guestLine.quantity + (customerLine?.quantity ?? 0);
+    const merchandise = state.productAvailability.get(guestLine.skuId);
+    const available = Math.min(20, Math.max(0, merchandise?.available ?? 0));
+    const canPurchase = merchandise?.purchasable === true && available > 0;
+    const quantity = canPurchase ? Math.min(requestedQuantity, available) : requestedQuantity;
+    const notice: CartNoticeCodeValue | null = canPurchase
+      ? quantity < requestedQuantity
+        ? 'quantity_reduced_to_inventory'
+        : null
+      : 'sku_unavailable';
+    const common = {
+      guestLineId: guestLine.id,
+      quantity,
+      status: canPurchase ? ('available' as const) : ('unavailable' as const),
+      notice,
+      requestedQuantity,
+    };
+
+    if (customerLine === undefined) {
+      customerProducts.set(guestLine.skuId, { ...guestLine, quantity });
+      return { kind: 'move_product', ...common };
+    }
+    return { kind: 'combine_product', customerLineId: customerLine.id, ...common };
+  });
+}

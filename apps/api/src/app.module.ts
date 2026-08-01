@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { FoundationModule } from './modules/foundation/foundation.module.js';
 import { HealthModule } from './platform/health/health.module.js';
 import { PrismaModule } from './infrastructure/prisma/prisma.module.js';
-import { CatalogModule } from './modules/catalog/catalog.module.js';
+import { CustomerCommerceModule } from './modules/customer-commerce.module.js';
 
 @Module({
-  imports: [PrismaModule, HealthModule, FoundationModule, CatalogModule],
+  imports: [PrismaModule, HealthModule, CustomerCommerceModule],
 })
 export class AppModule {}

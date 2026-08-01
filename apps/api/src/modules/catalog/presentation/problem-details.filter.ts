@@ -7,15 +7,17 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { CatalogError } from '../application/catalog.error.js';
+import { ApplicationError } from '../../../shared/application-error.js';
 import { correlationId } from '../../../platform/observability/correlation-context.js';
 
-const statusByKind: Record<CatalogError['kind'], number> = {
+const statusByKind: Record<ApplicationError['kind'], number> = {
   not_found: HttpStatus.NOT_FOUND,
   conflict: HttpStatus.CONFLICT,
   validation: HttpStatus.UNPROCESSABLE_ENTITY,
   unauthorized: HttpStatus.UNAUTHORIZED,
   forbidden: HttpStatus.FORBIDDEN,
+  rate_limited: HttpStatus.TOO_MANY_REQUESTS,
+  dependency: HttpStatus.SERVICE_UNAVAILABLE,
 };
 
 @Catch()
@@ -24,13 +26,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse<Response>();
     const resolvedCorrelationId = correlationId() ?? randomUUID();
     const status =
-      exception instanceof CatalogError
+      exception instanceof ApplicationError
         ? statusByKind[exception.kind]
         : exception instanceof HttpException
           ? exception.getStatus()
           : HttpStatus.INTERNAL_SERVER_ERROR;
     const code =
-      exception instanceof CatalogError
+      exception instanceof ApplicationError
         ? exception.code
         : status === 400
           ? 'REQUEST_VALIDATION_FAILED'
@@ -40,15 +42,19 @@ export class ProblemDetailsFilter implements ExceptionFilter {
               ? 'FORBIDDEN'
               : 'INTERNAL_ERROR';
     const detail =
-      exception instanceof CatalogError
+      exception instanceof ApplicationError
         ? exception.message
         : exception instanceof HttpException
           ? exception.message
           : 'An unexpected error occurred.';
     const errors =
-      exception instanceof CatalogError && exception.errors.length > 0
+      exception instanceof ApplicationError && exception.errors.length > 0
         ? exception.errors
         : undefined;
+
+    if (exception instanceof ApplicationError && exception.retryAfterSeconds !== undefined) {
+      response.setHeader('Retry-After', String(exception.retryAfterSeconds));
+    }
 
     response
       .status(status)

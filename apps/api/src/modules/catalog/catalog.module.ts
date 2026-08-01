@@ -8,6 +8,12 @@ import {
   AdminCatalogController,
   PublicCatalogController,
 } from './presentation/catalog.controller.js';
+import {
+  CART_CATALOG_READER,
+  type CartCatalogReader,
+} from './application/cart-catalog.contract.js';
+import { PrismaTransactionContext } from '../../infrastructure/prisma/prisma-transaction.context.js';
+import { PrismaCartCatalogReader } from './infrastructure/prisma-cart-catalog.reader.js';
 
 @Module({
   controllers: [PublicCatalogController, AdminCatalogController],
@@ -23,6 +29,13 @@ import {
       useFactory: (repository: CatalogRepository): CatalogService => new CatalogService(repository),
       inject: [CATALOG_REPOSITORY],
     },
+    {
+      provide: CART_CATALOG_READER,
+      useFactory: (transactions: PrismaTransactionContext): CartCatalogReader =>
+        new PrismaCartCatalogReader(transactions),
+      inject: [PrismaTransactionContext],
+    },
   ],
+  exports: [CART_CATALOG_READER],
 })
 export class CatalogModule {}

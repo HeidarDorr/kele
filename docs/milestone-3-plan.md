@@ -132,21 +132,21 @@ remain Outfit-Revision aware before that module is delivered.
 
 ## Failure scenarios and expected outcomes
 
-| Failure | Expected outcome |
-|---|---|
-| SMS adapter rejects dispatch | Challenge is not usable; generic dependency problem, no raw code in logs |
-| Invalid Iranian mobile or unknown fields | `400` validation problem; no challenge or SMS |
-| OTP cooldown/limit | `429` with safe retry metadata; no account-state disclosure |
-| Wrong/expired/replayed OTP | Generic verification failure; no customer/session/cart mutation |
-| Database failure during authentication/merge | No partial customer cart or merge receipt; no authenticated cookie |
-| Invalid/forged anonymous-cart cookie | It is ignored and replaced by a fresh anonymous cart on safe cart read |
-| Missing, revoked, or expired session | `401`; protected resource is not disclosed |
-| Foreign or unknown address ID | Identical `404`; no horizontal-authorization oracle |
-| Stale cart version | `409`; caller reloads current cart; no partial mutation |
-| Product/SKU archived or inventory zero | Line remains unavailable and blocks checkout |
-| Price changes after add | Next cart read shows current informational price and recomputed total |
-| Outfit revision unavailable | Exact revision remains `requires_review`; no automatic substitution |
-| Browser/API network failure | User input remains where safe and an actionable Persian retry state is shown |
+| Failure                                      | Expected outcome                                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------------- |
+| SMS adapter rejects dispatch                 | Challenge is not usable; generic dependency problem, no raw code in logs     |
+| Invalid Iranian mobile or unknown fields     | `400` validation problem; no challenge or SMS                                |
+| OTP cooldown/limit                           | `429` with safe retry metadata; no account-state disclosure                  |
+| Wrong/expired/replayed OTP                   | Generic verification failure; no customer/session/cart mutation              |
+| Database failure during authentication/merge | No partial customer cart or merge receipt; no authenticated cookie           |
+| Invalid/forged anonymous-cart cookie         | It is ignored and replaced by a fresh anonymous cart on safe cart read       |
+| Missing, revoked, or expired session         | `401`; protected resource is not disclosed                                   |
+| Foreign or unknown address ID                | Identical `404`; no horizontal-authorization oracle                          |
+| Stale cart version                           | `409`; caller reloads current cart; no partial mutation                      |
+| Product/SKU archived or inventory zero       | Line remains unavailable and blocks checkout                                 |
+| Price changes after add                      | Next cart read shows current informational price and recomputed total        |
+| Outfit revision unavailable                  | Exact revision remains `requires_review`; no automatic substitution          |
+| Browser/API network failure                  | User input remains where safe and an actionable Persian retry state is shown |
 
 ## Migration and rollback note
 
@@ -156,4 +156,3 @@ constraints. The development rollback is the reverse migration before any
 dependent Milestone 4 data exists. In an environment containing customer data,
 rollback requires an export/retention decision and is not treated as a safe
 automatic operation.
-

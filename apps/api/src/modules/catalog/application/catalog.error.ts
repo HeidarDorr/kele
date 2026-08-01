@@ -1,17 +1,16 @@
-export type CatalogErrorKind =
-  'not_found' | 'conflict' | 'validation' | 'unauthorized' | 'forbidden';
+import { ApplicationError, type ApplicationErrorKind } from '../../../shared/application-error.js';
 
-export class CatalogError extends Error {
+export class CatalogError extends ApplicationError {
   constructor(
-    public readonly kind: CatalogErrorKind,
-    public readonly code: string,
+    kind: ApplicationErrorKind,
+    code: string,
     message: string,
-    public readonly errors: ReadonlyArray<{
+    errors: ReadonlyArray<{
       path: string;
       code: string;
       message: string;
     }> = [],
   ) {
-    super(message);
+    super(kind, code, message, errors);
   }
 }
