@@ -49,6 +49,172 @@ enum InventoryAction {
   @@map("inventory_action")
 }
 
+enum CartStatus {
+  ACTIVE
+  MERGED
+
+  @@map("cart_status")
+}
+
+enum CartLineKind {
+  PRODUCT
+  OUTFIT
+
+  @@map("cart_line_kind")
+}
+
+enum CartLineStatus {
+  AVAILABLE
+  UNAVAILABLE
+  REQUIRES_REVIEW
+
+  @@map("cart_line_status")
+}
+
+enum CartNoticeCode {
+  QUANTITY_REDUCED_TO_INVENTORY
+  SKU_UNAVAILABLE
+  OUTFIT_REVISION_REQUIRES_REVIEW
+
+  @@map("cart_notice_code")
+}
+
+model Customer {
+  id        String            @id @default(uuid()) @db.Uuid
+  mobile    String            @unique @db.VarChar(15)
+  firstName String?           @map("first_name") @db.VarChar(80)
+  lastName  String?           @map("last_name") @db.VarChar(80)
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  addresses Address[]
+  sessions  CustomerSession[]
+  cart      Cart?
+
+  @@map("customers")
+}
+
+model OtpChallenge {
+  id             String    @id @default(uuid()) @db.Uuid
+  mobile         String    @db.VarChar(15)
+  mobileHash     String    @map("mobile_hash") @db.Char(64)
+  ipHash         String    @map("ip_hash") @db.Char(64)
+  deviceHash     String    @map("device_hash") @db.Char(64)
+  codeSalt       String    @map("code_salt") @db.Char(32)
+  codeVerifier   String    @map("code_verifier") @db.Char(128)
+  failedAttempts Int       @default(0) @map("failed_attempts")
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt     DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([mobileHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([deviceHash, createdAt])
+  @@index([expiresAt])
+  @@map("otp_challenges")
+}
+
+model CustomerSession {
+  id                String    @id @default(uuid()) @db.Uuid
+  customerId        String    @map("customer_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash") @db.Char(64)
+  csrfHash          String    @map("csrf_hash") @db.Char(64)
+  idleExpiresAt     DateTime  @map("idle_expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime  @map("absolute_expires_at") @db.Timestamptz(6)
+  lastSeenAt        DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, revokedAt])
+  @@index([idleExpiresAt])
+  @@index([absoluteExpiresAt])
+  @@map("customer_sessions")
+}
+
+model Address {
+  id              String   @id @default(uuid()) @db.Uuid
+  customerId      String   @map("customer_id") @db.Uuid
+  recipientName   String   @map("recipient_name") @db.VarChar(160)
+  recipientMobile String   @map("recipient_mobile") @db.VarChar(15)
+  province        String   @db.VarChar(100)
+  city            String   @db.VarChar(100)
+  addressLine     String   @map("address_line") @db.VarChar(500)
+  postalCode      String   @map("postal_code") @db.Char(10)
+  isDefault       Boolean  @default(false) @map("is_default")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@index([customerId, createdAt])
+  @@map("addresses")
+}
+
+model Cart {
+  id         String       @id @default(uuid()) @db.Uuid
+  customerId String?      @unique @map("customer_id") @db.Uuid
+  status     CartStatus   @default(ACTIVE)
+  version    Int          @default(0)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  mergedAt   DateTime?    @map("merged_at") @db.Timestamptz(6)
+  customer   Customer?    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lines      CartLine[]
+  notices    CartNotice[]
+
+  @@index([status, updatedAt])
+  @@map("carts")
+}
+
+model CartLine {
+  id                String         @id @default(uuid()) @db.Uuid
+  cartId            String         @map("cart_id") @db.Uuid
+  kind              CartLineKind
+  skuId             String?        @map("sku_id") @db.Uuid
+  outfitRevisionId  String?        @map("outfit_revision_id") @db.Uuid
+  outfitSize        String?        @map("outfit_size") @db.VarChar(40)
+  titleSnapshot     String         @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot String         @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot   String?        @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot     Json?          @map("image_snapshot")
+  quantity          Int
+  status            CartLineStatus @default(AVAILABLE)
+  unitPriceRial     BigInt         @map("unit_price_rial")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  cart              Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  notices           CartNotice[]
+
+  @@index([cartId, createdAt])
+  @@index([cartId, skuId])
+  @@index([outfitRevisionId])
+  @@map("cart_lines")
+}
+
+model CartNotice {
+  id                String         @id @default(uuid()) @db.Uuid
+  cartId            String         @map("cart_id") @db.Uuid
+  lineId            String         @map("line_id") @db.Uuid
+  code              CartNoticeCode
+  requestedQuantity Int?           @map("requested_quantity")
+  appliedQuantity   Int?           @map("applied_quantity")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  cart              Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  line              CartLine       @relation(fields: [lineId], references: [id], onDelete: Cascade)
+
+  @@index([cartId, createdAt])
+  @@map("cart_notices")
+}
+
+model CartMergeReceipt {
+  id             String   @id @default(uuid()) @db.Uuid
+  guestCartId    String   @unique @map("guest_cart_id") @db.Uuid
+  customerCartId String   @map("customer_cart_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([customerCartId, createdAt])
+  @@map("cart_merge_receipts")
+}
+
 model Category {
   id           String            @id @default(uuid()) @db.Uuid
   name         String            @db.VarChar(120)

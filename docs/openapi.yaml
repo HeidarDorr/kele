@@ -231,11 +231,16 @@ paths:
       responses:
         '202':
           description: Generic accepted response; does not reveal account state.
+          headers:
+            Set-Cookie:
+              description: Rotated signed device and anti-CSRF cookies.
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 type: object
-                required: [challengeId, retryAfterSeconds]
+                required: [challengeId, retryAfterSeconds, expiresAt]
                 properties:
                   challengeId:
                     type: string
@@ -243,6 +248,9 @@ paths:
                   retryAfterSeconds:
                     type: integer
                     minimum: 1
+                  expiresAt:
+                    type: string
+                    format: date-time
         '429':
           $ref: '#/components/responses/Problem'
         default:
@@ -254,6 +262,8 @@ paths:
       tags: [Identity]
       summary: Verify an OTP and create/rotate a secure session.
       security: []
+      parameters:
+        - $ref: '#/components/parameters/OptionalCsrfToken'
       requestBody:
         required: true
         content:
@@ -292,6 +302,10 @@ paths:
       operationId: deleteSession
       tags: [Identity]
       summary: Revoke the current session.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
       responses:
         '204':
           description: Session revoked.
@@ -302,6 +316,8 @@ paths:
     get:
       operationId: getCurrentCustomer
       tags: [Customer]
+      security:
+        - SessionCookie: []
       responses:
         '200':
           description: Current customer profile.
@@ -314,6 +330,10 @@ paths:
     patch:
       operationId: updateCurrentCustomer
       tags: [Customer]
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -344,6 +364,8 @@ paths:
     get:
       operationId: listCurrentCustomerAddresses
       tags: [Customer]
+      security:
+        - SessionCookie: []
       responses:
         '200':
           description: Customer-owned addresses.
@@ -358,6 +380,10 @@ paths:
     post:
       operationId: createCurrentCustomerAddress
       tags: [Customer]
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -371,6 +397,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Address'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /me/addresses/{addressId}:
+    patch:
+      operationId: updateCurrentCustomerAddress
+      tags: [Customer]
+      summary: Replace one address owned by the current customer.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AddressId'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Customer-owned address updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteCurrentCustomerAddress
+      tags: [Customer]
+      summary: Delete one address owned by the current customer.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AddressId'
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Customer-owned address deleted.
+        '404':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -475,6 +545,11 @@ paths:
       responses:
         '200':
           description: Current cart with informational prices and availability.
+          headers:
+            Set-Cookie:
+              description: Anonymous-cart and anti-CSRF cookies when absent or rotated.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -487,6 +562,9 @@ paths:
       security:
         - SessionCookie: []
         - AnonymousCart: []
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CsrfToken'
       responses:
         '204':
           description: Cart cleared.
@@ -500,6 +578,9 @@ paths:
       security:
         - SessionCookie: []
         - AnonymousCart: []
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -531,6 +612,8 @@ paths:
         - AnonymousCart: []
       parameters:
         - $ref: '#/components/parameters/LineId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -551,6 +634,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cart'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteCartLine
+      tags: [Cart]
+      summary: Remove one line owned by the current cart.
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      parameters:
+        - $ref: '#/components/parameters/LineId'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Line removed.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -583,19 +686,6 @@ paths:
                   $ref: '#/components/schemas/ShippingOption'
         '422':
           $ref: '#/components/responses/Problem'
-        default:
-          $ref: '#/components/responses/Problem'
-    delete:
-      operationId: deleteCartLine
-      tags: [Cart]
-      security:
-        - SessionCookie: []
-        - AnonymousCart: []
-      parameters:
-        - $ref: '#/components/parameters/LineId'
-      responses:
-        '204':
-          description: Line removed.
         default:
           $ref: '#/components/responses/Problem'
 
@@ -1245,6 +1335,13 @@ components:
       schema:
         type: string
         format: uuid
+    AddressId:
+      name: addressId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     CheckoutSessionId:
       name: checkoutSessionId
       in: path
@@ -1288,6 +1385,25 @@ components:
       description: Optimistic resource version.
       schema:
         type: string
+        pattern: '^"[0-9]+"$'
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Double-submit token matching the signed anti-CSRF cookie.
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 256
+    OptionalCsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: false
+      description: Required when an anonymous-cart cookie is presented for merge.
+      schema:
+        type: string
+        minLength: 32
+        maxLength: 256
 
   responses:
     Problem:
@@ -1656,12 +1772,14 @@ components:
     AuthenticationResult:
       type: object
       additionalProperties: false
-      required: [customer, cart]
+      required: [customer, cart, mergePerformed]
       properties:
         customer:
           $ref: '#/components/schemas/Customer'
         cart:
           $ref: '#/components/schemas/Cart'
+        mergePerformed:
+          type: boolean
 
     AddressInput:
       type: object
@@ -1842,7 +1960,8 @@ components:
 
     Cart:
       type: object
-      required: [id, version, lines, informationalTotal, mergeNotices]
+      additionalProperties: false
+      required: [id, version, lines, informationalTotal, mergeNotices, checkoutBlocked]
       properties:
         id:
           type: string
@@ -1854,6 +1973,7 @@ components:
           type: array
           items:
             type: object
+            additionalProperties: false
             required: [id, kind, title, quantity, status, checkoutBlocking, unitPrice]
             properties:
               id:
@@ -1866,6 +1986,12 @@ components:
                 type: string
               selection:
                 type: string
+              skuCode:
+                type: [string, 'null']
+              image:
+                anyOf:
+                  - $ref: '#/components/schemas/Media'
+                  - type: 'null'
               quantity:
                 type: integer
                 minimum: 1
@@ -1878,13 +2004,18 @@ components:
                 $ref: '#/components/schemas/Money'
         informationalTotal:
           $ref: '#/components/schemas/Money'
+        checkoutBlocked:
+          type: boolean
         mergeNotices:
           type: array
           items:
             type: object
             additionalProperties: false
-            required: [code, lineId, message]
+            required: [id, code, lineId]
             properties:
+              id:
+                type: string
+                format: uuid
               code:
                 type: string
                 enum:
@@ -1894,8 +2025,12 @@ components:
               lineId:
                 type: string
                 format: uuid
-              message:
-                type: string
+              requestedQuantity:
+                type: [integer, 'null']
+                minimum: 1
+              appliedQuantity:
+                type: [integer, 'null']
+                minimum: 1
 
     CheckoutSession:
       type: object

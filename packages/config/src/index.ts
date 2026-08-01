@@ -17,7 +17,13 @@ export const environmentSchema = z
     SMS_PROVIDER: z.literal('fake'),
     API_BASE_URL: z.url(),
     NEXT_PUBLIC_API_BASE_URL: z.url(),
+    STOREFRONT_ORIGIN: z.url().default('http://localhost:3000'),
     KELE_TYPOGRAPHY: z.enum(['elize', 'markazi']).default('elize'),
+    IDENTITY_SIGNING_SECRET: z
+      .string()
+      .min(32)
+      .default('development-identity-signing-secret-00001'),
+    OTP_VERIFIER_PEPPER: z.string().min(32).default('development-otp-verifier-pepper-000001'),
     ADMIN_SUPER_SESSION_TOKEN: z
       .string()
       .min(32)
@@ -56,6 +62,18 @@ export const environmentSchema = z
         code: 'custom',
         path: ['ADMIN_SUPER_SESSION_TOKEN'],
         message: 'Development administrator sessions are forbidden in production.',
+      });
+    }
+
+    if (
+      value.NODE_ENV === 'production' &&
+      (value.IDENTITY_SIGNING_SECRET.startsWith('development-') ||
+        value.OTP_VERIFIER_PEPPER.startsWith('development-'))
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['IDENTITY_SIGNING_SECRET'],
+        message: 'Development identity secrets are forbidden in production.',
       });
     }
   });

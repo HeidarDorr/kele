@@ -222,6 +222,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/me/addresses/{addressId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete one address owned by the current customer. */
+    delete: operations['deleteCurrentCustomerAddress'];
+    options?: never;
+    head?: never;
+    /** Replace one address owned by the current customer. */
+    patch: operations['updateCurrentCustomerAddress'];
+    trace?: never;
+  };
   '/me/orders': {
     parameters: {
       query?: never;
@@ -313,7 +331,8 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    delete?: never;
+    /** Remove one line owned by the current cart. */
+    delete: operations['deleteCartLine'];
     options?: never;
     head?: never;
     patch: operations['updateCartLine'];
@@ -330,7 +349,7 @@ export interface paths {
     get: operations['listShippingOptions'];
     put?: never;
     post?: never;
-    delete: operations['deleteCartLine'];
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -809,6 +828,7 @@ export interface components {
     AuthenticationResult: {
       customer: components['schemas']['Customer'];
       cart: components['schemas']['Cart'];
+      mergePerformed: boolean;
     };
     AddressInput: {
       recipientName: string;
@@ -896,6 +916,8 @@ export interface components {
         kind: 'product' | 'outfit';
         title: string;
         selection?: string;
+        skuCode?: string | null;
+        image?: components['schemas']['Media'] | null;
         quantity: number;
         /** @enum {string} */
         status: 'available' | 'unavailable' | 'requires_review';
@@ -903,13 +925,17 @@ export interface components {
         unitPrice: components['schemas']['Money'];
       }[];
       informationalTotal: components['schemas']['Money'];
+      checkoutBlocked: boolean;
       mergeNotices: {
+        /** Format: uuid */
+        id: string;
         /** @enum {string} */
         code:
           'quantity_reduced_to_inventory' | 'sku_unavailable' | 'outfit_revision_requires_review';
         /** Format: uuid */
         lineId: string;
-        message: string;
+        requestedQuantity?: number | null;
+        appliedQuantity?: number | null;
       }[];
     };
     CheckoutSession: {
@@ -1139,6 +1165,7 @@ export interface components {
     PageSize: number;
     Slug: string;
     LineId: string;
+    AddressId: string;
     CheckoutSessionId: string;
     ProductId: string;
     SkuId: string;
@@ -1146,6 +1173,10 @@ export interface components {
     IdempotencyKey: string;
     /** @description Optimistic resource version. */
     IfMatch: string;
+    /** @description Double-submit token matching the signed anti-CSRF cookie. */
+    CsrfToken: string;
+    /** @description Required when an anonymous-cart cookie is presented for merge. */
+    OptionalCsrfToken: string;
   };
   requestBodies: never;
   headers: {
@@ -1378,6 +1409,8 @@ export interface operations {
       /** @description Generic accepted response; does not reveal account state. */
       202: {
         headers: {
+          /** @description Rotated signed device and anti-CSRF cookies. */
+          'Set-Cookie'?: string;
           [name: string]: unknown;
         };
         content: {
@@ -1385,6 +1418,8 @@ export interface operations {
             /** Format: uuid */
             challengeId: string;
             retryAfterSeconds: number;
+            /** Format: date-time */
+            expiresAt: string;
           };
         };
       };
@@ -1395,7 +1430,10 @@ export interface operations {
   verifyOtpChallenge: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description Required when an anonymous-cart cookie is presented for merge. */
+        'X-CSRF-Token'?: components['parameters']['OptionalCsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1427,7 +1465,10 @@ export interface operations {
   deleteSession: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1467,7 +1508,10 @@ export interface operations {
   updateCurrentCustomer: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1516,7 +1560,10 @@ export interface operations {
   createCurrentCustomerAddress: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1535,6 +1582,62 @@ export interface operations {
           'application/json': components['schemas']['Address'];
         };
       };
+      default: components['responses']['Problem'];
+    };
+  };
+  deleteCurrentCustomerAddress: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path: {
+        addressId: components['parameters']['AddressId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Customer-owned address deleted. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  updateCurrentCustomerAddress: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path: {
+        addressId: components['parameters']['AddressId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddressInput'];
+      };
+    };
+    responses: {
+      /** @description Customer-owned address updated. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Address'];
+        };
+      };
+      404: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };
@@ -1654,6 +1757,8 @@ export interface operations {
       /** @description Current cart with informational prices and availability. */
       200: {
         headers: {
+          /** @description Anonymous-cart and anti-CSRF cookies when absent or rotated. */
+          'Set-Cookie'?: string;
           [name: string]: unknown;
         };
         content: {
@@ -1666,7 +1771,12 @@ export interface operations {
   clearCart: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1685,7 +1795,12 @@ export interface operations {
   addCartLine: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -1710,10 +1825,43 @@ export interface operations {
       default: components['responses']['Problem'];
     };
   };
+  deleteCartLine: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path: {
+        lineId: components['parameters']['LineId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Line removed. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
   updateCartLine: {
     parameters: {
       query?: never;
-      header?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
       path: {
         lineId: components['parameters']['LineId'];
       };
@@ -1761,27 +1909,6 @@ export interface operations {
         };
       };
       422: components['responses']['Problem'];
-      default: components['responses']['Problem'];
-    };
-  };
-  deleteCartLine: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        lineId: components['parameters']['LineId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Line removed. */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
       default: components['responses']['Problem'];
     };
   };
