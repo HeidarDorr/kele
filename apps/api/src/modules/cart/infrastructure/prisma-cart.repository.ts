@@ -82,6 +82,7 @@ function mapCartLine(line: CartLine): CartLineRecord {
     kind: line.kind === CartLineKind.PRODUCT ? 'product' : 'outfit',
     skuId: line.skuId,
     outfitRevisionId: line.outfitRevisionId,
+    outfitRevisionNumber: line.outfitRevisionNumber,
     outfitSize: line.outfitSize,
     titleSnapshot: line.titleSnapshot,
     selectionSnapshot: line.selectionSnapshot,
@@ -232,19 +233,53 @@ export class PrismaCartRepository implements CartRepository {
   ): Promise<CartRecord> {
     const client = this.transactions.client();
     await this.lockCart(cartId, expectedVersion);
-    await client.cartLine.create({
-      data: {
+    const existing = await client.cartLine.findFirst({
+      where: {
         cartId,
         kind: CartLineKind.OUTFIT,
         outfitRevisionId: outfit.revisionId,
         outfitSize: outfit.size,
-        titleSnapshot: outfit.title,
-        selectionSnapshot: outfit.size,
-        quantity,
-        status: outfit.purchasable ? CartLineStatus.AVAILABLE : CartLineStatus.REQUIRES_REVIEW,
-        unitPriceRial: outfit.unitPriceRial,
       },
     });
+    const requestedQuantity = (existing?.quantity ?? 0) + quantity;
+    if (requestedQuantity > 20) {
+      throw new ApplicationError(
+        'validation',
+        'CART_QUANTITY_LIMIT',
+        'Cart line quantity cannot exceed 20.',
+      );
+    }
+    const status = !outfit.purchasable
+      ? CartLineStatus.REQUIRES_REVIEW
+      : outfit.availableQuantity >= requestedQuantity
+        ? CartLineStatus.AVAILABLE
+        : CartLineStatus.UNAVAILABLE;
+    const data = {
+      outfitRevisionNumber: outfit.revisionNumber,
+      titleSnapshot: outfit.title,
+      selectionSnapshot: outfit.sizeLabel,
+      imageSnapshot:
+        outfit.image === null
+          ? Prisma.JsonNull
+          : (outfit.image as unknown as Prisma.InputJsonValue),
+      quantity: requestedQuantity,
+      status,
+      unitPriceRial: outfit.unitPriceRial,
+    };
+    if (existing === null) {
+      await client.cartLine.create({
+        data: {
+          cartId,
+          kind: CartLineKind.OUTFIT,
+          outfitRevisionId: outfit.revisionId,
+          outfitSize: outfit.size,
+          ...data,
+        },
+      });
+    } else {
+      await client.cartNotice.deleteMany({ where: { lineId: existing.id } });
+      await client.cartLine.update({ where: { id: existing.id }, data });
+    }
     await this.incrementVersion(cartId, expectedVersion);
     return this.getActiveCart(cartId);
   }
@@ -347,7 +382,7 @@ export class PrismaCartRepository implements CartRepository {
   ): Promise<void> {
     const client = this.transactions.client();
     let noticeLineId: string;
-    if (instruction.kind === 'combine_product') {
+    if (instruction.kind === 'combine_product' || instruction.kind === 'combine_outfit') {
       await client.cartLine.update({
         where: { id: instruction.customerLineId },
         data: { quantity: instruction.quantity, status: toLineStatus[instruction.status] },
@@ -360,7 +395,7 @@ export class PrismaCartRepository implements CartRepository {
         data: {
           cartId: customerCartId,
           status: toLineStatus[instruction.status],
-          ...(instruction.kind === 'move_product' ? { quantity: instruction.quantity } : {}),
+          quantity: instruction.quantity,
         },
       });
       noticeLineId = instruction.guestLineId;
@@ -371,9 +406,8 @@ export class PrismaCartRepository implements CartRepository {
           cartId: customerCartId,
           lineId: noticeLineId,
           code: toNoticeCode[instruction.notice],
-          requestedQuantity:
-            instruction.kind === 'move_outfit' ? null : instruction.requestedQuantity,
-          appliedQuantity: instruction.kind === 'move_outfit' ? null : instruction.quantity,
+          requestedQuantity: instruction.requestedQuantity,
+          appliedQuantity: instruction.quantity,
         },
       });
     }

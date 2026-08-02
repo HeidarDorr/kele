@@ -14,6 +14,8 @@ import { PrismaCheckoutCartAdapter } from '../src/modules/cart/infrastructure/pr
 import { PrismaCheckoutCatalogAdapter } from '../src/modules/catalog/infrastructure/prisma-checkout-catalog.adapter.js';
 import { CheckoutJobService } from '../src/modules/checkout/application/checkout-job.service.js';
 import { CheckoutService } from '../src/modules/checkout/application/checkout.service.js';
+import type { CheckoutOutfitPort } from '../src/modules/checkout/application/checkout-outfit.contract.js';
+import type { CheckoutCatalogPort } from '../src/modules/catalog/application/checkout-catalog.contract.js';
 import { PaymentService } from '../src/modules/checkout/application/payment.service.js';
 import { PrismaCheckoutRepository } from '../src/modules/checkout/infrastructure/prisma-checkout.repository.js';
 import { FakePaymentAdapter } from '../src/modules/foundation/infrastructure/fake-payment.adapter.js';
@@ -28,18 +30,31 @@ const productIds = new Set<string>();
 const variantIds = new Set<string>();
 const skuIds = new Set<string>();
 const policyIds = new Set<string>();
+const outfitIds = new Set<string>();
+const outfitRevisionIds = new Set<string>();
 let mobileCounter = randomInt(1_000_000, 8_000_000);
 
 type Fixture = Awaited<ReturnType<typeof createFixture>>;
 
-function createServices(clock: () => Date = () => new Date()) {
+function createServices(
+  clock: () => Date = () => new Date(),
+  outfits: CheckoutOutfitPort = { getOutfitForCheckout: () => Promise.resolve(null) },
+) {
   const transactions = new PrismaTransactionContext(prisma as unknown as PrismaService);
   const repository = new PrismaCheckoutRepository(transactions);
   const carts = new PrismaCheckoutCartAdapter(transactions);
   const customers = new PrismaCheckoutCustomerAdapter(transactions);
   const catalog = new PrismaCheckoutCatalogAdapter(transactions);
   const fake = new FakePaymentAdapter(fakeCallbackKey);
-  const checkouts = new CheckoutService(repository, carts, customers, catalog, transactions, clock);
+  const checkouts = new CheckoutService(
+    repository,
+    carts,
+    customers,
+    catalog,
+    outfits,
+    transactions,
+    clock,
+  );
   const payments = new PaymentService(
     repository,
     fake,
@@ -51,7 +66,67 @@ function createServices(clock: () => Date = () => new Date()) {
     clock,
   );
   const jobs = new CheckoutJobService(repository, checkouts, transactions, clock);
-  return { transactions, repository, carts, catalog, fake, checkouts, payments, jobs };
+  return { transactions, repository, carts, customers, catalog, fake, checkouts, payments, jobs };
+}
+
+async function createOutfitRevision() {
+  const suffix = randomUUID();
+  const outfit = await prisma.outfit.create({ data: { slug: `checkout-outfit-${suffix}` } });
+  outfitIds.add(outfit.id);
+  const revision = await prisma.outfitRevision.create({
+    data: {
+      outfitId: outfit.id,
+      revisionNumber: 1,
+      name: 'استایل یکپارچهٔ پرداخت',
+      description: 'ویرایش موقت آزمون Checkout',
+    },
+  });
+  outfitRevisionIds.add(revision.id);
+  return revision;
+}
+
+function outfitPort(input: {
+  revisionId: string;
+  components: ReadonlyArray<{
+    skuId: string;
+    skuCode: string;
+    productName: string;
+    quantity: number;
+    available: number;
+  }>;
+  amountRial?: number;
+}): CheckoutOutfitPort {
+  return {
+    getOutfitForCheckout: (revisionId, size) =>
+      Promise.resolve(
+        revisionId === input.revisionId && size === 'LOOK-M'
+          ? {
+              revisionId,
+              revisionNumber: 1,
+              size,
+              sizeLabel: 'متوسط',
+              title: 'استایل یکپارچهٔ پرداخت',
+              unitPriceRial: input.amountRial ?? 20_000_000,
+              image: null,
+              availableQuantity: Math.min(
+                ...input.components.map((item) => Math.floor(item.available / item.quantity)),
+              ),
+              purchasable: true,
+              components: input.components.map((item, displayOrder) => ({
+                outfitItemId: randomUUID(),
+                skuId: item.skuId,
+                skuCode: item.skuCode,
+                productName: item.productName,
+                colorName: 'مشکی',
+                sizeLabel: displayOrder === 0 ? 'کت ۴۰' : 'شلوار ۴۲',
+                quantityPerOutfit: item.quantity,
+                availableQuantity: item.available,
+                displayOrder,
+              })),
+            }
+          : null,
+      ),
+  };
 }
 
 async function createSku(input: { physicalQuantity: number; amountRial: number }) {
@@ -151,6 +226,62 @@ async function createCustomerCart(input: {
     cartLineId: line.id,
     skuId: input.skuId,
   };
+}
+
+async function createOutfitCustomerCart(input: { revisionId: string; productSkuId?: string }) {
+  mobileCounter += 1;
+  const customer = await prisma.customer.create({
+    data: {
+      mobile: `+98912${String(mobileCounter).padStart(7, '0')}`,
+      firstName: 'کاربر',
+      lastName: 'Outfit',
+    },
+  });
+  customerIds.add(customer.id);
+  const address = await prisma.address.create({
+    data: {
+      customerId: customer.id,
+      recipientName: 'کاربر Outfit',
+      recipientMobile: customer.mobile,
+      province: 'تهران',
+      city: 'تهران',
+      addressLine: 'خیابان آزمون Outfit، پلاک ۵',
+      postalCode: '1234567890',
+      isDefault: true,
+    },
+  });
+  const cart = await prisma.cart.create({ data: { customerId: customer.id } });
+  cartIds.add(cart.id);
+  await prisma.cartLine.create({
+    data: {
+      cartId: cart.id,
+      kind: CartLineKind.OUTFIT,
+      outfitRevisionId: input.revisionId,
+      outfitRevisionNumber: 1,
+      outfitSize: 'LOOK-M',
+      titleSnapshot: 'استایل یکپارچهٔ پرداخت',
+      selectionSnapshot: 'متوسط',
+      quantity: 1,
+      status: CartLineStatus.AVAILABLE,
+      unitPriceRial: 20_000_000n,
+    },
+  });
+  if (input.productSkuId) {
+    await prisma.cartLine.create({
+      data: {
+        cartId: cart.id,
+        kind: CartLineKind.PRODUCT,
+        skuId: input.productSkuId,
+        titleSnapshot: 'محصول مشترک',
+        selectionSnapshot: 'مشکی / M',
+        skuCodeSnapshot: 'SHARED-SKU',
+        quantity: 1,
+        status: CartLineStatus.AVAILABLE,
+        unitPriceRial: 7_000_000n,
+      },
+    });
+  }
+  return { customerId: customer.id, addressId: address.id, cartId: cart.id };
 }
 
 async function createFixture(input: {
@@ -285,17 +416,25 @@ afterAll(async () => {
         },
       },
     });
+    await prisma.orderOutfitComponent.deleteMany({
+      where: { orderItem: { orderId: { in: orderIds } } },
+    });
     await prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
     await prisma.paymentAttempt.deleteMany({ where: { id: { in: attemptIds } } });
     await prisma.inventoryReservation.deleteMany({
       where: { checkoutSessionId: { in: checkoutIds } },
     });
+    await prisma.checkoutOutfitComponent.deleteMany({
+      where: { checkoutLine: { checkoutSessionId: { in: checkoutIds } } },
+    });
     await prisma.checkoutLine.deleteMany({ where: { checkoutSessionId: { in: checkoutIds } } });
     await prisma.checkoutSession.deleteMany({ where: { id: { in: checkoutIds } } });
     await prisma.cartNotice.deleteMany({ where: { cartId: { in: [...cartIds] } } });
     await prisma.cartLine.deleteMany({ where: { cartId: { in: [...cartIds] } } });
     await prisma.cart.deleteMany({ where: { id: { in: [...cartIds] } } });
+    await prisma.outfitRevision.deleteMany({ where: { id: { in: [...outfitRevisionIds] } } });
+    await prisma.outfit.deleteMany({ where: { id: { in: [...outfitIds] } } });
     await prisma.address.deleteMany({ where: { customerId: { in: [...customerIds] } } });
     await prisma.customerSession.deleteMany({ where: { customerId: { in: [...customerIds] } } });
     await prisma.customer.deleteMany({ where: { id: { in: [...customerIds] } } });
@@ -635,5 +774,213 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
       await prisma.checkoutSession.count({ where: { customerId: unavailable.customerId } }),
     ).toBe(0);
     expect(await prisma.order.count({ where: { customerId: unavailable.customerId } })).toBe(0);
+  });
+
+  it('[OTF-004][OTF-016][ORD-003][ORD-004] pays a mixed Product/Outfit cart and freezes exact component snapshots', async () => {
+    const jacket = await createSku({ physicalQuantity: 4, amountRial: 7_000_000 });
+    const trouser = await createSku({ physicalQuantity: 4, amountRial: 9_000_000 });
+    const revision = await createOutfitRevision();
+    const fixture = await createOutfitCustomerCart({
+      revisionId: revision.id,
+      productSkuId: jacket.skuId,
+    });
+    const selection = outfitPort({
+      revisionId: revision.id,
+      components: [
+        {
+          skuId: jacket.skuId,
+          skuCode: 'JACKET-40',
+          productName: 'کت مشکی',
+          quantity: 1,
+          available: 4,
+        },
+        {
+          skuId: trouser.skuId,
+          skuCode: 'TROUSER-42',
+          productName: 'شلوار مشکی',
+          quantity: 2,
+          available: 4,
+        },
+      ],
+    });
+    const services = createServices(() => new Date(), selection);
+    const checkout = await services.checkouts.createCheckout({
+      customerId: fixture.customerId,
+      cartId: fixture.cartId,
+      addressId: fixture.addressId,
+      deliveryMethod: 'iran_post',
+      idempotencyKey: `mixed-outfit-${randomUUID()}`,
+      correlationId: randomUUID(),
+    });
+    expect(checkout.quote.itemsTotal.amountRial).toBe(27_000_000);
+    expect(checkout.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'outfit',
+          outfitRevisionId: revision.id,
+          outfitRevisionNumber: 1,
+          outfitSize: 'LOOK-M',
+          outfitComponents: [
+            expect.objectContaining({ skuId: jacket.skuId, totalQuantity: 1 }),
+            expect.objectContaining({ skuId: trouser.skuId, totalQuantity: 2 }),
+          ],
+        }),
+      ]),
+    );
+    const attempt = await services.payments.startPayment({
+      customerId: fixture.customerId,
+      checkoutSessionId: checkout.id,
+      idempotencyKey: `mixed-payment-${randomUUID()}`,
+      correlationId: randomUUID(),
+    });
+    const outcome = await services.payments.completeFakePayment(
+      fixture.customerId,
+      attempt.id,
+      'success',
+      randomUUID(),
+    );
+    expect(outcome).toMatchObject({ status: 'paid', orderNumber: expect.any(String) });
+    if (!outcome.orderNumber) throw new Error('Mixed Outfit payment did not create an Order.');
+
+    await prisma.product.updateMany({
+      where: { id: { in: [jacket.productId, trouser.productId] } },
+      data: { name: 'نام تغییر‌یافته پس از پرداخت' },
+    });
+    const order = await services.repository.getOwnedOrder(fixture.customerId, outcome.orderNumber);
+    const outfitItem = order.items.find((item) => item.kind === 'outfit');
+    expect(outfitItem).toMatchObject({
+      outfitRevisionId: revision.id,
+      outfitRevisionNumber: 1,
+      outfitSize: 'LOOK-M',
+      unitPriceRial: 20_000_000,
+      outfitComponents: [
+        expect.objectContaining({ productName: 'کت مشکی', skuCode: 'JACKET-40' }),
+        expect.objectContaining({
+          productName: 'شلوار مشکی',
+          skuCode: 'TROUSER-42',
+          totalQuantity: 2,
+        }),
+      ],
+    });
+    await expect(
+      prisma.inventory.findUniqueOrThrow({ where: { skuId: jacket.skuId } }),
+    ).resolves.toMatchObject({ physicalQuantity: 2, reservedQuantity: 0 });
+    await expect(
+      prisma.inventory.findUniqueOrThrow({ where: { skuId: trouser.skuId } }),
+    ).resolves.toMatchObject({ physicalQuantity: 2, reservedQuantity: 0 });
+  });
+
+  it('[OTF-016][INV-002] rolls back every component and Checkout fact when a later reservation fails', async () => {
+    const first = await createSku({ physicalQuantity: 2, amountRial: 4_000_000 });
+    const second = await createSku({ physicalQuantity: 2, amountRial: 5_000_000 });
+    const revision = await createOutfitRevision();
+    const fixture = await createOutfitCustomerCart({ revisionId: revision.id });
+    const selection = outfitPort({
+      revisionId: revision.id,
+      components: [
+        {
+          skuId: first.skuId,
+          skuCode: 'ROLLBACK-A',
+          productName: 'جزء اول',
+          quantity: 1,
+          available: 2,
+        },
+        {
+          skuId: second.skuId,
+          skuCode: 'ROLLBACK-B',
+          productName: 'جزء دوم',
+          quantity: 1,
+          available: 2,
+        },
+      ],
+    });
+    const base = createServices(() => new Date(), selection);
+    const failingCatalog: CheckoutCatalogPort = {
+      getProducts: (ids) => base.catalog.getProducts(ids),
+      lockProducts: (ids) => base.catalog.lockProducts(ids),
+      reserve: async (reservations, actor) => {
+        await base.catalog.reserve(reservations.slice(0, 1), actor);
+        throw new Error('simulated later component failure');
+      },
+      release: (reservations, actor, reason) => base.catalog.release(reservations, actor, reason),
+      consume: (reservations, actor, orderId) => base.catalog.consume(reservations, actor, orderId),
+    };
+    const checkouts = new CheckoutService(
+      base.repository,
+      base.carts,
+      base.customers,
+      failingCatalog,
+      selection,
+      base.transactions,
+    );
+    await expect(
+      checkouts.createCheckout({
+        customerId: fixture.customerId,
+        cartId: fixture.cartId,
+        addressId: fixture.addressId,
+        deliveryMethod: 'iran_post',
+        idempotencyKey: `rollback-outfit-${randomUUID()}`,
+        correlationId: randomUUID(),
+      }),
+    ).rejects.toThrow('simulated later component failure');
+    expect(
+      await prisma.inventory.findMany({
+        where: { skuId: { in: [first.skuId, second.skuId] } },
+        select: { reservedQuantity: true },
+      }),
+    ).toEqual([{ reservedQuantity: 0 }, { reservedQuantity: 0 }]);
+    expect(await prisma.checkoutSession.count({ where: { cartId: fixture.cartId } })).toBe(0);
+  });
+
+  it('[OTF-007][OTF-016][INV-001] gives the last complete Outfit to exactly one concurrent cart', async () => {
+    const first = await createSku({ physicalQuantity: 1, amountRial: 4_000_000 });
+    const second = await createSku({ physicalQuantity: 1, amountRial: 5_000_000 });
+    const revision = await createOutfitRevision();
+    const carts = await Promise.all([
+      createOutfitCustomerCart({ revisionId: revision.id }),
+      createOutfitCustomerCart({ revisionId: revision.id }),
+    ]);
+    const selection = outfitPort({
+      revisionId: revision.id,
+      components: [
+        {
+          skuId: first.skuId,
+          skuCode: 'LAST-A',
+          productName: 'جزء اول',
+          quantity: 1,
+          available: 1,
+        },
+        {
+          skuId: second.skuId,
+          skuCode: 'LAST-B',
+          productName: 'جزء دوم',
+          quantity: 1,
+          available: 1,
+        },
+      ],
+    });
+    const services = createServices(() => new Date(), selection);
+    const results = await Promise.allSettled(
+      carts.map((fixture) =>
+        services.checkouts.createCheckout({
+          customerId: fixture.customerId,
+          cartId: fixture.cartId,
+          addressId: fixture.addressId,
+          deliveryMethod: 'iran_post',
+          idempotencyKey: `last-outfit-${fixture.customerId}`,
+          correlationId: randomUUID(),
+        }),
+      ),
+    );
+    expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter(({ status }) => status === 'rejected')).toHaveLength(1);
+    const inventory = await prisma.inventory.findMany({
+      where: { skuId: { in: [first.skuId, second.skuId] } },
+      select: { physicalQuantity: true, reservedQuantity: true },
+    });
+    expect(inventory).toEqual([
+      { physicalQuantity: 1, reservedQuantity: 1 },
+      { physicalQuantity: 1, reservedQuantity: 1 },
+    ]);
   });
 });

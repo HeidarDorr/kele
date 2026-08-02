@@ -62,6 +62,7 @@ export type CheckoutLineRecord = Readonly<{
   kind: 'product' | 'outfit';
   skuId: string | null;
   outfitRevisionId: string | null;
+  outfitRevisionNumber: number | null;
   outfitSize: string | null;
   title: string;
   selection: string;
@@ -70,6 +71,19 @@ export type CheckoutLineRecord = Readonly<{
   quantity: number;
   unitPriceRial: number;
   lineTotalRial: number;
+  outfitComponents: readonly OutfitComponentSnapshot[];
+}>;
+
+export type OutfitComponentSnapshot = Readonly<{
+  outfitItemId: string;
+  skuId: string;
+  skuCode: string;
+  productName: string;
+  colorName: string;
+  sizeLabel: string;
+  quantityPerOutfit: number;
+  totalQuantity: number;
+  displayOrder: number;
 }>;
 
 export type ReservationRecord = Readonly<{
@@ -112,10 +126,14 @@ export type CheckoutSessionView = Readonly<{
     title: string;
     selection: string;
     skuCode: string | null;
+    outfitRevisionId: string | null;
+    outfitRevisionNumber: number | null;
+    outfitSize: string | null;
     image: CheckoutMediaSnapshot | null;
     quantity: number;
     unitPrice: MoneyView;
     lineTotal: MoneyView;
+    outfitComponents: readonly OutfitComponentSnapshot[];
   }>;
   quote: Readonly<{
     itemsTotal: MoneyView;
@@ -207,9 +225,13 @@ export type OrderSnapshotRecord = Readonly<{
     title: string;
     selection: string;
     skuCode: string | null;
+    outfitRevisionId: string | null;
+    outfitRevisionNumber: number | null;
+    outfitSize: string | null;
     quantity: number;
     unitPriceRial: number;
     lineTotalRial: number;
+    outfitComponents: readonly OutfitComponentSnapshot[];
   }>;
   address: AddressSnapshot;
   shipping: Readonly<{
@@ -241,9 +263,13 @@ export type OrderView = Readonly<{
     title: string;
     selection: string;
     skuCode: string | null;
+    outfitRevisionId: string | null;
+    outfitRevisionNumber: number | null;
+    outfitSize: string | null;
     quantity: number;
     unitPrice: MoneyView;
     lineTotal: MoneyView;
+    outfitComponents: readonly OutfitComponentSnapshot[];
   }>;
   address: AddressSnapshot;
   shipping: Readonly<{

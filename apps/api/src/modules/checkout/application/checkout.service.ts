@@ -14,6 +14,7 @@ import type {
 } from '../../catalog/application/checkout-catalog.contract.js';
 import type { CheckoutCustomerPort } from '../../identity/application/checkout-customer.contract.js';
 import type { CheckoutRepository } from './checkout.repository.js';
+import type { CheckoutOutfitPort, CheckoutOutfitSelection } from './checkout-outfit.contract.js';
 import {
   normalizeAddressZone,
   quoteShippingOptions,
@@ -87,10 +88,14 @@ export function checkoutSessionView(session: CheckoutSessionRecord): CheckoutSes
       title: line.title,
       selection: line.selection,
       skuCode: line.skuCode,
+      outfitRevisionId: line.outfitRevisionId,
+      outfitRevisionNumber: line.outfitRevisionNumber,
+      outfitSize: line.outfitSize,
       image: line.image,
       quantity: line.quantity,
       unitPrice: money(line.unitPriceRial),
       lineTotal: money(line.lineTotalRial),
+      outfitComponents: line.outfitComponents,
     })),
     quote: {
       itemsTotal: money(session.itemsSubtotalRial),
@@ -109,6 +114,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
     private readonly carts: CheckoutCartPort,
     private readonly customers: CheckoutCustomerPort,
     private readonly catalog: CheckoutCatalogPort,
+    private readonly outfits: CheckoutOutfitPort,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: () => Date = () => new Date(),
     private readonly idFactory: IdFactory = randomUUID,
@@ -129,7 +135,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
       ...rawAddress,
       normalizedZone: normalizeAddressZone(rawAddress),
     };
-    const { itemsSubtotalRial } = await this.quoteProductCart(cart, false);
+    const { itemsSubtotalRial } = await this.quoteCart(cart, false);
     return quoteShippingOptions(settings, address, itemsSubtotalRial).map(shippingOptionView);
   }
 
@@ -177,7 +183,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
         normalizedZone: normalizeAddressZone(rawAddress),
       };
       const settings = await this.requireShippingSettings(now);
-      const quote = await this.quoteProductCart(cart, true);
+      const quote = await this.quoteCart(cart, true);
       let shipping: ShippingOptionValue;
       try {
         shipping = requireEligibleShippingOption(
@@ -209,30 +215,42 @@ export class CheckoutService implements CartCheckoutLifecycle {
       const lines: CheckoutLineRecord[] = quote.lines.map((line) => ({
         id: this.idFactory(),
         cartLineId: line.cartLineId,
-        kind: 'product',
-        skuId: line.product.skuId,
-        outfitRevisionId: null,
-        outfitSize: null,
-        title: line.product.title,
-        selection: line.product.selection,
-        skuCode: line.product.skuCode,
-        image: line.product.image,
+        kind: line.kind,
+        skuId: line.skuId,
+        outfitRevisionId: line.outfitRevisionId,
+        outfitRevisionNumber: line.outfitRevisionNumber,
+        outfitSize: line.outfitSize,
+        title: line.title,
+        selection: line.selection,
+        skuCode: line.skuCode,
+        image: line.image,
         quantity: line.quantity,
-        unitPriceRial: line.product.unitPriceRial,
-        lineTotalRial: checkedMoney(
-          line.product.unitPriceRial * line.quantity,
-          'Checkout line total',
-        ),
+        unitPriceRial: line.unitPriceRial,
+        lineTotalRial: checkedMoney(line.unitPriceRial * line.quantity, 'Checkout line total'),
+        outfitComponents: line.outfitComponents,
       }));
-      const reservations: ReservationRecord[] = lines.map((line) => ({
-        id: this.idFactory(),
-        checkoutSessionId: sessionId,
-        checkoutLineId: line.id,
-        skuId: line.skuId as string,
-        quantity: line.quantity,
-        status: 'active',
-        expiresAt,
-      }));
+      const reservations: ReservationRecord[] = lines.flatMap((line) => {
+        const demands = new Map<string, number>();
+        if (line.kind === 'product' && line.skuId !== null) {
+          demands.set(line.skuId, line.quantity);
+        } else {
+          for (const component of line.outfitComponents) {
+            demands.set(
+              component.skuId,
+              (demands.get(component.skuId) ?? 0) + component.totalQuantity,
+            );
+          }
+        }
+        return [...demands.entries()].map(([skuId, quantity]) => ({
+          id: this.idFactory(),
+          checkoutSessionId: sessionId,
+          checkoutLineId: line.id,
+          skuId,
+          quantity,
+          status: 'active' as const,
+          expiresAt,
+        }));
+      });
       const created = await this.repository.createCheckout(
         {
           id: sessionId,
@@ -377,52 +395,145 @@ export class CheckoutService implements CartCheckoutLifecycle {
     return this.repository.getEffectiveShippingSettings(this.clock());
   }
 
-  private async quoteProductCart(cart: CheckoutCart, lock: boolean) {
+  private async quoteCart(cart: CheckoutCart, lock: boolean) {
     if (cart.lines.length === 0) {
       throw new ApplicationError('validation', 'CART_EMPTY', 'Cart is empty.');
     }
-    if (cart.lines.some((line) => line.kind === 'outfit' || line.status === 'requires_review')) {
+    if (cart.lines.some((line) => line.status !== 'available')) {
       throw new ApplicationError(
         'validation',
         'CART_REQUIRES_REVIEW',
-        'Cart contains an Outfit Revision that cannot enter Product checkout.',
+        'Cart contains a line that must be resolved before Checkout.',
       );
     }
-    const skuIds = cart.lines.map((line) => {
-      if (line.skuId === null) {
+    const outfitSelections = new Map<string, CheckoutOutfitSelection>();
+    for (const line of cart.lines) {
+      if (line.kind !== 'outfit') continue;
+      if (line.outfitRevisionId === null || line.outfitSize === null) {
+        throw new ApplicationError('validation', 'CART_LINE_INVALID', 'Outfit line is incomplete.');
+      }
+      const selection = await this.outfits.getOutfitForCheckout(
+        line.outfitRevisionId,
+        line.outfitSize,
+      );
+      if (selection === null || !selection.purchasable) {
         throw new ApplicationError(
-          'validation',
-          'CART_LINE_INVALID',
-          'Product cart line is missing its SKU.',
+          'conflict',
+          'OUTFIT_REVISION_REQUIRES_REVIEW',
+          'Outfit revision is no longer purchasable.',
         );
       }
-      return line.skuId;
+      outfitSelections.set(line.id, selection);
+    }
+    const skuIds = cart.lines.flatMap((line) => {
+      if (line.kind === 'product') {
+        if (line.skuId === null) {
+          throw new ApplicationError(
+            'validation',
+            'CART_LINE_INVALID',
+            'Product cart line is missing its SKU.',
+          );
+        }
+        return [line.skuId];
+      }
+      return outfitSelections.get(line.id)?.components.map((component) => component.skuId) ?? [];
     });
     const products = lock
       ? await this.catalog.lockProducts(skuIds)
       : await this.catalog.getProducts(skuIds);
-    let itemsSubtotalRial = 0;
-    const lines: Array<{
-      cartLineId: string;
-      quantity: number;
-      product: CheckoutCatalogProduct;
-    }> = [];
+    const totalDemand = new Map<string, number>();
     for (const line of cart.lines) {
-      const product = products.get(line.skuId as string);
-      if (
-        product === undefined ||
-        !product.purchasable ||
-        product.availableQuantity < line.quantity
-      ) {
+      if (line.kind === 'product') {
+        totalDemand.set(
+          line.skuId as string,
+          (totalDemand.get(line.skuId as string) ?? 0) + line.quantity,
+        );
+        continue;
+      }
+      const selection = outfitSelections.get(line.id) as CheckoutOutfitSelection;
+      for (const component of selection.components) {
+        totalDemand.set(
+          component.skuId,
+          (totalDemand.get(component.skuId) ?? 0) + component.quantityPerOutfit * line.quantity,
+        );
+      }
+    }
+    for (const [skuId, quantity] of totalDemand) {
+      const product = products.get(skuId);
+      if (product === undefined || !product.purchasable || product.availableQuantity < quantity) {
         throw new ApplicationError(
           'conflict',
           'CART_LINE_UNAVAILABLE',
-          'A Cart line is no longer purchasable in the requested quantity.',
+          'A Product or Outfit component is unavailable in the requested quantity.',
         );
       }
-      const lineTotal = checkedMoney(product.unitPriceRial * line.quantity, 'Cart line total');
+    }
+    let itemsSubtotalRial = 0;
+    const lines: Array<{
+      cartLineId: string;
+      kind: 'product' | 'outfit';
+      skuId: string | null;
+      outfitRevisionId: string | null;
+      outfitRevisionNumber: number | null;
+      outfitSize: string | null;
+      title: string;
+      selection: string;
+      skuCode: string | null;
+      image: CheckoutLineRecord['image'];
+      quantity: number;
+      unitPriceRial: number;
+      outfitComponents: CheckoutLineRecord['outfitComponents'];
+    }> = [];
+    for (const line of cart.lines) {
+      if (line.kind === 'product') {
+        const product = products.get(line.skuId as string) as CheckoutCatalogProduct;
+        const lineTotal = checkedMoney(product.unitPriceRial * line.quantity, 'Cart line total');
+        itemsSubtotalRial = addMoney(itemsSubtotalRial, lineTotal, 'Order Subtotal');
+        lines.push({
+          cartLineId: line.id,
+          kind: 'product',
+          skuId: product.skuId,
+          outfitRevisionId: null,
+          outfitRevisionNumber: null,
+          outfitSize: null,
+          title: product.title,
+          selection: product.selection,
+          skuCode: product.skuCode,
+          image: product.image,
+          quantity: line.quantity,
+          unitPriceRial: product.unitPriceRial,
+          outfitComponents: [],
+        });
+        continue;
+      }
+      const selection = outfitSelections.get(line.id) as CheckoutOutfitSelection;
+      const lineTotal = checkedMoney(selection.unitPriceRial * line.quantity, 'Outfit line total');
       itemsSubtotalRial = addMoney(itemsSubtotalRial, lineTotal, 'Order Subtotal');
-      lines.push({ cartLineId: line.id, quantity: line.quantity, product });
+      lines.push({
+        cartLineId: line.id,
+        kind: 'outfit',
+        skuId: null,
+        outfitRevisionId: selection.revisionId,
+        outfitRevisionNumber: selection.revisionNumber,
+        outfitSize: selection.size,
+        title: selection.title,
+        selection: selection.sizeLabel,
+        skuCode: null,
+        image: selection.image,
+        quantity: line.quantity,
+        unitPriceRial: selection.unitPriceRial,
+        outfitComponents: selection.components.map((component) => ({
+          outfitItemId: component.outfitItemId,
+          skuId: component.skuId,
+          skuCode: component.skuCode,
+          productName: component.productName,
+          colorName: component.colorName,
+          sizeLabel: component.sizeLabel,
+          quantityPerOutfit: component.quantityPerOutfit,
+          totalQuantity: component.quantityPerOutfit * line.quantity,
+          displayOrder: component.displayOrder,
+        })),
+      });
     }
     return { itemsSubtotalRial, lines };
   }

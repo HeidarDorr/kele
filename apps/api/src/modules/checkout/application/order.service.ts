@@ -21,9 +21,13 @@ function orderView(order: OrderSnapshotRecord): OrderView {
       title: item.title,
       selection: item.selection,
       skuCode: item.skuCode,
+      outfitRevisionId: item.outfitRevisionId,
+      outfitRevisionNumber: item.outfitRevisionNumber,
+      outfitSize: item.outfitSize,
       quantity: item.quantity,
       unitPrice: money(item.unitPriceRial),
       lineTotal: money(item.lineTotalRial),
+      outfitComponents: item.outfitComponents,
     })),
     address: order.address,
     shipping: {

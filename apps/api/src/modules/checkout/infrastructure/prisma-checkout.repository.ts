@@ -30,7 +30,10 @@ import type {
 } from '../domain/checkout.types.js';
 
 const checkoutInclude = {
-  lines: { orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }] },
+  lines: {
+    orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }],
+    include: { outfitComponents: { orderBy: { displayOrder: 'asc' as const } } },
+  },
   reservations: { orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }] },
   order: { select: { orderNumber: true } },
 } satisfies Prisma.CheckoutSessionInclude;
@@ -50,7 +53,10 @@ type CheckoutRow = Prisma.CheckoutSessionGetPayload<{ include: typeof checkoutIn
 type PaymentRow = Prisma.PaymentAttemptGetPayload<{ include: typeof paymentInclude }>;
 
 const orderInclude = {
-  items: { orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }] },
+  items: {
+    orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }],
+    include: { outfitComponents: { orderBy: { displayOrder: 'asc' as const } } },
+  },
 } satisfies Prisma.OrderInclude;
 
 type OrderRow = Prisma.OrderGetPayload<{ include: typeof orderInclude }>;
@@ -157,6 +163,7 @@ function mapCheckout(row: CheckoutRow): CheckoutSessionRecord {
       kind: line.kind === CartLineKind.PRODUCT ? 'product' : 'outfit',
       skuId: line.skuId,
       outfitRevisionId: line.outfitRevisionId,
+      outfitRevisionNumber: line.outfitRevisionNumber,
       outfitSize: line.outfitSize,
       title: line.titleSnapshot,
       selection: line.selectionSnapshot,
@@ -168,6 +175,17 @@ function mapCheckout(row: CheckoutRow): CheckoutSessionRecord {
       quantity: line.quantity,
       unitPriceRial: safeInteger(line.unitPriceRial),
       lineTotalRial: safeInteger(line.lineTotalRial),
+      outfitComponents: line.outfitComponents.map((component) => ({
+        outfitItemId: component.outfitItemIdSnapshot,
+        skuId: component.skuIdSnapshot,
+        skuCode: component.skuCodeSnapshot,
+        productName: component.productNameSnapshot,
+        colorName: component.colorNameSnapshot,
+        sizeLabel: component.sizeLabelSnapshot,
+        quantityPerOutfit: component.quantityPerOutfit,
+        totalQuantity: component.totalQuantity,
+        displayOrder: component.displayOrder,
+      })),
     })),
     reservations: row.reservations.map((reservation) => ({
       id: reservation.id,
@@ -225,9 +243,23 @@ function mapOrder(row: OrderRow): OrderSnapshotRecord {
       title: item.titleSnapshot,
       selection: item.selectionSnapshot,
       skuCode: item.skuCodeSnapshot,
+      outfitRevisionId: item.outfitRevisionId,
+      outfitRevisionNumber: item.outfitRevisionNumber,
+      outfitSize: item.outfitSize,
       quantity: item.quantity,
       unitPriceRial: safeInteger(item.unitPriceRial),
       lineTotalRial: safeInteger(item.lineTotalRial),
+      outfitComponents: item.outfitComponents.map((component) => ({
+        outfitItemId: component.outfitItemIdSnapshot,
+        skuId: component.skuIdSnapshot,
+        skuCode: component.skuCodeSnapshot,
+        productName: component.productNameSnapshot,
+        colorName: component.colorNameSnapshot,
+        sizeLabel: component.sizeLabelSnapshot,
+        quantityPerOutfit: component.quantityPerOutfit,
+        totalQuantity: component.totalQuantity,
+        displayOrder: component.displayOrder,
+      })),
     })),
     address: mapAddress(row.addressSnapshot),
     shipping: {
@@ -436,6 +468,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
             kind: line.kind === 'product' ? CartLineKind.PRODUCT : CartLineKind.OUTFIT,
             skuId: line.skuId,
             outfitRevisionId: line.outfitRevisionId,
+            outfitRevisionNumber: line.outfitRevisionNumber,
             outfitSize: line.outfitSize,
             titleSnapshot: line.title,
             selectionSnapshot: line.selection,
@@ -447,6 +480,19 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
             quantity: line.quantity,
             unitPriceRial: line.unitPriceRial,
             lineTotalRial: line.lineTotalRial,
+            outfitComponents: {
+              create: line.outfitComponents.map((component) => ({
+                outfitItemIdSnapshot: component.outfitItemId,
+                skuIdSnapshot: component.skuId,
+                skuCodeSnapshot: component.skuCode,
+                productNameSnapshot: component.productName,
+                colorNameSnapshot: component.colorName,
+                sizeLabelSnapshot: component.sizeLabel,
+                quantityPerOutfit: component.quantityPerOutfit,
+                totalQuantity: component.totalQuantity,
+                displayOrder: component.displayOrder,
+              })),
+            },
           })),
         },
       },
@@ -786,6 +832,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
             kind: line.kind === 'product' ? CartLineKind.PRODUCT : CartLineKind.OUTFIT,
             skuId: line.skuId,
             outfitRevisionId: line.outfitRevisionId,
+            outfitRevisionNumber: line.outfitRevisionNumber,
             outfitSize: line.outfitSize,
             titleSnapshot: line.title,
             selectionSnapshot: line.selection,
@@ -797,6 +844,19 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
             quantity: line.quantity,
             unitPriceRial: line.unitPriceRial,
             lineTotalRial: line.lineTotalRial,
+            outfitComponents: {
+              create: line.outfitComponents.map((component) => ({
+                outfitItemIdSnapshot: component.outfitItemId,
+                skuIdSnapshot: component.skuId,
+                skuCodeSnapshot: component.skuCode,
+                productNameSnapshot: component.productName,
+                colorNameSnapshot: component.colorName,
+                sizeLabelSnapshot: component.sizeLabel,
+                quantityPerOutfit: component.quantityPerOutfit,
+                totalQuantity: component.totalQuantity,
+                displayOrder: component.displayOrder,
+              })),
+            },
           })),
         },
       },

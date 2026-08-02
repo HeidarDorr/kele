@@ -18,10 +18,11 @@ import {
   type CartCheckoutLifecycle,
 } from './cart/application/cart-checkout-lifecycle.contract.js';
 import {
-  MilestoneThreeOutfitCartReader,
   OUTFIT_CART_READER,
   type OutfitCartReader,
 } from './cart/application/outfit-cart.contract.js';
+import { OutfitModule } from './outfit/outfit.module.js';
+import { OutfitService } from './outfit/application/outfit.service.js';
 import { CartAccessResolver } from './cart/presentation/cart-access.js';
 import { CartController } from './cart/presentation/cart.controller.js';
 import {
@@ -80,9 +81,13 @@ import {
 import { AdminSessionGuard } from './catalog/presentation/admin-session.guard.js';
 import { OrderService } from './checkout/application/order.service.js';
 import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.js';
+import {
+  CHECKOUT_OUTFIT_PORT,
+  type CheckoutOutfitPort,
+} from './checkout/application/checkout-outfit.contract.js';
 
 @Module({
-  imports: [FoundationModule, CatalogModule],
+  imports: [FoundationModule, CatalogModule, OutfitModule],
   controllers: [
     IdentityController,
     CustomerController,
@@ -97,8 +102,8 @@ import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.
     CustomerSessionGuard,
     CustomerCsrfGuard,
     CartAccessResolver,
-    MilestoneThreeOutfitCartReader,
-    { provide: OUTFIT_CART_READER, useExisting: MilestoneThreeOutfitCartReader },
+    { provide: OUTFIT_CART_READER, useExisting: OutfitService },
+    { provide: CHECKOUT_OUTFIT_PORT, useExisting: OutfitService },
     {
       provide: CART_REPOSITORY,
       useFactory: (transactions: PrismaTransactionContext): CartRepository =>
@@ -188,6 +193,7 @@ import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.
         carts: CheckoutCartPort,
         customers: CheckoutCustomerPort,
         catalog: CheckoutCatalogPort,
+        outfits: CheckoutOutfitPort,
         unitOfWork: UnitOfWork,
       ): CheckoutService =>
         new CheckoutService(
@@ -195,6 +201,7 @@ import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.
           carts,
           customers,
           catalog,
+          outfits,
           unitOfWork,
           runtimeClock(environment.E2E_FIXED_TIME),
           runtimeIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'checkout'),
@@ -204,6 +211,7 @@ import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.
         CHECKOUT_CART_PORT,
         CHECKOUT_CUSTOMER_PORT,
         CHECKOUT_CATALOG_PORT,
+        CHECKOUT_OUTFIT_PORT,
         UNIT_OF_WORK,
       ],
     },

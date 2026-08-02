@@ -19,6 +19,11 @@ import {
   type CheckoutCatalogPort,
 } from './application/checkout-catalog.contract.js';
 import { PrismaCheckoutCatalogAdapter } from './infrastructure/prisma-checkout-catalog.adapter.js';
+import {
+  OUTFIT_CATALOG_PORT,
+  type OutfitCatalogPort,
+} from './application/outfit-catalog.contract.js';
+import { PrismaOutfitCatalogAdapter } from './infrastructure/prisma-outfit-catalog.adapter.js';
 
 @Module({
   controllers: [PublicCatalogController, AdminCatalogController],
@@ -46,7 +51,13 @@ import { PrismaCheckoutCatalogAdapter } from './infrastructure/prisma-checkout-c
         new PrismaCheckoutCatalogAdapter(transactions),
       inject: [PrismaTransactionContext],
     },
+    {
+      provide: OUTFIT_CATALOG_PORT,
+      useFactory: (transactions: PrismaTransactionContext): OutfitCatalogPort =>
+        new PrismaOutfitCatalogAdapter(transactions),
+      inject: [PrismaTransactionContext],
+    },
   ],
-  exports: [CART_CATALOG_READER, CHECKOUT_CATALOG_PORT],
+  exports: [CART_CATALOG_READER, CHECKOUT_CATALOG_PORT, OUTFIT_CATALOG_PORT],
 })
 export class CatalogModule {}

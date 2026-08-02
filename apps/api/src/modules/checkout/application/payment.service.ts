@@ -223,19 +223,36 @@ export class PaymentService {
       const activeReservations = checkout.reservations.filter(
         (reservation) => reservation.status === 'active',
       );
-      const completeProductReservation =
-        checkout.lines.every((line) =>
+      const expectedReservations = checkout.lines.flatMap((line) => {
+        if (line.kind === 'product') {
+          return line.skuId === null
+            ? []
+            : [{ checkoutLineId: line.id, skuId: line.skuId, quantity: line.quantity }];
+        }
+        const bySku = new Map<string, number>();
+        for (const component of line.outfitComponents) {
+          bySku.set(component.skuId, (bySku.get(component.skuId) ?? 0) + component.totalQuantity);
+        }
+        return [...bySku.entries()].map(([skuId, quantity]) => ({
+          checkoutLineId: line.id,
+          skuId,
+          quantity,
+        }));
+      });
+      const completeReservationSet =
+        expectedReservations.length === activeReservations.length &&
+        expectedReservations.every((expected) =>
           activeReservations.some(
             (reservation) =>
-              reservation.checkoutLineId === line.id &&
-              reservation.skuId === line.skuId &&
-              reservation.quantity === line.quantity,
+              reservation.checkoutLineId === expected.checkoutLineId &&
+              reservation.skuId === expected.skuId &&
+              reservation.quantity === expected.quantity,
           ),
-        ) && activeReservations.length === checkout.reservations.length;
+        );
       if (
         !['active', 'payment_pending'].includes(checkout.status) ||
         checkout.expiresAt <= now ||
-        !completeProductReservation
+        !completeReservationSet
       ) {
         return this.repository.createReconciliation({
           checkout,

@@ -113,7 +113,7 @@ export class CartService {
       }
 
       const productStates = new Map<string, { purchasable: boolean; available: number }>();
-      const outfitStates = new Map<string, boolean>();
+      const outfitStates = new Map<string, { purchasable: boolean; available: number }>();
       for (const line of guestCart.lines) {
         if (line.kind === 'product' && line.skuId !== null) {
           const product = await this.catalog.getProductForCart(line.skuId);
@@ -126,15 +126,15 @@ export class CartService {
             line.outfitRevisionId,
             line.outfitSize,
           );
-          outfitStates.set(
-            `${line.outfitRevisionId}:${line.outfitSize}`,
-            outfit?.purchasable === true,
-          );
+          outfitStates.set(`${line.outfitRevisionId}:${line.outfitSize}`, {
+            purchasable: outfit?.purchasable === true,
+            available: outfit?.availableQuantity ?? 0,
+          });
         }
       }
       const instructions = planDeterministicMerge(customerCart.lines, guestCart.lines, {
         productAvailability: productStates,
-        outfitPurchasability: outfitStates,
+        outfitAvailability: outfitStates,
       });
       const result = await this.repository.applyMerge(customerCart.id, guestCart.id, instructions);
       return { cart: await this.toView(result.cart), mergePerformed: result.mergePerformed };
@@ -151,6 +151,9 @@ export class CartService {
           title: current.title,
           selection: current.selection,
           skuCode: current.skuCode,
+          outfitRevisionId: line.outfitRevisionId,
+          outfitRevisionNumber: line.outfitRevisionNumber,
+          outfitSize: line.outfitSize,
           image: current.image,
           quantity: line.quantity,
           status: current.status,
@@ -199,16 +202,26 @@ export class CartService {
       throw new Error('Outfit cart line is missing its immutable selection.');
     }
     const outfit = await this.outfits.getOutfitForCart(line.outfitRevisionId, line.outfitSize);
+    if (outfit === null) {
+      return {
+        title: line.titleSnapshot,
+        selection: line.selectionSnapshot,
+        skuCode: null,
+        image: line.imageSnapshot,
+        unitPriceRial: line.unitPriceRial,
+        status: 'requires_review' as const,
+      };
+    }
     return {
-      title: outfit?.title ?? line.titleSnapshot,
-      selection: outfit?.size ?? line.selectionSnapshot,
+      title: outfit.title,
+      selection: outfit.sizeLabel,
       skuCode: null,
-      image: line.imageSnapshot,
-      unitPriceRial: outfit?.unitPriceRial ?? line.unitPriceRial,
+      image: outfit.image ?? line.imageSnapshot,
+      unitPriceRial: outfit.unitPriceRial,
       status:
-        outfit?.purchasable === true && outfit.availableQuantity >= quantity
+        outfit.purchasable && outfit.availableQuantity >= quantity
           ? ('available' as const)
-          : ('requires_review' as const),
+          : ('unavailable' as const),
     };
   }
 

@@ -5,6 +5,7 @@ export type CheckoutCartLine = Readonly<{
   kind: 'product' | 'outfit';
   skuId: string | null;
   outfitRevisionId: string | null;
+  outfitRevisionNumber: number | null;
   outfitSize: string | null;
   titleSnapshot: string;
   selectionSnapshot: string;

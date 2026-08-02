@@ -2,6 +2,7 @@ import {
   InventoryAction,
   MediaFormat,
   MediaGroup,
+  OutfitRevisionState,
   type Prisma,
   PrismaClient,
   PublicationStatus,
@@ -9,7 +10,7 @@ import {
 } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
 
-const seedVersion = 'milestone-2-catalog';
+const seedVersion = 'milestone-5-outfit';
 const categoryId = '20000000-0000-4000-8000-000000000001';
 const productId = '20000000-0000-4000-8000-000000000010';
 const variantId = '20000000-0000-4000-8000-000000000020';
@@ -18,6 +19,15 @@ const backMediaId = '20000000-0000-4000-8000-000000000032';
 const detailMediaId = '20000000-0000-4000-8000-000000000033';
 const eventId = '20000000-0000-4000-8000-000000000060';
 const correlationId = '20000000-0000-4000-8000-000000000099';
+const outfitId = '50000000-0000-4000-8000-000000000001';
+const outfitRevisionId = '50000000-0000-4000-8000-000000000002';
+const outfitItemId = '50000000-0000-4000-8000-000000000003';
+const outfitEventId = '50000000-0000-4000-8000-000000000004';
+const outfitMediaIds = [
+  '50000000-0000-4000-8000-000000000031',
+  '50000000-0000-4000-8000-000000000032',
+  '50000000-0000-4000-8000-000000000033',
+] as const;
 const publishedAt = new Date('2026-07-31T00:00:00.000Z');
 const mediaIds = [frontMediaId, backMediaId, detailMediaId];
 const prisma = new PrismaClient();
@@ -83,6 +93,9 @@ const skuInputs = [
 ] as const;
 
 async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promise<void> {
+  // E2E reset is guarded by assertE2EDatabaseResetEnvironment. TRUNCATE bypasses
+  // published-revision row guards while CASCADE clears only the disposable test graph.
+  await transaction.$executeRawUnsafe('TRUNCATE TABLE "outfits" CASCADE');
   await transaction.paymentCallbackReceipt.deleteMany();
   await transaction.paymentReconciliation.deleteMany();
   await transaction.databaseJob.deleteMany();
@@ -115,6 +128,124 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
   await transaction.product.deleteMany();
   await transaction.category.deleteMany();
   await transaction.mediaAsset.deleteMany();
+}
+
+async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<void> {
+  for (const [index, source] of media.entries()) {
+    const outfitMediaId = outfitMediaIds[index];
+    if (outfitMediaId === undefined) throw new Error('Outfit seed media mapping is incomplete.');
+    await transaction.mediaAsset.upsert({
+      where: { id: outfitMediaId },
+      create: {
+        id: outfitMediaId,
+        url: source.url,
+        width: source.width,
+        height: source.height,
+        altText:
+          index === 0
+            ? 'نمای کامل استایل لینن آرام KELE'
+            : index === 1
+              ? 'نمای پشت استایل لینن آرام KELE'
+              : 'جزئیات بافت استایل لینن آرام KELE',
+        focalPointX: source.focalPointX,
+        focalPointY: source.focalPointY,
+        format: MediaFormat.WEBP,
+        group: MediaGroup.OUTFIT_EDITORIAL,
+      },
+      update: { archivedAt: null },
+    });
+  }
+  await transaction.outfit.upsert({
+    where: { id: outfitId },
+    create: { id: outfitId, slug: 'calm-linen-look' },
+    update: {},
+  });
+  await transaction.outfitCategory.upsert({
+    where: { outfitId_categoryId: { outfitId, categoryId } },
+    create: { outfitId, categoryId },
+    update: {},
+  });
+  const existing = await transaction.outfitRevision.findUnique({
+    where: { id: outfitRevisionId },
+  });
+  if (existing === null) {
+    await transaction.outfitRevision.create({
+      data: {
+        id: outfitRevisionId,
+        outfitId,
+        revisionNumber: 1,
+        state: OutfitRevisionState.DRAFT,
+        name: 'استایل لینن آرام',
+        description:
+          'یک انتخاب کامل و روشن برای موقعیت‌های رسمی؛ اندازهٔ استایل مستقیماً به SKU واقعی کت‌وشلوار لینن متصل است.',
+        seoTitle: 'استایل لینن آرام | KELE',
+        seoDescription: 'مشاهدهٔ اندازه، قیمت مستقل و موجودی لحظه‌ای استایل لینن آرام KELE.',
+      },
+    });
+    await transaction.outfitItem.create({
+      data: {
+        id: outfitItemId,
+        outfitRevisionId,
+        productId,
+        defaultColorVariantId: variantId,
+        quantity: 1,
+        displayOrder: 0,
+      },
+    });
+    for (const [displayOrder, mediaAssetId] of outfitMediaIds.entries()) {
+      await transaction.outfitRevisionMedia.create({
+        data: {
+          outfitRevisionId,
+          mediaAssetId,
+          displayOrder,
+          featured: displayOrder === 0,
+        },
+      });
+    }
+    for (const [displayOrder, sku] of skuInputs.entries()) {
+      const size = await transaction.outfitSize.create({
+        data: {
+          outfitRevisionId,
+          code: sku.normalizedSize.toUpperCase(),
+          label: sku.displaySize,
+          amountRial: sku.amountRial + 6_000_000n,
+          displayOrder,
+        },
+      });
+      await transaction.outfitSizeComponent.create({
+        data: {
+          outfitSizeId: size.id,
+          outfitItemId,
+          skuId: sku.id,
+          quantity: 1,
+          displayOrder: 0,
+        },
+      });
+    }
+    await transaction.outfitRevision.update({
+      where: { id: outfitRevisionId },
+      data: { state: OutfitRevisionState.PUBLISHED, publishedAt },
+    });
+    await transaction.outfit.update({
+      where: { id: outfitId },
+      data: { status: PublicationStatus.PUBLISHED, publishedAt, version: 2 },
+    });
+    await transaction.businessEvent.create({
+      data: {
+        id: outfitEventId,
+        type: 'OutfitPublished',
+        actorId: 'seed',
+        entityType: 'Outfit',
+        entityId: outfitId,
+        correlationId,
+        payload: {
+          revisionId: outfitRevisionId,
+          ruleIds: ['OTF-004', 'OTF-014', 'OTF-015', 'OTF-017'],
+          deterministic: true,
+        },
+      },
+    });
+  }
 }
 
 async function reconcileE2EShipping(transaction: Prisma.TransactionClient): Promise<void> {
@@ -386,8 +517,11 @@ async function assertExactE2EFixture(): Promise<void> {
     prisma.sku.count(),
     prisma.priceRecord.count(),
     prisma.inventory.count(),
+    prisma.outfit.count(),
+    prisma.outfitRevision.count(),
+    prisma.outfitSize.count(),
   ]);
-  const expected = [1, 1, 1, 3, 3, 3, 3];
+  const expected = [1, 1, 1, 6, 3, 3, 3, 1, 1, 3];
   if (counts.some((count, index) => count !== expected[index])) {
     throw new Error(
       `E2E fixture is not exclusive. Expected ${expected.join('/')} but found ${counts.join('/')}.`,
@@ -402,6 +536,7 @@ async function seed(): Promise<void> {
   await prisma.$transaction(async (transaction) => {
     if (resetForE2E) await resetCatalogForE2E(transaction);
     await reconcileSeed(transaction);
+    await reconcileOutfit(transaction);
     if (resetForE2E) await reconcileE2EShipping(transaction);
   });
   if (resetForE2E) await assertExactE2EFixture();

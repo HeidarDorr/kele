@@ -31,6 +31,7 @@ function mapLine(line: CartLine): CheckoutCartLine {
     kind: line.kind === CartLineKind.PRODUCT ? 'product' : 'outfit',
     skuId: line.skuId,
     outfitRevisionId: line.outfitRevisionId,
+    outfitRevisionNumber: line.outfitRevisionNumber,
     outfitSize: line.outfitSize,
     titleSnapshot: line.titleSnapshot,
     selectionSnapshot: line.selectionSnapshot,

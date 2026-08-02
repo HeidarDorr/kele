@@ -19,6 +19,7 @@ function productLine(input: {
     kind: 'product',
     skuId: input.skuId,
     outfitRevisionId: null,
+    outfitRevisionNumber: null,
     outfitSize: null,
     titleSnapshot: 'محصول آزمون',
     selectionSnapshot: 'مشکی / M',
@@ -59,7 +60,7 @@ describe('Milestone 3 identity and cart domain', () => {
     expect(
       planDeterministicMerge([customer], [guest], {
         productAvailability: new Map([['sku-1', { purchasable: true, available: 5 }]]),
-        outfitPurchasability: new Map(),
+        outfitAvailability: new Map(),
       }),
     ).toEqual([
       {
@@ -79,7 +80,7 @@ describe('Milestone 3 identity and cart domain', () => {
     expect(
       planDeterministicMerge([], [guest], {
         productAvailability: new Map([['sku-1', { purchasable: false, available: 0 }]]),
-        outfitPurchasability: new Map(),
+        outfitAvailability: new Map(),
       }),
     ).toEqual([
       expect.objectContaining({
@@ -98,6 +99,7 @@ describe('Milestone 3 identity and cart domain', () => {
       kind: 'outfit',
       skuId: null,
       outfitRevisionId: 'revision-1',
+      outfitRevisionNumber: 1,
       outfitSize: 'M',
       titleSnapshot: 'استایل آزمون',
       selectionSnapshot: 'M',
@@ -111,14 +113,53 @@ describe('Milestone 3 identity and cart domain', () => {
     expect(
       planDeterministicMerge([], [outfit], {
         productAvailability: new Map(),
-        outfitPurchasability: new Map([['revision-1:M', false]]),
+        outfitAvailability: new Map([['revision-1:M', { purchasable: false, available: 0 }]]),
       }),
     ).toEqual([
       {
         kind: 'move_outfit',
         guestLineId: 'outfit-line',
+        quantity: 1,
         status: 'requires_review',
         notice: 'outfit_revision_requires_review',
+        requestedQuantity: 1,
+      },
+    ]);
+  });
+
+  it('[CRT-013][CRT-018] combines only the exact same Outfit revision and size at current derived availability', () => {
+    const customer: CartLineRecord = {
+      id: 'customer-outfit',
+      cartId: 'customer',
+      kind: 'outfit',
+      skuId: null,
+      outfitRevisionId: 'revision-7',
+      outfitRevisionNumber: 7,
+      outfitSize: 'M',
+      titleSnapshot: 'استایل ثابت',
+      selectionSnapshot: 'متوسط',
+      skuCodeSnapshot: null,
+      imageSnapshot: null,
+      quantity: 1,
+      status: 'available',
+      unitPriceRial: 8_000_000,
+      createdAt: new Date('2026-08-01T00:00:00Z'),
+    };
+    const guest = { ...customer, id: 'guest-outfit', cartId: 'guest', quantity: 2 };
+    expect(
+      planDeterministicMerge([customer], [guest], {
+        productAvailability: new Map(),
+        outfitAvailability: new Map([['revision-7:M', { purchasable: true, available: 2 }]]),
+      }),
+    ).toEqual([
+      {
+        kind: 'combine_outfit',
+        customerLineId: 'customer-outfit',
+        guestLineId: 'guest-outfit',
+        quantity: 2,
+        status: 'available',
+        notice: 'quantity_reduced_to_inventory',
+        requestedQuantity: 3,
       },
     ]);
   });

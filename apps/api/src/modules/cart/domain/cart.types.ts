@@ -11,6 +11,7 @@ export type CartLineRecord = Readonly<{
   kind: CartLineKindValue;
   skuId: string | null;
   outfitRevisionId: string | null;
+  outfitRevisionNumber: number | null;
   outfitSize: string | null;
   titleSnapshot: string;
   selectionSnapshot: string;
@@ -48,6 +49,9 @@ export type CartView = Readonly<{
     title: string;
     selection: string;
     skuCode: string | null;
+    outfitRevisionId: string | null;
+    outfitRevisionNumber: number | null;
+    outfitSize: string | null;
     image: CartCatalogMedia | null;
     quantity: number;
     status: CartLineStatusValue;
@@ -89,6 +93,17 @@ export type MergeInstruction =
   | Readonly<{
       kind: 'move_outfit';
       guestLineId: string;
-      status: 'available' | 'requires_review';
+      quantity: number;
+      status: 'available' | 'unavailable' | 'requires_review';
       notice: CartNoticeCodeValue | null;
+      requestedQuantity: number;
+    }>
+  | Readonly<{
+      kind: 'combine_outfit';
+      guestLineId: string;
+      customerLineId: string;
+      quantity: number;
+      status: 'available' | 'unavailable' | 'requires_review';
+      notice: CartNoticeCodeValue | null;
+      requestedQuantity: number;
     }>;
