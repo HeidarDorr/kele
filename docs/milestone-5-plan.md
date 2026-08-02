@@ -1,6 +1,6 @@
 # Milestone 5 implementation and acceptance plan
 
-Status: In progress
+Status: Complete and verified locally; see `milestone-5-verification.md`
 
 Branch: `feat/m05-outfit`
 
