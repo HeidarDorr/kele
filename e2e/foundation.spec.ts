@@ -6,6 +6,7 @@ import {
   addE2EOutfitReviewLine,
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
+  expireE2EPayment,
   readE2EPaymentEvidence,
   setE2EInventory,
 } from '../apps/api/test/support/customer-e2e.js';
@@ -811,6 +812,42 @@ test('tampered amount is shown as reconciliation and never creates an Order', as
         callbacks: 1,
         physicalQuantity: 4,
         reservedQuantity: 1,
+      });
+  } finally {
+    await context.close();
+    await cleanupE2ECustomer(mobile, cartIds);
+    await setE2EInventory(skuId, 4);
+  }
+});
+
+test('expired reservation is visible and cannot become an Order', async ({ browser }) => {
+  await mkdir(milestoneFourEvidence, { recursive: true });
+  const mobile = '+989121234571';
+  const skuId = '20000000-0000-4000-8000-000000000041';
+  const cartIds: string[] = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  try {
+    await setE2EInventory(skuId, 4);
+    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await page.getByRole('button', { name: 'رزرو موجودی و ورود به پرداخت' }).click();
+    await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
+    const attemptId = new URL(page.url()).searchParams.get('attempt');
+    if (attemptId === null) throw new Error('Fake payment URL did not include its attempt ID.');
+    await expireE2EPayment(attemptId);
+    await page.goto(
+      `${e2eUrls.storefront}/payment/result?attempt=${encodeURIComponent(attemptId)}`,
+    );
+    await expect(page.getByRole('heading', { name: 'مهلت پرداخت تمام شده است' })).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-expired.png'));
+    await expect
+      .poll(() => readE2EPaymentEvidence(mobile, skuId))
+      .toEqual({
+        orders: 0,
+        reconciliations: 0,
+        callbacks: 0,
+        physicalQuantity: 4,
+        reservedQuantity: 0,
       });
   } finally {
     await context.close();

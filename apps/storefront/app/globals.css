@@ -691,6 +691,7 @@ button:disabled {
 
 .payment-result-failed .payment-result-symbol,
 .payment-result-cancelled .payment-result-symbol,
+.payment-result-expired .payment-result-symbol,
 .payment-result-error .payment-result-symbol {
   color: var(--kele-danger);
 }

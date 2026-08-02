@@ -154,3 +154,41 @@ export async function readE2EPaymentEvidence(mobile: string, skuId: string) {
     await prisma.$disconnect();
   }
 }
+
+export async function expireE2EPayment(paymentAttemptId: string): Promise<void> {
+  const prisma = guardedClient();
+  try {
+    await prisma.$transaction(async (transaction) => {
+      const attempt = await transaction.paymentAttempt.findUniqueOrThrow({
+        where: { id: paymentAttemptId },
+      });
+      const reservations = await transaction.inventoryReservation.findMany({
+        where: { checkoutSessionId: attempt.checkoutSessionId, status: 'ACTIVE' },
+      });
+      for (const reservation of reservations) {
+        await transaction.inventory.update({
+          where: { skuId: reservation.skuId },
+          data: {
+            reservedQuantity: { decrement: reservation.quantity },
+            version: { increment: 1 },
+          },
+        });
+      }
+      const now = new Date();
+      await transaction.inventoryReservation.updateMany({
+        where: { checkoutSessionId: attempt.checkoutSessionId, status: 'ACTIVE' },
+        data: { status: 'EXPIRED', releasedAt: now },
+      });
+      await transaction.checkoutSession.update({
+        where: { id: attempt.checkoutSessionId },
+        data: { status: 'EXPIRED', expiredAt: now },
+      });
+      await transaction.databaseJob.updateMany({
+        where: { idempotencyKey: `expire-checkout:${attempt.checkoutSessionId}` },
+        data: { status: 'COMPLETED', completedAt: now },
+      });
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}

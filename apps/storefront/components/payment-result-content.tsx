@@ -7,6 +7,7 @@ import {
   CommerceApiError,
   commerceApi,
   commerceErrorMessage,
+  type CheckoutSession,
   type PaymentAttempt,
 } from '../lib/commerce-api';
 
@@ -16,6 +17,7 @@ export function PaymentResultContent() {
   const search = useSearchParams();
   const attemptId = search.get('attempt') ?? '';
   const [attempt, setAttempt] = useState<PaymentAttempt | null>(null);
+  const [checkout, setCheckout] = useState<CheckoutSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +30,9 @@ export function PaymentResultContent() {
     }
     try {
       const current = await commerceApi.payment(attemptId);
+      const currentCheckout = await commerceApi.checkout(current.checkoutSessionId);
       setAttempt(current);
+      setCheckout(currentCheckout);
       setUnauthorized(false);
     } catch (requestError: unknown) {
       if (requestError instanceof CommerceApiError && requestError.status === 401) {
@@ -73,7 +77,12 @@ export function PaymentResultContent() {
     );
   }
 
-  const status = attempt?.status;
+  const status: PaymentAttempt['status'] | 'expired' | undefined =
+    checkout?.status === 'expired'
+      ? 'expired'
+      : checkout?.status === 'cancelled'
+        ? 'cancelled'
+        : attempt?.status;
   const paid = status === 'verified' && attempt?.orderNumber;
   return (
     <main id="main-content" className="shell commerce-page payment-result-page">
@@ -83,7 +92,7 @@ export function PaymentResultContent() {
             ? '✓'
             : status === 'reconciliation'
               ? '!'
-              : retryable.has(status ?? 'failed')
+              : status !== 'expired' && retryable.has(status ?? 'failed')
                 ? '…'
                 : '×'}
         </p>
@@ -110,6 +119,15 @@ export function PaymentResultContent() {
             <bdi className="reconciliation-code">{attempt?.reconciliationReason}</bdi>
             <Link className="button-secondary" href="/account">
               بازگشت به حساب
+            </Link>
+          </>
+        ) : status === 'expired' ? (
+          <>
+            <p className="commerce-eyebrow">پایان مهلت رزرو</p>
+            <h1>مهلت پرداخت تمام شده است</h1>
+            <p>موجودی رزروشده آزاد شده و هیچ سفارشی ساخته نشده است. از سبد دوباره شروع کنید.</p>
+            <Link className="button-primary" href="/cart">
+              بازگشت به سبد
             </Link>
           </>
         ) : status === 'failed' || status === 'cancelled' ? (
