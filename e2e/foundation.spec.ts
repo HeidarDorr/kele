@@ -53,6 +53,24 @@ async function captureEvidence(
   await page.waitForFunction(() => document.fonts.status === 'loaded');
   await page.evaluate(async (captureOptions) => {
     await document.fonts.ready;
+    const fontRequests = new Map<string, string>();
+    for (const element of [
+      document.body,
+      ...document.querySelectorAll<HTMLElement>('.wordmark, .footer-wordmark, h1, h2'),
+    ]) {
+      const style = getComputedStyle(element);
+      const font = [style.fontWeight, style.fontSize, style.fontFamily].map(String).join(' ');
+      fontRequests.set(font, element.textContent?.slice(0, 32) ?? 'KELE');
+    }
+    await Promise.all(
+      [...fontRequests].map(async ([font, sample]) => {
+        await document.fonts.load(font, sample);
+        if (!document.fonts.check(font, sample)) {
+          throw new Error(`Evidence font did not load: ${font}`);
+        }
+      }),
+    );
+    await document.fonts.ready;
     if (captureOptions.stabilizePage) {
       let captureStyle = document.querySelector<HTMLStyleElement>('#kele-evidence-stability');
       if (captureStyle === null) {
@@ -108,11 +126,15 @@ async function captureEvidence(
     }
     throw new Error('Evidence layout height did not stabilize before capture.');
   });
-  await page.screenshot({
-    path,
-    caret: 'hide',
-    fullPage: true,
-  });
+  try {
+    await page.screenshot({
+      path,
+      caret: 'hide',
+      fullPage: true,
+    });
+  } finally {
+    await page.clock.resume();
+  }
 }
 
 async function cleanupAcceptanceFixture(): Promise<void> {
