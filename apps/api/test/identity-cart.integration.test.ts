@@ -77,6 +77,8 @@ let productId = '';
 let variantId = '';
 let skuId = '';
 let mediaId = '';
+let unavailableOutfitId = '';
+let unavailableOutfitRevisionId = '';
 
 async function startChallenge(
   mobile: string,
@@ -158,6 +160,19 @@ beforeAll(async () => {
   await prisma.currentSkuPrice.create({
     data: { skuId, priceRecordId: price.id, amountRial: 12_000_000 },
   });
+  const unavailableOutfit = await prisma.outfit.create({
+    data: { slug: `m3-unavailable-outfit-${runId}` },
+  });
+  unavailableOutfitId = unavailableOutfit.id;
+  const unavailableRevision = await prisma.outfitRevision.create({
+    data: {
+      outfitId: unavailableOutfit.id,
+      revisionNumber: 1,
+      name: 'استایل تاریخی آزمون سبد',
+      description: 'نسخه‌ای واقعی که reader مرزی M3 آن را قابل خرید نمی‌داند.',
+    },
+  });
+  unavailableOutfitRevisionId = unavailableRevision.id;
 });
 
 afterAll(async () => {
@@ -180,6 +195,12 @@ afterAll(async () => {
     await prisma.customerSession.deleteMany({ where: { customerId: { in: [...customerIds] } } });
     await prisma.otpChallenge.deleteMany({ where: { mobile: { in: mobiles } } });
     await prisma.customer.deleteMany({ where: { id: { in: [...customerIds] } } });
+    if (unavailableOutfitRevisionId !== '') {
+      await prisma.outfitRevision.deleteMany({ where: { id: unavailableOutfitRevisionId } });
+    }
+    if (unavailableOutfitId !== '') {
+      await prisma.outfit.deleteMany({ where: { id: unavailableOutfitId } });
+    }
     if (skuId !== '') {
       await prisma.currentSkuPrice.deleteMany({ where: { skuId } });
       await prisma.priceRecord.deleteMany({ where: { skuId } });
@@ -437,12 +458,11 @@ describe('Milestone 3 identity, ownership and cart on PostgreSQL', () => {
     customerIds.add(customer.id);
     const guest = await cartService.createAnonymousCart();
     cartIds.add(guest.id);
-    const revisionId = randomUUID();
     await prisma.cartLine.create({
       data: {
         cartId: guest.id,
         kind: CartLineKind.OUTFIT,
-        outfitRevisionId: revisionId,
+        outfitRevisionId: unavailableOutfitRevisionId,
         outfitSize: 'M',
         titleSnapshot: 'استایل تاریخی',
         selectionSnapshot: 'M',
@@ -464,7 +484,7 @@ describe('Milestone 3 identity, ownership and cart on PostgreSQL', () => {
     const mergedLineId = merged.cart.lines[0]?.id;
     if (mergedLineId === undefined) throw new Error('Merged Outfit line was not found.');
     expect(await prisma.cartLine.findFirstOrThrow({ where: { id: mergedLineId } })).toMatchObject({
-      outfitRevisionId: revisionId,
+      outfitRevisionId: unavailableOutfitRevisionId,
     });
   });
 
