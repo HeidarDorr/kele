@@ -28,7 +28,7 @@ const cartIds = new Set<string>();
 const productIds = new Set<string>();
 const variantIds = new Set<string>();
 const skuIds = new Set<string>();
-let policyId = '';
+const policyIds = new Set<string>();
 let mobileCounter = randomInt(1_000_000, 8_000_000);
 
 type Fixture = Awaited<ReturnType<typeof createFixture>>;
@@ -241,7 +241,7 @@ beforeAll(async () => {
       },
     },
   });
-  policyId = policy.id;
+  policyIds.add(policy.id);
 });
 
 afterAll(async () => {
@@ -282,13 +282,7 @@ afterAll(async () => {
     await prisma.businessEvent.deleteMany({
       where: {
         entityId: {
-          in: [
-            ...checkoutIds,
-            ...attemptIds,
-            ...orderIds,
-            ...skuIds,
-            ...(policyId ? [policyId] : []),
-          ],
+          in: [...checkoutIds, ...attemptIds, ...orderIds, ...skuIds, ...policyIds],
         },
       },
     });
@@ -312,9 +306,11 @@ afterAll(async () => {
     await prisma.sku.deleteMany({ where: { id: { in: [...skuIds] } } });
     await prisma.colorVariant.deleteMany({ where: { id: { in: [...variantIds] } } });
     await prisma.product.deleteMany({ where: { id: { in: [...productIds] } } });
-    if (policyId !== '') {
-      await prisma.shippingMethodVersion.deleteMany({ where: { policyId } });
-      await prisma.shippingPolicyVersion.delete({ where: { id: policyId } });
+    if (policyIds.size > 0) {
+      await prisma.shippingMethodVersion.deleteMany({
+        where: { policyId: { in: [...policyIds] } },
+      });
+      await prisma.shippingPolicyVersion.deleteMany({ where: { id: { in: [...policyIds] } } });
     }
   } finally {
     await prisma.$disconnect();
@@ -350,6 +346,20 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
       shippingTotal: { amountRial: 800_000 },
       payableTotal: { amountRial: 12_800_000 },
     });
+    const changedShipping = await services.checkouts.publishShippingSettings({
+      freeShippingThresholdRial: 60_000_000,
+      methods: [
+        { code: 'iran_post', enabled: true, fixedPriceRial: 1_000_000 },
+        { code: 'tipax', enabled: true, fixedPriceRial: 1_400_000 },
+        { code: 'tehran_local_courier', enabled: true, fixedPriceRial: 1_700_000 },
+      ],
+      actorId: 'm4-integration-admin',
+      correlationId: randomUUID(),
+      reason: 'Verify immutable shipping snapshot after policy change',
+      expectedVersion: checkout.shipping.settingsVersion,
+    });
+    policyIds.add(changedShipping.id);
+    expect(changedShipping.version).toBe(checkout.shipping.settingsVersion + 1);
 
     const attempt = await startPayment(fixture, checkout.id, services);
     const persisted = await services.repository.getOwnedPaymentAttempt(
@@ -388,6 +398,19 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
       ),
     ).rejects.toMatchObject({ code: 'PAYMENT_TRANSACTION_MISMATCH' });
 
+    const eventCollisionPayload = {
+      ...callback.payload,
+      amountRial: callback.payload.amountRial + 1,
+    };
+    await expect(
+      services.payments.processCallback(
+        'fake',
+        services.fake.signForTest(eventCollisionPayload),
+        eventCollisionPayload,
+        randomUUID(),
+      ),
+    ).rejects.toMatchObject({ code: 'PAYMENT_CALLBACK_EVENT_COLLISION' });
+
     const price = await prisma.priceRecord.create({
       data: {
         skuId: fixture.skuId,
@@ -411,6 +434,7 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
     expect(order).toMatchObject({
       paidTotalRial: 12_800_000,
       address: { addressLine: 'خیابان آزمون، پلاک ۴' },
+      shipping: { chargedPriceRial: 800_000, settingsVersion: checkout.shipping.settingsVersion },
       items: [{ unitPriceRial: 12_000_000, quantity: 1 }],
     });
     expect(await prisma.order.count({ where: { checkoutSessionId: checkout.id } })).toBe(1);

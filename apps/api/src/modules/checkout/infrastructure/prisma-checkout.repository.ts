@@ -336,7 +336,10 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
     effectiveAt: Date;
   }): Promise<ShippingSettingsRecord> {
     const client = this.transactions.client();
-    await client.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended('shipping-policy-version', 0))`;
+    await client.$queryRaw<Array<{ locked: number }>>`
+      SELECT 1::integer AS locked
+      FROM pg_advisory_xact_lock(hashtextextended('shipping-policy-version', 0))
+    `;
     const latest = await client.shippingPolicyVersion.findFirst({ orderBy: { version: 'desc' } });
     const version = (latest?.version ?? 0) + 1;
     const created = await client.shippingPolicyVersion.create({
