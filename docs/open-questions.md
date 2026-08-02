@@ -20,6 +20,17 @@ entire project.
 No unresolved product-behavior question currently blocks Milestones 1–5.
 Production-provider decisions and final design assets remain gated below.
 
+## Recorded source conflicts
+
+These conflicts are resolved by the documented source-of-truth order and do
+not require a new product decision. They remain recorded so implementation does
+not silently choose older wording.
+
+| ID | Conflicting sources | Applied resolution |
+|---|---|---|
+| SRC-M5-001 | Frozen `02-domain-model.md` describes one Outfit selling price, while accepted ADR-0003 and OTF-004 define a price for every Outfit size. | ADR-0003 is authoritative. Price belongs to the immutable Outfit Revision size; Product component prices do not derive or mutate it. |
+| SRC-M5-002 | OTF-006 says manual Outfit-size definition is forbidden, while accepted ADR-0003 and later OTF-014 require an explicit mapping from every Outfit size to exact component SKUs. | ADR-0003 is authoritative. Administrators explicitly author and validate each revision-size mapping; no size or SKU is inferred by string equality. |
+
 ## Blocking production-provider decisions
 
 Development may proceed with adapters. These items block staging/production
