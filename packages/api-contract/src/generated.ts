@@ -610,6 +610,127 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/outfits': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Outfit identities with their draft and current published revisions. */
+    get: operations['listAdminOutfits'];
+    put?: never;
+    /** Create an Outfit identity and its first mutable draft revision. */
+    post: operations['createAdminOutfit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read an Outfit with its editable draft or current published revision. */
+    get: operations['getAdminOutfit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Replace a mutable draft, forking the current published revision when needed. */
+    patch: operations['updateAdminOutfit'];
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}/validation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Validate the mutable Outfit revision for publication. */
+    get: operations['validateAdminOutfit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read a protected storefront-shaped preview of the draft revision. */
+    get: operations['previewAdminOutfit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Validate and freeze the draft as the current purchasable revision. */
+    post: operations['publishAdminOutfit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}/revisions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List immutable publication history and the current draft. */
+    get: operations['listAdminOutfitRevisions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/outfits/{outfitId}/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Archive Outfit discovery and purchase without deleting revisions. */
+    post: operations['archiveAdminOutfit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/inventory/{skuId}': {
     parameters: {
       query?: never;
@@ -822,33 +943,48 @@ export interface components {
     OutfitCard: {
       /** Format: uuid */
       id: string;
+      /** Format: uuid */
+      revisionId: string;
+      revisionNumber: number;
       slug: string;
       name: string;
       featuredMedia: components['schemas']['Media'];
       startingPrice: components['schemas']['Money'];
+      available: boolean;
     };
     OutfitCardPage: {
       items: components['schemas']['OutfitCard'][];
       page: components['schemas']['CursorPage'];
     };
     OutfitDetail: components['schemas']['OutfitCard'] & {
-      /** Format: uuid */
-      revisionId: string;
       description: string;
-      sizes: {
-        code: string;
-        price: components['schemas']['Money'];
-        available: boolean;
-        availableQuantity: number;
-      }[];
-      items: {
-        /** Format: uuid */
-        productId: string;
-        /** Format: uuid */
-        variantId: string;
-        name: string;
-        quantity: number;
-      }[];
+      gallery: components['schemas']['Media'][];
+      sizes: components['schemas']['OutfitSizeOption'][];
+      items: components['schemas']['OutfitItemView'][];
+      categories: components['schemas']['CategorySummary'][];
+      seo: components['schemas']['Seo'];
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    OutfitSizeOption: {
+      code: string;
+      label: string;
+      price: components['schemas']['Money'];
+      available: boolean;
+      availableQuantity: number;
+    };
+    OutfitItemView: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      productId: string;
+      productSlug: string;
+      /** Format: uuid */
+      variantId: string;
+      name: string;
+      colorName: string;
+      quantity: number;
+      featuredMedia: components['schemas']['Media'];
     };
     Seo: {
       title?: string;
@@ -957,6 +1093,10 @@ export interface components {
         title: string;
         selection?: string;
         skuCode?: string | null;
+        /** Format: uuid */
+        outfitRevisionId: string | null;
+        outfitRevisionNumber: number | null;
+        outfitSize: string | null;
         image?: components['schemas']['Media'] | null;
         quantity: number;
         /** @enum {string} */
@@ -1005,10 +1145,25 @@ export interface components {
       title: string;
       selection: string;
       skuCode?: string | null;
+      /** Format: uuid */
+      outfitRevisionId: string | null;
+      outfitRevisionNumber: number | null;
+      outfitSize: string | null;
       image?: components['schemas']['Media'] | null;
       quantity: number;
       unitPrice: components['schemas']['Money'];
       lineTotal: components['schemas']['Money'];
+      outfitComponents: components['schemas']['OutfitComponentSnapshot'][];
+    };
+    OutfitComponentSnapshot: {
+      /** Format: uuid */
+      skuId: string;
+      skuCode: string;
+      productName: string;
+      colorName: string;
+      sizeLabel: string;
+      quantityPerOutfit: number;
+      totalQuantity: number;
     };
     PaymentAttempt: {
       /** Format: uuid */
@@ -1083,9 +1238,14 @@ export interface components {
         title: string;
         selection: string;
         skuCode: string | null;
+        /** Format: uuid */
+        outfitRevisionId: string | null;
+        outfitRevisionNumber: number | null;
+        outfitSize: string | null;
         quantity: number;
         unitPrice: components['schemas']['Money'];
         lineTotal: components['schemas']['Money'];
+        outfitComponents: components['schemas']['OutfitComponentSnapshot'][];
       }[];
       address: components['schemas']['AddressSnapshot'];
       shipping: {
@@ -1214,6 +1374,81 @@ export interface components {
       items: components['schemas']['AdminProduct'][];
       page: components['schemas']['CursorPage'];
     };
+    AdminOutfitComponentInput: {
+      /** Format: uuid */
+      outfitItemId: string;
+      /** Format: uuid */
+      skuId: string;
+      quantity: number;
+      displayOrder: number;
+    };
+    AdminOutfitSizeInput: {
+      code: string;
+      label: string;
+      /** Format: int64 */
+      amountRial: number;
+      displayOrder: number;
+      components: components['schemas']['AdminOutfitComponentInput'][];
+    };
+    AdminOutfitItemInput: {
+      /**
+       * Format: uuid
+       * @description Stable draft child identifier used by exact size mappings.
+       */
+      id: string;
+      /** Format: uuid */
+      productId: string;
+      /** Format: uuid */
+      defaultColorVariantId: string;
+      quantity: number;
+      displayOrder: number;
+    };
+    AdminOutfitInput: {
+      name: string;
+      slug: string;
+      description: string;
+      categoryIds: string[];
+      mediaIds: string[];
+      /** Format: uuid */
+      featuredMediaId: string;
+      seo?: components['schemas']['Seo'];
+      items: components['schemas']['AdminOutfitItemInput'][];
+      sizes: components['schemas']['AdminOutfitSizeInput'][];
+    };
+    /** @enum {string} */
+    OutfitRevisionState: 'draft' | 'published' | 'historical';
+    AdminOutfit: components['schemas']['AdminOutfitInput'] & {
+      /** Format: uuid */
+      id: string;
+      status: components['schemas']['PublicationStatus'];
+      version: number;
+      /** Format: uuid */
+      revisionId: string;
+      revisionNumber: number;
+      revisionState: components['schemas']['OutfitRevisionState'];
+      /** Format: date-time */
+      publishedAt: string | null;
+    };
+    AdminOutfitPage: {
+      items: components['schemas']['AdminOutfit'][];
+      page: components['schemas']['CursorPage'];
+    };
+    OutfitRevisionSummary: {
+      /** Format: uuid */
+      id: string;
+      revisionNumber: number;
+      state: components['schemas']['OutfitRevisionState'];
+      name: string;
+      /** Format: date-time */
+      publishedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AdminOutfitPreview: {
+      /** @constant */
+      preview: true;
+      outfit: components['schemas']['OutfitDetail'];
+    };
     AdminPriceInput: {
       /** Format: int64 */
       amountRial: number;
@@ -1284,6 +1519,7 @@ export interface components {
     CheckoutSessionId: string;
     PaymentAttemptId: string;
     ProductId: string;
+    OutfitId: string;
     SkuId: string;
     ReturnId: string;
     IdempotencyKey: string;
@@ -2533,6 +2769,243 @@ export interface operations {
           'application/json': components['schemas']['AdminProduct'];
         };
       };
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminOutfits: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+        status?: components['schemas']['PublicationStatus'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Administrative Outfit page. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfitPage'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdminOutfit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminOutfitInput'];
+      };
+    };
+    responses: {
+      /** @description Outfit and draft revision created. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfit'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminOutfit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Administrative Outfit detail. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfit'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  updateAdminOutfit: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminOutfitInput'];
+      };
+    };
+    responses: {
+      /** @description Draft revision updated or forked and updated. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfit'];
+        };
+      };
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  validateAdminOutfit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Stable rule-ID and field-path validation result. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicationValidation'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminOutfit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Protected Outfit preview with derived current availability. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfitPreview'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  publishAdminOutfit: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Revision published immutably. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfit'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminOutfitRevisions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Outfit revision history in descending revision order. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OutfitRevisionSummary'][];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  archiveAdminOutfit: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+      };
+      path: {
+        outfitId: components['parameters']['OutfitId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Outfit identity archived and history retained. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOutfit'];
+        };
+      };
+      409: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };

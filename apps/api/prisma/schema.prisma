@@ -20,6 +20,14 @@ enum PublicationStatus {
   @@map("publication_status")
 }
 
+enum OutfitRevisionState {
+  DRAFT
+  PUBLISHED
+  HISTORICAL
+
+  @@map("outfit_revision_state")
+}
+
 enum MediaFormat {
   JPG
   PNG
@@ -258,23 +266,25 @@ model Cart {
 }
 
 model CartLine {
-  id                String         @id @default(uuid()) @db.Uuid
-  cartId            String         @map("cart_id") @db.Uuid
-  kind              CartLineKind
-  skuId             String?        @map("sku_id") @db.Uuid
-  outfitRevisionId  String?        @map("outfit_revision_id") @db.Uuid
-  outfitSize        String?        @map("outfit_size") @db.VarChar(40)
-  titleSnapshot     String         @map("title_snapshot") @db.VarChar(180)
-  selectionSnapshot String         @map("selection_snapshot") @db.VarChar(180)
-  skuCodeSnapshot   String?        @map("sku_code_snapshot") @db.VarChar(64)
-  imageSnapshot     Json?          @map("image_snapshot")
-  quantity          Int
-  status            CartLineStatus @default(AVAILABLE)
-  unitPriceRial     BigInt         @map("unit_price_rial")
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  cart              Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  notices           CartNotice[]
+  id                   String          @id @default(uuid()) @db.Uuid
+  cartId               String          @map("cart_id") @db.Uuid
+  kind                 CartLineKind
+  skuId                String?         @map("sku_id") @db.Uuid
+  outfitRevisionId     String?         @map("outfit_revision_id") @db.Uuid
+  outfitRevisionNumber Int?            @map("outfit_revision_number")
+  outfitSize           String?         @map("outfit_size") @db.VarChar(40)
+  titleSnapshot        String          @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot    String          @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot      String?         @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot        Json?           @map("image_snapshot")
+  quantity             Int
+  status               CartLineStatus  @default(AVAILABLE)
+  unitPriceRial        BigInt          @map("unit_price_rial")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  cart                 Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  outfitRevision       OutfitRevision? @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  notices              CartNotice[]
 
   @@index([cartId, createdAt])
   @@index([cartId, skuId])
@@ -321,6 +331,7 @@ model Category {
   updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
   archivedAt   DateTime?         @map("archived_at") @db.Timestamptz(6)
   products     ProductCategory[]
+  outfits      OutfitCategory[]
 
   @@index([status, displayOrder])
   @@map("categories")
@@ -343,6 +354,7 @@ model Product {
   archivedAt     DateTime?         @map("archived_at") @db.Timestamptz(6)
   categories     ProductCategory[]
   variants       ColorVariant[]
+  outfitItems    OutfitItem[]
 
   @@index([status, createdAt])
   @@index([status, slug])
@@ -361,6 +373,129 @@ model ProductCategory {
   @@map("product_categories")
 }
 
+model Outfit {
+  id          String            @id @default(uuid()) @db.Uuid
+  slug        String            @unique @db.VarChar(160)
+  status      PublicationStatus @default(DRAFT)
+  version     Int               @default(1)
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  publishedAt DateTime?         @map("published_at") @db.Timestamptz(6)
+  archivedAt  DateTime?         @map("archived_at") @db.Timestamptz(6)
+  revisions   OutfitRevision[]
+  categories  OutfitCategory[]
+
+  @@index([status, createdAt])
+  @@index([status, slug])
+  @@map("outfits")
+}
+
+model OutfitCategory {
+  outfitId   String   @map("outfit_id") @db.Uuid
+  categoryId String   @map("category_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  outfit     Outfit   @relation(fields: [outfitId], references: [id], onDelete: Restrict)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@id([outfitId, categoryId])
+  @@index([categoryId, outfitId])
+  @@map("outfit_categories")
+}
+
+model OutfitRevision {
+  id               String                @id @default(uuid()) @db.Uuid
+  outfitId         String                @map("outfit_id") @db.Uuid
+  revisionNumber   Int                   @map("revision_number")
+  state            OutfitRevisionState   @default(DRAFT)
+  name             String                @db.VarChar(180)
+  description      String                @db.Text
+  seoTitle         String?               @map("seo_title") @db.VarChar(180)
+  seoDescription   String?               @map("seo_description") @db.VarChar(320)
+  version          Int                   @default(1)
+  sourceRevisionId String?               @map("source_revision_id") @db.Uuid
+  publishedAt      DateTime?             @map("published_at") @db.Timestamptz(6)
+  supersededAt     DateTime?             @map("superseded_at") @db.Timestamptz(6)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  outfit           Outfit                @relation(fields: [outfitId], references: [id], onDelete: Restrict)
+  sourceRevision   OutfitRevision?       @relation("OutfitRevisionFork", fields: [sourceRevisionId], references: [id], onDelete: Restrict)
+  forks            OutfitRevision[]      @relation("OutfitRevisionFork")
+  items            OutfitItem[]
+  sizes            OutfitSize[]
+  media            OutfitRevisionMedia[]
+  cartLines        CartLine[]
+  checkoutLines    CheckoutLine[]
+  orderItems       OrderItem[]
+
+  @@unique([outfitId, revisionNumber])
+  @@index([outfitId, state, revisionNumber])
+  @@map("outfit_revisions")
+}
+
+model OutfitItem {
+  id                    String                @id @db.Uuid
+  outfitRevisionId      String                @map("outfit_revision_id") @db.Uuid
+  productId             String                @map("product_id") @db.Uuid
+  defaultColorVariantId String                @map("default_color_variant_id") @db.Uuid
+  quantity              Int
+  displayOrder          Int                   @map("display_order")
+  outfitRevision        OutfitRevision        @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  product               Product               @relation(fields: [productId], references: [id], onDelete: Restrict)
+  defaultColorVariant   ColorVariant          @relation(fields: [defaultColorVariantId], references: [id], onDelete: Restrict)
+  sizeComponents        OutfitSizeComponent[]
+
+  @@unique([outfitRevisionId, displayOrder])
+  @@index([productId])
+  @@index([defaultColorVariantId])
+  @@map("outfit_items")
+}
+
+model OutfitSize {
+  id               String                @id @default(uuid()) @db.Uuid
+  outfitRevisionId String                @map("outfit_revision_id") @db.Uuid
+  code             String                @db.VarChar(40)
+  label            String                @db.VarChar(80)
+  amountRial       BigInt                @map("amount_rial")
+  displayOrder     Int                   @map("display_order")
+  outfitRevision   OutfitRevision        @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  components       OutfitSizeComponent[]
+
+  @@unique([outfitRevisionId, code])
+  @@unique([outfitRevisionId, displayOrder])
+  @@map("outfit_sizes")
+}
+
+model OutfitSizeComponent {
+  id           String     @id @default(uuid()) @db.Uuid
+  outfitSizeId String     @map("outfit_size_id") @db.Uuid
+  outfitItemId String     @map("outfit_item_id") @db.Uuid
+  skuId        String     @map("sku_id") @db.Uuid
+  quantity     Int
+  displayOrder Int        @map("display_order")
+  outfitSize   OutfitSize @relation(fields: [outfitSizeId], references: [id], onDelete: Restrict)
+  outfitItem   OutfitItem @relation(fields: [outfitItemId], references: [id], onDelete: Restrict)
+  sku          Sku        @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  @@unique([outfitSizeId, outfitItemId])
+  @@unique([outfitSizeId, displayOrder])
+  @@index([skuId])
+  @@map("outfit_size_components")
+}
+
+model OutfitRevisionMedia {
+  outfitRevisionId String         @map("outfit_revision_id") @db.Uuid
+  mediaAssetId     String         @map("media_asset_id") @db.Uuid
+  displayOrder     Int            @map("display_order")
+  featured         Boolean        @default(false)
+  outfitRevision   OutfitRevision @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  mediaAsset       MediaAsset     @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@id([outfitRevisionId, mediaAssetId])
+  @@unique([outfitRevisionId, displayOrder])
+  @@index([mediaAssetId])
+  @@map("outfit_revision_media")
+}
+
 model ColorVariant {
   id                  String            @id @default(uuid()) @db.Uuid
   productId           String            @map("product_id") @db.Uuid
@@ -376,6 +511,7 @@ model ColorVariant {
   product             Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
   mediaAssignments    MediaAssignment[]
   skus                Sku[]
+  outfitItems         OutfitItem[]
 
   @@unique([productId, normalizedColorCode])
   @@index([productId, status, displayOrder])
@@ -383,18 +519,19 @@ model ColorVariant {
 }
 
 model MediaAsset {
-  id          String            @id @default(uuid()) @db.Uuid
-  url         String            @db.VarChar(500)
-  width       Int
-  height      Int
-  altText     String            @map("alt_text") @db.VarChar(500)
-  focalPointX Float             @default(0.5) @map("focal_point_x")
-  focalPointY Float             @default(0.5) @map("focal_point_y")
-  format      MediaFormat
-  group       MediaGroup
-  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  archivedAt  DateTime?         @map("archived_at") @db.Timestamptz(6)
-  assignments MediaAssignment[]
+  id                  String                @id @default(uuid()) @db.Uuid
+  url                 String                @db.VarChar(500)
+  width               Int
+  height              Int
+  altText             String                @map("alt_text") @db.VarChar(500)
+  focalPointX         Float                 @default(0.5) @map("focal_point_x")
+  focalPointY         Float                 @default(0.5) @map("focal_point_y")
+  format              MediaFormat
+  group               MediaGroup
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  archivedAt          DateTime?             @map("archived_at") @db.Timestamptz(6)
+  assignments         MediaAssignment[]
+  outfitRevisionMedia OutfitRevisionMedia[]
 
   @@index([group, createdAt])
   @@map("media_assets")
@@ -414,22 +551,23 @@ model MediaAssignment {
 }
 
 model Sku {
-  id             String                 @id @default(uuid()) @db.Uuid
-  colorVariantId String                 @map("color_variant_id") @db.Uuid
-  code           String                 @unique @db.VarChar(64)
-  normalizedSize String                 @map("normalized_size") @db.VarChar(40)
-  displaySize    String                 @map("display_size") @db.VarChar(40)
-  status         PublicationStatus      @default(DRAFT)
-  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  archivedAt     DateTime?              @map("archived_at") @db.Timestamptz(6)
-  colorVariant   ColorVariant           @relation(fields: [colorVariantId], references: [id], onDelete: Restrict)
-  priceRecords   PriceRecord[]
-  currentPrice   CurrentSkuPrice?
-  inventory      Inventory?
-  movements      InventoryMovement[]
-  reservations   InventoryReservation[]
-  orderItems     OrderItem[]
+  id               String                 @id @default(uuid()) @db.Uuid
+  colorVariantId   String                 @map("color_variant_id") @db.Uuid
+  code             String                 @unique @db.VarChar(64)
+  normalizedSize   String                 @map("normalized_size") @db.VarChar(40)
+  displaySize      String                 @map("display_size") @db.VarChar(40)
+  status           PublicationStatus      @default(DRAFT)
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt       DateTime?              @map("archived_at") @db.Timestamptz(6)
+  colorVariant     ColorVariant           @relation(fields: [colorVariantId], references: [id], onDelete: Restrict)
+  priceRecords     PriceRecord[]
+  currentPrice     CurrentSkuPrice?
+  inventory        Inventory?
+  movements        InventoryMovement[]
+  reservations     InventoryReservation[]
+  orderItems       OrderItem[]
+  outfitComponents OutfitSizeComponent[]
 
   @@unique([colorVariantId, normalizedSize])
   @@index([colorVariantId, status])
@@ -602,27 +740,50 @@ model CheckoutSession {
 }
 
 model CheckoutLine {
-  id                String                 @id @default(uuid()) @db.Uuid
-  checkoutSessionId String                 @map("checkout_session_id") @db.Uuid
-  cartLineId        String                 @map("cart_line_id") @db.Uuid
-  kind              CartLineKind
-  skuId             String?                @map("sku_id") @db.Uuid
-  outfitRevisionId  String?                @map("outfit_revision_id") @db.Uuid
-  outfitSize        String?                @map("outfit_size") @db.VarChar(40)
-  titleSnapshot     String                 @map("title_snapshot") @db.VarChar(180)
-  selectionSnapshot String                 @map("selection_snapshot") @db.VarChar(180)
-  skuCodeSnapshot   String?                @map("sku_code_snapshot") @db.VarChar(64)
-  imageSnapshot     Json?                  @map("image_snapshot")
-  quantity          Int
-  unitPriceRial     BigInt                 @map("unit_price_rial")
-  lineTotalRial     BigInt                 @map("line_total_rial")
-  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  checkoutSession   CheckoutSession        @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
-  reservations      InventoryReservation[]
+  id                   String                    @id @default(uuid()) @db.Uuid
+  checkoutSessionId    String                    @map("checkout_session_id") @db.Uuid
+  cartLineId           String                    @map("cart_line_id") @db.Uuid
+  kind                 CartLineKind
+  skuId                String?                   @map("sku_id") @db.Uuid
+  outfitRevisionId     String?                   @map("outfit_revision_id") @db.Uuid
+  outfitRevisionNumber Int?                      @map("outfit_revision_number")
+  outfitSize           String?                   @map("outfit_size") @db.VarChar(40)
+  titleSnapshot        String                    @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot    String                    @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot      String?                   @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot        Json?                     @map("image_snapshot")
+  quantity             Int
+  unitPriceRial        BigInt                    @map("unit_price_rial")
+  lineTotalRial        BigInt                    @map("line_total_rial")
+  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  checkoutSession      CheckoutSession           @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  outfitRevision       OutfitRevision?           @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  reservations         InventoryReservation[]
+  outfitComponents     CheckoutOutfitComponent[]
 
   @@unique([checkoutSessionId, cartLineId])
   @@index([skuId])
   @@map("checkout_lines")
+}
+
+model CheckoutOutfitComponent {
+  id                   String       @id @default(uuid()) @db.Uuid
+  checkoutLineId       String       @map("checkout_line_id") @db.Uuid
+  outfitItemIdSnapshot String       @map("outfit_item_id_snapshot") @db.Uuid
+  skuIdSnapshot        String       @map("sku_id_snapshot") @db.Uuid
+  skuCodeSnapshot      String       @map("sku_code_snapshot") @db.VarChar(64)
+  productNameSnapshot  String       @map("product_name_snapshot") @db.VarChar(180)
+  colorNameSnapshot    String       @map("color_name_snapshot") @db.VarChar(100)
+  sizeLabelSnapshot    String       @map("size_label_snapshot") @db.VarChar(40)
+  quantityPerOutfit    Int          @map("quantity_per_outfit")
+  totalQuantity        Int          @map("total_quantity")
+  displayOrder         Int          @map("display_order")
+  checkoutLine         CheckoutLine @relation(fields: [checkoutLineId], references: [id], onDelete: Restrict)
+
+  @@unique([checkoutLineId, outfitItemIdSnapshot])
+  @@unique([checkoutLineId, displayOrder])
+  @@index([skuIdSnapshot])
+  @@map("checkout_outfit_components")
 }
 
 model InventoryReservation {
@@ -732,26 +893,49 @@ model Order {
 }
 
 model OrderItem {
-  id                String       @id @default(uuid()) @db.Uuid
-  orderId           String       @map("order_id") @db.Uuid
-  kind              CartLineKind
-  skuId             String?      @map("sku_id") @db.Uuid
-  outfitRevisionId  String?      @map("outfit_revision_id") @db.Uuid
-  outfitSize        String?      @map("outfit_size") @db.VarChar(40)
-  titleSnapshot     String       @map("title_snapshot") @db.VarChar(180)
-  selectionSnapshot String       @map("selection_snapshot") @db.VarChar(180)
-  skuCodeSnapshot   String?      @map("sku_code_snapshot") @db.VarChar(64)
-  imageSnapshot     Json?        @map("image_snapshot")
-  quantity          Int
-  unitPriceRial     BigInt       @map("unit_price_rial")
-  lineTotalRial     BigInt       @map("line_total_rial")
-  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  order             Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  sku               Sku?         @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  id                   String                 @id @default(uuid()) @db.Uuid
+  orderId              String                 @map("order_id") @db.Uuid
+  kind                 CartLineKind
+  skuId                String?                @map("sku_id") @db.Uuid
+  outfitRevisionId     String?                @map("outfit_revision_id") @db.Uuid
+  outfitRevisionNumber Int?                   @map("outfit_revision_number")
+  outfitSize           String?                @map("outfit_size") @db.VarChar(40)
+  titleSnapshot        String                 @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot    String                 @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot      String?                @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot        Json?                  @map("image_snapshot")
+  quantity             Int
+  unitPriceRial        BigInt                 @map("unit_price_rial")
+  lineTotalRial        BigInt                 @map("line_total_rial")
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  order                Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sku                  Sku?                   @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  outfitRevision       OutfitRevision?        @relation(fields: [outfitRevisionId], references: [id], onDelete: Restrict)
+  outfitComponents     OrderOutfitComponent[]
 
   @@index([orderId, createdAt])
   @@index([skuId])
   @@map("order_items")
+}
+
+model OrderOutfitComponent {
+  id                   String    @id @default(uuid()) @db.Uuid
+  orderItemId          String    @map("order_item_id") @db.Uuid
+  outfitItemIdSnapshot String    @map("outfit_item_id_snapshot") @db.Uuid
+  skuIdSnapshot        String    @map("sku_id_snapshot") @db.Uuid
+  skuCodeSnapshot      String    @map("sku_code_snapshot") @db.VarChar(64)
+  productNameSnapshot  String    @map("product_name_snapshot") @db.VarChar(180)
+  colorNameSnapshot    String    @map("color_name_snapshot") @db.VarChar(100)
+  sizeLabelSnapshot    String    @map("size_label_snapshot") @db.VarChar(40)
+  quantityPerOutfit    Int       @map("quantity_per_outfit")
+  totalQuantity        Int       @map("total_quantity")
+  displayOrder         Int       @map("display_order")
+  orderItem            OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@unique([orderItemId, outfitItemIdSnapshot])
+  @@unique([orderItemId, displayOrder])
+  @@index([skuIdSnapshot])
+  @@map("order_outfit_components")
 }
 
 model PaymentReconciliation {

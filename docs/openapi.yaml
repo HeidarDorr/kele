@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: KELE API
-  version: 0.1.0
+  version: 0.2.0
   summary: Baseline contract for the KELE storefront and administration API.
   description: |
     This contract is the transport-level source of truth for version 1.
@@ -25,6 +25,8 @@ tags:
   - name: Orders
   - name: Returns
   - name: Admin Catalog
+  - name: Admin Outfits
+    description: Immutable Outfit authoring, validation, publication and revision history.
   - name: Admin Inventory
   - name: Admin Returns
   - name: Admin Content
@@ -1162,6 +1164,220 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /admin/outfits:
+    get:
+      operationId: listAdminOutfits
+      tags: [Admin Outfits]
+      summary: List Outfit identities with their draft and current published revisions.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PublicationStatus'
+      responses:
+        '200':
+          description: Administrative Outfit page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfitPage'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createAdminOutfit
+      tags: [Admin Outfits]
+      summary: Create an Outfit identity and its first mutable draft revision.
+      security:
+        - SessionCookie: [catalog:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOutfitInput'
+      responses:
+        '201':
+          description: Outfit and draft revision created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfit'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}:
+    get:
+      operationId: getAdminOutfit
+      tags: [Admin Outfits]
+      summary: Read an Outfit with its editable draft or current published revision.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+      responses:
+        '200':
+          description: Administrative Outfit detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfit'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: updateAdminOutfit
+      tags: [Admin Outfits]
+      summary: Replace a mutable draft, forking the current published revision when needed.
+      security:
+        - SessionCookie: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOutfitInput'
+      responses:
+        '200':
+          description: Draft revision updated or forked and updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfit'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}/validation:
+    get:
+      operationId: validateAdminOutfit
+      tags: [Admin Outfits]
+      summary: Validate the mutable Outfit revision for publication.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+      responses:
+        '200':
+          description: Stable rule-ID and field-path validation result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicationValidation'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}/preview:
+    get:
+      operationId: previewAdminOutfit
+      tags: [Admin Outfits]
+      summary: Read a protected storefront-shaped preview of the draft revision.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+      responses:
+        '200':
+          description: Protected Outfit preview with derived current availability.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfitPreview'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}/publish:
+    post:
+      operationId: publishAdminOutfit
+      tags: [Admin Outfits]
+      summary: Validate and freeze the draft as the current purchasable revision.
+      security:
+        - SessionCookie: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Revision published immutably.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfit'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}/revisions:
+    get:
+      operationId: listAdminOutfitRevisions
+      tags: [Admin Outfits]
+      summary: List immutable publication history and the current draft.
+      security:
+        - SessionCookie: [catalog:read]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+      responses:
+        '200':
+          description: Outfit revision history in descending revision order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutfitRevisionSummary'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/outfits/{outfitId}/archive:
+    post:
+      operationId: archiveAdminOutfit
+      tags: [Admin Outfits]
+      summary: Archive Outfit discovery and purchase without deleting revisions.
+      security:
+        - SessionCookie: [catalog:publish]
+      parameters:
+        - $ref: '#/components/parameters/OutfitId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Outfit identity archived and history retained.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOutfit'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /admin/inventory/{skuId}:
     get:
       operationId: getAdminInventory
@@ -1426,6 +1642,13 @@ components:
         format: uuid
     ProductId:
       name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OutfitId:
+      name: outfitId
       in: path
       required: true
       schema:
@@ -1751,11 +1974,19 @@ components:
 
     OutfitCard:
       type: object
-      required: [id, slug, name, featuredMedia, startingPrice]
+      additionalProperties: false
+      required:
+        [id, revisionId, revisionNumber, slug, name, featuredMedia, startingPrice, available]
       properties:
         id:
           type: string
           format: uuid
+        revisionId:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
         slug:
           type: string
         name:
@@ -1764,6 +1995,8 @@ components:
           $ref: '#/components/schemas/Media'
         startingPrice:
           $ref: '#/components/schemas/Money'
+        available:
+          type: boolean
 
     OutfitCardPage:
       type: object
@@ -1780,45 +2013,82 @@ components:
       allOf:
         - $ref: '#/components/schemas/OutfitCard'
         - type: object
-          required: [revisionId, description, sizes, items]
+          additionalProperties: false
+          required: [description, gallery, sizes, items, categories, seo, updatedAt]
           properties:
-            revisionId:
-              type: string
-              format: uuid
             description:
               type: string
+            gallery:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/Media'
             sizes:
               type: array
+              minItems: 1
               items:
-                type: object
-                required: [code, price, available, availableQuantity]
-                properties:
-                  code:
-                    type: string
-                  price:
-                    $ref: '#/components/schemas/Money'
-                  available:
-                    type: boolean
-                  availableQuantity:
-                    type: integer
-                    minimum: 0
+                $ref: '#/components/schemas/OutfitSizeOption'
             items:
               type: array
+              minItems: 1
               items:
-                type: object
-                required: [productId, variantId, name, quantity]
-                properties:
-                  productId:
-                    type: string
-                    format: uuid
-                  variantId:
-                    type: string
-                    format: uuid
-                  name:
-                    type: string
-                  quantity:
-                    type: integer
-                    minimum: 1
+                $ref: '#/components/schemas/OutfitItemView'
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/CategorySummary'
+            seo:
+              $ref: '#/components/schemas/Seo'
+            updatedAt:
+              type: string
+              format: date-time
+
+    OutfitSizeOption:
+      type: object
+      additionalProperties: false
+      required: [code, label, price, available, availableQuantity]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 40
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        price:
+          $ref: '#/components/schemas/Money'
+        available:
+          type: boolean
+        availableQuantity:
+          type: integer
+          minimum: 0
+
+    OutfitItemView:
+      type: object
+      additionalProperties: false
+      required: [id, productId, productSlug, variantId, name, colorName, quantity, featuredMedia]
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        productSlug:
+          type: string
+        variantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        colorName:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        featuredMedia:
+          $ref: '#/components/schemas/Media'
 
     Seo:
       type: object
@@ -2061,7 +2331,17 @@ components:
           items:
             type: object
             additionalProperties: false
-            required: [id, kind, title, quantity, status, checkoutBlocking, unitPrice]
+            required:
+              - id
+              - kind
+              - title
+              - quantity
+              - status
+              - checkoutBlocking
+              - unitPrice
+              - outfitRevisionId
+              - outfitRevisionNumber
+              - outfitSize
             properties:
               id:
                 type: string
@@ -2074,6 +2354,14 @@ components:
               selection:
                 type: string
               skuCode:
+                type: [string, 'null']
+              outfitRevisionId:
+                type: [string, 'null']
+                format: uuid
+              outfitRevisionNumber:
+                type: [integer, 'null']
+                minimum: 1
+              outfitSize:
                 type: [string, 'null']
               image:
                 anyOf:
@@ -2162,7 +2450,18 @@ components:
     CheckoutLineSnapshot:
       type: object
       additionalProperties: false
-      required: [id, kind, title, selection, quantity, unitPrice, lineTotal]
+      required:
+        - id
+        - kind
+        - title
+        - selection
+        - quantity
+        - unitPrice
+        - lineTotal
+        - outfitRevisionId
+        - outfitRevisionNumber
+        - outfitSize
+        - outfitComponents
       properties:
         id:
           type: string
@@ -2176,6 +2475,14 @@ components:
           type: string
         skuCode:
           type: [string, 'null']
+        outfitRevisionId:
+          type: [string, 'null']
+          format: uuid
+        outfitRevisionNumber:
+          type: [integer, 'null']
+          minimum: 1
+        outfitSize:
+          type: [string, 'null']
         image:
           anyOf:
             - $ref: '#/components/schemas/Media'
@@ -2187,6 +2494,40 @@ components:
           $ref: '#/components/schemas/Money'
         lineTotal:
           $ref: '#/components/schemas/Money'
+        outfitComponents:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutfitComponentSnapshot'
+
+    OutfitComponentSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - skuId
+        - skuCode
+        - productName
+        - colorName
+        - sizeLabel
+        - quantityPerOutfit
+        - totalQuantity
+      properties:
+        skuId:
+          type: string
+          format: uuid
+        skuCode:
+          type: string
+        productName:
+          type: string
+        colorName:
+          type: string
+        sizeLabel:
+          type: string
+        quantityPerOutfit:
+          type: integer
+          minimum: 1
+        totalQuantity:
+          type: integer
+          minimum: 1
 
     PaymentAttempt:
       type: object
@@ -2334,7 +2675,19 @@ components:
               items:
                 type: object
                 additionalProperties: false
-                required: [id, kind, title, selection, skuCode, quantity, unitPrice, lineTotal]
+                required:
+                  - id
+                  - kind
+                  - title
+                  - selection
+                  - skuCode
+                  - quantity
+                  - unitPrice
+                  - lineTotal
+                  - outfitRevisionId
+                  - outfitRevisionNumber
+                  - outfitSize
+                  - outfitComponents
                 properties:
                   id:
                     type: string
@@ -2348,6 +2701,14 @@ components:
                     type: string
                   skuCode:
                     type: [string, 'null']
+                  outfitRevisionId:
+                    type: [string, 'null']
+                    format: uuid
+                  outfitRevisionNumber:
+                    type: [integer, 'null']
+                    minimum: 1
+                  outfitSize:
+                    type: [string, 'null']
                   quantity:
                     type: integer
                     minimum: 1
@@ -2355,6 +2716,10 @@ components:
                     $ref: '#/components/schemas/Money'
                   lineTotal:
                     $ref: '#/components/schemas/Money'
+                  outfitComponents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OutfitComponentSnapshot'
             address:
               $ref: '#/components/schemas/AddressSnapshot'
             shipping:
@@ -2708,6 +3073,211 @@ components:
         page:
           $ref: '#/components/schemas/CursorPage'
 
+    AdminOutfitComponentInput:
+      type: object
+      additionalProperties: false
+      required: [outfitItemId, skuId, quantity, displayOrder]
+      properties:
+        outfitItemId:
+          type: string
+          format: uuid
+        skuId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+        displayOrder:
+          type: integer
+          minimum: 0
+
+    AdminOutfitSizeInput:
+      type: object
+      additionalProperties: false
+      required: [code, label, amountRial, displayOrder, components]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        amountRial:
+          type: integer
+          format: int64
+          minimum: 1
+        displayOrder:
+          type: integer
+          minimum: 0
+        components:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AdminOutfitComponentInput'
+
+    AdminOutfitItemInput:
+      type: object
+      additionalProperties: false
+      required: [id, productId, defaultColorVariantId, quantity, displayOrder]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Stable draft child identifier used by exact size mappings.
+        productId:
+          type: string
+          format: uuid
+        defaultColorVariantId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+        displayOrder:
+          type: integer
+          minimum: 0
+
+    AdminOutfitInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - slug
+        - description
+        - categoryIds
+        - mediaIds
+        - featuredMediaId
+        - items
+        - sizes
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 180
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 160
+        description:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        categoryIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        mediaIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        featuredMediaId:
+          type: string
+          format: uuid
+        seo:
+          $ref: '#/components/schemas/Seo'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AdminOutfitItemInput'
+        sizes:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AdminOutfitSizeInput'
+
+    OutfitRevisionState:
+      type: string
+      enum: [draft, published, historical]
+
+    AdminOutfit:
+      allOf:
+        - $ref: '#/components/schemas/AdminOutfitInput'
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - status
+            - version
+            - revisionId
+            - revisionNumber
+            - revisionState
+            - publishedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: '#/components/schemas/PublicationStatus'
+            version:
+              type: integer
+              minimum: 1
+            revisionId:
+              type: string
+              format: uuid
+            revisionNumber:
+              type: integer
+              minimum: 1
+            revisionState:
+              $ref: '#/components/schemas/OutfitRevisionState'
+            publishedAt:
+              type: [string, 'null']
+              format: date-time
+
+    AdminOutfitPage:
+      type: object
+      additionalProperties: false
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminOutfit'
+        page:
+          $ref: '#/components/schemas/CursorPage'
+
+    OutfitRevisionSummary:
+      type: object
+      additionalProperties: false
+      required: [id, revisionNumber, state, name, publishedAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
+        state:
+          $ref: '#/components/schemas/OutfitRevisionState'
+        name:
+          type: string
+        publishedAt:
+          type: [string, 'null']
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    AdminOutfitPreview:
+      type: object
+      additionalProperties: false
+      required: [preview, outfit]
+      properties:
+        preview:
+          type: boolean
+          const: true
+        outfit:
+          $ref: '#/components/schemas/OutfitDetail'
+
     AdminPriceInput:
       type: object
       additionalProperties: false
@@ -2731,7 +3301,7 @@ components:
           type: string
         ruleId:
           type: string
-          pattern: '^(CAT|PUB)-[0-9]{3}$'
+          pattern: '^(CAT|PUB|OTF|INV)-[0-9]{3}$'
         message:
           type: string
 
