@@ -239,18 +239,18 @@ model Address {
 }
 
 model Cart {
-  id         String            @id @default(uuid()) @db.Uuid
-  customerId String?           @unique @map("customer_id") @db.Uuid
-  status     CartStatus        @default(ACTIVE)
-  version    Int               @default(0)
-  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  mergedAt   DateTime?         @map("merged_at") @db.Timestamptz(6)
-  customer   Customer?         @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  lines      CartLine[]
-  notices    CartNotice[]
-  checkouts  CheckoutSession[]
-  guestMergeReceipt    CartMergeReceipt?  @relation("GuestCartMerge")
+  id                    String             @id @default(uuid()) @db.Uuid
+  customerId            String?            @unique @map("customer_id") @db.Uuid
+  status                CartStatus         @default(ACTIVE)
+  version               Int                @default(0)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  mergedAt              DateTime?          @map("merged_at") @db.Timestamptz(6)
+  customer              Customer?          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lines                 CartLine[]
+  notices               CartNotice[]
+  checkouts             CheckoutSession[]
+  guestMergeReceipt     CartMergeReceipt?  @relation("GuestCartMerge")
   customerMergeReceipts CartMergeReceipt[] @relation("CustomerCartMerge")
 
   @@index([status, updatedAt])
@@ -681,6 +681,7 @@ model PaymentCallbackReceipt {
   id                    String                @id @default(uuid()) @db.Uuid
   paymentAttemptId      String                @map("payment_attempt_id") @db.Uuid
   provider              String                @db.VarChar(40)
+  providerEventId       String                @map("provider_event_id") @db.VarChar(120)
   providerTransactionId String                @map("provider_transaction_id") @db.VarChar(120)
   payloadHash           String                @map("payload_hash") @db.Char(64)
   result                PaymentCallbackResult
@@ -689,7 +690,8 @@ model PaymentCallbackReceipt {
   paymentAttempt        PaymentAttempt        @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
   order                 Order?                @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
-  @@unique([provider, providerTransactionId])
+  @@unique([provider, providerEventId])
+  @@index([provider, providerTransactionId])
   @@index([paymentAttemptId, receivedAt])
   @@map("payment_callback_receipts")
 }
