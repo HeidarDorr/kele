@@ -1,6 +1,7 @@
-import { mkdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import { cleanupCatalogTestData } from '../apps/api/test/support/catalog-cleanup.js';
 import {
   addE2EOutfitReviewLine,
@@ -11,6 +12,12 @@ import {
   setE2EInventory,
 } from '../apps/api/test/support/customer-e2e.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
+import {
+  evidenceFixedTime,
+  milestoneFourFixture,
+  milestoneThreeFixture,
+  type MilestoneEvidenceFixture,
+} from './evidence-fixtures.mjs';
 
 const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
 const evidenceDirectory = resolve(
@@ -18,13 +25,12 @@ const evidenceDirectory = resolve(
     ? 'output/playwright/milestone-2-markazi'
     : 'output/playwright/milestone-2',
 );
-const milestoneThreeEvidence = resolve('output/playwright/milestone-3');
-const milestoneFourEvidence = resolve('output/playwright/milestone-4');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
 let acceptanceCategoryId: string | undefined;
 let acceptanceMediaId: string | undefined;
+let milestoneThreeHashesBeforeMilestoneFour: Readonly<Record<string, string>> | null = null;
 
 async function cartIdFromPage(page: Page): Promise<string> {
   const cookie = (await page.context().cookies()).find((item) => item.name === 'kele_cart');
@@ -33,20 +39,32 @@ async function cartIdFromPage(page: Page): Promise<string> {
   return cartId;
 }
 
+function newMilestoneEvidenceContext(
+  browser: Browser,
+  viewport: Readonly<{ width: number; height: number }>,
+): Promise<BrowserContext> {
+  return browser.newContext({
+    colorScheme: 'light',
+    locale: 'fa-IR',
+    reducedMotion: 'reduce',
+    timezoneId: 'Asia/Tehran',
+    viewport,
+  });
+}
+
 async function completeOtp(page: Page, mobile: string, code = '111111'): Promise<void> {
   await page.getByRole('textbox', { name: 'شمارهٔ موبایل', exact: true }).fill(mobile);
-  const challengeResponse = page.waitForResponse(
-    (response) =>
-      response.url().includes('/api/commerce/auth/otp/challenges') && response.status() === 202,
+  const challengeResponse = page.waitForResponse((response) =>
+    response.url().includes('/api/commerce/auth/otp/challenges'),
   );
   await page.getByRole('button', { name: 'دریافت کد' }).click();
-  await challengeResponse;
+  expect((await challengeResponse).status()).toBe(202);
   await page.getByRole('textbox', { name: 'کد یک‌بارمصرف', exact: true }).fill(code);
   await page.getByRole('button', { name: 'تأیید و ورود' }).click();
   await expect(page).toHaveURL(/\/account$/);
 }
 
-async function prepareCheckoutCustomer(
+async function prepareMilestoneFourCheckoutCustomer(
   page: Page,
   mobile: string,
   cartIds: string[],
@@ -82,19 +100,23 @@ async function captureEvidence(
   path: string,
   options: { preserveFocus?: boolean; stabilizePage?: boolean } = {},
 ): Promise<void> {
-  if (options.stabilizePage) await page.clock.setFixedTime('2026-08-01T09:00:00.000Z');
-  await page.emulateMedia({ reducedMotion: 'reduce' });
+  if (options.stabilizePage) await page.clock.setFixedTime(evidenceFixedTime);
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+  await page.waitForFunction(() =>
+    Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0),
+  );
   await page.waitForFunction(() => document.fonts.status === 'loaded');
   await page.evaluate(async (captureOptions) => {
     await document.fonts.ready;
     const fontRequests = new Map<string, string>();
-    for (const element of [
-      document.body,
-      ...document.querySelectorAll<HTMLElement>('.wordmark, .footer-wordmark, h1, h2'),
-    ]) {
+    for (const element of [document.body, ...document.querySelectorAll<HTMLElement>('body *')]) {
+      if (element !== document.body && element.getClientRects().length === 0) continue;
       const style = getComputedStyle(element);
-      const font = [style.fontWeight, style.fontSize, style.fontFamily].map(String).join(' ');
-      fontRequests.set(font, element.textContent?.slice(0, 32) ?? 'KELE');
+      const font = [style.fontStyle, style.fontWeight, style.fontSize, style.fontFamily]
+        .map(String)
+        .join(' ');
+      const sample = element.textContent?.trim().slice(0, 64);
+      if (sample) fontRequests.set(font, sample);
     }
     await Promise.all(
       [...fontRequests].map(async ([font, sample]) => {
@@ -116,6 +138,7 @@ async function captureEvidence(
             caret-color: transparent !important;
             transition: none !important;
           }
+          html { scroll-behavior: auto !important; }
         `;
         document.head.append(captureStyle);
       }
@@ -144,31 +167,83 @@ async function captureEvidence(
 
   await page.mouse.move(0, 0);
   await page.evaluate(async () => {
-    let previousHeight = -1;
+    let previousSignature = '';
     let stableFrames = 0;
-    for (let frame = 0; frame < 12; frame += 1) {
+    for (let frame = 0; frame < 20; frame += 1) {
       await new Promise<void>((resolveFrame) => {
         requestAnimationFrame(() => {
           resolveFrame();
         });
       });
-      const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
-      if (height === previousHeight) stableFrames += 1;
+      const tracked = Array.from(
+        document.querySelectorAll<HTMLElement>('header, main, footer, form, section, img'),
+      ).map((element) => {
+        const rectangle = element.getBoundingClientRect();
+        return {
+          height: rectangle.height,
+          tagName: element.tagName,
+          width: rectangle.width,
+          x: rectangle.x,
+          y: rectangle.y,
+        };
+      });
+      const signature = JSON.stringify([
+        document.documentElement.scrollWidth,
+        document.documentElement.scrollHeight,
+        tracked,
+      ]);
+      if (signature === previousSignature) stableFrames += 1;
       else stableFrames = 0;
-      if (stableFrames >= 2) return;
-      previousHeight = height;
+      if (stableFrames >= 3) return;
+      previousSignature = signature;
     }
     throw new Error('Evidence layout height did not stabilize before capture.');
   });
   try {
     await page.screenshot({
       path,
+      animations: 'disabled',
       caret: 'hide',
       fullPage: true,
     });
   } finally {
     await page.clock.resume();
   }
+}
+
+async function captureMilestoneEvidence(
+  page: Page,
+  fixture: MilestoneEvidenceFixture,
+  filename: string,
+  options: { preserveFocus?: boolean } = {},
+): Promise<void> {
+  if (!fixture.screenshotFilenames.includes(filename)) {
+    throw new Error(`Invalid ${fixture.milestone} evidence filename.`);
+  }
+  await mkdir(fixture.evidenceDirectory, { recursive: true });
+  await captureEvidence(page, resolve(fixture.evidenceDirectory, filename), {
+    ...options,
+    stabilizePage: true,
+  });
+}
+
+async function evidenceHashes(
+  fixture: MilestoneEvidenceFixture,
+): Promise<Readonly<Record<string, string>>> {
+  const filenames = (await readdir(fixture.evidenceDirectory))
+    .filter((filename) => filename.endsWith('.png'))
+    .sort();
+  const expected = [...fixture.screenshotFilenames].sort();
+  expect(filenames).toEqual(expected);
+  const entries = await Promise.all(
+    filenames.map(async (filename): Promise<readonly [string, string]> => [
+      filename,
+      createHash('sha256')
+        .update(await readFile(resolve(fixture.evidenceDirectory, filename)))
+        .digest('hex'),
+    ]),
+  );
+  return Object.fromEntries(entries);
 }
 
 async function cleanupAcceptanceFixture(): Promise<void> {
@@ -184,6 +259,12 @@ async function cleanupAcceptanceFixture(): Promise<void> {
 
 test.afterAll(async () => {
   await cleanupAcceptanceFixture();
+  if (milestoneThreeHashesBeforeMilestoneFour !== null) {
+    expect(await evidenceHashes(milestoneThreeFixture)).toEqual(
+      milestoneThreeHashesBeforeMilestoneFour,
+    );
+    await evidenceHashes(milestoneFourFixture);
+  }
 });
 
 test.afterEach(async () => {
@@ -509,11 +590,10 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
   browser,
   request,
 }) => {
-  await mkdir(milestoneThreeEvidence, { recursive: true });
-  const mobile = '+989121234567';
-  const skuId = '20000000-0000-4000-8000-000000000041';
+  const mobile = milestoneThreeFixture.journeyMobile;
+  const skuId = milestoneThreeFixture.skuId;
   const cartIds: string[] = [];
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const page = await context.newPage();
   try {
     await context.addCookies([
@@ -582,10 +662,10 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await expect(page.getByRole('status')).toHaveText('نشانی ذخیره شد.');
     await expect(page.getByLabel('نام گیرنده')).toHaveValue('');
     await expect(page.getByRole('button', { name: 'ذخیره نشانی' })).toBeEnabled();
-    await captureEvidence(
+    await captureMilestoneEvidence(
       page,
-      resolve(milestoneThreeEvidence, 'account-profile-address-desktop.png'),
-      { stabilizePage: true },
+      milestoneThreeFixture,
+      'account-profile-address-desktop.png',
     );
 
     const revokedToken = authenticatedCookie?.value;
@@ -610,43 +690,46 @@ test('anonymous cart, OTP merge, owned profile/address and logout pass the brows
     await page.goto(`${e2eUrls.storefront}/cart`);
     await expect(page.getByText('تعداد با موجودی فعلی هماهنگ شد.')).toBeVisible();
     await expect(page.locator('.cart-page-lines select')).toHaveValue('4');
-    await captureEvidence(page, resolve(milestoneThreeEvidence, 'cart-merge-notice-laptop.png'));
+    await captureMilestoneEvidence(page, milestoneThreeFixture, 'cart-merge-notice-laptop.png');
     for (const viewport of [
       { name: 'mobile', width: 390, height: 844 },
       { name: 'tablet', width: 768, height: 1024 },
       { name: 'desktop', width: 1440, height: 900 },
     ]) {
       await page.setViewportSize(viewport);
-      await captureEvidence(
+      await captureMilestoneEvidence(
         page,
-        resolve(milestoneThreeEvidence, `cart-authenticated-${viewport.name}.png`),
+        milestoneThreeFixture,
+        `cart-authenticated-${viewport.name}.png`,
       );
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
     }
   } finally {
-    await context.close();
-    await cleanupE2ECustomer(mobile, cartIds);
+    try {
+      await context.close();
+    } finally {
+      await cleanupE2ECustomer(mobile, cartIds);
+    }
   }
 });
 
 test('cart UI exposes loading, empty, error, unavailable and Outfit review states', async ({
   browser,
 }) => {
-  await mkdir(milestoneThreeEvidence, { recursive: true });
-  const skuId = '20000000-0000-4000-8000-000000000041';
+  const skuId = milestoneThreeFixture.skuId;
   const cartIds: string[] = [];
-  const mobile = '+989121234568';
+  const mobile = milestoneThreeFixture.stateMobile;
   try {
-    const emptyContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const emptyContext = await newMilestoneEvidenceContext(browser, { width: 390, height: 844 });
     const empty = await emptyContext.newPage();
     await empty.goto(`${e2eUrls.storefront}/cart`);
     await expect(empty.getByText('هنوز چیزی برای نگه‌داشتن انتخاب نکرده‌اید.')).toBeVisible();
-    await captureEvidence(empty, resolve(milestoneThreeEvidence, 'cart-empty-mobile.png'));
+    await captureMilestoneEvidence(empty, milestoneThreeFixture, 'cart-empty-mobile.png');
     await emptyContext.close();
 
-    const errorContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
+    const errorContext = await newMilestoneEvidenceContext(browser, { width: 768, height: 1024 });
     const errorPage = await errorContext.newPage();
     await errorPage.route('**/api/commerce/cart', async (route) => {
       await route.fulfill({
@@ -657,10 +740,13 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     });
     await errorPage.goto(`${e2eUrls.storefront}/cart`);
     await expect(errorPage.locator('.commerce-page-state.state-error')).toBeVisible();
-    await captureEvidence(errorPage, resolve(milestoneThreeEvidence, 'cart-error-tablet.png'));
+    await captureMilestoneEvidence(errorPage, milestoneThreeFixture, 'cart-error-tablet.png');
     await errorContext.close();
 
-    const loadingContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const loadingContext = await newMilestoneEvidenceContext(browser, {
+      width: 1280,
+      height: 800,
+    });
     const loadingPage = await loadingContext.newPage();
     await loadingPage.route('**/api/commerce/cart', async (route) => {
       await new Promise((resolveDelay) => setTimeout(resolveDelay, 4_000));
@@ -668,10 +754,13 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     });
     await loadingPage.goto(`${e2eUrls.storefront}/cart`);
     await expect(loadingPage.getByText('در حال دریافت سبد…')).toBeVisible();
-    await captureEvidence(loadingPage, resolve(milestoneThreeEvidence, 'cart-loading-laptop.png'));
+    await captureMilestoneEvidence(loadingPage, milestoneThreeFixture, 'cart-loading-laptop.png');
     await loadingContext.close();
 
-    const unavailableContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const unavailableContext = await newMilestoneEvidenceContext(browser, {
+      width: 1440,
+      height: 900,
+    });
     const unavailable = await unavailableContext.newPage();
     await unavailable.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
     await unavailable.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
@@ -681,14 +770,18 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     await unavailable.goto(`${e2eUrls.storefront}/cart`);
     await expect(unavailable.getByText('این انتخاب اکنون ناموجود است.')).toBeVisible();
     await expect(unavailable.getByText(/ادامه خرید تا رفع/)).toBeVisible();
-    await captureEvidence(
+    await captureMilestoneEvidence(
       unavailable,
-      resolve(milestoneThreeEvidence, 'cart-unavailable-desktop.png'),
+      milestoneThreeFixture,
+      'cart-unavailable-desktop.png',
     );
     await setE2EInventory(skuId, 4);
     await unavailableContext.close();
 
-    const reviewContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const reviewContext = await newMilestoneEvidenceContext(browser, {
+      width: 1280,
+      height: 800,
+    });
     const review = await reviewContext.newPage();
     await review.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
     await review.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
@@ -698,9 +791,10 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     await addE2EOutfitReviewLine(reviewCartId);
     await review.goto(`${e2eUrls.storefront}/cart`);
     await expect(review.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
-    await captureEvidence(
+    await captureMilestoneEvidence(
       review,
-      resolve(milestoneThreeEvidence, 'cart-outfit-requires-review.png'),
+      milestoneThreeFixture,
+      'cart-outfit-requires-review.png',
     );
     await reviewContext.close();
   } finally {
@@ -712,15 +806,15 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
 test('checkout covers pending, failed, cancelled and exactly-once paid outcomes in the browser', async ({
   browser,
 }) => {
-  await mkdir(milestoneFourEvidence, { recursive: true });
-  const mobile = '+989121234569';
-  const skuId = '20000000-0000-4000-8000-000000000041';
+  milestoneThreeHashesBeforeMilestoneFour = await evidenceHashes(milestoneThreeFixture);
+  const mobile = milestoneFourFixture.paidMobile;
+  const skuId = milestoneFourFixture.skuId;
   const cartIds: string[] = [];
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const page = await context.newPage();
   try {
-    await setE2EInventory(skuId, 4);
-    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    await prepareMilestoneFourCheckoutCustomer(page, mobile, cartIds);
     await page.getByRole('radio', { name: /پیک محلی تهران/ }).check();
 
     for (const viewport of [
@@ -732,7 +826,7 @@ test('checkout covers pending, failed, cancelled and exactly-once paid outcomes 
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
-      await captureEvidence(page, resolve(milestoneFourEvidence, `checkout-${viewport.name}.png`));
+      await captureMilestoneEvidence(page, milestoneFourFixture, `checkout-${viewport.name}.png`);
     }
 
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -740,34 +834,34 @@ test('checkout covers pending, failed, cancelled and exactly-once paid outcomes 
     await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
     const fakeUrl = page.url();
     await expect(page.getByRole('heading', { name: 'شبیه‌ساز درگاه پرداخت' })).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'fake-gateway-laptop.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'fake-gateway-laptop.png');
 
     await page.getByRole('button', { name: 'در انتظار تأیید' }).click();
     await expect(page).toHaveURL(/\/payment\/result\?attempt=/);
     await expect(
       page.getByRole('heading', { name: 'نتیجهٔ پرداخت هنوز نهایی نیست' }),
     ).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-pending.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-pending.png');
 
     await page.goto(fakeUrl);
     await page.getByRole('button', { name: 'پرداخت ناموفق' }).click();
     await expect(page.getByRole('heading', { name: 'پرداخت ناموفق بود' })).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-failed.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-failed.png');
 
     await page.goto(fakeUrl);
     await page.getByRole('button', { name: 'انصراف مشتری' }).click();
     await expect(page.getByRole('heading', { name: 'از پرداخت منصرف شدید' })).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-cancelled.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-cancelled.png');
 
     await page.goto(fakeUrl);
     await page.getByRole('button', { name: 'پرداخت موفق' }).click();
     await expect(page.getByRole('heading', { name: 'سفارش شما ثبت شد' })).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-paid.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-paid.png');
     await page.getByRole('link', { name: 'مشاهدهٔ سفارش' }).click();
     await expect(page.getByRole('heading', { name: 'جزئیات سفارش' })).toBeVisible();
     await expect(page.getByText('پیک محلی تهران')).toBeVisible();
     await expect(page.locator('.order-items > li')).toHaveCount(1);
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'paid-order-desktop.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'paid-order-desktop.png');
 
     await expect
       .poll(() => readE2EPaymentEvidence(mobile, skuId))
@@ -779,31 +873,33 @@ test('checkout covers pending, failed, cancelled and exactly-once paid outcomes 
         reservedQuantity: 0,
       });
   } finally {
-    await context.close();
-    await cleanupE2ECustomer(mobile, cartIds);
-    await setE2EInventory(skuId, 4);
+    try {
+      await context.close();
+    } finally {
+      await cleanupE2ECustomer(mobile, cartIds);
+      await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    }
   }
 });
 
 test('tampered amount is shown as reconciliation and never creates an Order', async ({
   browser,
 }) => {
-  await mkdir(milestoneFourEvidence, { recursive: true });
-  const mobile = '+989121234570';
-  const skuId = '20000000-0000-4000-8000-000000000041';
+  const mobile = milestoneFourFixture.reconciliationMobile;
+  const skuId = milestoneFourFixture.skuId;
   const cartIds: string[] = [];
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const page = await context.newPage();
   try {
-    await setE2EInventory(skuId, 4);
-    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    await prepareMilestoneFourCheckoutCustomer(page, mobile, cartIds);
     await page.getByRole('button', { name: 'رزرو موجودی و ورود به پرداخت' }).click();
     await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
     await page.getByText('آزمون امنیتی مبلغ').click();
     await page.getByRole('button', { name: 'ارسال مبلغ دست‌کاری‌شده' }).click();
     await expect(page.getByRole('heading', { name: 'پرداخت در حال تطبیق است' })).toBeVisible();
     await expect(page.getByText(/هیچ سفارش یا کسر موجودی تکراری انجام نشده است/)).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-reconciliation.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-reconciliation.png');
     await expect
       .poll(() => readE2EPaymentEvidence(mobile, skuId))
       .toEqual({
@@ -814,22 +910,24 @@ test('tampered amount is shown as reconciliation and never creates an Order', as
         reservedQuantity: 1,
       });
   } finally {
-    await context.close();
-    await cleanupE2ECustomer(mobile, cartIds);
-    await setE2EInventory(skuId, 4);
+    try {
+      await context.close();
+    } finally {
+      await cleanupE2ECustomer(mobile, cartIds);
+      await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    }
   }
 });
 
 test('expired reservation is visible and cannot become an Order', async ({ browser }) => {
-  await mkdir(milestoneFourEvidence, { recursive: true });
-  const mobile = '+989121234571';
-  const skuId = '20000000-0000-4000-8000-000000000041';
+  const mobile = milestoneFourFixture.expiredMobile;
+  const skuId = milestoneFourFixture.skuId;
   const cartIds: string[] = [];
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const context = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const page = await context.newPage();
   try {
-    await setE2EInventory(skuId, 4);
-    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    await prepareMilestoneFourCheckoutCustomer(page, mobile, cartIds);
     await page.getByRole('button', { name: 'رزرو موجودی و ورود به پرداخت' }).click();
     await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
     const attemptId = new URL(page.url()).searchParams.get('attempt');
@@ -839,7 +937,7 @@ test('expired reservation is visible and cannot become an Order', async ({ brows
       `${e2eUrls.storefront}/payment/result?attempt=${encodeURIComponent(attemptId)}`,
     );
     await expect(page.getByRole('heading', { name: 'مهلت پرداخت تمام شده است' })).toBeVisible();
-    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-expired.png'));
+    await captureMilestoneEvidence(page, milestoneFourFixture, 'payment-expired.png');
     await expect
       .poll(() => readE2EPaymentEvidence(mobile, skuId))
       .toEqual({
@@ -850,8 +948,11 @@ test('expired reservation is visible and cannot become an Order', async ({ brows
         reservedQuantity: 0,
       });
   } finally {
-    await context.close();
-    await cleanupE2ECustomer(mobile, cartIds);
-    await setE2EInventory(skuId, 4);
+    try {
+      await context.close();
+    } finally {
+      await cleanupE2ECustomer(mobile, cartIds);
+      await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    }
   }
 });

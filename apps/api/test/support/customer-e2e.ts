@@ -6,12 +6,18 @@ function guardedClient(): PrismaClient {
   return new PrismaClient();
 }
 
+function deterministicE2ENow(): Date {
+  const fixedTime = process.env.E2E_FIXED_TIME;
+  if (fixedTime === undefined) throw new Error('E2E_FIXED_TIME is required for browser fixtures.');
+  return new Date(fixedTime);
+}
+
 export async function ageE2EOtpChallenges(mobile: string): Promise<void> {
   const prisma = guardedClient();
   try {
     await prisma.otpChallenge.updateMany({
       where: { mobile },
-      data: { createdAt: new Date(Date.now() - 2 * 60_000) },
+      data: { createdAt: new Date(deterministicE2ENow().getTime() - 2 * 60_000) },
     });
   } finally {
     await prisma.$disconnect();
@@ -174,7 +180,7 @@ export async function expireE2EPayment(paymentAttemptId: string): Promise<void> 
           },
         });
       }
-      const now = new Date();
+      const now = new Date(deterministicE2ENow().getTime() + 31 * 60_000);
       await transaction.inventoryReservation.updateMany({
         where: { checkoutSessionId: attempt.checkoutSessionId, status: 'ACTIVE' },
         data: { status: 'EXPIRED', releasedAt: now },

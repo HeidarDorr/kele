@@ -1,5 +1,6 @@
 import type { SmsGateway } from '../../foundation/application/sms-gateway.port.js';
 import type { UnitOfWork } from '../../../shared/unit-of-work.js';
+import type { Clock } from '../../../shared/deterministic-runtime.js';
 import { ApplicationError } from '../../../shared/application-error.js';
 import type { CartService } from '../../cart/application/cart.service.js';
 import type { CartView } from '../../cart/domain/cart.types.js';
@@ -37,10 +38,11 @@ export class IdentityService {
     private readonly signingSecret: string,
     private readonly otpPepper: string,
     private readonly otpCode: () => string = randomOtp,
+    private readonly clock: Clock = () => new Date(),
   ) {}
 
   async createOtpChallenge(mobile: string, ip: string, deviceId: string) {
-    const now = new Date();
+    const now = this.clock();
     const code = this.otpCode();
     const codeSalt = randomHex(16);
     const challenge = await this.unitOfWork.run(() =>
@@ -63,7 +65,7 @@ export class IdentityService {
       });
     } catch {
       await this.unitOfWork.run(() =>
-        this.repository.markChallengeUndeliverable(challenge.id, new Date()),
+        this.repository.markChallengeUndeliverable(challenge.id, this.clock()),
       );
       throw new ApplicationError(
         'dependency',
@@ -86,7 +88,7 @@ export class IdentityService {
   }): Promise<AuthenticationResultValue> {
     const sessionToken = randomToken();
     const csrfToken = randomToken();
-    const now = new Date();
+    const now = this.clock();
     const outcome = await this.unitOfWork.run(async () => {
       const challenge = await this.repository.lockChallenge(input.challengeId);
       if (challenge === null || challenge.consumedAt !== null || challenge.failedAttempts >= 5) {
@@ -111,6 +113,7 @@ export class IdentityService {
         csrfHash: sha256(csrfToken),
         idleExpiresAt: new Date(now.getTime() + SESSION_IDLE_MS),
         absoluteExpiresAt: new Date(now.getTime() + SESSION_ABSOLUTE_MS),
+        now,
       });
       const merge = await this.carts.mergeGuestCart(customer.id, input.guestCartId);
       return { valid: true as const, customer, merge };
@@ -134,7 +137,7 @@ export class IdentityService {
 
   resolveSession(sessionToken: string | null): Promise<CustomerSessionValue | null> {
     if (sessionToken === null || sessionToken.length < 32) return Promise.resolve(null);
-    const now = new Date();
+    const now = this.clock();
     return this.unitOfWork.run(() =>
       this.repository.resolveSession(
         sha256(sessionToken),
@@ -152,7 +155,7 @@ export class IdentityService {
 
   logout(sessionToken: string): Promise<void> {
     return this.unitOfWork.run(() =>
-      this.repository.revokeSession(sha256(sessionToken), new Date()),
+      this.repository.revokeSession(sha256(sessionToken), this.clock()),
     );
   }
 }

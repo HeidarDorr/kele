@@ -193,3 +193,28 @@ The traceability document is updated when a rule becomes implemented.
   Checkout at 390×844, 768×1024 and 1440×900, fake gateway, every payment
   outcome and the immutable paid Order. Reduced-motion and horizontal-overflow
   acceptance remain mandatory.
+
+### Deterministic M3/M4 visual-evidence contract
+
+Acceptance criteria:
+
+- M3 and M4 use distinct, named fixture objects and can write only beneath
+  `output/playwright/milestone-3/` and `output/playwright/milestone-4/`
+  respectively. An M4 test must never receive the M3 evidence directory.
+- Each run resets only the configuration-guarded `kele_e2e` database before
+  migrations and seed, preventing abandoned Checkout/customer facts from a
+  failed prior run from contaminating either milestone fixture.
+- The E2E API uses the fixed instant `2026-08-02T09:00:00.000Z` and a scoped,
+  repeatable UUID sequence. These controls are rejected outside `NODE_ENV=test`.
+- Every M3/M4 capture uses the Tehran timezone, Persian locale, light color
+  scheme, reduced motion, loaded fonts and images, disabled animation/transition,
+  top scroll position, hidden caret, an explicit focus policy and three stable
+  layout frames before PNG encoding.
+- After the accepted evidence baseline is committed, two consecutive complete
+  E2E runs must each leave `git diff --exit-code -- output/playwright` at zero.
+
+Failure scenarios include an unloaded font/image, changing layout signature,
+unexpected focus ring or caret, real-time date, random visible identifier,
+cross-milestone output path, or any byte change in tracked Playwright evidence.
+Any such difference fails evidence acceptance even when the functional browser
+assertions pass.

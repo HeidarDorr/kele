@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { config as loadEnvironment } from 'dotenv';
 import { readE2EPorts } from '../e2e/ports.mts';
+import { evidenceFixedTime, evidenceIdSeed } from '../e2e/evidence-fixtures.mts';
 import { readE2EDatabaseConfiguration } from '../packages/config/src/e2e-database.ts';
 
 const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -37,6 +38,8 @@ const sharedEnvironment = {
   NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
   DATABASE_URL: databaseConfiguration.databaseUrl,
   E2E_DATABASE_URL: databaseConfiguration.databaseUrl,
+  E2E_FIXED_TIME: evidenceFixedTime,
+  E2E_DETERMINISTIC_ID_SEED: evidenceIdSeed,
 };
 const generatedDeclarationPaths = [
   path.join(workspace, 'apps/storefront/next-env.d.ts'),
@@ -182,10 +185,25 @@ try {
   await runPnpm(['--filter', '@kele/storefront', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/admin', 'build'], buildEnvironment);
   await ensureE2EDatabase();
-  await runPnpm(['--filter', '@kele/api', 'prisma:deploy'], {
-    ...sharedEnvironment,
-    NODE_ENV: 'test',
-  });
+  console.log(`[e2e] Resetting guarded database ${databaseConfiguration.databaseName}.`);
+  await runPnpm(
+    [
+      '--filter',
+      '@kele/api',
+      'exec',
+      'prisma',
+      'migrate',
+      'reset',
+      '--force',
+      '--skip-seed',
+      '--skip-generate',
+    ],
+    {
+      ...sharedEnvironment,
+      NODE_ENV: 'test',
+      E2E_DATABASE_RESET: 'true',
+    },
+  );
   await runPnpm(['--filter', '@kele/api', 'seed'], {
     ...sharedEnvironment,
     NODE_ENV: 'test',

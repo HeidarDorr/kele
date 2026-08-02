@@ -7,13 +7,17 @@ import {
   SMS_GATEWAY,
 } from './application/provider.tokens.js';
 import { environment } from '../../platform/config/environment.js';
+import { runtimeIdFactory } from '../../shared/deterministic-runtime.js';
 
 @Module({
   providers: [
     {
       provide: FakePaymentAdapter,
       useFactory: (): FakePaymentAdapter =>
-        new FakePaymentAdapter(environment.FAKE_PAYMENT_SIGNING_SECRET),
+        new FakePaymentAdapter(
+          environment.FAKE_PAYMENT_SIGNING_SECRET,
+          runtimeIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'fake-payment-callback'),
+        ),
     },
     FakeSmsAdapter,
     { provide: PAYMENT_GATEWAY, useExisting: FakePaymentAdapter },

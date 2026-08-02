@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { formatIrrAsToman } from '@kele/design-system/money';
 import type { UnitOfWork } from '../../../shared/unit-of-work.js';
+import type { IdFactory } from '../../../shared/deterministic-runtime.js';
 import { ApplicationError } from '../../../shared/application-error.js';
 import type { CheckoutCartPort } from '../../cart/application/checkout-cart.contract.js';
 import type { CheckoutCatalogPort } from '../../catalog/application/checkout-catalog.contract.js';
@@ -48,6 +49,7 @@ export class PaymentService {
     private readonly unitOfWork: UnitOfWork,
     private readonly returnBaseUrl: string,
     private readonly clock: () => Date = () => new Date(),
+    private readonly idFactory: IdFactory = randomUUID,
   ) {}
 
   async startPayment(input: {
@@ -71,7 +73,7 @@ export class PaymentService {
       input.checkoutSessionId,
     );
     this.assertCheckoutPayable(observedCheckout.status, observedCheckout.expiresAt);
-    const paymentAttemptId = randomUUID();
+    const paymentAttemptId = this.idFactory();
     const applicationReference = hash(`${input.checkoutSessionId}:${input.idempotencyKey}`).slice(
       0,
       48,
@@ -245,8 +247,8 @@ export class PaymentService {
         });
       }
 
-      const orderId = randomUUID();
-      const orderNumber = randomUUID();
+      const orderId = this.idFactory();
+      const orderNumber = this.idFactory();
       const order = await this.repository.createOrder({
         id: orderId,
         orderNumber,

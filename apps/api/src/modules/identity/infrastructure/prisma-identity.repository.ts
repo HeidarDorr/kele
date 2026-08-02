@@ -115,6 +115,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
           codeSalt: input.codeSalt,
           codeVerifier: input.codeVerifier,
           expiresAt: input.expiresAt,
+          createdAt: input.now,
         },
       }),
     );
@@ -174,12 +175,13 @@ export class PrismaIdentityRepository implements IdentityRepository {
     csrfHash: string;
     idleExpiresAt: Date;
     absoluteExpiresAt: Date;
+    now: Date;
   }): Promise<void> {
     const client = this.transactions.client();
     if (input.previousTokenHash !== null) {
       await client.customerSession.updateMany({
         where: { tokenHash: input.previousTokenHash, revokedAt: null },
-        data: { revokedAt: new Date() },
+        data: { revokedAt: input.now },
       });
     }
     await client.customerSession.create({
@@ -189,6 +191,8 @@ export class PrismaIdentityRepository implements IdentityRepository {
         csrfHash: input.csrfHash,
         idleExpiresAt: input.idleExpiresAt,
         absoluteExpiresAt: input.absoluteExpiresAt,
+        createdAt: input.now,
+        lastSeenAt: input.now,
       },
     });
   }

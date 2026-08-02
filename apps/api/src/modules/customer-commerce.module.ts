@@ -79,6 +79,7 @@ import {
 } from './checkout/presentation/checkout.controller.js';
 import { AdminSessionGuard } from './catalog/presentation/admin-session.guard.js';
 import { OrderService } from './checkout/application/order.service.js';
+import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.js';
 
 @Module({
   imports: [FoundationModule, CatalogModule],
@@ -162,6 +163,7 @@ import { OrderService } from './checkout/application/order.service.js';
           environment.IDENTITY_SIGNING_SECRET,
           environment.OTP_VERIFIER_PEPPER,
           () => environment.FAKE_SMS_OTP_CODE,
+          runtimeClock(environment.E2E_FIXED_TIME),
         ),
       inject: [IDENTITY_REPOSITORY, CartService, SMS_GATEWAY, UNIT_OF_WORK],
     },
@@ -187,7 +189,16 @@ import { OrderService } from './checkout/application/order.service.js';
         customers: CheckoutCustomerPort,
         catalog: CheckoutCatalogPort,
         unitOfWork: UnitOfWork,
-      ): CheckoutService => new CheckoutService(repository, carts, customers, catalog, unitOfWork),
+      ): CheckoutService =>
+        new CheckoutService(
+          repository,
+          carts,
+          customers,
+          catalog,
+          unitOfWork,
+          runtimeClock(environment.E2E_FIXED_TIME),
+          runtimeIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'checkout'),
+        ),
       inject: [
         CHECKOUT_REPOSITORY,
         CHECKOUT_CART_PORT,
@@ -214,6 +225,8 @@ import { OrderService } from './checkout/application/order.service.js';
           carts,
           unitOfWork,
           environment.STOREFRONT_ORIGIN,
+          runtimeClock(environment.E2E_FIXED_TIME),
+          runtimeIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'payment'),
         ),
       inject: [
         CHECKOUT_REPOSITORY,
@@ -231,7 +244,13 @@ import { OrderService } from './checkout/application/order.service.js';
         repository: CheckoutRepository,
         checkouts: CheckoutService,
         unitOfWork: UnitOfWork,
-      ): CheckoutJobService => new CheckoutJobService(repository, checkouts, unitOfWork),
+      ): CheckoutJobService =>
+        new CheckoutJobService(
+          repository,
+          checkouts,
+          unitOfWork,
+          runtimeClock(environment.E2E_FIXED_TIME),
+        ),
       inject: [CHECKOUT_REPOSITORY, CheckoutService, UNIT_OF_WORK],
     },
     {

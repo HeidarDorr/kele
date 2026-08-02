@@ -6,6 +6,7 @@ import type {
   PaymentAttemptRecord,
 } from '../../checkout/domain/checkout.types.js';
 import type { PaymentGateway, PaymentIntent } from '../application/payment-gateway.port.js';
+import type { IdFactory } from '../../../shared/deterministic-runtime.js';
 
 const CALLBACK_MAX_AGE_MS = 5 * 60_000;
 const CALLBACK_FUTURE_SKEW_MS = 30_000;
@@ -24,7 +25,10 @@ function canonicalCallback(payload: FakePaymentCallbackPayload): string {
 
 @Injectable()
 export class FakePaymentAdapter implements PaymentGateway {
-  constructor(private readonly signingSecret: string) {}
+  constructor(
+    private readonly signingSecret: string,
+    private readonly idFactory: IdFactory = randomUUID,
+  ) {}
 
   createIntent(input: {
     applicationReference: string;
@@ -94,7 +98,7 @@ export class FakePaymentAdapter implements PaymentGateway {
       amountRial: outcome === 'tampered_amount' ? attempt.amountRial + 1 : attempt.amountRial,
       currency: 'IRR',
       issuedAt: now.toISOString(),
-      nonce: randomUUID(),
+      nonce: this.idFactory(),
     };
     return { payload, signature: this.signature(canonicalCallback(payload)) };
   }

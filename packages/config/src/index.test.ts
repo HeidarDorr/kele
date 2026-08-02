@@ -65,4 +65,19 @@ describe('environment configuration', () => {
       '654321',
     );
   });
+
+  it('accepts deterministic runtime controls only in the test environment', () => {
+    const deterministic = {
+      ...valid,
+      E2E_FIXED_TIME: '2026-08-02T09:00:00.000Z',
+      E2E_DETERMINISTIC_ID_SEED: 'kele-evidence-runtime-seed-v1',
+    };
+    expect(parseEnvironment(deterministic)).toMatchObject({
+      E2E_FIXED_TIME: '2026-08-02T09:00:00.000Z',
+      E2E_DETERMINISTIC_ID_SEED: 'kele-evidence-runtime-seed-v1',
+    });
+    expect(() => parseEnvironment({ ...deterministic, NODE_ENV: 'development' })).toThrow(
+      'Deterministic E2E runtime controls are allowed only when NODE_ENV=test.',
+    );
+  });
 });

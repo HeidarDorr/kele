@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { formatIrrAsToman } from '@kele/design-system/money';
 import type { UnitOfWork } from '../../../shared/unit-of-work.js';
+import type { IdFactory } from '../../../shared/deterministic-runtime.js';
 import { ApplicationError } from '../../../shared/application-error.js';
 import type {
   CheckoutCart,
@@ -110,6 +111,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
     private readonly catalog: CheckoutCatalogPort,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: () => Date = () => new Date(),
+    private readonly idFactory: IdFactory = randomUUID,
   ) {}
 
   async listShippingOptions(
@@ -202,10 +204,10 @@ export class CheckoutService implements CartCheckoutLifecycle {
           'Checkout payable total must be positive.',
         );
       }
-      const sessionId = randomUUID();
+      const sessionId = this.idFactory();
       const expiresAt = new Date(now.getTime() + CHECKOUT_TTL_MS);
       const lines: CheckoutLineRecord[] = quote.lines.map((line) => ({
-        id: randomUUID(),
+        id: this.idFactory(),
         cartLineId: line.cartLineId,
         kind: 'product',
         skuId: line.product.skuId,
@@ -223,7 +225,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
         ),
       }));
       const reservations: ReservationRecord[] = lines.map((line) => ({
-        id: randomUUID(),
+        id: this.idFactory(),
         checkoutSessionId: sessionId,
         checkoutLineId: line.id,
         skuId: line.skuId as string,

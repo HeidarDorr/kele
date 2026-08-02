@@ -8,6 +8,8 @@ export const environmentSchema = z
     PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     DATABASE_URL: z.url(),
     E2E_DATABASE_URL: z.url().optional(),
+    E2E_FIXED_TIME: z.iso.datetime({ offset: true }).optional(),
+    E2E_DETERMINISTIC_ID_SEED: z.string().min(16).optional(),
     STORAGE_ENDPOINT: z.url(),
     STORAGE_REGION: z.string().min(1),
     STORAGE_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/),
@@ -46,6 +48,17 @@ export const environmentSchema = z
       .default('development-instagram-admin-session-token-00001'),
   })
   .superRefine((value, context) => {
+    if (
+      value.NODE_ENV !== 'test' &&
+      (value.E2E_FIXED_TIME !== undefined || value.E2E_DETERMINISTIC_ID_SEED !== undefined)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['E2E_FIXED_TIME'],
+        message: 'Deterministic E2E runtime controls are allowed only when NODE_ENV=test.',
+      });
+    }
+
     if (value.NODE_ENV === 'production') {
       context.addIssue({
         code: 'custom',

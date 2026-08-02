@@ -33,6 +33,7 @@ export interface IdentityRepository {
     csrfHash: string;
     idleExpiresAt: Date;
     absoluteExpiresAt: Date;
+    now: Date;
   }): Promise<void>;
   resolveSession(
     tokenHash: string,
