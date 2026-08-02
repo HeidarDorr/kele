@@ -6,6 +6,13 @@ export type Customer = components['schemas']['Customer'];
 export type Address = components['schemas']['Address'];
 export type AddressInput = components['schemas']['AddressInput'];
 export type AuthenticationResult = components['schemas']['AuthenticationResult'];
+export type ShippingOption = components['schemas']['ShippingOption'];
+export type ShippingMethodCode = components['schemas']['ShippingMethodCode'];
+export type CheckoutSession = components['schemas']['CheckoutSession'];
+export type PaymentAttempt = components['schemas']['PaymentAttempt'];
+export type PaymentCallbackOutcome = components['schemas']['PaymentCallbackOutcome'];
+export type OrderPage = components['schemas']['OrderPage'];
+export type Order = components['schemas']['Order'];
 
 export class CommerceApiError extends Error {
   constructor(
@@ -100,6 +107,38 @@ export const commerceApi = {
     }),
   deleteAddress: (id: string) =>
     request<undefined>(`/me/addresses/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  shippingOptions: (cartId: string, addressId: string) =>
+    request<ShippingOption[]>(
+      `/shipping-options?cartId=${encodeURIComponent(cartId)}&addressId=${encodeURIComponent(addressId)}`,
+    ),
+  createCheckout: (
+    input: { cartId: string; addressId: string; deliveryMethod: ShippingMethodCode },
+    idempotencyKey: string,
+  ) =>
+    request<CheckoutSession>('/checkout-sessions', {
+      method: 'POST',
+      headers: { 'idempotency-key': idempotencyKey },
+      body: JSON.stringify(input),
+    }),
+  checkout: (checkoutSessionId: string) =>
+    request<CheckoutSession>(`/checkout-sessions/${encodeURIComponent(checkoutSessionId)}`),
+  startPayment: (checkoutSessionId: string, idempotencyKey: string) =>
+    request<PaymentAttempt>(
+      `/checkout-sessions/${encodeURIComponent(checkoutSessionId)}/payment-attempts`,
+      { method: 'POST', headers: { 'idempotency-key': idempotencyKey } },
+    ),
+  payment: (paymentAttemptId: string) =>
+    request<PaymentAttempt>(`/payment-attempts/${encodeURIComponent(paymentAttemptId)}`),
+  completeFakePayment: (
+    paymentAttemptId: string,
+    outcome: components['schemas']['FakePaymentCompletionInput']['outcome'],
+  ) =>
+    request<PaymentCallbackOutcome>(
+      `/fake-payment-attempts/${encodeURIComponent(paymentAttemptId)}/complete`,
+      { method: 'POST', body: JSON.stringify({ outcome }) },
+    ),
+  orders: () => request<OrderPage>('/me/orders'),
+  order: (orderNumber: string) => request<Order>(`/me/orders/${encodeURIComponent(orderNumber)}`),
 };
 
 export function commerceErrorMessage(error: unknown): string {
@@ -113,6 +152,17 @@ export function commerceErrorMessage(error: unknown): string {
     OTP_VERIFICATION_FAILED: 'کد واردشده نامعتبر یا منقضی است.',
     SESSION_REQUIRED: 'برای ادامه وارد حساب خود شوید.',
     ADDRESS_NOT_FOUND: 'این نشانی پیدا نشد یا متعلق به حساب دیگری است.',
+    CART_EMPTY: 'سبد خرید خالی است.',
+    CART_LINE_UNAVAILABLE: 'یکی از انتخاب‌ها دیگر در تعداد خواسته‌شده موجود نیست.',
+    CART_REQUIRES_REVIEW: 'یکی از انتخاب‌های سبد پیش از پرداخت نیازمند بازبینی است.',
+    CART_CHECKOUT_ALREADY_ACTIVE: 'برای این سبد یک پرداخت باز وجود دارد.',
+    SHIPPING_SETTINGS_UNAVAILABLE: 'روش‌های ارسال هنوز برای فروشگاه تنظیم نشده‌اند.',
+    SHIPPING_METHOD_UNAVAILABLE: 'روش ارسال انتخاب‌شده در دسترس نیست.',
+    LOCAL_COURIER_OUTSIDE_TEHRAN: 'پیک محلی فقط برای شهر تهران قابل انتخاب است.',
+    CHECKOUT_EXPIRED: 'مهلت این پرداخت تمام شده است. از سبد خرید دوباره شروع کنید.',
+    CHECKOUT_NOT_PAYABLE: 'این درخواست پرداخت دیگر قابل استفاده نیست.',
+    PAYMENT_CALLBACK_UNVERIFIED: 'اصالت پاسخ پرداخت تأیید نشد.',
+    PAYMENT_TRANSACTION_MISMATCH: 'شناسهٔ تراکنش با پرداخت قطعی‌شده هم‌خوان نیست.',
   };
   return messages[error.code] ?? 'انجام درخواست ممکن نشد. دوباره تلاش کنید.';
 }

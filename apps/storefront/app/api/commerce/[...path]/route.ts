@@ -12,6 +12,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     'content-type',
     'cookie',
     'if-match',
+    'idempotency-key',
     'x-correlation-id',
     'x-csrf-token',
   ]) {

@@ -59,6 +59,59 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
     const customerCarts =
       customer === null ? [] : await prisma.cart.findMany({ where: { customerId: customer.id } });
     const ids = [...new Set([...cartIds, ...customerCarts.map((cart) => cart.id)])];
+    const checkouts = await prisma.checkoutSession.findMany({
+      where: { cartId: { in: ids } },
+      select: { id: true },
+    });
+    const checkoutIds = checkouts.map((checkout) => checkout.id);
+    const attempts = await prisma.paymentAttempt.findMany({
+      where: { checkoutSessionId: { in: checkoutIds } },
+      select: { id: true },
+    });
+    const attemptIds = attempts.map((attempt) => attempt.id);
+    const orders = await prisma.order.findMany({
+      where: { checkoutSessionId: { in: checkoutIds } },
+      select: { id: true },
+    });
+    const orderIds = orders.map((order) => order.id);
+    const reservations = await prisma.inventoryReservation.findMany({
+      where: { checkoutSessionId: { in: checkoutIds } },
+      select: { id: true },
+    });
+    const reservationIds = reservations.map((reservation) => reservation.id);
+    await prisma.paymentCallbackReceipt.deleteMany({
+      where: { paymentAttemptId: { in: attemptIds } },
+    });
+    await prisma.paymentReconciliation.deleteMany({
+      where: { checkoutSessionId: { in: checkoutIds } },
+    });
+    await prisma.databaseJob.deleteMany({
+      where: {
+        OR: [
+          ...checkoutIds.map((id) => ({ idempotencyKey: `expire-checkout:${id}` })),
+          ...attemptIds.flatMap((id) => [
+            { idempotencyKey: `recover-payment:${id}` },
+            { idempotencyKey: `reconcile:fake:fake-txn-${id}` },
+          ]),
+        ],
+      },
+    });
+    await prisma.inventoryMovement.deleteMany({
+      where: {
+        OR: [{ reservationId: { in: reservationIds } }, { orderId: { in: orderIds } }],
+      },
+    });
+    await prisma.businessEvent.deleteMany({
+      where: { entityId: { in: [...checkoutIds, ...attemptIds, ...orderIds] } },
+    });
+    await prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+    await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
+    await prisma.paymentAttempt.deleteMany({ where: { id: { in: attemptIds } } });
+    await prisma.inventoryReservation.deleteMany({
+      where: { checkoutSessionId: { in: checkoutIds } },
+    });
+    await prisma.checkoutLine.deleteMany({ where: { checkoutSessionId: { in: checkoutIds } } });
+    await prisma.checkoutSession.deleteMany({ where: { id: { in: checkoutIds } } });
     await prisma.cartMergeReceipt.deleteMany({
       where: { OR: [{ guestCartId: { in: ids } }, { customerCartId: { in: ids } }] },
     });
@@ -71,6 +124,32 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
       await prisma.customer.delete({ where: { id: customer.id } });
     }
     await prisma.otpChallenge.deleteMany({ where: { mobile } });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function readE2EPaymentEvidence(mobile: string, skuId: string) {
+  const prisma = guardedClient();
+  try {
+    const customer = await prisma.customer.findUniqueOrThrow({ where: { mobile } });
+    const [orders, reconciliations, callbacks, inventory] = await Promise.all([
+      prisma.order.count({ where: { customerId: customer.id } }),
+      prisma.paymentReconciliation.count({
+        where: { checkoutSession: { customerId: customer.id } },
+      }),
+      prisma.paymentCallbackReceipt.count({
+        where: { paymentAttempt: { checkoutSession: { customerId: customer.id } } },
+      }),
+      prisma.inventory.findUniqueOrThrow({ where: { skuId } }),
+    ]);
+    return {
+      orders,
+      reconciliations,
+      callbacks,
+      physicalQuantity: inventory.physicalQuantity,
+      reservedQuantity: inventory.reservedQuantity,
+    };
   } finally {
     await prisma.$disconnect();
   }

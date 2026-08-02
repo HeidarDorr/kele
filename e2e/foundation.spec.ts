@@ -6,6 +6,7 @@ import {
   addE2EOutfitReviewLine,
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
+  readE2EPaymentEvidence,
   setE2EInventory,
 } from '../apps/api/test/support/customer-e2e.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
@@ -17,6 +18,7 @@ const evidenceDirectory = resolve(
     : 'output/playwright/milestone-2',
 );
 const milestoneThreeEvidence = resolve('output/playwright/milestone-3');
+const milestoneFourEvidence = resolve('output/playwright/milestone-4');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
@@ -41,6 +43,37 @@ async function completeOtp(page: Page, mobile: string, code = '111111'): Promise
   await page.getByRole('textbox', { name: 'کد یک‌بارمصرف', exact: true }).fill(code);
   await page.getByRole('button', { name: 'تأیید و ورود' }).click();
   await expect(page).toHaveURL(/\/account$/);
+}
+
+async function prepareCheckoutCustomer(
+  page: Page,
+  mobile: string,
+  cartIds: string[],
+): Promise<void> {
+  await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+  await page.getByRole('button', { name: /۵ سال KELE-LINEN-BEIGE-5Y/ }).click();
+  await page.getByRole('button', { name: 'افزودن به سبد' }).click();
+  cartIds.push(await cartIdFromPage(page));
+  await page.keyboard.press('Escape');
+  await page.goto(`${e2eUrls.storefront}/sign-in`);
+  await completeOtp(page, mobile);
+  await page.getByLabel('نام گیرنده').fill('مشتری پرداخت کِلِه');
+  await page.getByLabel('موبایل گیرنده').fill(mobile);
+  await page.getByLabel('استان').fill('تهران');
+  await page.getByLabel('شهر').fill('تهران');
+  await page.getByLabel('نشانی کامل').fill('خیابان ولیعصر، کوچهٔ پرداخت، پلاک ۲۴');
+  await page.getByLabel('کد پستی').fill('1234567890');
+  await page.getByLabel('نشانی پیش‌فرض باشد').check();
+  await page.getByRole('button', { name: 'ذخیره نشانی' }).click();
+  await expect(page.getByRole('status')).toHaveText('نشانی ذخیره شد.');
+  await page.goto(`${e2eUrls.storefront}/cart`);
+  await expect(page.getByRole('link', { name: 'ادامه و انتخاب ارسال' })).toBeVisible();
+  await page.getByRole('link', { name: 'ادامه و انتخاب ارسال' }).click();
+  await expect(page).toHaveURL(/\/checkout$/);
+  await expect(page.getByRole('heading', { name: 'ارسال و پرداخت' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /پست ایران/ })).toBeEnabled();
+  await expect(page.getByRole('radio', { name: /تیپاکس/ })).toBeEnabled();
+  await expect(page.getByRole('radio', { name: /پیک محلی تهران/ })).toBeEnabled();
 }
 
 async function captureEvidence(
@@ -672,5 +705,116 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
   } finally {
     await setE2EInventory(skuId, 4);
     await cleanupE2ECustomer(mobile, cartIds);
+  }
+});
+
+test('checkout covers pending, failed, cancelled and exactly-once paid outcomes in the browser', async ({
+  browser,
+}) => {
+  await mkdir(milestoneFourEvidence, { recursive: true });
+  const mobile = '+989121234569';
+  const skuId = '20000000-0000-4000-8000-000000000041';
+  const cartIds: string[] = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  try {
+    await setE2EInventory(skuId, 4);
+    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await page.getByRole('radio', { name: /پیک محلی تهران/ }).check();
+
+    for (const viewport of [
+      { name: 'mobile', width: 390, height: 844 },
+      { name: 'tablet', width: 768, height: 1024 },
+      { name: 'desktop', width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
+        true,
+      );
+      await captureEvidence(page, resolve(milestoneFourEvidence, `checkout-${viewport.name}.png`));
+    }
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.getByRole('button', { name: 'رزرو موجودی و ورود به پرداخت' }).click();
+    await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
+    const fakeUrl = page.url();
+    await expect(page.getByRole('heading', { name: 'شبیه‌ساز درگاه پرداخت' })).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'fake-gateway-laptop.png'));
+
+    await page.getByRole('button', { name: 'در انتظار تأیید' }).click();
+    await expect(page).toHaveURL(/\/payment\/result\?attempt=/);
+    await expect(
+      page.getByRole('heading', { name: 'نتیجهٔ پرداخت هنوز نهایی نیست' }),
+    ).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-pending.png'));
+
+    await page.goto(fakeUrl);
+    await page.getByRole('button', { name: 'پرداخت ناموفق' }).click();
+    await expect(page.getByRole('heading', { name: 'پرداخت ناموفق بود' })).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-failed.png'));
+
+    await page.goto(fakeUrl);
+    await page.getByRole('button', { name: 'انصراف مشتری' }).click();
+    await expect(page.getByRole('heading', { name: 'از پرداخت منصرف شدید' })).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-cancelled.png'));
+
+    await page.goto(fakeUrl);
+    await page.getByRole('button', { name: 'پرداخت موفق' }).click();
+    await expect(page.getByRole('heading', { name: 'سفارش شما ثبت شد' })).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-paid.png'));
+    await page.getByRole('link', { name: 'مشاهدهٔ سفارش' }).click();
+    await expect(page.getByRole('heading', { name: 'جزئیات سفارش' })).toBeVisible();
+    await expect(page.getByText('پیک محلی تهران')).toBeVisible();
+    await expect(page.locator('.order-items > li')).toHaveCount(1);
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'paid-order-desktop.png'));
+
+    await expect
+      .poll(() => readE2EPaymentEvidence(mobile, skuId))
+      .toEqual({
+        orders: 1,
+        reconciliations: 0,
+        callbacks: 4,
+        physicalQuantity: 3,
+        reservedQuantity: 0,
+      });
+  } finally {
+    await context.close();
+    await cleanupE2ECustomer(mobile, cartIds);
+    await setE2EInventory(skuId, 4);
+  }
+});
+
+test('tampered amount is shown as reconciliation and never creates an Order', async ({
+  browser,
+}) => {
+  await mkdir(milestoneFourEvidence, { recursive: true });
+  const mobile = '+989121234570';
+  const skuId = '20000000-0000-4000-8000-000000000041';
+  const cartIds: string[] = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  try {
+    await setE2EInventory(skuId, 4);
+    await prepareCheckoutCustomer(page, mobile, cartIds);
+    await page.getByRole('button', { name: 'رزرو موجودی و ورود به پرداخت' }).click();
+    await expect(page).toHaveURL(/\/payment\/fake\?attempt=/);
+    await page.getByText('آزمون امنیتی مبلغ').click();
+    await page.getByRole('button', { name: 'ارسال مبلغ دست‌کاری‌شده' }).click();
+    await expect(page.getByRole('heading', { name: 'پرداخت در حال تطبیق است' })).toBeVisible();
+    await expect(page.getByText(/هیچ سفارش یا کسر موجودی تکراری انجام نشده است/)).toBeVisible();
+    await captureEvidence(page, resolve(milestoneFourEvidence, 'payment-reconciliation.png'));
+    await expect
+      .poll(() => readE2EPaymentEvidence(mobile, skuId))
+      .toEqual({
+        orders: 0,
+        reconciliations: 1,
+        callbacks: 1,
+        physicalQuantity: 4,
+        reservedQuantity: 1,
+      });
+  } finally {
+    await context.close();
+    await cleanupE2ECustomer(mobile, cartIds);
+    await setE2EInventory(skuId, 4);
   }
 });

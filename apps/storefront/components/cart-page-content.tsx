@@ -65,9 +65,14 @@ export function CartPageContent() {
                 ادامه خرید تا رفع انتخاب‌های ناموجود یا نیازمند بررسی مسدود است.
               </div>
             ) : (
-              <div className="cart-ready" role="status">
-                همه انتخاب‌های سبد در وضعیت فعلی قابل تأمین‌اند.
-              </div>
+              <>
+                <div className="cart-ready" role="status">
+                  همه انتخاب‌های سبد در وضعیت فعلی قابل تأمین‌اند.
+                </div>
+                <Link className="button-primary cart-checkout-link" href="/checkout">
+                  ادامه و انتخاب ارسال
+                </Link>
+              </>
             )}
             <Link className="button-secondary" href="/account">
               مدیریت حساب مشتری
