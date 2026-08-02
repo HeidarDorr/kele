@@ -14,6 +14,10 @@ export const environmentSchema = z
     STORAGE_ACCESS_KEY: z.string().min(1),
     STORAGE_SECRET_KEY: z.string().min(1),
     PAYMENT_PROVIDER: z.literal('fake'),
+    FAKE_PAYMENT_SIGNING_SECRET: z
+      .string()
+      .min(32)
+      .default('development-fake-payment-signing-secret-0001'),
     SMS_PROVIDER: z.literal('fake'),
     FAKE_SMS_OTP_CODE: z
       .string()

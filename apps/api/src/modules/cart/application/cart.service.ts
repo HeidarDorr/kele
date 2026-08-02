@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { formatIrrAsToman } from '@kele/design-system/money';
 import type { UnitOfWork } from '../../../shared/unit-of-work.js';
 import { ApplicationError } from '../../../shared/application-error.js';
@@ -9,6 +10,7 @@ import { planDeterministicMerge } from '../domain/cart-merge.js';
 import type { CartLineInput, CartLineRecord, CartRecord, CartView } from '../domain/cart.types.js';
 import type { CartRepository } from './cart.repository.js';
 import type { OutfitCartReader, OutfitCartSelection } from './outfit-cart.contract.js';
+import type { CartCheckoutLifecycle } from './cart-checkout-lifecycle.contract.js';
 
 export class CartService {
   constructor(
@@ -16,6 +18,7 @@ export class CartService {
     private readonly catalog: CartCatalogReader,
     private readonly outfits: OutfitCartReader,
     private readonly unitOfWork: UnitOfWork,
+    private readonly checkoutLifecycle?: CartCheckoutLifecycle,
   ) {}
 
   async createAnonymousCart(): Promise<CartView> {
@@ -32,6 +35,7 @@ export class CartService {
 
   addLine(cartId: string, expectedVersion: number, input: CartLineInput): Promise<CartView> {
     return this.unitOfWork.run(async () => {
+      await this.cancelCheckoutForMutation(cartId);
       if (input.kind === 'product') {
         const product = await this.requireProduct(input.skuId);
         return this.toView(
@@ -52,6 +56,7 @@ export class CartService {
     quantity: number,
   ): Promise<CartView> {
     return this.unitOfWork.run(async () => {
+      await this.cancelCheckoutForMutation(cartId);
       const cart = await this.repository.getActiveCart(cartId);
       const line = cart.lines.find((candidate) => candidate.id === lineId);
       if (line === undefined) {
@@ -72,11 +77,17 @@ export class CartService {
   }
 
   removeLine(cartId: string, lineId: string, expectedVersion: number): Promise<void> {
-    return this.unitOfWork.run(() => this.repository.removeLine(cartId, lineId, expectedVersion));
+    return this.unitOfWork.run(async () => {
+      await this.cancelCheckoutForMutation(cartId);
+      await this.repository.removeLine(cartId, lineId, expectedVersion);
+    });
   }
 
   clear(cartId: string, expectedVersion: number): Promise<void> {
-    return this.unitOfWork.run(() => this.repository.clear(cartId, expectedVersion));
+    return this.unitOfWork.run(async () => {
+      await this.cancelCheckoutForMutation(cartId);
+      await this.repository.clear(cartId, expectedVersion);
+    });
   }
 
   mergeGuestCart(
@@ -219,5 +230,9 @@ export class CartService {
       );
     }
     return outfit;
+  }
+
+  private async cancelCheckoutForMutation(cartId: string): Promise<void> {
+    await this.checkoutLifecycle?.cancelOpenCheckoutForCart(cartId, randomUUID());
   }
 }

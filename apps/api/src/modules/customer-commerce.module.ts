@@ -14,6 +14,10 @@ import { CART_REPOSITORY, type CartRepository } from './cart/application/cart.re
 import { PrismaCartRepository } from './cart/infrastructure/prisma-cart.repository.js';
 import { CartService } from './cart/application/cart.service.js';
 import {
+  CART_CHECKOUT_LIFECYCLE,
+  type CartCheckoutLifecycle,
+} from './cart/application/cart-checkout-lifecycle.contract.js';
+import {
   MilestoneThreeOutfitCartReader,
   OUTFIT_CART_READER,
   type OutfitCartReader,
@@ -36,11 +40,59 @@ import {
   CustomerController,
   IdentityController,
 } from './identity/presentation/identity.controller.js';
+import {
+  CHECKOUT_CART_PORT,
+  type CheckoutCartPort,
+} from './cart/application/checkout-cart.contract.js';
+import { PrismaCheckoutCartAdapter } from './cart/infrastructure/prisma-checkout-cart.adapter.js';
+import {
+  CHECKOUT_CUSTOMER_PORT,
+  type CheckoutCustomerPort,
+} from './identity/application/checkout-customer.contract.js';
+import { PrismaCheckoutCustomerAdapter } from './identity/infrastructure/prisma-checkout-customer.adapter.js';
+import {
+  CHECKOUT_CATALOG_PORT,
+  type CheckoutCatalogPort,
+} from './catalog/application/checkout-catalog.contract.js';
+import {
+  CHECKOUT_REPOSITORY,
+  type CheckoutRepository,
+} from './checkout/application/checkout.repository.js';
+import { PrismaCheckoutRepository } from './checkout/infrastructure/prisma-checkout.repository.js';
+import { CheckoutService } from './checkout/application/checkout.service.js';
+import { PaymentService } from './checkout/application/payment.service.js';
+import { CheckoutJobService } from './checkout/application/checkout-job.service.js';
+import { CheckoutJobScheduler } from './checkout/infrastructure/checkout-job.scheduler.js';
+import type {
+  FakePaymentSimulator,
+  PaymentGateway,
+} from './foundation/application/payment-gateway.port.js';
+import {
+  FAKE_PAYMENT_SIMULATOR,
+  PAYMENT_GATEWAY,
+} from './foundation/application/provider.tokens.js';
+import {
+  AdminShippingController,
+  CheckoutController,
+  CustomerOrderController,
+  ShippingController,
+} from './checkout/presentation/checkout.controller.js';
+import { AdminSessionGuard } from './catalog/presentation/admin-session.guard.js';
+import { OrderService } from './checkout/application/order.service.js';
 
 @Module({
   imports: [FoundationModule, CatalogModule],
-  controllers: [IdentityController, CustomerController, CartController],
+  controllers: [
+    IdentityController,
+    CustomerController,
+    CartController,
+    ShippingController,
+    CheckoutController,
+    AdminShippingController,
+    CustomerOrderController,
+  ],
   providers: [
+    AdminSessionGuard,
     CustomerSessionGuard,
     CustomerCsrfGuard,
     CartAccessResolver,
@@ -53,14 +105,40 @@ import {
       inject: [PrismaTransactionContext],
     },
     {
+      provide: CHECKOUT_CART_PORT,
+      useFactory: (transactions: PrismaTransactionContext): CheckoutCartPort =>
+        new PrismaCheckoutCartAdapter(transactions),
+      inject: [PrismaTransactionContext],
+    },
+    {
+      provide: CHECKOUT_CUSTOMER_PORT,
+      useFactory: (transactions: PrismaTransactionContext): CheckoutCustomerPort =>
+        new PrismaCheckoutCustomerAdapter(transactions),
+      inject: [PrismaTransactionContext],
+    },
+    {
+      provide: CHECKOUT_REPOSITORY,
+      useFactory: (transactions: PrismaTransactionContext): CheckoutRepository =>
+        new PrismaCheckoutRepository(transactions),
+      inject: [PrismaTransactionContext],
+    },
+    {
       provide: CartService,
       useFactory: (
         repository: CartRepository,
         catalog: CartCatalogReader,
         outfits: OutfitCartReader,
         unitOfWork: UnitOfWork,
-      ): CartService => new CartService(repository, catalog, outfits, unitOfWork),
-      inject: [CART_REPOSITORY, CART_CATALOG_READER, OUTFIT_CART_READER, UNIT_OF_WORK],
+        checkoutLifecycle: CartCheckoutLifecycle,
+      ): CartService =>
+        new CartService(repository, catalog, outfits, unitOfWork, checkoutLifecycle),
+      inject: [
+        CART_REPOSITORY,
+        CART_CATALOG_READER,
+        OUTFIT_CART_READER,
+        UNIT_OF_WORK,
+        CART_CHECKOUT_LIFECYCLE,
+      ],
     },
     {
       provide: IDENTITY_REPOSITORY,
@@ -101,6 +179,67 @@ import {
           environment.NODE_ENV === 'production',
         ),
     },
+    {
+      provide: CheckoutService,
+      useFactory: (
+        repository: CheckoutRepository,
+        carts: CheckoutCartPort,
+        customers: CheckoutCustomerPort,
+        catalog: CheckoutCatalogPort,
+        unitOfWork: UnitOfWork,
+      ): CheckoutService => new CheckoutService(repository, carts, customers, catalog, unitOfWork),
+      inject: [
+        CHECKOUT_REPOSITORY,
+        CHECKOUT_CART_PORT,
+        CHECKOUT_CUSTOMER_PORT,
+        CHECKOUT_CATALOG_PORT,
+        UNIT_OF_WORK,
+      ],
+    },
+    {
+      provide: PaymentService,
+      useFactory: (
+        repository: CheckoutRepository,
+        gateway: PaymentGateway,
+        simulator: FakePaymentSimulator,
+        catalog: CheckoutCatalogPort,
+        carts: CheckoutCartPort,
+        unitOfWork: UnitOfWork,
+      ): PaymentService =>
+        new PaymentService(
+          repository,
+          gateway,
+          simulator,
+          catalog,
+          carts,
+          unitOfWork,
+          environment.STOREFRONT_ORIGIN,
+        ),
+      inject: [
+        CHECKOUT_REPOSITORY,
+        PAYMENT_GATEWAY,
+        FAKE_PAYMENT_SIMULATOR,
+        CHECKOUT_CATALOG_PORT,
+        CHECKOUT_CART_PORT,
+        UNIT_OF_WORK,
+      ],
+    },
+    { provide: CART_CHECKOUT_LIFECYCLE, useExisting: CheckoutService },
+    {
+      provide: CheckoutJobService,
+      useFactory: (
+        repository: CheckoutRepository,
+        checkouts: CheckoutService,
+        unitOfWork: UnitOfWork,
+      ): CheckoutJobService => new CheckoutJobService(repository, checkouts, unitOfWork),
+      inject: [CHECKOUT_REPOSITORY, CheckoutService, UNIT_OF_WORK],
+    },
+    {
+      provide: OrderService,
+      useFactory: (repository: CheckoutRepository): OrderService => new OrderService(repository),
+      inject: [CHECKOUT_REPOSITORY],
+    },
+    CheckoutJobScheduler,
   ],
 })
 export class CustomerCommerceModule {}

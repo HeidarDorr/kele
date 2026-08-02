@@ -5,6 +5,7 @@ import {
   type Prisma,
   PrismaClient,
   PublicationStatus,
+  ShippingMethodCode,
 } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
 
@@ -82,6 +83,18 @@ const skuInputs = [
 ] as const;
 
 async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promise<void> {
+  await transaction.paymentCallbackReceipt.deleteMany();
+  await transaction.paymentReconciliation.deleteMany();
+  await transaction.databaseJob.deleteMany();
+  await transaction.inventoryMovement.deleteMany();
+  await transaction.orderItem.deleteMany();
+  await transaction.order.deleteMany();
+  await transaction.paymentAttempt.deleteMany();
+  await transaction.inventoryReservation.deleteMany();
+  await transaction.checkoutLine.deleteMany();
+  await transaction.checkoutSession.deleteMany();
+  await transaction.shippingMethodVersion.deleteMany();
+  await transaction.shippingPolicyVersion.deleteMany();
   await transaction.cartMergeReceipt.deleteMany();
   await transaction.cartNotice.deleteMany();
   await transaction.cartLine.deleteMany();
@@ -92,7 +105,6 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
   await transaction.customer.deleteMany();
   await transaction.commandReceipt.deleteMany();
   await transaction.businessEvent.deleteMany();
-  await transaction.inventoryMovement.deleteMany();
   await transaction.currentSkuPrice.deleteMany();
   await transaction.priceRecord.deleteMany();
   await transaction.inventory.deleteMany();
@@ -103,6 +115,53 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
   await transaction.product.deleteMany();
   await transaction.category.deleteMany();
   await transaction.mediaAsset.deleteMany();
+}
+
+async function reconcileE2EShipping(transaction: Prisma.TransactionClient): Promise<void> {
+  const policyId = '40000000-0000-4000-8000-000000000001';
+  await transaction.shippingPolicyVersion.upsert({
+    where: { version: 1 },
+    create: {
+      id: policyId,
+      version: 1,
+      freeShippingThresholdRial: 40_000_000,
+      eligibilityBasis: 'order_subtotal',
+      effectiveAt: publishedAt,
+      actorId: 'e2e-seed',
+      reason: 'Synthetic Milestone 4 browser fixture; not approved production pricing',
+    },
+    update: {},
+  });
+  const methods = [
+    {
+      id: '40000000-0000-4000-8000-000000000011',
+      code: ShippingMethodCode.IRAN_POST,
+      localizedName: 'پست ایران',
+      fixedPriceRial: 2_500_000,
+      displayOrder: 0,
+    },
+    {
+      id: '40000000-0000-4000-8000-000000000012',
+      code: ShippingMethodCode.TIPAX,
+      localizedName: 'تیپاکس',
+      fixedPriceRial: 3_500_000,
+      displayOrder: 1,
+    },
+    {
+      id: '40000000-0000-4000-8000-000000000013',
+      code: ShippingMethodCode.TEHRAN_LOCAL_COURIER,
+      localizedName: 'پیک محلی تهران',
+      fixedPriceRial: 1_800_000,
+      displayOrder: 2,
+    },
+  ] as const;
+  for (const method of methods) {
+    await transaction.shippingMethodVersion.upsert({
+      where: { policyId_code: { policyId, code: method.code } },
+      create: { ...method, policyId, enabled: true },
+      update: {},
+    });
+  }
 }
 
 async function reconcileSeed(transaction: Prisma.TransactionClient): Promise<void> {
@@ -343,6 +402,7 @@ async function seed(): Promise<void> {
   await prisma.$transaction(async (transaction) => {
     if (resetForE2E) await resetCatalogForE2E(transaction);
     await reconcileSeed(transaction);
+    if (resetForE2E) await reconcileE2EShipping(transaction);
   });
   if (resetForE2E) await assertExactE2EFixture();
 }

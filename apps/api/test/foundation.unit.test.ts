@@ -4,12 +4,21 @@ import { FakeSmsAdapter } from '../src/modules/foundation/infrastructure/fake-sm
 
 describe('foundation adapters', () => {
   it('[PAY-001][PAY-003] creates deterministic fake payment references without credentials', async () => {
-    const adapter = new FakePaymentAdapter();
+    const adapter = new FakePaymentAdapter('test-fake-payment-signing-secret-000001');
     await expect(
-      adapter.createIntent({ amountIrr: 1000, correlationId: 'test-id' }),
+      adapter.createIntent({
+        applicationReference: 'checkout-key',
+        paymentAttemptId: '00000000-0000-4000-8000-000000000001',
+        amountRial: 1000,
+        currency: 'IRR',
+        returnBaseUrl: 'http://localhost:3000',
+        correlationId: 'test-id',
+      }),
     ).resolves.toEqual({
-      reference: 'fake-pay-test-id',
-      amountIrr: 1000,
+      provider: 'fake',
+      reference: 'fake-checkout-key',
+      redirectUrl:
+        'http://localhost:3000/payment/fake?attempt=00000000-0000-4000-8000-000000000001',
       status: 'created',
     });
   });

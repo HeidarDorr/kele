@@ -1,15 +1,25 @@
 import { Module } from '@nestjs/common';
 import { FakePaymentAdapter } from './infrastructure/fake-payment.adapter.js';
 import { FakeSmsAdapter } from './infrastructure/fake-sms.adapter.js';
-import { PAYMENT_GATEWAY, SMS_GATEWAY } from './application/provider.tokens.js';
+import {
+  FAKE_PAYMENT_SIMULATOR,
+  PAYMENT_GATEWAY,
+  SMS_GATEWAY,
+} from './application/provider.tokens.js';
+import { environment } from '../../platform/config/environment.js';
 
 @Module({
   providers: [
-    FakePaymentAdapter,
+    {
+      provide: FakePaymentAdapter,
+      useFactory: (): FakePaymentAdapter =>
+        new FakePaymentAdapter(environment.FAKE_PAYMENT_SIGNING_SECRET),
+    },
     FakeSmsAdapter,
     { provide: PAYMENT_GATEWAY, useExisting: FakePaymentAdapter },
+    { provide: FAKE_PAYMENT_SIMULATOR, useExisting: FakePaymentAdapter },
     { provide: SMS_GATEWAY, useExisting: FakeSmsAdapter },
   ],
-  exports: [PAYMENT_GATEWAY, SMS_GATEWAY],
+  exports: [PAYMENT_GATEWAY, FAKE_PAYMENT_SIMULATOR, SMS_GATEWAY],
 })
 export class FoundationModule {}
