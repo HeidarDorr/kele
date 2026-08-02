@@ -178,6 +178,46 @@ Status: Required baseline
   E2E directly; no OTP inspection endpoint, plaintext database field or OTP
   log was added. Production startup continues to reject Fake SMS.
 
+## Milestone 4 checkout and payment enforcement
+
+- Checkout accepts only an authenticated customer's owned Cart and Address,
+  validates CSRF and idempotency, locks Cart/inventory deterministically, and
+  recalculates publication, current price, availability, shipping and payable
+  amount on the server. The browser cannot submit subtotal, shipping price,
+  threshold result, currency or payment amount.
+- Tehran eligibility is derived from normalized server-owned province/city
+  fields. Shipping settings are permission-protected effective versions; quote
+  and Order retain the exact method, fixed charge, threshold decision and
+  policy version.
+- The Fake Payment Adapter signs a canonical bounded payload with HMAC-SHA256.
+  Verification uses constant-time comparison, rejects callbacks older than
+  five minutes or more than 30 seconds in the future, and occurs before any
+  commercial transaction. `FAKE_PAYMENT_SIGNING_SECRET` is local/test-only;
+  production continues to reject the fake provider.
+- Provider event identity plus payload hash makes exact callback replay stable;
+  provider transaction uniqueness on PaymentAttempt/Order prevents cross-attempt
+  duplication. A paid attempt is monotonic: a late failure returns the existing
+  paid result and a different transaction ID cannot rewrite it.
+- Verified amount mismatch, success after expiry, and incomplete hold enter
+  reconciliation with zero Orders and zero physical deduction. Unsupported
+  currency is rejected at the callback DTO boundary before commercial
+  processing. Forged, stale, unmatched and event-collision callbacks roll back
+  without a receipt or commercial mutation; raw callback payloads and
+  signatures are not logged.
+- Database locks, conditional version updates, uniqueness and quantity checks
+  enforce exactly-once conversion and non-negative inventory. Cart mutation
+  cancels an open checkout and releases its reservations in the same command
+  transaction. Scheduler delay cannot authorize an expired payment.
+- Database jobs are claimed with `FOR UPDATE SKIP LOCKED`, a 60-second lease,
+  bounded attempts and backoff. Handler replay is safe and job correctness is
+  secondary to synchronous Checkout/payment state validation.
+
+Automated abuse evidence includes concurrent last-unit checkout, exact parallel
+callback replay, out-of-order status, forged HMAC, stale timestamp, changed
+transaction, amount tampering, incomplete reservation, expiry/payment race and
+job lease/retry. No real card data, provider credential, refund surface or
+production callback protocol was introduced.
+
 ## Pre-production security exit
 
 - Provider-specific payment threat review completed.

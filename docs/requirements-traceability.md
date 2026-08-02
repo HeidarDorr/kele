@@ -19,10 +19,10 @@ manual UX acceptance.
 | PUB-009 | Outfit | outfit publish | `outfit-publication.domain` | Pending |
 | PUB-010–PUB-011 | Catalog, cache/freshness | publish/edit operations | `publication-side-effects.integration` | Pending |
 | PRC-001–PRC-005 | Pricing | price commands and reads | `pricing.domain` | Pending |
-| PRC-006–PRC-007 | Cart, Checkout, Pricing | checkout quote | `checkout-repricing.integration` | Pending |
+| PRC-006–PRC-007 | Cart, Checkout, Pricing | checkout quote | `checkout.integration.test.ts` repricing/snapshot test | Implemented for Product checkout; Outfit checkout remains M5 |
 | PRC-008–PRC-010 | Pricing Admin, Audit | bulk price API/history | `pricing-admin.integration` | Pending |
-| INV-001–INV-002 | Inventory | inventory reads | `inventory.domain` | Pending |
-| INV-003–INV-007 | Cart, Checkout, Inventory, Order | checkout/payment | `reservation-lifecycle.integration` | Pending |
+| INV-001–INV-002 | Inventory | inventory reads | catalog/cart plus M4 concurrency integration tests | Implemented for SKU projection and Product checkout |
+| INV-003–INV-007 | Cart, Checkout, Inventory, Order | checkout/payment | `checkout.integration.test.ts` reservation, expiry and paid-conversion tests | Implemented for Product lines; atomic Outfit expansion remains M5 |
 | INV-008–INV-014 | Inventory Admin, Audit | inventory action API | `inventory-actions.integration` | Pending |
 | INV-015–INV-017 | Outfit, Inventory | outfit availability | `outfit-availability.domain` | Pending |
 | OTF-001–OTF-005 | Outfit | admin outfit API | `outfit-composition.domain` | Pending |
@@ -32,10 +32,10 @@ manual UX acceptance.
 | CUS-006–CUS-007 | Notification, Inventory | stock subscription API | `stock-notification.integration` | Pending |
 | CUS-008–CUS-010 | Customer, Identity, Order | profile/session API | `customer-history.integration` | Pending |
 | CRT-001–CRT-003 | Cart | cart API | `cart.domain` | Pending |
-| CRT-004–CRT-009 | Cart, Checkout, Inventory | checkout/cart commands | `cart-checkout.integration` | Pending |
+| CRT-004–CRT-009 | Cart, Checkout, Inventory | checkout/cart commands | M4 Checkout integration plus cart-mutation cancellation lifecycle | Implemented for Product lines; Outfit validation remains M5 |
 | CRT-010 | Cart | cart persistence | `cart-persistence.integration` | Pending |
-| ORD-001 | Checkout, Payment, Order | payment callback | `paid-order-creation.integration` | Clarified ADR-0004 |
-| ORD-002–ORD-004 | Order, Inventory | order creation/read | `order-snapshot.integration` | Pending |
+| ORD-001 | Checkout, Payment, Order | payment callback | parallel replay, failure and browser paid-path evidence | Implemented per ADR-0004 for M4 Product path |
+| ORD-002–ORD-004 | Order, Inventory | order creation/read | immutable snapshot, exact-once and stock-consumption integration tests | Implemented for Product Orders |
 | ORD-005–ORD-010 | Order Admin, Return, Audit | order transitions | `order-state-machine.domain` | Pending |
 | ORD-011–ORD-017 | Shipping, Order | delivery/fulfillment API | `shipping-fulfillment.integration` | Pending |
 | REV-001–REV-003 | Review, Identity | review submit API | `review-ownership.integration` | Pending |
@@ -51,10 +51,10 @@ manual UX acceptance.
 | EVT-005–EVT-009 | Inventory, Pricing, Catalog, Order | module commands | module integration suites | Pending |
 | EVT-010–EVT-012 | Reporting, Audit | event query API | `business-event-query.integration` | Pending |
 | LOC-001–LOC-002 | Storefront, Admin, Content | HTML/routing/content contracts | `rtl-localization.e2e` | Pending |
-| PAY-001–PAY-003 | Payment, Configuration | payment adapter/callback | `payment-adapter.contract` | Production provider deferred |
+| PAY-001–PAY-003 | Payment, Configuration | payment adapter/callback | foundation unit, callback abuse integration and Playwright fake-provider paths | PAY-001–PAY-002 implemented; PAY-003 production provider deferred |
 | SMS-001–SMS-002 | Identity, Notification | SMS adapter | `sms-adapter.contract` | Production provider deferred |
-| SHP-001–SHP-005 | Shipping, Settings, Checkout | shipping options/settings API | `shipping-quote.integration` | Pending |
-| SHP-006–SHP-008 | Shipping, Checkout, Order, Audit | shipping quote/settings/snapshot | `free-shipping-boundary.integration`, `shipping-versioning.integration` | Pending |
+| SHP-001–SHP-005 | Shipping, Settings, Checkout | shipping options/settings API | shipping unit boundaries, owned Checkout API and Playwright method selection | Implemented |
+| SHP-006–SHP-008 | Shipping, Checkout, Order, Audit | shipping quote/settings/snapshot | threshold unit test and immutable Checkout/Order integration evidence | Implemented for Product subtotal; Outfit contribution remains M5 |
 | RTE-001–RTE-005 | Return, Order, Inventory | customer/admin return API | `return-eligibility.integration` | Pending |
 | OTF-014–OTF-018 | Outfit, Inventory | outfit revision/publish/reserve | `outfit-revision.integration` | Pending |
 | CRT-011–CRT-012 | Cart, Identity, Checkout | cart/session API | `guest-cart.e2e` | Pending |
@@ -85,12 +85,24 @@ merged into the business specification:
 | Requirement IDs | Implementation | Automated evidence | State |
 |---|---|---|---|
 | CUS-001–CUS-005, CUS-008, CUS-010 | OTP identity, opaque server sessions, owned profile and address application services/controllers | `identity-cart.unit.test.ts`, `identity-cart.integration.test.ts`, `e2e/foundation.spec.ts` | Implemented; CUS-006–CUS-007 and CUS-009 remain later scope |
-| CRT-001–CRT-004, CRT-007–CRT-008, CRT-010–CRT-012 | Anonymous/authenticated cart, signed cart cookie, current price/inventory reads, optimistic concurrency and persistence | `cart-merge.ts`, `cart.service.ts`, `identity-cart.integration.test.ts`, browser cart journey | Implemented for Product lines and Outfit-aware representation; checkout/reservation clauses remain M4 |
+| CRT-001–CRT-004, CRT-007–CRT-008, CRT-010–CRT-012 | Anonymous/authenticated cart, signed cart cookie, current price/inventory reads, optimistic concurrency and persistence | `cart-merge.ts`, `cart.service.ts`, `identity-cart.integration.test.ts`, browser cart journey | M3 Cart implemented; M4 now completes Product checkout while Outfit checkout remains M5 |
 | CRT-013–CRT-018 | Transactional deterministic merge, Product SKU combination, inventory cap/notice, unavailable retention, immutable Outfit Revision review blocker and replay receipt | merge unit/integration/concurrency tests and Playwright merge journey | Implemented |
-| INV-001–INV-004, INV-017 | Current `physical - reserved` availability contract, no cart reservation, non-negative constraints and Outfit review fallback | catalog/cart integration tests, Prisma checks, unavailable browser state | Implemented for the M3 cart boundary; reservation lifecycle remains M4/M5 |
-| PRC-001, PRC-006–PRC-007, PRC-011–PRC-012 | Current append-only SKU price projection, integer IRR total and centralized exact toman presentation | cart integration tests, money unit tests, browser captures | Implemented for informational cart repricing; authoritative checkout quote remains M4 |
+| INV-001–INV-004, INV-017 | Current `physical - reserved` availability contract, no cart reservation, non-negative constraints and Outfit review fallback | catalog/cart integration tests, Prisma checks, unavailable browser state | M3 Cart boundary implemented; M4 adds Product reservation and M5 retains Outfit expansion |
+| PRC-001, PRC-006–PRC-007, PRC-011–PRC-012 | Current append-only SKU price projection, integer IRR total and centralized exact toman presentation | cart integration tests, money unit tests, browser captures | Cart display plus M4 authoritative Product checkout quote implemented |
 | SMS-001–SMS-002 | Replaceable Fake SMS adapter, explicit fixed local/test code, verifier-only persistence and production fake-provider guard | foundation/config unit tests plus OTP integration abuse tests | Fake test/local boundary implemented; production random-code provider deferred |
 | LOC-001–LOC-002, HRD-001–HRD-002 | Persian RTL customer/cart surfaces, bidi isolation, inward dependencies and centralized money | architecture gate, type-check, Playwright viewport/keyboard evidence | Implemented for M3 surfaces |
+
+## Milestone 4 checkout, payment and Order evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+| --- | --- | --- | --- |
+| PRC-006–PRC-007, PRC-011–PRC-012, CRT-004–CRT-008 | server-owned current SKU repricing, integer IRR quote, Cart/address ownership and Checkout blockers | `checkout.integration.test.ts`, generated OpenAPI contract, complete browser journey | Implemented for Product carts |
+| CRT-009–CRT-010, INV-003–INV-007 | cart mutation cancellation, 30-minute atomic reservation, physical/reserved projection, leased expiry and paid consumption | PostgreSQL expiry, job retry, last-unit and callback race tests | Implemented for Product lines; Outfit component expansion remains M5 |
+| ORD-001–ORD-004, ORD-018, HRD-005 | verified-success-only commercial creation, unique immutable number and item/price/address/shipping/payment snapshots | parallel exact replay, out-of-order callback, post-payment mutation and owned Order browser assertions | Implemented for Product Orders |
+| PAY-001–PAY-002, HRD-003 | provider-neutral fake adapter, canonical HMAC/freshness verification, provider-event replay fingerprint and transaction monotonicity | foundation/shipping-payment units, adversarial integration and all fake browser outcomes | Implemented locally/test; real provider remains PAY-003/OQ-002-PROD |
+| SHP-001–SHP-008 | versioned Post/Tipax/Tehran Local Courier fixed prices, Tehran normalization, threshold equality and immutable policy snapshots | unit boundary tests, Checkout integration and responsive Playwright selection | Implemented for Product subtotal; Outfit contribution remains M5 |
+| HRD-001–HRD-002, HRD-006 | application ports, Prisma-only infrastructure, checked money, DB-backed SKIP LOCKED lease/retry | architecture/type gates and PostgreSQL worker race evidence | Implemented |
+| LOC-001–LOC-002 | Persian RTL Checkout, fake gateway, result/reconciliation/expiry and Order pages with logical CSS | 12 production-build Playwright tests and `output/playwright/milestone-4/` | Implemented for M4 surfaces |
 
 ## Milestone 1 implementation evidence
 

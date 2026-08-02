@@ -1,6 +1,6 @@
 # Milestone 4 implementation and acceptance plan
 
-Status: In progress
+Status: Complete and verified locally on 2026-08-02
 
 Branch: `feat/m04-checkout-payment-order`
 
@@ -108,10 +108,12 @@ outside this milestone.
    provider verification. Browser status, amount, currency, checkout ID, and
    transaction reference are untrusted inputs. The verified provider amount
    and `IRR` currency must exactly match the CheckoutSession snapshot.
-2. Provider plus provider transaction ID is globally unique. A callback receipt
-   records a payload fingerprint and result. Exact replay returns the prior
-   commercial result; a conflicting reuse is rejected and records a security
-   event without changing Checkout, inventory, or Order state.
+2. Provider transaction identity is globally unique on PaymentAttempt and
+   Order. Each provider event ID is unique on callback receipts, allowing the
+   same transaction to progress from pending to success. A receipt records a
+   payload fingerprint and result. Exact event replay returns the prior
+   commercial result; reuse with a different payload is rejected without
+   changing Checkout, inventory, or Order state.
 3. In one database transaction, verified success with active reservations
    creates at most one commercial Order, assigns one immutable Order Number,
    writes immutable item/price/address/shipping/payment snapshots, consumes all
@@ -184,7 +186,7 @@ outside this milestone.
 | Threshold just below/equal/above                                  | Only equality/above receives zero shipping against Product/Outfit subtotal |
 | Shipping settings change after quote                              | Existing Checkout/Order retains prior version and policy values            |
 | Payment start replay or key/payload collision                     | Same attempt returned or `409`; provider request is not duplicated         |
-| Forged signature/unverified callback                              | Safe rejection plus redacted security event; no commercial mutation        |
+| Forged signature/unverified callback                              | Safe correlated rejection without payload logging or commercial mutation   |
 | Client/provider amount or currency mismatch                       | Rejected/reconciliation security result; no Order or stock deduction       |
 | Duplicate identical success callback                              | Existing paid result and Order Number returned; one deduction/event set    |
 | Same transaction reference with different payload                 | Conflict/security event; original result remains authoritative             |
@@ -235,8 +237,31 @@ and export/reconcile commercial facts before any approved data change.
 
 ## Verification evidence
 
-Pending implementation. Final evidence must record commands and counts for all
-quality gates, migration application, concurrency/idempotency assertions,
-Playwright production-build outcomes and screenshots, independent Playwright
-CLI inspection, rule coverage, security/operational changes, residual risks,
-and rollback notes.
+The implemented Product-cart vertical path is carried by commits `93f9f28`,
+`be5c0e1`, `ff92dd4`, `e7d6650`, `b128125`, and `e96f350`. Outfit expansion
+remains Milestone 5 and is not claimed by this evidence. Commit `389e680`
+contains the final strict-lint/type-boundary cleanup discovered by the complete
+quality-gate run.
+
+| Evidence                   | Result                                                                                                                                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit suite                 | 35 tests passed, including threshold equality, Tehran normalization, HMAC forgery and stale callback rejection                                                                                                                                    |
+| PostgreSQL integration     | 18 tests passed; 6 M4 cases exercise last-unit locking, parallel callback replay, expiry/success race, amount tampering, incomplete holds and job lease/retry                                                                                     |
+| Architecture and contracts | inward-dependency scan, OpenAPI lint/generation and generated contract tests passed                                                                                                                                                               |
+| Production builds          | API, storefront and administration builds passed; new Checkout, payment-result and owned-Order routes were emitted                                                                                                                                |
+| Browser acceptance         | 12 Playwright tests passed against guarded `kele_e2e`; M4 covers pending, failed, cancelled, paid, reconciliation and expired outcomes                                                                                                            |
+| Independent Playwright CLI | fresh `/checkout` snapshot showed the owned-session sign-in boundary, Persian semantic text, `lang="fa-IR"`, `dir="rtl"` and no horizontal overflow; its only console error was the expected `401` address request for an unauthenticated browser |
+| Visual evidence            | `output/playwright/milestone-4/` contains Checkout at 390×844, 768×1024 and 1440×900 plus gateway/result/Order captures                                                                                                                           |
+| Commercial assertions      | exact replay produced one Order, physical `4 -> 3`, reserved `1 -> 0`; tampered amount produced zero Orders and one reconciliation case                                                                                                           |
+
+The adversarial PostgreSQL suite asserts no negative inventory and no duplicate
+Order in every commercial race. Final branch handoff also runs formatting,
+lint, type-check, unit, integration, architecture, OpenAPI/contract, production
+build, E2E, dependency-audit, secret-scan and migration-status gates.
+
+Residual risk is explicit: no real provider or provider-side inquiry API is in
+scope, so production remains fail-closed and reconciliation cases require
+operational observation until the approved provider is implemented. There is
+no destructive rollback for accepted commercial facts; roll back application
+images, keep callback ingestion and reconciliation available, and preserve all
+M4 tables.

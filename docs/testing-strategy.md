@@ -164,3 +164,32 @@ The traceability document is updated when a rule becomes implemented.
   and exact Outfit Revision `requires_review` states. Evidence is written to
   `output/playwright/milestone-3/`; an independent Playwright CLI snapshot
   verifies the mobile semantic tree and document direction.
+
+## Milestone 4 harnesses
+
+- Shipping/payment unit tests cover free-shipping equality and below-threshold
+  boundaries, disabled methods, Persian/Arabic Tehran normalization, local
+  courier rejection, valid HMAC, forged payload and stale timestamp.
+- `checkout.integration.test.ts` runs on PostgreSQL and exercises the real
+  transaction context, repositories and database constraints. It asserts one
+  winner for concurrent last-unit holds; one immutable Order for parallel exact
+  callback replay; monotonic paid state under late failure; rejection of a new
+  transaction; server repricing and snapshot immutability; expiry/success race;
+  amount mismatch; incomplete reservation; one-time expiry; job lease/retry;
+  and unavailable/review Cart blocking.
+- Every concurrency test queries Order count, reconciliation count, callback
+  receipts, reservation state and physical/reserved inventory. HTTP success by
+  itself is insufficient evidence.
+- Production-build Playwright uses the guarded `kele_e2e` database for the full
+  Product Cart → OTP → Address → Checkout → Fake Provider → Result → Order
+  journey. The same attempt is driven through pending, failed, cancelled and
+  success to verify out-of-order handling; isolated journeys cover tampered
+  amount/reconciliation and expired reservation.
+- Browser assertions also read PostgreSQL evidence: success creates one Order,
+  four receipts, physical `4 -> 3` and reserved `1 -> 0`; amount tampering
+  creates zero Orders, one reconciliation and no physical deduction; expiry
+  creates no Order and releases the hold.
+- M4 visual evidence is stored in `output/playwright/milestone-4/`, including
+  Checkout at 390×844, 768×1024 and 1440×900, fake gateway, every payment
+  outcome and the immutable paid Order. Reduced-motion and horizontal-overflow
+  acceptance remain mandatory.

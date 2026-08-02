@@ -124,6 +124,42 @@ later migration or a seed record needed for diagnosis.
   client-synchronization signals. They do not justify adding Redis, a queue or
   a second state store without an accepted ADR and measured need.
 
+## Milestone 4 checkout/payment operations
+
+- Apply migrations in order:
+  `20260802073130_milestone_4_checkout_payment_order`,
+  `20260802074000_callback_event_identity`, then
+  `20260802074500_reservation_movement_invariants`. They add commercial tables,
+  provider event identity, the one-live-Checkout index and reservation movement
+  checks. They do not rewrite existing M3 customer/cart facts.
+- Local/test startup requires a 32+ character `FAKE_PAYMENT_SIGNING_SECRET`.
+  Never configure this fake adapter in production; production deployment stays
+  blocked by configuration validation and OQ-002-PROD until a provider-specific
+  ADR, verification flow, credentials and sandbox certification are approved.
+- The in-process scheduler polls every 15 seconds. Jobs lease for 60 seconds,
+  use `FOR UPDATE SKIP LOCKED`, permit at most eight attempts and back off from
+  one minute up to 15 minutes. Monitor pending jobs past `runAt`, expired leases,
+  exhausted attempts, reservation expiry lag and reconciliation age/count.
+- Alert on `PAYMENT_CALLBACK_UNVERIFIED`, stale/event-collision/transaction
+  mismatch rates, payment amount/currency reconciliation, active holds beyond
+  expiry, `reserved > physical` constraint failures, and any Checkout with more
+  than one Order (which should also be structurally impossible).
+- Recovery never declares success from local state. When a reconciliation case
+  exists, preserve its provider transaction and correlated Checkout/attempt,
+  prevent customer retry of that Cart while its claim is live, and resolve only
+  through the future approved provider inquiry/operations workflow. Do not edit
+  an Order or inventory projection manually to force agreement.
+- A code rollback keeps all M4 tables and the callback route available. Do not
+  reverse migrations after a Checkout, receipt, reconciliation or Order exists.
+  Roll back API/storefront images, continue accepting idempotent callbacks, and
+  reconcile payment/stock before any separately approved data operation.
+
+Smoke evidence for a release candidate must include one paid fake/sandbox path,
+one failed path, one amount mismatch, callback replay, expiry release and owned
+Order read. Production claims remain prohibited until the real provider replaces
+the fake adapter; synthetic E2E shipping prices are explicitly not customer
+pricing approval.
+
 ## Incident minimum
 
 1. Stabilize customer and business data.

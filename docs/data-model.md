@@ -187,6 +187,36 @@ CheckoutSession snapshots:
   decision and policy version.
 - Fulfillment state changes append timeline events.
 
+### Milestone 4 physical mapping
+
+- `ShippingPolicyVersion` and `ShippingMethodVersion` are append-only effective
+  settings. `CheckoutSession.shippingSettingsVersion` references the applied
+  policy version while the session and Order also retain the charged values.
+- `CheckoutSession` owns immutable `CheckoutLine` snapshots and
+  `InventoryReservation` rows. A partial unique index permits at most one
+  `active`, `payment_pending`, or `reconciliation` session per Cart.
+- `InventoryReservation` owns the reservation lifecycle; Inventory remains the
+  projection of physical and reserved quantities. Reservation/release movements
+  have zero physical delta and an exact reserved-quantity transition. Sale
+  movements have a non-zero physical delta equal to before/after stock.
+- `PaymentAttempt` owns the provider reference and globally unique provider
+  transaction identity. `PaymentCallbackReceipt` instead uses provider event
+  identity, so ordered status events for one transaction can be retained while
+  exact event replay remains unique and fingerprinted.
+- `Order` is unique by CheckoutSession, PaymentAttempt, Order Number, and
+  provider transaction. `OrderItem`, address, shipping, price, amount and
+  payment fields are snapshots and have no update command in Milestone 4.
+- `PaymentReconciliation` is unique by provider transaction and records a
+  verified provider fact that could not safely become an Order.
+- `DatabaseJob` uses a unique idempotency key, pending/leased/completed/failed
+  state, lease owner/expiry, attempt count, bounded maximum and safe error.
+
+The database checks non-negative money, positive quantities, valid 30-minute
+expiry ordering, `0 <= reserved <= physical`, and movement consistency. The
+callback command locks PaymentAttempt then Checkout, consumes reservation and
+stock, creates the immutable Order, completes its jobs and records business
+events in one transaction.
+
 ## Returns and refunds
 
 ReturnRequest records `requestedAt`, the Order delivery-confirmation timestamp,
