@@ -662,6 +662,8 @@ paths:
       operationId: listShippingOptions
       tags: [Shipping]
       summary: Quote eligible configured shipping methods for a cart and address.
+      security:
+        - SessionCookie: []
       parameters:
         - name: cartId
           in: query
@@ -686,6 +688,8 @@ paths:
                   $ref: '#/components/schemas/ShippingOption'
         '422':
           $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -694,8 +698,11 @@ paths:
       operationId: createCheckoutSession
       tags: [Checkout]
       summary: Reprice, validate and atomically reserve cart components.
+      security:
+        - SessionCookie: []
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -724,6 +731,8 @@ paths:
           $ref: '#/components/responses/Problem'
         '422':
           $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -731,6 +740,8 @@ paths:
     get:
       operationId: getCheckoutSession
       tags: [Checkout]
+      security:
+        - SessionCookie: []
       parameters:
         - $ref: '#/components/parameters/CheckoutSessionId'
       responses:
@@ -750,9 +761,12 @@ paths:
       operationId: createPaymentAttempt
       tags: [Checkout]
       summary: Start payment through the configured provider.
+      security:
+        - SessionCookie: []
       parameters:
         - $ref: '#/components/parameters/CheckoutSessionId'
         - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
       responses:
         '201':
           description: Payment attempt created.
@@ -760,6 +774,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentAttempt'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /payment-attempts/{paymentAttemptId}:
+    get:
+      operationId: getPaymentAttempt
+      tags: [Checkout]
+      summary: Read the current owned payment outcome without causing a payment effect.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PaymentAttemptId'
+      responses:
+        '200':
+          description: Current immutable or retryable payment result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAttempt'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /fake-payment-attempts/{paymentAttemptId}/complete:
+    post:
+      operationId: completeFakePaymentAttempt
+      tags: [Checkout]
+      summary: Simulate the configured Fake Payment provider in non-production environments.
+      description: Production startup rejects the Fake Payment Adapter, so this route can never serve production traffic.
+      security:
+        - SessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/PaymentAttemptId'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FakePaymentCompletionInput'
+      responses:
+        '200':
+          description: Fake provider callback processed through the normal verification boundary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCallbackOutcome'
+        '404':
+          $ref: '#/components/responses/Problem'
         '409':
           $ref: '#/components/responses/Problem'
         default:
@@ -777,29 +843,31 @@ paths:
           required: true
           schema:
             type: string
-            pattern: '^[a-z0-9-]{2,40}$'
+            enum: [fake]
+        - name: X-Payment-Signature
+          in: header
+          required: true
+          description: Provider-specific callback authenticator verified before commercial state changes.
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 256
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: true
+              $ref: '#/components/schemas/FakePaymentCallback'
       responses:
         '200':
           description: Verified callback processed idempotently.
           content:
             application/json:
               schema:
-                type: object
-                required: [status]
-                properties:
-                  status:
-                    type: string
-                    enum: [paid, failed, pending_reconciliation]
-                  orderNumber:
-                    type: [string, 'null']
+                $ref: '#/components/schemas/PaymentCallbackOutcome'
         '400':
+          $ref: '#/components/responses/Problem'
+        '409':
           $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
@@ -1349,6 +1417,13 @@ components:
       schema:
         type: string
         format: uuid
+    PaymentAttemptId:
+      name: paymentAttemptId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     ProductId:
       name: productId
       in: path
@@ -1859,8 +1934,10 @@ components:
         - name
         - eligible
         - quotedPrice
+        - fixedPrice
         - eligibilitySubtotal
         - freeShippingApplied
+        - freeShippingThreshold
         - settingsVersion
       properties:
         method:
@@ -1873,10 +1950,16 @@ components:
           type: [string, 'null']
         quotedPrice:
           $ref: '#/components/schemas/Money'
+        fixedPrice:
+          $ref: '#/components/schemas/Money'
         eligibilitySubtotal:
           $ref: '#/components/schemas/Money'
         freeShippingApplied:
           type: boolean
+        freeShippingThreshold:
+          anyOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
         settingsVersion:
           type: integer
           minimum: 1
@@ -1884,7 +1967,7 @@ components:
     ShippingSettingsInput:
       type: object
       additionalProperties: false
-      required: [methods, eligibilityBasis]
+      required: [methods, eligibilityBasis, reason]
       properties:
         eligibilityBasis:
           type: string
@@ -1910,6 +1993,10 @@ components:
           type: [integer, 'null']
           minimum: 0
           description: Compared with Order Subtotal.
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
 
     ShippingSettings:
       allOf:
@@ -2034,7 +2121,8 @@ components:
 
     CheckoutSession:
       type: object
-      required: [id, status, expiresAt, quote, shipping]
+      additionalProperties: false
+      required: [id, status, createdAt, expiresAt, lines, quote, address, shipping]
       properties:
         id:
           type: string
@@ -2045,8 +2133,17 @@ components:
         expiresAt:
           type: string
           format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CheckoutLineSnapshot'
         quote:
           type: object
+          additionalProperties: false
           required: [itemsTotal, shippingTotal, payableTotal]
           properties:
             itemsTotal:
@@ -2057,20 +2154,139 @@ components:
               $ref: '#/components/schemas/Money'
         shipping:
           $ref: '#/components/schemas/ShippingOption'
+        address:
+          $ref: '#/components/schemas/AddressSnapshot'
+        orderNumber:
+          type: [string, 'null']
 
-    PaymentAttempt:
+    CheckoutLineSnapshot:
       type: object
-      required: [id, status]
+      additionalProperties: false
+      required: [id, kind, title, selection, quantity, unitPrice, lineTotal]
       properties:
         id:
           type: string
           format: uuid
+        kind:
+          type: string
+          enum: [product, outfit]
+        title:
+          type: string
+        selection:
+          type: string
+        skuCode:
+          type: [string, 'null']
+        image:
+          anyOf:
+            - $ref: '#/components/schemas/Media'
+            - type: 'null'
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          $ref: '#/components/schemas/Money'
+        lineTotal:
+          $ref: '#/components/schemas/Money'
+
+    PaymentAttempt:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - checkoutSessionId
+        - provider
+        - status
+        - amount
+        - redirectUrl
+        - orderNumber
+        - reconciliationReason
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkoutSessionId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [fake]
         status:
           type: string
-          enum: [created, redirected, verified, failed, reconciliation]
+          enum: [created, redirected, verified, failed, cancelled, pending, reconciliation]
+        amount:
+          $ref: '#/components/schemas/Money'
         redirectUrl:
           type: [string, 'null']
           format: uri
+        orderNumber:
+          type: [string, 'null']
+        reconciliationReason:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    FakePaymentCompletionInput:
+      type: object
+      additionalProperties: false
+      required: [outcome]
+      properties:
+        outcome:
+          type: string
+          enum: [success, failed, cancelled, pending, tampered_amount]
+
+    FakePaymentCallback:
+      type: object
+      additionalProperties: false
+      required:
+        - providerReference
+        - providerTransactionId
+        - status
+        - amountRial
+        - currency
+        - issuedAt
+        - nonce
+      properties:
+        providerReference:
+          type: string
+          minLength: 1
+          maxLength: 120
+        providerTransactionId:
+          type: string
+          minLength: 1
+          maxLength: 120
+        status:
+          type: string
+          enum: [success, failed, cancelled, pending]
+        amountRial:
+          type: integer
+          format: int64
+          minimum: 1
+        currency:
+          type: string
+          const: IRR
+        issuedAt:
+          type: string
+          format: date-time
+        nonce:
+          type: string
+          minLength: 16
+          maxLength: 120
+
+    PaymentCallbackOutcome:
+      type: object
+      additionalProperties: false
+      required: [status, paymentAttemptId, orderNumber]
+      properties:
+        status:
+          type: string
+          enum: [paid, failed, cancelled, pending, reconciliation]
+        paymentAttemptId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: [string, 'null']
 
     OrderPage:
       type: object
@@ -2102,22 +2318,42 @@ components:
       allOf:
         - $ref: '#/components/schemas/OrderSummary'
         - type: object
-          required: [items, address, shipping]
+          additionalProperties: false
+          required: [paidAt, itemsSubtotal, shippingTotal, items, address, shipping, payment]
           properties:
+            paidAt:
+              type: string
+              format: date-time
+            itemsSubtotal:
+              $ref: '#/components/schemas/Money'
+            shippingTotal:
+              $ref: '#/components/schemas/Money'
             items:
               type: array
+              minItems: 1
               items:
                 type: object
-                required: [title, quantity, unitPrice]
+                additionalProperties: false
+                required: [id, kind, title, selection, skuCode, quantity, unitPrice, lineTotal]
                 properties:
+                  id:
+                    type: string
+                    format: uuid
+                  kind:
+                    type: string
+                    enum: [product, outfit]
                   title:
                     type: string
                   selection:
                     type: string
+                  skuCode:
+                    type: [string, 'null']
                   quantity:
                     type: integer
                     minimum: 1
                   unitPrice:
+                    $ref: '#/components/schemas/Money'
+                  lineTotal:
                     $ref: '#/components/schemas/Money'
             address:
               $ref: '#/components/schemas/AddressSnapshot'
@@ -2128,7 +2364,9 @@ components:
                 - method
                 - name
                 - chargedPrice
+                - fixedPrice
                 - freeShippingApplied
+                - freeShippingThreshold
                 - settingsVersion
               properties:
                 method:
@@ -2137,11 +2375,27 @@ components:
                   type: string
                 chargedPrice:
                   $ref: '#/components/schemas/Money'
+                fixedPrice:
+                  $ref: '#/components/schemas/Money'
                 freeShippingApplied:
                   type: boolean
+                freeShippingThreshold:
+                  anyOf:
+                    - $ref: '#/components/schemas/Money'
+                    - type: 'null'
                 settingsVersion:
                   type: integer
                   minimum: 1
+            payment:
+              type: object
+              additionalProperties: false
+              required: [provider, providerTransactionId]
+              properties:
+                provider:
+                  type: string
+                  enum: [fake]
+                providerTransactionId:
+                  type: string
 
     ReturnStatus:
       type: string

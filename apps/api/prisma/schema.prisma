@@ -41,6 +41,8 @@ enum MediaGroup {
 enum InventoryAction {
   PRODUCTION
   SALE
+  RESERVATION
+  RESERVATION_RELEASE
   CUSTOMER_RETURN
   MANUAL_CORRECTION
   DAMAGED_GOODS
@@ -79,6 +81,91 @@ enum CartNoticeCode {
   @@map("cart_notice_code")
 }
 
+enum ShippingMethodCode {
+  IRAN_POST
+  TIPAX
+  TEHRAN_LOCAL_COURIER
+
+  @@map("shipping_method_code")
+}
+
+enum CheckoutStatus {
+  ACTIVE
+  PAYMENT_PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  RECONCILIATION
+
+  @@map("checkout_status")
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+  EXPIRED
+
+  @@map("reservation_status")
+}
+
+enum PaymentAttemptStatus {
+  CREATED
+  REDIRECTED
+  VERIFIED
+  FAILED
+  CANCELLED
+  PENDING
+  RECONCILIATION
+
+  @@map("payment_attempt_status")
+}
+
+enum PaymentCallbackResult {
+  PAID
+  FAILED
+  CANCELLED
+  PENDING
+  RECONCILIATION
+
+  @@map("payment_callback_result")
+}
+
+enum OrderFulfillmentStatus {
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+
+  @@map("order_fulfillment_status")
+}
+
+enum PaymentReconciliationStatus {
+  OPEN
+  RESOLVED
+  FAILED
+
+  @@map("payment_reconciliation_status")
+}
+
+enum DatabaseJobType {
+  EXPIRE_CHECKOUT
+  RECOVER_PAYMENT
+
+  @@map("database_job_type")
+}
+
+enum DatabaseJobStatus {
+  PENDING
+  LEASED
+  COMPLETED
+  FAILED
+
+  @@map("database_job_status")
+}
+
 model Customer {
   id        String            @id @default(uuid()) @db.Uuid
   mobile    String            @unique @db.VarChar(15)
@@ -89,6 +176,8 @@ model Customer {
   addresses Address[]
   sessions  CustomerSession[]
   cart      Cart?
+  checkouts CheckoutSession[]
+  orders    Order[]
 
   @@map("customers")
 }
@@ -150,16 +239,19 @@ model Address {
 }
 
 model Cart {
-  id         String       @id @default(uuid()) @db.Uuid
-  customerId String?      @unique @map("customer_id") @db.Uuid
-  status     CartStatus   @default(ACTIVE)
-  version    Int          @default(0)
-  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  mergedAt   DateTime?    @map("merged_at") @db.Timestamptz(6)
-  customer   Customer?    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  id         String            @id @default(uuid()) @db.Uuid
+  customerId String?           @unique @map("customer_id") @db.Uuid
+  status     CartStatus        @default(ACTIVE)
+  version    Int               @default(0)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  mergedAt   DateTime?         @map("merged_at") @db.Timestamptz(6)
+  customer   Customer?         @relation(fields: [customerId], references: [id], onDelete: Restrict)
   lines      CartLine[]
   notices    CartNotice[]
+  checkouts  CheckoutSession[]
+  guestMergeReceipt    CartMergeReceipt?  @relation("GuestCartMerge")
+  customerMergeReceipts CartMergeReceipt[] @relation("CustomerCartMerge")
 
   @@index([status, updatedAt])
   @@map("carts")
@@ -210,6 +302,8 @@ model CartMergeReceipt {
   guestCartId    String   @unique @map("guest_cart_id") @db.Uuid
   customerCartId String   @map("customer_cart_id") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  guestCart      Cart     @relation("GuestCartMerge", fields: [guestCartId], references: [id], onDelete: Restrict)
+  customerCart   Cart     @relation("CustomerCartMerge", fields: [customerCartId], references: [id], onDelete: Restrict)
 
   @@index([customerCartId, createdAt])
   @@map("cart_merge_receipts")
@@ -320,20 +414,22 @@ model MediaAssignment {
 }
 
 model Sku {
-  id             String              @id @default(uuid()) @db.Uuid
-  colorVariantId String              @map("color_variant_id") @db.Uuid
-  code           String              @unique @db.VarChar(64)
-  normalizedSize String              @map("normalized_size") @db.VarChar(40)
-  displaySize    String              @map("display_size") @db.VarChar(40)
-  status         PublicationStatus   @default(DRAFT)
-  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  archivedAt     DateTime?           @map("archived_at") @db.Timestamptz(6)
-  colorVariant   ColorVariant        @relation(fields: [colorVariantId], references: [id], onDelete: Restrict)
+  id             String                 @id @default(uuid()) @db.Uuid
+  colorVariantId String                 @map("color_variant_id") @db.Uuid
+  code           String                 @unique @db.VarChar(64)
+  normalizedSize String                 @map("normalized_size") @db.VarChar(40)
+  displaySize    String                 @map("display_size") @db.VarChar(40)
+  status         PublicationStatus      @default(DRAFT)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt     DateTime?              @map("archived_at") @db.Timestamptz(6)
+  colorVariant   ColorVariant           @relation(fields: [colorVariantId], references: [id], onDelete: Restrict)
   priceRecords   PriceRecord[]
   currentPrice   CurrentSkuPrice?
   inventory      Inventory?
   movements      InventoryMovement[]
+  reservations   InventoryReservation[]
+  orderItems     OrderItem[]
 
   @@unique([colorVariantId, normalizedSize])
   @@index([colorVariantId, status])
@@ -381,22 +477,28 @@ model Inventory {
 }
 
 model InventoryMovement {
-  id                     String          @id @default(uuid()) @db.Uuid
-  skuId                  String          @map("sku_id") @db.Uuid
+  id                     String                @id @default(uuid()) @db.Uuid
+  skuId                  String                @map("sku_id") @db.Uuid
   action                 InventoryAction
-  quantityDelta          Int             @map("quantity_delta")
-  beforePhysicalQuantity Int             @map("before_physical_quantity")
-  afterPhysicalQuantity  Int             @map("after_physical_quantity")
-  beforeReservedQuantity Int             @map("before_reserved_quantity")
-  afterReservedQuantity  Int             @map("after_reserved_quantity")
-  actorId                String          @map("actor_id") @db.VarChar(120)
-  reason                 String          @db.VarChar(500)
-  correlationId          String          @map("correlation_id") @db.Uuid
-  idempotencyKey         String          @unique @map("idempotency_key") @db.VarChar(120)
-  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  sku                    Sku             @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  quantityDelta          Int                   @map("quantity_delta")
+  beforePhysicalQuantity Int                   @map("before_physical_quantity")
+  afterPhysicalQuantity  Int                   @map("after_physical_quantity")
+  beforeReservedQuantity Int                   @map("before_reserved_quantity")
+  afterReservedQuantity  Int                   @map("after_reserved_quantity")
+  actorId                String                @map("actor_id") @db.VarChar(120)
+  reason                 String                @db.VarChar(500)
+  correlationId          String                @map("correlation_id") @db.Uuid
+  idempotencyKey         String                @unique @map("idempotency_key") @db.VarChar(120)
+  reservationId          String?               @map("reservation_id") @db.Uuid
+  orderId                String?               @map("order_id") @db.Uuid
+  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  sku                    Sku                   @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  reservation            InventoryReservation? @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  order                  Order?                @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
   @@index([skuId, createdAt])
+  @@index([reservationId])
+  @@index([orderId])
   @@map("inventory_movements")
 }
 
@@ -424,4 +526,271 @@ model CommandReceipt {
 
   @@index([commandType, entityId])
   @@map("command_receipts")
+}
+
+model ShippingPolicyVersion {
+  id                        String                  @id @default(uuid()) @db.Uuid
+  version                   Int                     @unique
+  freeShippingThresholdRial BigInt?                 @map("free_shipping_threshold_rial")
+  eligibilityBasis          String                  @default("order_subtotal") @map("eligibility_basis") @db.VarChar(40)
+  effectiveAt               DateTime                @map("effective_at") @db.Timestamptz(6)
+  actorId                   String                  @map("actor_id") @db.VarChar(120)
+  reason                    String                  @db.VarChar(500)
+  createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  methods                   ShippingMethodVersion[]
+  checkouts                 CheckoutSession[]
+
+  @@index([effectiveAt])
+  @@map("shipping_policy_versions")
+}
+
+model ShippingMethodVersion {
+  id             String                @id @default(uuid()) @db.Uuid
+  policyId       String                @map("policy_id") @db.Uuid
+  code           ShippingMethodCode
+  localizedName  String                @map("localized_name") @db.VarChar(120)
+  fixedPriceRial BigInt                @map("fixed_price_rial")
+  enabled        Boolean               @default(true)
+  displayOrder   Int                   @map("display_order")
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  policy         ShippingPolicyVersion @relation(fields: [policyId], references: [id], onDelete: Restrict)
+
+  @@unique([policyId, code])
+  @@index([policyId, displayOrder])
+  @@map("shipping_method_versions")
+}
+
+model CheckoutSession {
+  id                        String                  @id @default(uuid()) @db.Uuid
+  customerId                String                  @map("customer_id") @db.Uuid
+  cartId                    String                  @map("cart_id") @db.Uuid
+  cartVersion               Int                     @map("cart_version")
+  status                    CheckoutStatus          @default(ACTIVE)
+  idempotencyKey            String                  @map("idempotency_key") @db.VarChar(120)
+  requestHash               String                  @map("request_hash") @db.Char(64)
+  currency                  String                  @default("IRR") @db.Char(3)
+  itemsSubtotalRial         BigInt                  @map("items_subtotal_rial")
+  shippingTotalRial         BigInt                  @map("shipping_total_rial")
+  payableTotalRial          BigInt                  @map("payable_total_rial")
+  addressSnapshot           Json                    @map("address_snapshot")
+  shippingMethodCode        ShippingMethodCode      @map("shipping_method_code")
+  shippingMethodName        String                  @map("shipping_method_name") @db.VarChar(120)
+  shippingFixedPriceRial    BigInt                  @map("shipping_fixed_price_rial")
+  freeShippingThresholdRial BigInt?                 @map("free_shipping_threshold_rial")
+  freeShippingApplied       Boolean                 @map("free_shipping_applied")
+  shippingSettingsVersion   Int                     @map("shipping_settings_version")
+  expiresAt                 DateTime                @map("expires_at") @db.Timestamptz(6)
+  paidAt                    DateTime?               @map("paid_at") @db.Timestamptz(6)
+  expiredAt                 DateTime?               @map("expired_at") @db.Timestamptz(6)
+  cancelledAt               DateTime?               @map("cancelled_at") @db.Timestamptz(6)
+  createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  customer                  Customer                @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cart                      Cart                    @relation(fields: [cartId], references: [id], onDelete: Restrict)
+  shippingPolicy            ShippingPolicyVersion   @relation(fields: [shippingSettingsVersion], references: [version], onDelete: Restrict)
+  lines                     CheckoutLine[]
+  reservations              InventoryReservation[]
+  paymentAttempts           PaymentAttempt[]
+  order                     Order?
+  reconciliationCases       PaymentReconciliation[]
+
+  @@unique([customerId, idempotencyKey])
+  @@index([customerId, createdAt])
+  @@index([cartId, status])
+  @@index([status, expiresAt])
+  @@map("checkout_sessions")
+}
+
+model CheckoutLine {
+  id                String                 @id @default(uuid()) @db.Uuid
+  checkoutSessionId String                 @map("checkout_session_id") @db.Uuid
+  cartLineId        String                 @map("cart_line_id") @db.Uuid
+  kind              CartLineKind
+  skuId             String?                @map("sku_id") @db.Uuid
+  outfitRevisionId  String?                @map("outfit_revision_id") @db.Uuid
+  outfitSize        String?                @map("outfit_size") @db.VarChar(40)
+  titleSnapshot     String                 @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot String                 @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot   String?                @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot     Json?                  @map("image_snapshot")
+  quantity          Int
+  unitPriceRial     BigInt                 @map("unit_price_rial")
+  lineTotalRial     BigInt                 @map("line_total_rial")
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  checkoutSession   CheckoutSession        @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  reservations      InventoryReservation[]
+
+  @@unique([checkoutSessionId, cartLineId])
+  @@index([skuId])
+  @@map("checkout_lines")
+}
+
+model InventoryReservation {
+  id                String              @id @default(uuid()) @db.Uuid
+  checkoutSessionId String              @map("checkout_session_id") @db.Uuid
+  checkoutLineId    String              @map("checkout_line_id") @db.Uuid
+  skuId             String              @map("sku_id") @db.Uuid
+  quantity          Int
+  status            ReservationStatus   @default(ACTIVE)
+  expiresAt         DateTime            @map("expires_at") @db.Timestamptz(6)
+  consumedAt        DateTime?           @map("consumed_at") @db.Timestamptz(6)
+  releasedAt        DateTime?           @map("released_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  checkoutSession   CheckoutSession     @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  checkoutLine      CheckoutLine        @relation(fields: [checkoutLineId], references: [id], onDelete: Restrict)
+  sku               Sku                 @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  movements         InventoryMovement[]
+
+  @@unique([checkoutLineId, skuId])
+  @@index([checkoutSessionId, status])
+  @@index([status, expiresAt])
+  @@index([skuId, status])
+  @@map("inventory_reservations")
+}
+
+model PaymentAttempt {
+  id                    String                   @id @default(uuid()) @db.Uuid
+  checkoutSessionId     String                   @map("checkout_session_id") @db.Uuid
+  provider              String                   @db.VarChar(40)
+  providerReference     String                   @map("provider_reference") @db.VarChar(120)
+  providerTransactionId String?                  @map("provider_transaction_id") @db.VarChar(120)
+  status                PaymentAttemptStatus     @default(CREATED)
+  amountRial            BigInt                   @map("amount_rial")
+  currency              String                   @default("IRR") @db.Char(3)
+  redirectUrl           String?                  @map("redirect_url") @db.VarChar(1000)
+  idempotencyKey        String                   @map("idempotency_key") @db.VarChar(120)
+  requestHash           String                   @map("request_hash") @db.Char(64)
+  failureCode           String?                  @map("failure_code") @db.VarChar(120)
+  verifiedAt            DateTime?                @map("verified_at") @db.Timestamptz(6)
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  checkoutSession       CheckoutSession          @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  callbacks             PaymentCallbackReceipt[]
+  order                 Order?
+  reconciliationCases   PaymentReconciliation[]
+
+  @@unique([checkoutSessionId, idempotencyKey])
+  @@unique([provider, providerReference])
+  @@unique([provider, providerTransactionId])
+  @@index([checkoutSessionId, createdAt])
+  @@index([status, updatedAt])
+  @@map("payment_attempts")
+}
+
+model PaymentCallbackReceipt {
+  id                    String                @id @default(uuid()) @db.Uuid
+  paymentAttemptId      String                @map("payment_attempt_id") @db.Uuid
+  provider              String                @db.VarChar(40)
+  providerTransactionId String                @map("provider_transaction_id") @db.VarChar(120)
+  payloadHash           String                @map("payload_hash") @db.Char(64)
+  result                PaymentCallbackResult
+  orderId               String?               @map("order_id") @db.Uuid
+  receivedAt            DateTime              @default(now()) @map("received_at") @db.Timestamptz(6)
+  paymentAttempt        PaymentAttempt        @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+  order                 Order?                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerTransactionId])
+  @@index([paymentAttemptId, receivedAt])
+  @@map("payment_callback_receipts")
+}
+
+model Order {
+  id                        String                   @id @default(uuid()) @db.Uuid
+  orderNumber               String                   @unique @map("order_number") @db.VarChar(40)
+  customerId                String                   @map("customer_id") @db.Uuid
+  checkoutSessionId         String                   @unique @map("checkout_session_id") @db.Uuid
+  paymentAttemptId          String                   @unique @map("payment_attempt_id") @db.Uuid
+  fulfillmentStatus         OrderFulfillmentStatus   @default(PAID) @map("fulfillment_status")
+  currency                  String                   @default("IRR") @db.Char(3)
+  itemsSubtotalRial         BigInt                   @map("items_subtotal_rial")
+  shippingTotalRial         BigInt                   @map("shipping_total_rial")
+  paidTotalRial             BigInt                   @map("paid_total_rial")
+  addressSnapshot           Json                     @map("address_snapshot")
+  shippingMethodCode        ShippingMethodCode       @map("shipping_method_code")
+  shippingMethodName        String                   @map("shipping_method_name") @db.VarChar(120)
+  shippingFixedPriceRial    BigInt                   @map("shipping_fixed_price_rial")
+  freeShippingThresholdRial BigInt?                  @map("free_shipping_threshold_rial")
+  freeShippingApplied       Boolean                  @map("free_shipping_applied")
+  shippingSettingsVersion   Int                      @map("shipping_settings_version")
+  paymentProvider           String                   @map("payment_provider") @db.VarChar(40)
+  providerTransactionId     String                   @map("provider_transaction_id") @db.VarChar(120)
+  paidAt                    DateTime                 @map("paid_at") @db.Timestamptz(6)
+  createdAt                 DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  customer                  Customer                 @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  checkoutSession           CheckoutSession          @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  paymentAttempt            PaymentAttempt           @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+  items                     OrderItem[]
+  callbacks                 PaymentCallbackReceipt[]
+  movements                 InventoryMovement[]
+
+  @@unique([paymentProvider, providerTransactionId])
+  @@index([customerId, createdAt])
+  @@index([fulfillmentStatus, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String       @id @default(uuid()) @db.Uuid
+  orderId           String       @map("order_id") @db.Uuid
+  kind              CartLineKind
+  skuId             String?      @map("sku_id") @db.Uuid
+  outfitRevisionId  String?      @map("outfit_revision_id") @db.Uuid
+  outfitSize        String?      @map("outfit_size") @db.VarChar(40)
+  titleSnapshot     String       @map("title_snapshot") @db.VarChar(180)
+  selectionSnapshot String       @map("selection_snapshot") @db.VarChar(180)
+  skuCodeSnapshot   String?      @map("sku_code_snapshot") @db.VarChar(64)
+  imageSnapshot     Json?        @map("image_snapshot")
+  quantity          Int
+  unitPriceRial     BigInt       @map("unit_price_rial")
+  lineTotalRial     BigInt       @map("line_total_rial")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  order             Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sku               Sku?         @relation(fields: [skuId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+  @@index([skuId])
+  @@map("order_items")
+}
+
+model PaymentReconciliation {
+  id                    String                      @id @default(uuid()) @db.Uuid
+  checkoutSessionId     String                      @map("checkout_session_id") @db.Uuid
+  paymentAttemptId      String                      @map("payment_attempt_id") @db.Uuid
+  provider              String                      @db.VarChar(40)
+  providerTransactionId String                      @map("provider_transaction_id") @db.VarChar(120)
+  verifiedAmountRial    BigInt                      @map("verified_amount_rial")
+  currency              String                      @db.Char(3)
+  reason                String                      @db.VarChar(120)
+  status                PaymentReconciliationStatus @default(OPEN)
+  resolutionNote        String?                     @map("resolution_note") @db.VarChar(1000)
+  createdAt             DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  checkoutSession       CheckoutSession             @relation(fields: [checkoutSessionId], references: [id], onDelete: Restrict)
+  paymentAttempt        PaymentAttempt              @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerTransactionId])
+  @@index([status, createdAt])
+  @@map("payment_reconciliations")
+}
+
+model DatabaseJob {
+  id             String            @id @default(uuid()) @db.Uuid
+  type           DatabaseJobType
+  idempotencyKey String            @unique @map("idempotency_key") @db.VarChar(160)
+  payload        Json
+  status         DatabaseJobStatus @default(PENDING)
+  runAt          DateTime          @map("run_at") @db.Timestamptz(6)
+  attemptCount   Int               @default(0) @map("attempt_count")
+  maxAttempts    Int               @default(8) @map("max_attempts")
+  leaseOwner     String?           @map("lease_owner") @db.VarChar(120)
+  leaseExpiresAt DateTime?         @map("lease_expires_at") @db.Timestamptz(6)
+  lastErrorCode  String?           @map("last_error_code") @db.VarChar(120)
+  lastError      String?           @map("last_error") @db.VarChar(1000)
+  completedAt    DateTime?         @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, runAt])
+  @@index([leaseExpiresAt])
+  @@map("database_jobs")
 }

@@ -405,6 +405,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/payment-attempts/{paymentAttemptId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read the current owned payment outcome without causing a payment effect. */
+    get: operations['getPaymentAttempt'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/fake-payment-attempts/{paymentAttemptId}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Simulate the configured Fake Payment provider in non-production environments.
+     * @description Production startup rejects the Fake Payment Adapter, so this route can never serve production traffic.
+     */
+    post: operations['completeFakePaymentAttempt'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/payment-callbacks/{provider}': {
     parameters: {
       query?: never;
@@ -861,8 +898,10 @@ export interface components {
       eligible: boolean;
       ineligibilityCode?: string | null;
       quotedPrice: components['schemas']['Money'];
+      fixedPrice: components['schemas']['Money'];
       eligibilitySubtotal: components['schemas']['Money'];
       freeShippingApplied: boolean;
+      freeShippingThreshold: components['schemas']['Money'] | null;
       settingsVersion: number;
     };
     ShippingSettingsInput: {
@@ -878,6 +917,7 @@ export interface components {
       }[];
       /** @description Compared with Order Subtotal. */
       freeShippingThresholdRial?: number | null;
+      reason: string;
     };
     ShippingSettings: components['schemas']['ShippingSettingsInput'] & {
       version: number;
@@ -945,20 +985,78 @@ export interface components {
       status: 'active' | 'payment_pending' | 'paid' | 'expired' | 'cancelled' | 'reconciliation';
       /** Format: date-time */
       expiresAt: string;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['CheckoutLineSnapshot'][];
       quote: {
         itemsTotal: components['schemas']['Money'];
         shippingTotal: components['schemas']['Money'];
         payableTotal: components['schemas']['Money'];
       };
       shipping: components['schemas']['ShippingOption'];
+      address: components['schemas']['AddressSnapshot'];
+      orderNumber?: string | null;
+    };
+    CheckoutLineSnapshot: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: 'product' | 'outfit';
+      title: string;
+      selection: string;
+      skuCode?: string | null;
+      image?: components['schemas']['Media'] | null;
+      quantity: number;
+      unitPrice: components['schemas']['Money'];
+      lineTotal: components['schemas']['Money'];
     };
     PaymentAttempt: {
       /** Format: uuid */
       id: string;
+      /** Format: uuid */
+      checkoutSessionId: string;
       /** @enum {string} */
-      status: 'created' | 'redirected' | 'verified' | 'failed' | 'reconciliation';
+      provider: 'fake';
+      /** @enum {string} */
+      status:
+        | 'created'
+        | 'redirected'
+        | 'verified'
+        | 'failed'
+        | 'cancelled'
+        | 'pending'
+        | 'reconciliation';
+      amount: components['schemas']['Money'];
       /** Format: uri */
-      redirectUrl?: string | null;
+      redirectUrl: string | null;
+      orderNumber: string | null;
+      reconciliationReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    FakePaymentCompletionInput: {
+      /** @enum {string} */
+      outcome: 'success' | 'failed' | 'cancelled' | 'pending' | 'tampered_amount';
+    };
+    FakePaymentCallback: {
+      providerReference: string;
+      providerTransactionId: string;
+      /** @enum {string} */
+      status: 'success' | 'failed' | 'cancelled' | 'pending';
+      /** Format: int64 */
+      amountRial: number;
+      /** @constant */
+      currency: 'IRR';
+      /** Format: date-time */
+      issuedAt: string;
+      nonce: string;
+    };
+    PaymentCallbackOutcome: {
+      /** @enum {string} */
+      status: 'paid' | 'failed' | 'cancelled' | 'pending' | 'reconciliation';
+      /** Format: uuid */
+      paymentAttemptId: string;
+      orderNumber: string | null;
     };
     OrderPage: {
       items: components['schemas']['OrderSummary'][];
@@ -973,19 +1071,36 @@ export interface components {
       paidTotal: components['schemas']['Money'];
     };
     Order: components['schemas']['OrderSummary'] & {
+      /** Format: date-time */
+      paidAt: string;
+      itemsSubtotal: components['schemas']['Money'];
+      shippingTotal: components['schemas']['Money'];
       items: {
+        /** Format: uuid */
+        id: string;
+        /** @enum {string} */
+        kind: 'product' | 'outfit';
         title: string;
-        selection?: string;
+        selection: string;
+        skuCode: string | null;
         quantity: number;
         unitPrice: components['schemas']['Money'];
+        lineTotal: components['schemas']['Money'];
       }[];
       address: components['schemas']['AddressSnapshot'];
       shipping: {
         method: components['schemas']['ShippingMethodCode'];
         name: string;
         chargedPrice: components['schemas']['Money'];
+        fixedPrice: components['schemas']['Money'];
         freeShippingApplied: boolean;
+        freeShippingThreshold: components['schemas']['Money'] | null;
         settingsVersion: number;
+      };
+      payment: {
+        /** @enum {string} */
+        provider: 'fake';
+        providerTransactionId: string;
       };
     };
     /** @enum {string} */
@@ -1167,6 +1282,7 @@ export interface components {
     LineId: string;
     AddressId: string;
     CheckoutSessionId: string;
+    PaymentAttemptId: string;
     ProductId: string;
     SkuId: string;
     ReturnId: string;
@@ -1908,6 +2024,7 @@ export interface operations {
           'application/json': components['schemas']['ShippingOption'][];
         };
       };
+      401: components['responses']['Problem'];
       422: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
@@ -1917,6 +2034,8 @@ export interface operations {
       query?: never;
       header: {
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
       };
       path?: never;
       cookie?: never;
@@ -1942,6 +2061,7 @@ export interface operations {
           'application/json': components['schemas']['CheckoutSession'];
         };
       };
+      401: components['responses']['Problem'];
       409: components['responses']['Problem'];
       422: components['responses']['Problem'];
       default: components['responses']['Problem'];
@@ -1976,6 +2096,8 @@ export interface operations {
       query?: never;
       header: {
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
       };
       path: {
         checkoutSessionId: components['parameters']['CheckoutSessionId'];
@@ -1997,20 +2119,77 @@ export interface operations {
       default: components['responses']['Problem'];
     };
   };
-  processPaymentCallback: {
+  getPaymentAttempt: {
     parameters: {
       query?: never;
       header?: never;
       path: {
-        provider: string;
+        paymentAttemptId: components['parameters']['PaymentAttemptId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current immutable or retryable payment result. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PaymentAttempt'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  completeFakePaymentAttempt: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path: {
+        paymentAttemptId: components['parameters']['PaymentAttemptId'];
       };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': {
-          [key: string]: unknown;
+        'application/json': components['schemas']['FakePaymentCompletionInput'];
+      };
+    };
+    responses: {
+      /** @description Fake provider callback processed through the normal verification boundary. */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          'application/json': components['schemas']['PaymentCallbackOutcome'];
+        };
+      };
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  processPaymentCallback: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Provider-specific callback authenticator verified before commercial state changes. */
+        'X-Payment-Signature': string;
+      };
+      path: {
+        provider: 'fake';
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FakePaymentCallback'];
       };
     };
     responses: {
@@ -2020,14 +2199,11 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': {
-            /** @enum {string} */
-            status: 'paid' | 'failed' | 'pending_reconciliation';
-            orderNumber?: string | null;
-          };
+          'application/json': components['schemas']['PaymentCallbackOutcome'];
         };
       };
       400: components['responses']['Problem'];
+      409: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };
