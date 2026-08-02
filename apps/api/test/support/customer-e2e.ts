@@ -39,11 +39,33 @@ export async function setE2EInventory(skuId: string, physicalQuantity: number): 
 export async function addE2EOutfitReviewLine(cartId: string): Promise<void> {
   const prisma = guardedClient();
   try {
+    const outfitId = '30000000-0000-4000-8000-000000000017';
+    const revisionId = '30000000-0000-4000-8000-000000000018';
+    const existing = await prisma.outfitRevision.findUnique({ where: { id: revisionId } });
+    if (existing === null) {
+      await prisma.outfit.create({
+        data: { id: outfitId, slug: 'historical-e2e-review-outfit', status: 'ARCHIVED' },
+      });
+      const now = deterministicE2ENow();
+      await prisma.outfitRevision.create({
+        data: {
+          id: revisionId,
+          outfitId,
+          revisionNumber: 1,
+          state: 'HISTORICAL',
+          name: 'استایل تاریخی آزمون',
+          description: 'Fixture قطعی برای بررسی سبد قدیمی',
+          publishedAt: now,
+          supersededAt: now,
+        },
+      });
+    }
     await prisma.cartLine.create({
       data: {
         cartId,
         kind: 'OUTFIT',
-        outfitRevisionId: '30000000-0000-4000-8000-000000000018',
+        outfitRevisionId: revisionId,
+        outfitRevisionNumber: 1,
         outfitSize: 'M',
         titleSnapshot: 'استایل تاریخی آزمون',
         selectionSnapshot: 'M',
@@ -110,11 +132,17 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
     await prisma.businessEvent.deleteMany({
       where: { entityId: { in: [...checkoutIds, ...attemptIds, ...orderIds] } },
     });
+    await prisma.orderOutfitComponent.deleteMany({
+      where: { orderItem: { orderId: { in: orderIds } } },
+    });
     await prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
     await prisma.paymentAttempt.deleteMany({ where: { id: { in: attemptIds } } });
     await prisma.inventoryReservation.deleteMany({
       where: { checkoutSessionId: { in: checkoutIds } },
+    });
+    await prisma.checkoutOutfitComponent.deleteMany({
+      where: { checkoutLine: { checkoutSessionId: { in: checkoutIds } } },
     });
     await prisma.checkoutLine.deleteMany({ where: { checkoutSessionId: { in: checkoutIds } } });
     await prisma.checkoutSession.deleteMany({ where: { id: { in: checkoutIds } } });

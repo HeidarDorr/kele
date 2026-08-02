@@ -15,6 +15,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <nav aria-label="فهرست مدیریت">
           <Link href="/">محصولات</Link>
           <Link href="/products/new">محصول تازه</Link>
+          <Link href="/outfits">استایل‌ها</Link>
+          <Link href="/outfits/new">استایل تازه</Link>
         </nav>
         <p>نشست توسعهٔ Super Admin</p>
       </aside>

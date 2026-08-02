@@ -84,6 +84,26 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
                   <strong>{item.title}</strong>
                   <span>{item.selection}</span>
                   {item.skuCode ? <bdi>{item.skuCode}</bdi> : null}
+                  {item.kind === 'outfit' && item.outfitRevisionNumber !== null ? (
+                    <section className="order-outfit-snapshot" aria-label="ترکیب ثبت‌شده استایل">
+                      <span>
+                        نسخه {item.outfitRevisionNumber.toLocaleString('fa-IR')} · سایز{' '}
+                        {item.outfitSize}
+                      </span>
+                      <ul>
+                        {item.outfitComponents.map((component) => (
+                          <li key={component.skuId}>
+                            <span>
+                              {component.productName} · {component.colorName} ·{' '}
+                              {component.sizeLabel}
+                            </span>
+                            <bdi>{component.skuCode}</bdi>
+                            <span>{component.totalQuantity.toLocaleString('fa-IR')} عدد</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
                 </div>
                 <span>{item.quantity.toLocaleString('fa-IR')} عدد</span>
                 <strong>{item.lineTotal.display}</strong>

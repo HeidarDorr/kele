@@ -16,6 +16,7 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
             <summary aria-label="باز کردن فهرست">فهرست</summary>
             <nav aria-label="فهرست موبایل">
               <Link href="/catalog">محصولات</Link>
+              <Link href="/outfits">استایل‌ها</Link>
               {categories.map((category) => (
                 <Link key={category.id} href={`/category/${category.slug}`}>
                   {category.name}
@@ -25,6 +26,7 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
           </details>
           <nav className="desktop-nav" aria-label="فهرست اصلی">
             <Link href="/catalog">تازه‌ها</Link>
+            <Link href="/outfits">استایل‌ها</Link>
             {categories.slice(0, 3).map((category) => (
               <Link key={category.id} href={`/category/${category.slug}`}>
                 {category.name}

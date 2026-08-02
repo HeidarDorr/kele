@@ -8,6 +8,10 @@ export type MediaValue = components['schemas']['Media'];
 export type PublicationValidation = components['schemas']['PublicationValidation'];
 export type ProductPreview = components['schemas']['AdminProductPreview'];
 export type Inventory = components['schemas']['Inventory'];
+export type AdminOutfit = components['schemas']['AdminOutfit'];
+export type AdminOutfitPage = components['schemas']['AdminOutfitPage'];
+export type OutfitPreview = components['schemas']['AdminOutfitPreview'];
+export type OutfitRevision = components['schemas']['OutfitRevisionSummary'];
 
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
 const sessionToken =
@@ -57,3 +61,11 @@ export const validateProduct = (id: string) =>
   adminRequest<PublicationValidation>(`/admin/products/${id}/validation`);
 export const previewProduct = (id: string) =>
   adminRequest<ProductPreview>(`/admin/products/${id}/preview`);
+export const listOutfits = () => adminRequest<AdminOutfitPage>('/admin/outfits');
+export const getOutfit = (id: string) => adminRequest<AdminOutfit>(`/admin/outfits/${id}`);
+export const validateOutfit = (id: string) =>
+  adminRequest<PublicationValidation>(`/admin/outfits/${id}/validation`);
+export const previewOutfit = (id: string) =>
+  adminRequest<OutfitPreview>(`/admin/outfits/${id}/preview`);
+export const listOutfitRevisions = (id: string) =>
+  adminRequest<OutfitRevision[]>(`/admin/outfits/${id}/revisions`);

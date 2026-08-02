@@ -6,6 +6,9 @@ export type CategoryDetail = components['schemas']['CategoryDetail'];
 export type ProductCardValue = components['schemas']['ProductCard'];
 export type ProductCardPage = components['schemas']['ProductCardPage'];
 export type ProductDetail = components['schemas']['ProductDetail'];
+export type OutfitCardValue = components['schemas']['OutfitCard'];
+export type OutfitCardPage = components['schemas']['OutfitCardPage'];
+export type OutfitDetail = components['schemas']['OutfitDetail'];
 export type MediaValue = components['schemas']['Media'];
 
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
@@ -68,4 +71,13 @@ export function getProducts(
 export function getProduct(slug: string, color?: string): Promise<ProductDetail> {
   const suffix = color ? `?color=${encodeURIComponent(color)}` : '';
   return request<ProductDetail>(`/catalog/products/${encodeURIComponent(slug)}${suffix}`);
+}
+
+export function getOutfits(category?: string): Promise<OutfitCardPage> {
+  const suffix = category ? `?category=${encodeURIComponent(category)}` : '';
+  return request<OutfitCardPage>(`/catalog/outfits${suffix}`);
+}
+
+export function getOutfit(slug: string): Promise<OutfitDetail> {
+  return request<OutfitDetail>(`/catalog/outfits/${encodeURIComponent(slug)}`);
 }

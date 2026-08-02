@@ -71,6 +71,12 @@ export const commerceApi = {
       version,
       body: JSON.stringify({ kind: 'product', skuId, quantity }),
     }),
+  addOutfit: (outfitRevisionId: string, size: string, quantity: number, version: number) =>
+    request<Cart>('/cart/lines', {
+      method: 'POST',
+      version,
+      body: JSON.stringify({ kind: 'outfit', outfitRevisionId, size, quantity }),
+    }),
   updateLine: (lineId: string, quantity: number, version: number) =>
     request<Cart>(`/cart/lines/${encodeURIComponent(lineId)}`, {
       method: 'PATCH',

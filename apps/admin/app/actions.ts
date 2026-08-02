@@ -2,7 +2,12 @@
 
 import { randomUUID } from 'node:crypto';
 import { redirect } from 'next/navigation';
-import { adminRequest, type AdminProduct, type Inventory } from '../lib/admin-api';
+import {
+  adminRequest,
+  type AdminOutfit,
+  type AdminProduct,
+  type Inventory,
+} from '../lib/admin-api';
 
 export interface ActionState {
   status: 'idle' | 'error';
@@ -157,4 +162,90 @@ export async function createMediaAction(formData: FormData): Promise<void> {
     }),
   });
   redirect('/?notice=media');
+}
+
+function outfitPayload(formData: FormData) {
+  const model = JSON.parse(stringValue(formData, 'outfitModel')) as Pick<
+    AdminOutfit,
+    'items' | 'sizes'
+  >;
+  const categoryIds = formData
+    .getAll('categoryIds')
+    .filter((value): value is string => typeof value === 'string');
+  const mediaIds = formData
+    .getAll('mediaIds')
+    .filter((value): value is string => typeof value === 'string');
+  return {
+    name: stringValue(formData, 'name'),
+    slug: stringValue(formData, 'slug'),
+    description: stringValue(formData, 'description'),
+    categoryIds,
+    mediaIds,
+    featuredMediaId: mediaIds[0] ?? '',
+    seo: {
+      title: stringValue(formData, 'seoTitle') || null,
+      description: stringValue(formData, 'seoDescription') || null,
+    },
+    items: model.items,
+    sizes: model.sizes,
+  };
+}
+
+export async function createOutfitAction(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  let outfit: AdminOutfit;
+  try {
+    outfit = await adminRequest<AdminOutfit>('/admin/outfits', {
+      method: 'POST',
+      body: JSON.stringify(outfitPayload(formData)),
+    });
+  } catch (error: unknown) {
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'ساخت پیش‌نویس استایل ممکن نشد.',
+    };
+  }
+  redirect(`/outfits/${outfit.id}/edit?notice=created`);
+}
+
+export async function updateOutfitAction(
+  id: string,
+  version: number,
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    await adminRequest<AdminOutfit>(`/admin/outfits/${id}`, {
+      method: 'PATCH',
+      headers: { 'if-match': `"${String(version)}"` },
+      body: JSON.stringify(outfitPayload(formData)),
+    });
+  } catch (error: unknown) {
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'ویرایش استایل ممکن نشد.',
+    };
+  }
+  redirect(`/outfits/${id}/edit?notice=updated`);
+}
+
+export async function publishOutfitAction(id: string, version: number): Promise<void> {
+  await adminRequest<AdminOutfit>(`/admin/outfits/${id}/publish`, {
+    method: 'POST',
+    headers: {
+      'if-match': `"${String(version)}"`,
+      'idempotency-key': randomUUID(),
+    },
+  });
+  redirect(`/outfits/${id}/edit?notice=published`);
+}
+
+export async function archiveOutfitAction(id: string): Promise<void> {
+  await adminRequest<AdminOutfit>(`/admin/outfits/${id}/archive`, {
+    method: 'POST',
+    headers: { 'idempotency-key': randomUUID() },
+  });
+  redirect('/outfits?notice=archived');
 }
