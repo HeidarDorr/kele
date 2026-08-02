@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import {
   CommerceApiError,
   commerceApi,
@@ -87,7 +87,7 @@ export function CheckoutContent() {
     };
   }, [addressId, cart]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: SyntheticEvent<HTMLFormElement, SubmitEvent>) {
     event.preventDefault();
     if (cart === null || method === '' || addressId === '') return;
     setBusy(true);
@@ -199,7 +199,9 @@ export function CheckoutContent() {
                       name="address"
                       value={address.id}
                       checked={addressId === address.id}
-                      onChange={() => setAddressId(address.id)}
+                      onChange={() => {
+                        setAddressId(address.id);
+                      }}
                       disabled={busy}
                     />
                     <span>
@@ -234,7 +236,9 @@ export function CheckoutContent() {
                         name="shipping"
                         value={option.method}
                         checked={method === option.method}
-                        onChange={() => setMethod(option.method)}
+                        onChange={() => {
+                          setMethod(option.method);
+                        }}
                         disabled={!option.eligible || busy}
                       />
                       <span>

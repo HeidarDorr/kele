@@ -2,7 +2,6 @@ import { randomInt, randomUUID } from 'node:crypto';
 import {
   CartLineKind,
   CartLineStatus,
-  CheckoutStatus,
   DatabaseJobStatus,
   PrismaClient,
   PublicationStatus,
@@ -22,7 +21,7 @@ import { PrismaCheckoutCustomerAdapter } from '../src/modules/identity/infrastru
 
 const prisma = new PrismaClient();
 const runId = randomUUID();
-const signingSecret = 'm4-integration-fake-payment-signing-secret-000001';
+const fakeCallbackKey = 'm4-integration-fake-payment-signing-key-000001';
 const customerIds = new Set<string>();
 const cartIds = new Set<string>();
 const productIds = new Set<string>();
@@ -39,7 +38,7 @@ function createServices(clock: () => Date = () => new Date()) {
   const carts = new PrismaCheckoutCartAdapter(transactions);
   const customers = new PrismaCheckoutCustomerAdapter(transactions);
   const catalog = new PrismaCheckoutCatalogAdapter(transactions);
-  const fake = new FakePaymentAdapter(signingSecret);
+  const fake = new FakePaymentAdapter(fakeCallbackKey);
   const checkouts = new CheckoutService(repository, carts, customers, catalog, transactions, clock);
   const payments = new PaymentService(
     repository,
@@ -373,6 +372,8 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
     ]);
     expect(outcomes[0]).toEqual(outcomes[1]);
     expect(outcomes[0]).toMatchObject({ status: 'paid', orderNumber: expect.any(String) });
+    const paidOutcome = outcomes[0];
+    if (paidOutcome.orderNumber === null) throw new Error('Expected a paid order number.');
 
     const lateFailure = services.fake.simulateCallback(persisted, 'failed', new Date());
     await expect(
@@ -382,7 +383,7 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
         lateFailure.payload,
         randomUUID(),
       ),
-    ).resolves.toMatchObject({ status: 'paid', orderNumber: outcomes[0]?.orderNumber });
+    ).resolves.toMatchObject({ status: 'paid', orderNumber: paidOutcome.orderNumber });
 
     const wrongTransactionPayload = {
       ...callback.payload,
@@ -429,7 +430,7 @@ describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
     });
     const order = await services.repository.getOwnedOrder(
       fixture.customerId,
-      outcomes[0]?.orderNumber as string,
+      paidOutcome.orderNumber,
     );
     expect(order).toMatchObject({
       paidTotalRial: 12_800_000,

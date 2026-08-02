@@ -142,13 +142,6 @@ export class PaymentService {
     payload: FakePaymentCallbackPayload,
     correlationId: string,
   ): Promise<PaymentCallbackOutcome> {
-    if (provider !== 'fake') {
-      throw new ApplicationError(
-        'validation',
-        'PAYMENT_PROVIDER_UNSUPPORTED',
-        'Payment provider is unsupported.',
-      );
-    }
     const now = this.clock();
     const callback = await this.gateway.verifyCallback({ signature, payload, now });
     return this.unitOfWork.run(async () => {
@@ -201,7 +194,7 @@ export class PaymentService {
           correlationId,
         });
       }
-      if (callback.amountRial !== attempt.amountRial || callback.currency !== 'IRR') {
+      if (callback.amountRial !== attempt.amountRial) {
         return this.repository.createReconciliation({
           checkout,
           paymentAttempt: attempt,

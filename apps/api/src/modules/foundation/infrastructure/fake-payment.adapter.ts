@@ -37,9 +37,6 @@ export class FakePaymentAdapter implements PaymentGateway {
     if (!Number.isSafeInteger(input.amountRial) || input.amountRial <= 0) {
       return Promise.reject(new Error('Fake payment requires a positive integer IRR amount.'));
     }
-    if (input.currency !== 'IRR') {
-      return Promise.reject(new Error('Fake payment supports only IRR.'));
-    }
     return Promise.resolve({
       provider: 'fake',
       reference: `fake-${input.applicationReference}`,

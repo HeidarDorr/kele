@@ -84,7 +84,7 @@ describe('Milestone 4 shipping and payment boundaries', () => {
       eligible: false,
       ineligibilityCode: 'LOCAL_COURIER_OUTSIDE_TEHRAN',
     });
-    expect(() => requireEligibleShippingOption(outside, 'tehran_local_courier')).toThrowError(
+    expect(() => requireEligibleShippingOption(outside, 'tehran_local_courier')).toThrow(
       expect.objectContaining({ code: 'LOCAL_COURIER_OUTSIDE_TEHRAN' }),
     );
     expect(outside.find((option) => option.method === 'tipax')).toMatchObject({
@@ -123,11 +123,11 @@ describe('Milestone 4 shipping and payment boundaries', () => {
     };
     expect(() =>
       adapter.verifyCallback({ signature: simulated.signature, payload: forged, now }),
-    ).toThrowError(expect.objectContaining({ code: 'PAYMENT_CALLBACK_UNVERIFIED' }));
+    ).toThrow(expect.objectContaining({ code: 'PAYMENT_CALLBACK_UNVERIFIED' }));
 
     const stale = { ...simulated.payload, issuedAt: '2026-08-02T09:54:59.999Z' };
     expect(() =>
       adapter.verifyCallback({ signature: adapter.signForTest(stale), payload: stale, now }),
-    ).toThrowError(expect.objectContaining({ code: 'PAYMENT_CALLBACK_STALE' }));
+    ).toThrow(expect.objectContaining({ code: 'PAYMENT_CALLBACK_STALE' }));
   });
 });

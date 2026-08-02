@@ -50,7 +50,9 @@ export function PaymentResultContent() {
     const timer = window.setInterval(() => {
       if (attempt === null || retryable.has(attempt.status)) void load();
     }, 2_000);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+    };
   }, [attempt?.status, load]);
 
   if (loading) {
