@@ -12,6 +12,15 @@ export type AdminOutfit = components['schemas']['AdminOutfit'];
 export type AdminOutfitPage = components['schemas']['AdminOutfitPage'];
 export type OutfitPreview = components['schemas']['AdminOutfitPreview'];
 export type OutfitRevision = components['schemas']['OutfitRevisionSummary'];
+export type AdminOrder = components['schemas']['AdminOrder'];
+export type AdminOrderPage = components['schemas']['AdminOrderPage'];
+export type ReturnRequest = components['schemas']['ReturnRequest'];
+export interface ReturnRequestPage {
+  items: ReturnRequest[];
+  page: components['schemas']['CursorPage'];
+}
+export type AuditEventPage = components['schemas']['AuditEventPage'];
+export type BulkOperation = components['schemas']['BulkOperation'];
 
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
 const sessionToken =
@@ -69,3 +78,15 @@ export const previewOutfit = (id: string) =>
   adminRequest<OutfitPreview>(`/admin/outfits/${id}/preview`);
 export const listOutfitRevisions = (id: string) =>
   adminRequest<OutfitRevision[]>(`/admin/outfits/${id}/revisions`);
+export const listAdminOrders = (query = '') =>
+  adminRequest<AdminOrderPage>(`/admin/orders${query.length > 0 ? `?${query}` : ''}`);
+export const getAdminOrder = (orderNumber: string) =>
+  adminRequest<AdminOrder>(`/admin/orders/${encodeURIComponent(orderNumber)}`);
+export const listReturnRequests = (status = '') =>
+  adminRequest<ReturnRequestPage>(
+    `/admin/returns${status ? `?status=${encodeURIComponent(status)}` : ''}`,
+  );
+export const listAuditEvents = (query = '') =>
+  adminRequest<AuditEventPage>(`/admin/audit-events${query.length > 0 ? `?${query}` : ''}`);
+export const getBulkOperation = (id: string) =>
+  adminRequest<BulkOperation>(`/admin/bulk-operations/${encodeURIComponent(id)}`);

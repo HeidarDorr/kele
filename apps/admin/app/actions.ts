@@ -249,3 +249,115 @@ export async function archiveOutfitAction(id: string): Promise<void> {
   });
   redirect('/outfits?notice=archived');
 }
+
+export async function transitionOrderAction(
+  orderNumber: string,
+  version: number,
+  formData: FormData,
+): Promise<void> {
+  const toStatus = stringValue(formData, 'toStatus');
+  const trackingNumber = stringValue(formData, 'trackingNumber');
+  await adminRequest(`/admin/orders/${encodeURIComponent(orderNumber)}/transitions`, {
+    method: 'POST',
+    headers: {
+      'if-match': `"${String(version)}"`,
+      'idempotency-key': randomUUID(),
+    },
+    body: JSON.stringify({
+      toStatus,
+      reason: stringValue(formData, 'reason'),
+      ...(toStatus === 'shipped'
+        ? {
+            tracking: {
+              carrier: stringValue(formData, 'carrier'),
+              trackingNumber,
+              trackingUrl: stringValue(formData, 'trackingUrl') || null,
+            },
+          }
+        : {}),
+    }),
+  });
+  redirect(`/operations/orders/${encodeURIComponent(orderNumber)}?notice=transitioned`);
+}
+
+export async function reviseTrackingAction(
+  orderNumber: string,
+  version: number,
+  formData: FormData,
+): Promise<void> {
+  await adminRequest(`/admin/orders/${encodeURIComponent(orderNumber)}/tracking`, {
+    method: 'POST',
+    headers: {
+      'if-match': `"${String(version)}"`,
+      'idempotency-key': randomUUID(),
+    },
+    body: JSON.stringify({
+      carrier: stringValue(formData, 'carrier'),
+      trackingNumber: stringValue(formData, 'trackingNumber'),
+      trackingUrl: stringValue(formData, 'trackingUrl') || null,
+      reason: stringValue(formData, 'reason'),
+    }),
+  });
+  redirect(`/operations/orders/${encodeURIComponent(orderNumber)}?notice=tracking`);
+}
+
+export async function decideReturnAction(
+  returnId: string,
+  decision: 'approve' | 'reject',
+  formData: FormData,
+): Promise<void> {
+  await adminRequest(`/admin/returns/${encodeURIComponent(returnId)}/${decision}`, {
+    method: 'POST',
+    headers: { 'idempotency-key': randomUUID() },
+    body: JSON.stringify({ reason: stringValue(formData, 'reason') }),
+  });
+  redirect('/operations/returns?notice=decided');
+}
+
+export async function retryRefundAction(refundId: string, orderNumber: string): Promise<void> {
+  await adminRequest(`/admin/refunds/${encodeURIComponent(refundId)}/retry`, {
+    method: 'POST',
+    headers: { 'idempotency-key': randomUUID() },
+    body: JSON.stringify({ reason: 'تلاش مجدد کنترل‌شده توسط اپراتور' }),
+  });
+  redirect(`/operations/orders/${encodeURIComponent(orderNumber)}?notice=refund`);
+}
+
+export async function previewBulkAction(formData: FormData): Promise<void> {
+  const kind = stringValue(formData, 'kind');
+  const skuIds = stringValue(formData, 'skuIds')
+    .split(/[,\s]+/u)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const common = { filters: { skuIds }, reason: stringValue(formData, 'reason') };
+  const body =
+    kind === 'price'
+      ? {
+          ...common,
+          adjustment: {
+            type: stringValue(formData, 'adjustmentType'),
+            value: numberValue(formData, 'value'),
+          },
+        }
+      : {
+          ...common,
+          action: stringValue(formData, 'inventoryAction'),
+          quantity: numberValue(formData, 'value'),
+        };
+  const operation = await adminRequest<{ id: string }>(`/admin/bulk-operations/${kind}/preview`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+  redirect(`/operations/bulk?preview=${encodeURIComponent(operation.id)}`);
+}
+
+export async function applyBulkAction(id: string, version: number): Promise<void> {
+  await adminRequest(`/admin/bulk-operations/${encodeURIComponent(id)}/apply`, {
+    method: 'POST',
+    headers: {
+      'if-match': `"${String(version)}"`,
+      'idempotency-key': randomUUID(),
+    },
+  });
+  redirect(`/operations/bulk?preview=${encodeURIComponent(id)}&notice=applied`);
+}

@@ -610,6 +610,88 @@ label small,
   color: var(--kele-ink-muted);
 }
 
+.admin-filter-bar {
+  display: flex;
+  align-items: end;
+  gap: 1rem;
+  margin-block: 1.5rem;
+  padding-block: 1rem;
+  border-block: 1px solid #cfc3b6;
+}
+
+.admin-filter-bar label,
+.compact-form label {
+  display: grid;
+  gap: 0.35rem;
+  min-inline-size: 10rem;
+}
+
+.operations-grid {
+  align-items: start;
+}
+
+.operations-list,
+.operations-cards,
+.audit-timeline {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.operations-list li,
+.refund-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block-end: 0.75rem;
+  border-block-end: 1px solid #e0d6cc;
+}
+
+.compact-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+}
+
+.danger-form {
+  border-block-start-color: var(--kele-danger);
+}
+
+.audit-timeline li {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.6fr) minmax(10rem, 0.8fr) 2fr;
+  gap: 1rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid #e0d6cc;
+}
+
+.audit-timeline pre {
+  max-inline-size: 100%;
+  overflow: auto;
+  text-align: left;
+}
+
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 760px) {
+  .admin-filter-bar,
+  .operations-list li,
+  .refund-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .audit-timeline li,
+  .decision-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 bdi,
 .identifier {
   display: inline-block;

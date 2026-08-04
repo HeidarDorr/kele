@@ -169,6 +169,12 @@ export function AccountContent() {
         </button>
       </header>
 
+      <p className="account-orders-link">
+        <Link className="button-secondary" href="/orders">
+          مشاهدهٔ سفارش‌ها، رهگیری و مرجوعی
+        </Link>
+      </p>
+
       {error ? (
         <p className="form-error" role="alert">
           {error}

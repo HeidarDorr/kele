@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
@@ -7,6 +7,7 @@ import {
   addE2EOutfitReviewLine,
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
+  createE2EOperationsOrder,
   expireE2EPayment,
   readE2EPaymentEvidence,
   setE2EInventory,
@@ -26,6 +27,7 @@ const evidenceDirectory = resolve(
     : 'output/playwright/milestone-2',
 );
 const milestoneFiveEvidenceDirectory = resolve('output/playwright/milestone-5');
+const milestoneSixEvidenceDirectory = resolve('output/playwright/milestone-6');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
@@ -634,7 +636,7 @@ test('administration is responsive and exposes validation and inventory states',
         return bounds.left >= 0 && bounds.right <= window.innerWidth;
       }),
     ).toBe(true);
-    await expect(page.locator('.admin-sidebar nav a')).toHaveCount(4);
+    await expect(page.locator('.admin-sidebar nav a')).toHaveCount(8);
     expect(
       await page.locator('.admin-sidebar nav a').evaluateAll((links) =>
         links.every((link) => {
@@ -1171,6 +1173,152 @@ test('expired reservation is visible and cannot become an Order', async ({ brows
     } finally {
       await cleanupE2ECustomer(mobile, cartIds);
       await setE2EInventory(skuId, milestoneFourFixture.initialPhysicalQuantity);
+    }
+  }
+});
+
+test('Milestone 6 staff fulfillment and customer return journeys are authorized, RTL and responsive', async ({
+  browser,
+  request,
+}) => {
+  const mobile = '+989121234572';
+  const skuId = milestoneFourFixture.skuId;
+  const cartIds: string[] = [];
+  const customerContext = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
+  const adminContext = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
+  const customer = await customerContext.newPage();
+  const admin = await adminContext.newPage();
+  try {
+    await mkdir(milestoneSixEvidenceDirectory, { recursive: true });
+    await setE2EInventory(skuId, 4);
+    await customer.goto(`${e2eUrls.storefront}/sign-in`);
+    await completeOtp(customer, mobile);
+    const { orderNumber } = await createE2EOperationsOrder(mobile);
+
+    expect((await request.get(`${e2eUrls.api}/admin/orders`)).status()).toBe(401);
+    expect(
+      (
+        await request.get(`${e2eUrls.api}/admin/orders`, {
+          headers: {
+            cookie: `kele_session=${encodeURIComponent(
+              process.env.ADMIN_INSTAGRAM_SESSION_TOKEN ??
+                'development-instagram-admin-session-token-00001',
+            )}`,
+          },
+        })
+      ).status(),
+    ).toBe(403);
+    const instagramHeaders = {
+      cookie: `kele_session=${encodeURIComponent(
+        process.env.ADMIN_INSTAGRAM_SESSION_TOKEN ??
+          'development-instagram-admin-session-token-00001',
+      )}`,
+      'idempotency-key': randomUUID(),
+    };
+    expect(
+      (
+        await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
+          headers: instagramHeaders,
+          data: { action: 'manual_correction', quantity: 1, reason: 'کنش خارج از نقش' },
+        })
+      ).status(),
+    ).toBe(403);
+    expect(
+      (
+        await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
+          headers: { ...instagramHeaders, 'idempotency-key': randomUUID() },
+          data: { action: 'instagram_return', quantity: 1, reason: 'بازگشت ثبت‌شده از اینستاگرام' },
+        })
+      ).status(),
+    ).toBe(201);
+    expect(
+      (
+        await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
+          headers: { ...instagramHeaders, 'idempotency-key': randomUUID() },
+          data: { action: 'instagram_sale', quantity: 1, reason: 'فروش ثبت‌شده در اینستاگرام' },
+        })
+      ).status(),
+    ).toBe(201);
+
+    await admin.goto(
+      `${e2eUrls.admin}/operations/orders?search=${encodeURIComponent(orderNumber)}`,
+    );
+    await expect(admin.locator('html')).toHaveAttribute('lang', 'fa-IR');
+    await expect(admin.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(admin.getByText(orderNumber)).toBeVisible();
+    await admin.getByRole('link', { name: 'بررسی سفارش' }).click();
+    await admin.getByRole('button', { name: 'ثبت «در حال آماده‌سازی»' }).click();
+    await expect(admin.getByRole('status')).toBeVisible();
+    await admin.getByLabel('حامل').fill('پست ایران');
+    await admin.getByLabel('کد رهگیری').fill('KELE-M6-TRACK-001');
+    await admin.getByLabel('پیوند رهگیری').fill('https://example.test/track/KELE-M6-TRACK-001');
+    await admin.getByRole('button', { name: 'ثبت «ارسال‌شده»' }).click();
+    await expect(admin.getByText('KELE-M6-TRACK-001')).toBeVisible();
+    await admin.getByRole('button', { name: 'ثبت «تحویل‌شده»' }).click();
+    await expect(admin.getByText(/تحویل‌شده/).first()).toBeVisible();
+    await captureEvidence(
+      admin,
+      resolve(milestoneSixEvidenceDirectory, 'staff-order-delivered-desktop.png'),
+    );
+
+    await customer.goto(`${e2eUrls.storefront}/orders`);
+    await expect(customer.getByRole('heading', { name: 'سفارش‌های من' })).toBeVisible();
+    await expect(customer.getByText(orderNumber)).toBeVisible();
+    expect(
+      await customer.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),
+    ).toBe(true);
+    await customer.getByRole('link', { name: 'جزئیات و رهگیری' }).click();
+    await expect(customer.getByText('KELE-M6-TRACK-001')).toBeVisible();
+    await customer.locator('.return-form input[type="number"]').fill('1');
+    await customer.locator('.return-form textarea').fill('اندازه برای کودک مناسب نیست');
+    await customer.getByLabel('کالا استفاده نشده است').check();
+    await customer.getByLabel('کالا شسته نشده است').check();
+    await customer.getByLabel('همهٔ برچسب‌ها متصل‌اند').check();
+    await customer.getByRole('button', { name: 'ثبت درخواست برای بررسی' }).click();
+    await expect(customer.getByRole('status')).toContainText('درخواست مرجوعی ثبت شد');
+    await captureEvidence(
+      customer,
+      resolve(milestoneSixEvidenceDirectory, 'customer-return-submitted-desktop.png'),
+    );
+
+    await admin.goto(`${e2eUrls.admin}/operations/returns`);
+    await expect(admin.getByText(orderNumber)).toBeVisible();
+    await admin.getByLabel('دلیل تأیید').fill('اظهارها و مهلت تحویل بررسی شد');
+    await admin.getByRole('button', { name: 'تأیید و شروع بازپرداخت' }).click();
+    await expect(admin.getByRole('status')).toHaveText('تصمیم ثبت شد.');
+    await admin.goto(`${e2eUrls.admin}/operations/audit?search=${encodeURIComponent(orderNumber)}`);
+    await expect(admin.locator('.audit-timeline li').first()).toBeVisible();
+    await captureEvidence(admin, resolve(milestoneSixEvidenceDirectory, 'staff-audit-desktop.png'));
+
+    await customer.reload();
+    await expect(customer.getByText(/بازپرداخت تأیید شد/)).toBeVisible();
+    await customer.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await customer.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),
+    ).toBe(true);
+    await captureEvidence(
+      customer,
+      resolve(milestoneSixEvidenceDirectory, 'customer-return-completed-mobile.png'),
+    );
+
+    await admin.setViewportSize({ width: 390, height: 844 });
+    await admin.goto(`${e2eUrls.admin}/operations/orders?state=empty`);
+    await expect(admin.getByText('سفارشی مطابق این فیلتر وجود ندارد.')).toBeVisible();
+    expect(await admin.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
+      true,
+    );
+    await captureEvidence(
+      admin,
+      resolve(milestoneSixEvidenceDirectory, 'staff-orders-empty-mobile.png'),
+    );
+    await admin.goto(`${e2eUrls.admin}/operations/orders?state=error`);
+    await expect(admin.locator('section.admin-error[role="alert"]')).toBeVisible();
+  } finally {
+    try {
+      await Promise.all([customerContext.close(), adminContext.close()]);
+    } finally {
+      await cleanupE2ECustomer(mobile, cartIds);
+      await setE2EInventory(skuId, 4);
     }
   }
 });

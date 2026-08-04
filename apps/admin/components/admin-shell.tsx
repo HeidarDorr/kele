@@ -10,13 +10,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <aside className="admin-sidebar">
         <Link className="admin-brand" href="/">
           <BrandWordmark />
-          <small>مدیریت کاتالوگ</small>
+          <small>مدیریت عملیات</small>
         </Link>
         <nav aria-label="فهرست مدیریت">
           <Link href="/">محصولات</Link>
           <Link href="/products/new">محصول تازه</Link>
           <Link href="/outfits">استایل‌ها</Link>
           <Link href="/outfits/new">استایل تازه</Link>
+          <Link href="/operations/orders">سفارش‌ها</Link>
+          <Link href="/operations/returns">مرجوعی‌ها</Link>
+          <Link href="/operations/bulk">عملیات گروهی</Link>
+          <Link href="/operations/audit">رویدادها</Link>
         </nav>
         <p>نشست توسعهٔ Super Admin</p>
       </aside>

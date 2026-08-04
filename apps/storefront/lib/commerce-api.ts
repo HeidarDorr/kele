@@ -13,6 +13,12 @@ export type PaymentAttempt = components['schemas']['PaymentAttempt'];
 export type PaymentCallbackOutcome = components['schemas']['PaymentCallbackOutcome'];
 export type OrderPage = components['schemas']['OrderPage'];
 export type Order = components['schemas']['Order'];
+export type ReturnRequest = components['schemas']['ReturnRequest'];
+export type ReturnRequestInput = components['schemas']['ReturnRequestInput'];
+export interface ReturnRequestPage {
+  items: ReturnRequest[];
+  page: components['schemas']['CursorPage'];
+}
 
 export class CommerceApiError extends Error {
   constructor(
@@ -145,6 +151,13 @@ export const commerceApi = {
     ),
   orders: () => request<OrderPage>('/me/orders'),
   order: (orderNumber: string) => request<Order>(`/me/orders/${encodeURIComponent(orderNumber)}`),
+  returns: () => request<ReturnRequestPage>('/me/returns'),
+  submitReturn: (input: ReturnRequestInput, idempotencyKey: string) =>
+    request<ReturnRequest>('/me/returns', {
+      method: 'POST',
+      headers: { 'idempotency-key': idempotencyKey },
+      body: JSON.stringify(input),
+    }),
 };
 
 export function commerceErrorMessage(error: unknown): string {

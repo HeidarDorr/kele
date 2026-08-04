@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
+import { randomUUID } from 'node:crypto';
 
 function guardedClient(): PrismaClient {
   assertE2EDatabaseResetEnvironment(process.env);
@@ -80,6 +81,154 @@ export async function addE2EOutfitReviewLine(cartId: string): Promise<void> {
   }
 }
 
+export async function createE2EOperationsOrder(mobile: string): Promise<{
+  orderNumber: string;
+  orderItemId: string;
+}> {
+  const prisma = guardedClient();
+  try {
+    const now = deterministicE2ENow();
+    const customer = await prisma.customer.findUniqueOrThrow({ where: { mobile } });
+    const cart = await prisma.cart.findUniqueOrThrow({ where: { customerId: customer.id } });
+    const sku = await prisma.sku.findUniqueOrThrow({
+      where: { id: '20000000-0000-4000-8000-000000000041' },
+      include: {
+        colorVariant: { include: { product: true } },
+        inventory: true,
+        currentPrice: true,
+      },
+    });
+    if (sku.inventory === null || sku.currentPrice === null || sku.inventory.physicalQuantity < 1) {
+      throw new Error('M6 E2E fixture requires a priced SKU with physical inventory.');
+    }
+    const currentPrice = sku.currentPrice;
+    const startingInventory = sku.inventory;
+    const policy = await prisma.shippingPolicyVersion.findFirstOrThrow({
+      where: { effectiveAt: { lte: now } },
+      orderBy: { version: 'desc' },
+    });
+    const token = randomUUID();
+    const orderNumber = `M6-E2E-${token.slice(0, 8).toUpperCase()}`;
+    const addressSnapshot = {
+      recipientName: 'مشتری عملیات کِلِه',
+      recipientMobile: mobile,
+      province: 'تهران',
+      city: 'تهران',
+      addressLine: 'خیابان ولیعصر، پلاک ۲۴',
+      postalCode: '1234567890',
+      normalizedZone: 'tehran',
+    };
+    const result = await prisma.$transaction(async (transaction) => {
+      const checkout = await transaction.checkoutSession.create({
+        data: {
+          customerId: customer.id,
+          cartId: cart.id,
+          cartVersion: cart.version,
+          status: 'PAID',
+          idempotencyKey: `m6-e2e-checkout-${token}`,
+          requestHash: '6'.repeat(64),
+          itemsSubtotalRial: currentPrice.amountRial,
+          shippingTotalRial: 800_000,
+          payableTotalRial: currentPrice.amountRial + 800_000n,
+          addressSnapshot,
+          shippingMethodCode: 'IRAN_POST',
+          shippingMethodName: 'پست ایران',
+          shippingFixedPriceRial: 800_000,
+          freeShippingApplied: false,
+          shippingSettingsVersion: policy.version,
+          expiresAt: new Date(now.getTime() + 30 * 60_000),
+          paidAt: now,
+          createdAt: now,
+        },
+      });
+      const attempt = await transaction.paymentAttempt.create({
+        data: {
+          checkoutSessionId: checkout.id,
+          provider: 'fake',
+          providerReference: `m6-e2e-provider-${token}`,
+          providerTransactionId: `m6-e2e-transaction-${token}`,
+          status: 'VERIFIED',
+          amountRial: currentPrice.amountRial + 800_000n,
+          idempotencyKey: `m6-e2e-attempt-${token}`,
+          requestHash: '7'.repeat(64),
+          verifiedAt: now,
+        },
+      });
+      const order = await transaction.order.create({
+        data: {
+          orderNumber,
+          customerId: customer.id,
+          checkoutSessionId: checkout.id,
+          paymentAttemptId: attempt.id,
+          itemsSubtotalRial: currentPrice.amountRial,
+          shippingTotalRial: 800_000,
+          paidTotalRial: currentPrice.amountRial + 800_000n,
+          addressSnapshot,
+          shippingMethodCode: 'IRAN_POST',
+          shippingMethodName: 'پست ایران',
+          shippingFixedPriceRial: 800_000,
+          freeShippingApplied: false,
+          shippingSettingsVersion: policy.version,
+          paymentProvider: 'fake',
+          providerTransactionId: attempt.providerTransactionId ?? `m6-e2e-transaction-${token}`,
+          paidAt: now,
+          createdAt: now,
+          items: {
+            create: {
+              kind: 'PRODUCT',
+              skuId: sku.id,
+              titleSnapshot: sku.colorVariant.product.name,
+              selectionSnapshot: `${sku.colorVariant.name} / ${sku.displaySize}`,
+              skuCodeSnapshot: sku.code,
+              quantity: 1,
+              unitPriceRial: currentPrice.amountRial,
+              lineTotalRial: currentPrice.amountRial,
+            },
+          },
+          timeline: {
+            create: {
+              type: 'created',
+              toStatus: 'PAID',
+              actorId: 'payment:fake',
+              reason: 'پرداخت تأییدشدهٔ آزمون پذیرش',
+              correlationId: randomUUID(),
+              idempotencyKey: `m6-e2e-created-${token}`,
+              createdAt: now,
+            },
+          },
+        },
+        include: { items: true },
+      });
+      await transaction.inventory.update({
+        where: { skuId: sku.id },
+        data: { physicalQuantity: { decrement: 1 }, version: { increment: 1 } },
+      });
+      await transaction.inventoryMovement.create({
+        data: {
+          skuId: sku.id,
+          action: 'SALE',
+          quantityDelta: -1,
+          beforePhysicalQuantity: startingInventory.physicalQuantity,
+          afterPhysicalQuantity: startingInventory.physicalQuantity - 1,
+          beforeReservedQuantity: startingInventory.reservedQuantity,
+          afterReservedQuantity: startingInventory.reservedQuantity,
+          actorId: 'payment:fake',
+          reason: 'فروش تأییدشدهٔ آزمون پذیرش',
+          correlationId: randomUUID(),
+          idempotencyKey: `m6-e2e-sale-${token}`,
+          orderId: order.id,
+        },
+      });
+      return order;
+    });
+    const orderItem = result.items[0];
+    if (orderItem === undefined) throw new Error('Expected M6 E2E Order item.');
+    return { orderNumber: result.orderNumber, orderItemId: orderItem.id };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Promise<void> {
   const prisma = guardedClient();
   try {
@@ -102,6 +251,16 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
       select: { id: true },
     });
     const orderIds = orders.map((order) => order.id);
+    const returns = await prisma.returnRequest.findMany({
+      where: { orderId: { in: orderIds } },
+      select: { id: true },
+    });
+    const returnIds = returns.map((request) => request.id);
+    const refunds = await prisma.refund.findMany({
+      where: { orderId: { in: orderIds } },
+      select: { id: true },
+    });
+    const refundIds = refunds.map((refund) => refund.id);
     const reservations = await prisma.inventoryReservation.findMany({
       where: { checkoutSessionId: { in: checkoutIds } },
       select: { id: true },
@@ -124,17 +283,27 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
         ],
       },
     });
+    await prisma.refundAttempt.deleteMany({ where: { refundId: { in: refundIds } } });
+    await prisma.refund.deleteMany({ where: { id: { in: refundIds } } });
+    await prisma.returnItem.deleteMany({ where: { returnRequestId: { in: returnIds } } });
     await prisma.inventoryMovement.deleteMany({
       where: {
-        OR: [{ reservationId: { in: reservationIds } }, { orderId: { in: orderIds } }],
+        OR: [
+          { reservationId: { in: reservationIds } },
+          { orderId: { in: orderIds } },
+          { returnRequestId: { in: returnIds } },
+        ],
       },
     });
+    await prisma.returnRequest.deleteMany({ where: { id: { in: returnIds } } });
     await prisma.businessEvent.deleteMany({
       where: { entityId: { in: [...checkoutIds, ...attemptIds, ...orderIds] } },
     });
     await prisma.orderOutfitComponent.deleteMany({
       where: { orderItem: { orderId: { in: orderIds } } },
     });
+    await prisma.orderTimelineEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+    await prisma.shipmentTrackingRevision.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
     await prisma.paymentAttempt.deleteMany({ where: { id: { in: attemptIds } } });

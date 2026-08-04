@@ -318,6 +318,20 @@ describe('Milestone 6 operations, fulfillment and returns on PostgreSQL', () => 
       fulfillmentStatus: 'delivered',
       tracking: { trackingNumber: 'IR-POST-12345' },
     });
+    const auditMatches = await service.listAuditEvents(
+      {
+        from: null,
+        to: null,
+        eventType: null,
+        actor: null,
+        entityType: null,
+        entityId: null,
+        search: fixture.order.orderNumber,
+        limit: 20,
+      },
+      actor,
+    );
+    expect(auditMatches.length).toBeGreaterThan(0);
     await expect(
       service.transitionOrder({
         orderNumber: fixture.order.orderNumber,

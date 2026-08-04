@@ -1402,6 +1402,57 @@ export class PrismaOperationsRepository implements OperationsRepository {
       occurredAt: Date;
     }>[]
   > {
+    if (query.search !== null) {
+      const conditions: Prisma.Sql[] = [
+        Prisma.sql`(
+          "type" ILIKE ${`%${query.search}%`}
+          OR "actor_id" ILIKE ${`%${query.search}%`}
+          OR "entity_type" ILIKE ${`%${query.search}%`}
+          OR "entity_id" ILIKE ${`%${query.search}%`}
+          OR "payload"::text ILIKE ${`%${query.search}%`}
+        )`,
+      ];
+      if (query.from !== null) conditions.push(Prisma.sql`"created_at" >= ${query.from}`);
+      if (query.to !== null) conditions.push(Prisma.sql`"created_at" <= ${query.to}`);
+      if (query.eventType !== null) conditions.push(Prisma.sql`"type" = ${query.eventType}`);
+      if (query.actor !== null) conditions.push(Prisma.sql`"actor_id" = ${query.actor}`);
+      if (query.entityType !== null)
+        conditions.push(Prisma.sql`"entity_type" = ${query.entityType}`);
+      if (query.entityId !== null) conditions.push(Prisma.sql`"entity_id" = ${query.entityId}`);
+      if (actor.role === 'instagram_admin')
+        conditions.push(Prisma.sql`"actor_id" = ${actor.actorId}`);
+      const rows = await this.transactions.client().$queryRaw<
+        Array<{
+          id: string;
+          type: string;
+          actorId: string;
+          entityType: string;
+          entityId: string;
+          correlationId: string;
+          payload: Prisma.JsonValue;
+          createdAt: Date;
+        }>
+      >(Prisma.sql`
+        SELECT
+          "id", "type", "actor_id" AS "actorId", "entity_type" AS "entityType",
+          "entity_id" AS "entityId", "correlation_id" AS "correlationId",
+          "payload", "created_at" AS "createdAt"
+        FROM "business_events"
+        WHERE ${Prisma.join(conditions, ' AND ')}
+        ORDER BY "created_at" DESC, "id" DESC
+        LIMIT ${query.limit}
+      `);
+      return rows.map((row) => ({
+        id: row.id,
+        eventType: row.type,
+        actorId: row.actorId,
+        entityType: row.entityType,
+        entityId: row.entityId,
+        correlationId: row.correlationId,
+        payload: row.payload as Readonly<Record<string, unknown>>,
+        occurredAt: row.createdAt,
+      }));
+    }
     const where: Prisma.BusinessEventWhereInput = {
       ...(query.from === null && query.to === null
         ? {}
@@ -1415,16 +1466,6 @@ export class PrismaOperationsRepository implements OperationsRepository {
       ...(query.actor === null ? {} : { actorId: query.actor }),
       ...(query.entityType === null ? {} : { entityType: query.entityType }),
       ...(query.entityId === null ? {} : { entityId: query.entityId }),
-      ...(query.search === null
-        ? {}
-        : {
-            OR: [
-              { type: { contains: query.search, mode: 'insensitive' } },
-              { actorId: { contains: query.search, mode: 'insensitive' } },
-              { entityType: { contains: query.search, mode: 'insensitive' } },
-              { entityId: { contains: query.search, mode: 'insensitive' } },
-            ],
-          }),
       ...(actor.role === 'instagram_admin' ? { actorId: actor.actorId } : {}),
     };
     const rows = await this.transactions.client().businessEvent.findMany({
