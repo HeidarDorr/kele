@@ -78,6 +78,11 @@ fragment. Mixed Product/Outfit demand for a shared SKU is aggregated before
 the availability check. Payment replay creates one Order and consumes the
 complete component set once.
 
+The 2026-08-04 dependency follow-up advances the workspace overrides to
+`brace-expansion@5.0.9` and `postcss@8.5.23`. The regenerated pnpm lockfile is
+compatible with the pinned Next.js, Vitest and ESLint toolchain, and
+`corepack pnpm@11.18.0 audit` reports no known vulnerabilities.
+
 ## Browser evidence
 
 Deterministic captures are stored in `output/playwright/milestone-5/` for:
@@ -103,6 +108,13 @@ The browser assertions cover `lang="fa-IR"`, `dir="rtl"`, keyboard skip-link
 focus, useful server HTML, semantic names, disabled unavailable size,
 mixed-direction identifiers, image readiness, reduced motion and absence of
 horizontal overflow.
+
+Cart evidence now renders the versioned editorial thumbnail directly instead
+of relying on a responsive Next.js optimizer candidate. This removes the
+hydration race that alternated between 1x and higher-density sources for
+`cart-outfit-old-revision-review-laptop.png`; Playwright asserts the direct
+source path, DPR, rendered width and sufficient decoded resolution before
+capture. The affected Cart baselines were reviewed and refreshed together.
 
 ## Monitor-ready handoff
 

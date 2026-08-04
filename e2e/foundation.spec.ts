@@ -662,11 +662,11 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.goto(`${e2eUrls.storefront}/outfits`);
     await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await page.evaluate(() => {
-      document.body.tabIndex = -1;
-      document.body.focus();
+    const body = page.locator('body');
+    await body.evaluate((element) => {
+      element.tabIndex = -1;
     });
-    await page.keyboard.press('Tab');
+    await body.press('Tab');
     await expect(page.getByRole('link', { name: 'رفتن به محتوای اصلی' })).toBeFocused();
     await page.evaluate(() => {
       document.body.removeAttribute('tabindex');
@@ -768,6 +768,27 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.goto(`${e2eUrls.storefront}/cart`);
     await expect(page.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
     await expect(page.getByText(/ادامه خرید تا رفع/)).toBeVisible();
+    const cartImage = page.locator<HTMLImageElement>('.cart-line-media img');
+    await expect
+      .poll(async () =>
+        cartImage.evaluate((image) => ({
+          candidateWidth:
+            image.currentSrc === '' ? null : new URL(image.currentSrc).searchParams.get('w'),
+          clientWidth: image.clientWidth,
+          complete: image.complete,
+          devicePixelRatio: window.devicePixelRatio,
+          sourcePath: image.currentSrc === '' ? null : new URL(image.currentSrc).pathname,
+          sufficientResolution: image.naturalWidth >= image.clientWidth,
+        })),
+      )
+      .toEqual({
+        candidateWidth: null,
+        clientWidth: 128,
+        complete: true,
+        devicePixelRatio: 1,
+        sourcePath: '/media/catalog/linen-suit-front.webp',
+        sufficientResolution: true,
+      });
     await captureMilestoneFiveEvidence(page, 'cart-outfit-old-revision-review-laptop.png');
     await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
     await expect(

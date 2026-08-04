@@ -220,6 +220,11 @@ button:disabled {
   font-size: 2rem;
 }
 
+.cart-line-media img {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 .cart-line-copy {
   min-inline-size: 0;
 }

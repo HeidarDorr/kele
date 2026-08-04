@@ -22,8 +22,9 @@ export function CartLineItem({ line }: { line: CartLine }) {
           <Image
             src={line.image.url}
             alt={line.image.alt}
-            fill
-            sizes="(max-width: 48rem) 80px, 128px"
+            width={256}
+            height={358}
+            unoptimized
             style={{
               objectPosition: `${String(line.image.focalPoint.x * 100)}% ${String(line.image.focalPoint.y * 100)}%`,
             }}
