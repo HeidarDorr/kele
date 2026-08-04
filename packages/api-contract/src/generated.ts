@@ -795,6 +795,193 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search Orders available to authorized operations staff. */
+    get: operations['listAdminOrders'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/orders/{orderNumber}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read one operational Order with immutable service history. */
+    get: operations['getAdminOrder'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/orders/{orderNumber}/transitions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Apply one explicit authorized fulfillment or cancellation transition. */
+    post: operations['transitionAdminOrder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/orders/{orderNumber}/tracking': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Append a tracking revision without rewriting prior tracking facts. */
+    post: operations['appendAdminOrderTracking'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/returns': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List return requests for authorized review. */
+    get: operations['listAdminReturns'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/refunds/{refundId}/retry': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Retry one non-confirmed provider-neutral refund idempotently. */
+    post: operations['retryAdminRefund'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/audit-events': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search immutable business events using bounded filters. */
+    get: operations['listAdminAuditEvents'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/bulk-operations/price/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Validate and persist a price bulk-operation preview. */
+    post: operations['previewAdminPriceBulkOperation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/bulk-operations/inventory/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Validate and persist an inventory bulk-operation preview. */
+    post: operations['previewAdminInventoryBulkOperation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/bulk-operations/{bulkOperationId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read one persisted bulk preview or apply result. */
+    get: operations['getAdminBulkOperation'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/bulk-operations/{bulkOperationId}/apply': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Apply exactly the validated targets from an unexpired preview. */
+    post: operations['applyAdminBulkOperation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/homepage': {
     parameters: {
       query?: never;
@@ -1221,10 +1408,13 @@ export interface components {
       orderNumber: string;
       /** Format: date-time */
       createdAt: string;
-      /** @enum {string} */
-      fulfillmentStatus: 'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
+      fulfillmentStatus: components['schemas']['OrderFulfillmentStatus'];
       paidTotal: components['schemas']['Money'];
+      version: number;
     };
+    /** @enum {string} */
+    OrderFulfillmentStatus:
+      'paid' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
     Order: components['schemas']['OrderSummary'] & {
       /** Format: date-time */
       paidAt: string;
@@ -1262,9 +1452,66 @@ export interface components {
         provider: 'fake';
         providerTransactionId: string;
       };
+      tracking: components['schemas']['TrackingRevision'] | null;
+      timeline: components['schemas']['OrderTimelineEvent'][];
+      returnEligibility: components['schemas']['ReturnEligibility'];
+      returns: components['schemas']['ReturnRequest'][];
+      refunds: components['schemas']['Refund'][];
+    };
+    AdminOrder: components['schemas']['Order'] & {
+      /** Format: uuid */
+      customerId: string;
+    };
+    AdminOrderPage: {
+      items: components['schemas']['AdminOrder'][];
+      page: components['schemas']['CursorPage'];
+    };
+    OrderTransitionInput: {
+      toStatus: components['schemas']['OrderFulfillmentStatus'];
+      reason: string;
+      tracking?: components['schemas']['TrackingInput'];
+    };
+    TrackingInput: {
+      carrier: string;
+      trackingNumber: string;
+      /** Format: uri */
+      trackingUrl?: string | null;
+    };
+    TrackingRevision: components['schemas']['TrackingInput'] & {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      recordedAt: string;
+    };
+    OrderTimelineEvent: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      type:
+        | 'created'
+        | 'fulfillment_transition'
+        | 'tracking_updated'
+        | 'return_submitted'
+        | 'return_decided'
+        | 'refund_updated';
+      fromStatus: components['schemas']['OrderFulfillmentStatus'] | null;
+      toStatus: components['schemas']['OrderFulfillmentStatus'] | null;
+      actorId: string;
+      reason: string | null;
+      /** Format: date-time */
+      occurredAt: string;
+    };
+    ReturnEligibility: {
+      eligible: boolean;
+      /** Format: date-time */
+      deliveredAt: string | null;
+      /** Format: date-time */
+      deadline: string | null;
+      /** @enum {string} */
+      code: 'eligible' | 'not_delivered' | 'window_expired' | 'no_remaining_quantity';
     };
     /** @enum {string} */
-    ReturnStatus: 'submitted' | 'approved' | 'rejected' | 'completed';
+    ReturnStatus: 'submitted' | 'approved' | 'rejected' | 'refund_pending' | 'completed';
     ReturnRequestInput: {
       orderNumber: string;
       items: {
@@ -1290,9 +1537,30 @@ export interface components {
       deliveryConfirmedAt: string;
       /** Format: date-time */
       eligibilityDeadline: string;
+      /** Format: date-time */
+      decidedAt?: string | null;
+      decisionReason?: string | null;
+      refund?: components['schemas']['Refund'] | null;
     };
     ReturnDecisionInput: {
       reason: string;
+    };
+    /** @enum {string} */
+    RefundStatus: 'pending_provider' | 'confirmed' | 'failed';
+    Refund: {
+      /** Format: uuid */
+      id: string;
+      orderNumber: string;
+      amount: components['schemas']['Money'];
+      /** @enum {string} */
+      provider: 'fake';
+      providerReference?: string | null;
+      status: components['schemas']['RefundStatus'];
+      /** Format: date-time */
+      requestedAt: string;
+      /** Format: date-time */
+      confirmedAt: string | null;
+      failureCode: string | null;
     };
     Inventory: {
       /** Format: uuid */
@@ -1301,6 +1569,80 @@ export interface components {
       reservedQuantity: number;
       availableQuantity: number;
       version: number;
+    };
+    AuditEvent: {
+      /** Format: uuid */
+      id: string;
+      eventType: string;
+      actorId: string;
+      entityType: string;
+      entityId: string;
+      /** Format: uuid */
+      correlationId: string;
+      payload: {
+        [key: string]: unknown;
+      };
+      /** Format: date-time */
+      occurredAt: string;
+    };
+    AuditEventPage: {
+      items: components['schemas']['AuditEvent'][];
+      page: components['schemas']['CursorPage'];
+    };
+    BulkCatalogFilters: {
+      skuIds?: string[];
+      productIds?: string[];
+      categoryIds?: string[];
+      statuses?: components['schemas']['PublicationStatus'][];
+      sizes?: string[];
+    };
+    PriceBulkPreviewInput: {
+      filters: components['schemas']['BulkCatalogFilters'];
+      adjustment: {
+        /** @enum {string} */
+        type: 'fixed_amount' | 'percentage_increase' | 'percentage_decrease';
+        value: number;
+      };
+      reason: string;
+    };
+    InventoryBulkPreviewInput: {
+      filters: components['schemas']['BulkCatalogFilters'];
+      /** @enum {string} */
+      action: 'production' | 'manual_correction' | 'damaged_goods';
+      quantity: number;
+      reason: string;
+    };
+    BulkOperation: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: 'price' | 'inventory';
+      /** @enum {string} */
+      status: 'previewed' | 'applied' | 'partial_failed' | 'failed';
+      reason: string;
+      version: number;
+      /** Format: date-time */
+      expiresAt: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      appliedAt?: string | null;
+      summary: {
+        total: number;
+        succeeded: number;
+        failed: number;
+      };
+      items: {
+        /** Format: uuid */
+        skuId: string;
+        skuCode: string;
+        beforeValue: number;
+        proposedValue: number;
+        expectedVersion: number;
+        /** @enum {string} */
+        status: 'valid' | 'applied' | 'failed';
+        failureCode: string | null;
+      }[];
     };
     AdminCategoryInput: {
       name: string;
@@ -1522,6 +1864,9 @@ export interface components {
     OutfitId: string;
     SkuId: string;
     ReturnId: string;
+    OrderNumber: string;
+    RefundId: string;
+    BulkOperationId: string;
     IdempotencyKey: string;
     /** @description Optimistic resource version. */
     IfMatch: string;
@@ -2073,6 +2418,8 @@ export interface operations {
       query?: never;
       header: {
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
       };
       path?: never;
       cookie?: never;
@@ -3121,6 +3468,319 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ReturnRequest'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminOrders: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+        status?: components['schemas']['OrderFulfillmentStatus'];
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Authorized operational Order page. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOrderPage'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminOrder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        orderNumber: components['parameters']['OrderNumber'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Operational Order detail with immutable timeline and service workflows. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOrder'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  transitionAdminOrder: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        orderNumber: components['parameters']['OrderNumber'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OrderTransitionInput'];
+      };
+    };
+    responses: {
+      /** @description Transition and all synchronous business effects applied once. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOrder'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  appendAdminOrderTracking: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        orderNumber: components['parameters']['OrderNumber'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TrackingInput'];
+      };
+    };
+    responses: {
+      /** @description Tracking revision appended. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOrder'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminReturns: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+        status?: components['schemas']['ReturnStatus'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Return requests available to authorized reviewers. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            items: components['schemas']['ReturnRequest'][];
+            page: components['schemas']['CursorPage'];
+          };
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  retryAdminRefund: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+      };
+      path: {
+        refundId: components['parameters']['RefundId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          reason: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Current refund result after the retry. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Refund'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminAuditEvents: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+        from?: string;
+        to?: string;
+        eventType?: string;
+        actor?: string;
+        entityType?: string;
+        entityId?: string;
+        search?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Filtered immutable event page. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuditEventPage'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminPriceBulkOperation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PriceBulkPreviewInput'];
+      };
+    };
+    responses: {
+      /** @description Persisted validated preview; no prices changed. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkOperation'];
+        };
+      };
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminInventoryBulkOperation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InventoryBulkPreviewInput'];
+      };
+    };
+    responses: {
+      /** @description Persisted validated preview; no inventory changed. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkOperation'];
+        };
+      };
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminBulkOperation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bulkOperationId: components['parameters']['BulkOperationId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Preview or apply result. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkOperation'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  applyAdminBulkOperation: {
+    parameters: {
+      query?: never;
+      header: {
+        'Idempotency-Key': components['parameters']['IdempotencyKey'];
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        bulkOperationId: components['parameters']['BulkOperationId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Stored applied or partial-failure result. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkOperation'];
         };
       };
       409: components['responses']['Problem'];

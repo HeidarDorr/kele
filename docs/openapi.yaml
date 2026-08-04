@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: KELE API
-  version: 0.2.0
+  version: 0.3.0
   summary: Baseline contract for the KELE storefront and administration API.
   description: |
     This contract is the transport-level source of truth for version 1.
@@ -28,7 +28,15 @@ tags:
   - name: Admin Outfits
     description: Immutable Outfit authoring, validation, publication and revision history.
   - name: Admin Inventory
+    description: Authorized SKU inventory projections and auditable movements.
   - name: Admin Returns
+    description: Authorized return decisions and provider-neutral refund operations.
+  - name: Admin Orders
+    description: Authorized fulfillment, tracking, cancellation and immutable timeline operations.
+  - name: Admin Bulk Operations
+    description: Persisted preview and validated apply workflows for price and inventory changes.
+  - name: Admin Audit
+    description: Searchable immutable business-event exploration.
   - name: Admin Content
     description: Administrative content operations.
 
@@ -517,6 +525,7 @@ paths:
       summary: Submit a return request within 24 hours after confirmed delivery.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
       requestBody:
         required: true
         content:
@@ -1495,6 +1504,338 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /admin/orders:
+    get:
+      operationId: listAdminOrders
+      tags: [Admin Orders]
+      summary: Search Orders available to authorized operations staff.
+      security:
+        - SessionCookie: [orders:read]
+      parameters:
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderFulfillmentStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+      responses:
+        '200':
+          description: Authorized operational Order page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrderPage'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/orders/{orderNumber}:
+    get:
+      operationId: getAdminOrder
+      tags: [Admin Orders]
+      summary: Read one operational Order with immutable service history.
+      security:
+        - SessionCookie: [orders:read]
+      parameters:
+        - $ref: '#/components/parameters/OrderNumber'
+      responses:
+        '200':
+          description: Operational Order detail with immutable timeline and service workflows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrder'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/orders/{orderNumber}/transitions:
+    post:
+      operationId: transitionAdminOrder
+      tags: [Admin Orders]
+      summary: Apply one explicit authorized fulfillment or cancellation transition.
+      security:
+        - SessionCookie: [orders:transition]
+      parameters:
+        - $ref: '#/components/parameters/OrderNumber'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderTransitionInput'
+      responses:
+        '200':
+          description: Transition and all synchronous business effects applied once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrder'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/orders/{orderNumber}/tracking:
+    post:
+      operationId: appendAdminOrderTracking
+      tags: [Admin Orders]
+      summary: Append a tracking revision without rewriting prior tracking facts.
+      security:
+        - SessionCookie: [orders:transition]
+      parameters:
+        - $ref: '#/components/parameters/OrderNumber'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackingInput'
+      responses:
+        '200':
+          description: Tracking revision appended.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrder'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/returns:
+    get:
+      operationId: listAdminReturns
+      tags: [Admin Returns]
+      summary: List return requests for authorized review.
+      security:
+        - SessionCookie: [returns:read]
+      parameters:
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ReturnStatus'
+      responses:
+        '200':
+          description: Return requests available to authorized reviewers.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, page]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReturnRequest'
+                  page:
+                    $ref: '#/components/schemas/CursorPage'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/refunds/{refundId}/retry:
+    post:
+      operationId: retryAdminRefund
+      tags: [Admin Returns]
+      summary: Retry one non-confirmed provider-neutral refund idempotently.
+      security:
+        - SessionCookie: [refunds:write]
+      parameters:
+        - $ref: '#/components/parameters/RefundId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  minLength: 3
+                  maxLength: 500
+      responses:
+        '200':
+          description: Current refund result after the retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/audit-events:
+    get:
+      operationId: listAdminAuditEvents
+      tags: [Admin Audit]
+      summary: Search immutable business events using bounded filters.
+      security:
+        - SessionCookie: [audit:read]
+      parameters:
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: eventType
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+        - name: actor
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+        - name: entityType
+          in: query
+          schema:
+            type: string
+            maxLength: 80
+        - name: entityId
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+      responses:
+        '200':
+          description: Filtered immutable event page.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventPage'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/bulk-operations/price/preview:
+    post:
+      operationId: previewAdminPriceBulkOperation
+      tags: [Admin Bulk Operations]
+      summary: Validate and persist a price bulk-operation preview.
+      security:
+        - SessionCookie: [pricing:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceBulkPreviewInput'
+      responses:
+        '201':
+          description: Persisted validated preview; no prices changed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperation'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/bulk-operations/inventory/preview:
+    post:
+      operationId: previewAdminInventoryBulkOperation
+      tags: [Admin Bulk Operations]
+      summary: Validate and persist an inventory bulk-operation preview.
+      security:
+        - SessionCookie: [inventory:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryBulkPreviewInput'
+      responses:
+        '201':
+          description: Persisted validated preview; no inventory changed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperation'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/bulk-operations/{bulkOperationId}:
+    get:
+      operationId: getAdminBulkOperation
+      tags: [Admin Bulk Operations]
+      summary: Read one persisted bulk preview or apply result.
+      security:
+        - SessionCookie: [inventory:read]
+      parameters:
+        - $ref: '#/components/parameters/BulkOperationId'
+      responses:
+        '200':
+          description: Preview or apply result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperation'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/bulk-operations/{bulkOperationId}/apply:
+    post:
+      operationId: applyAdminBulkOperation
+      tags: [Admin Bulk Operations]
+      summary: Apply exactly the validated targets from an unexpired preview.
+      security:
+        - SessionCookie: [inventory:write]
+      parameters:
+        - $ref: '#/components/parameters/BulkOperationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Stored applied or partial-failure result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperation'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /admin/homepage:
     get:
       operationId: getAdminHomepage
@@ -1663,6 +2004,28 @@ components:
         format: uuid
     ReturnId:
       name: returnId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OrderNumber:
+      name: orderNumber
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 40
+    RefundId:
+      name: refundId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    BulkOperationId:
+      name: bulkOperationId
       in: path
       required: true
       schema:
@@ -2642,7 +3005,7 @@ components:
 
     OrderSummary:
       type: object
-      required: [orderNumber, createdAt, fulfillmentStatus, paidTotal]
+      required: [orderNumber, createdAt, fulfillmentStatus, paidTotal, version]
       properties:
         orderNumber:
           type: string
@@ -2650,17 +3013,35 @@ components:
           type: string
           format: date-time
         fulfillmentStatus:
-          type: string
-          enum: [paid, preparing, shipped, delivered, cancelled, returned]
+          $ref: '#/components/schemas/OrderFulfillmentStatus'
         paidTotal:
           $ref: '#/components/schemas/Money'
+        version:
+          type: integer
+          minimum: 1
+
+    OrderFulfillmentStatus:
+      type: string
+      enum: [paid, preparing, shipped, delivered, cancelled, returned]
 
     Order:
       allOf:
         - $ref: '#/components/schemas/OrderSummary'
         - type: object
           additionalProperties: false
-          required: [paidAt, itemsSubtotal, shippingTotal, items, address, shipping, payment]
+          required:
+            - paidAt
+            - itemsSubtotal
+            - shippingTotal
+            - items
+            - address
+            - shipping
+            - payment
+            - tracking
+            - timeline
+            - returnEligibility
+            - returns
+            - refunds
           properties:
             paidAt:
               type: string
@@ -2761,10 +3142,139 @@ components:
                   enum: [fake]
                 providerTransactionId:
                   type: string
+            tracking:
+              anyOf:
+                - $ref: '#/components/schemas/TrackingRevision'
+                - type: 'null'
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderTimelineEvent'
+            returnEligibility:
+              $ref: '#/components/schemas/ReturnEligibility'
+            returns:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReturnRequest'
+            refunds:
+              type: array
+              items:
+                $ref: '#/components/schemas/Refund'
+
+    AdminOrder:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          required: [customerId]
+          properties:
+            customerId:
+              type: string
+              format: uuid
+
+    AdminOrderPage:
+      type: object
+      additionalProperties: false
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminOrder'
+        page:
+          $ref: '#/components/schemas/CursorPage'
+
+    OrderTransitionInput:
+      type: object
+      additionalProperties: false
+      required: [toStatus, reason]
+      properties:
+        toStatus:
+          $ref: '#/components/schemas/OrderFulfillmentStatus'
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+        tracking:
+          $ref: '#/components/schemas/TrackingInput'
+
+    TrackingInput:
+      type: object
+      additionalProperties: false
+      required: [carrier, trackingNumber]
+      properties:
+        carrier:
+          type: string
+          minLength: 2
+          maxLength: 120
+        trackingNumber:
+          type: string
+          minLength: 2
+          maxLength: 160
+        trackingUrl:
+          type: [string, 'null']
+          format: uri
+          maxLength: 1000
+
+    TrackingRevision:
+      allOf:
+        - $ref: '#/components/schemas/TrackingInput'
+        - type: object
+          required: [id, recordedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            recordedAt:
+              type: string
+              format: date-time
+
+    OrderTimelineEvent:
+      type: object
+      additionalProperties: false
+      required: [id, type, fromStatus, toStatus, actorId, reason, occurredAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [created, fulfillment_transition, tracking_updated, return_submitted, return_decided, refund_updated]
+        fromStatus:
+          anyOf:
+            - $ref: '#/components/schemas/OrderFulfillmentStatus'
+            - type: 'null'
+        toStatus:
+          anyOf:
+            - $ref: '#/components/schemas/OrderFulfillmentStatus'
+            - type: 'null'
+        actorId:
+          type: string
+        reason:
+          type: [string, 'null']
+        occurredAt:
+          type: string
+          format: date-time
+
+    ReturnEligibility:
+      type: object
+      additionalProperties: false
+      required: [eligible, deliveredAt, deadline, code]
+      properties:
+        eligible:
+          type: boolean
+        deliveredAt:
+          type: [string, 'null']
+          format: date-time
+        deadline:
+          type: [string, 'null']
+          format: date-time
+        code:
+          type: string
+          enum: [eligible, not_delivered, window_expired, no_remaining_quantity]
 
     ReturnStatus:
       type: string
-      enum: [submitted, approved, rejected, completed]
+      enum: [submitted, approved, rejected, refund_pending, completed]
 
     ReturnRequestInput:
       type: object
@@ -2834,6 +3344,15 @@ components:
             eligibilityDeadline:
               type: string
               format: date-time
+            decidedAt:
+              type: [string, 'null']
+              format: date-time
+            decisionReason:
+              type: [string, 'null']
+            refund:
+              anyOf:
+                - $ref: '#/components/schemas/Refund'
+                - type: 'null'
 
     ReturnDecisionInput:
       type: object
@@ -2844,6 +3363,38 @@ components:
           type: string
           minLength: 3
           maxLength: 1000
+
+    RefundStatus:
+      type: string
+      enum: [pending_provider, confirmed, failed]
+
+    Refund:
+      type: object
+      additionalProperties: false
+      required: [id, orderNumber, amount, provider, status, requestedAt, confirmedAt, failureCode]
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+        amount:
+          $ref: '#/components/schemas/Money'
+        provider:
+          type: string
+          enum: [fake]
+        providerReference:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/RefundStatus'
+        requestedAt:
+          type: string
+          format: date-time
+        confirmedAt:
+          type: [string, 'null']
+          format: date-time
+        failureCode:
+          type: [string, 'null']
 
     Inventory:
       type: object
@@ -2864,6 +3415,191 @@ components:
         version:
           type: integer
           minimum: 0
+
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [id, eventType, actorId, entityType, entityId, correlationId, payload, occurredAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        actorId:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: string
+        correlationId:
+          type: string
+          format: uuid
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    AuditEventPage:
+      type: object
+      additionalProperties: false
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        page:
+          $ref: '#/components/schemas/CursorPage'
+
+    BulkCatalogFilters:
+      type: object
+      additionalProperties: false
+      properties:
+        skuIds:
+          type: array
+          uniqueItems: true
+          maxItems: 500
+          items:
+            type: string
+            format: uuid
+        productIds:
+          type: array
+          uniqueItems: true
+          maxItems: 100
+          items:
+            type: string
+            format: uuid
+        categoryIds:
+          type: array
+          uniqueItems: true
+          maxItems: 100
+          items:
+            type: string
+            format: uuid
+        statuses:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PublicationStatus'
+        sizes:
+          type: array
+          uniqueItems: true
+          maxItems: 40
+          items:
+            type: string
+            maxLength: 40
+
+    PriceBulkPreviewInput:
+      type: object
+      additionalProperties: false
+      required: [filters, adjustment, reason]
+      properties:
+        filters:
+          $ref: '#/components/schemas/BulkCatalogFilters'
+        adjustment:
+          type: object
+          additionalProperties: false
+          required: [type, value]
+          properties:
+            type:
+              type: string
+              enum: [fixed_amount, percentage_increase, percentage_decrease]
+            value:
+              type: integer
+              minimum: 1
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+
+    InventoryBulkPreviewInput:
+      type: object
+      additionalProperties: false
+      required: [filters, action, quantity, reason]
+      properties:
+        filters:
+          $ref: '#/components/schemas/BulkCatalogFilters'
+        action:
+          type: string
+          enum: [production, manual_correction, damaged_goods]
+        quantity:
+          type: integer
+          not:
+            const: 0
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+
+    BulkOperation:
+      type: object
+      additionalProperties: false
+      required: [id, kind, status, reason, version, expiresAt, items, summary, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [price, inventory]
+        status:
+          type: string
+          enum: [previewed, applied, partial_failed, failed]
+        reason:
+          type: string
+        version:
+          type: integer
+          minimum: 1
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        appliedAt:
+          type: [string, 'null']
+          format: date-time
+        summary:
+          type: object
+          additionalProperties: false
+          required: [total, succeeded, failed]
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            succeeded:
+              type: integer
+              minimum: 0
+            failed:
+              type: integer
+              minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [skuId, skuCode, beforeValue, proposedValue, expectedVersion, status, failureCode]
+            properties:
+              skuId:
+                type: string
+                format: uuid
+              skuCode:
+                type: string
+              beforeValue:
+                type: integer
+              proposedValue:
+                type: integer
+              expectedVersion:
+                type: integer
+                minimum: 1
+              status:
+                type: string
+                enum: [valid, applied, failed]
+              failureCode:
+                type: [string, 'null']
 
     AdminCategoryInput:
       type: object
