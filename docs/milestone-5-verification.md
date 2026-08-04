@@ -89,6 +89,16 @@ Deterministic captures are stored in `output/playwright/milestone-5/` for:
 - old revision `requires_review` Cart handling;
 - an additional Playwright CLI production-page check at 1440×900.
 
+The 24 changed Milestone 2–4 visual baselines were reviewed side by side and
+refreshed because Milestone 5 intentionally extends the global storefront
+navigation with Outfit discovery and the administration navigation with Outfit
+authoring/history destinations. The underlying Milestone 2–4 page content and
+states remain unchanged. During this review, the administration navigation was
+made a contained two-column grid at the mobile breakpoint so its complete
+wordmark and all four destinations remain inside the viewport. Outfit evidence
+timestamps now use the fixed E2E clock/seed rather than the calendar date of the
+test run.
+
 The browser assertions cover `lang="fa-IR"`, `dir="rtl"`, keyboard skip-link
 focus, useful server HTML, semantic names, disabled unavailable size,
 mixed-direction identifiers, image readiness, reduced motion and absence of

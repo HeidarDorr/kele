@@ -106,6 +106,31 @@ async function captureEvidence(
   await page.waitForFunction(() =>
     Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0),
   );
+  await page.evaluate(async () => {
+    let previousSignature = '';
+    let stableFrames = 0;
+    for (let frame = 0; frame < 180; frame += 1) {
+      await new Promise<void>((resolveFrame) => {
+        window.requestAnimationFrame(() => {
+          resolveFrame();
+        });
+      });
+      const images: HTMLImageElement[] = Array.from(document.images);
+      let signature = '';
+      for (const image of images) {
+        signature += `${String(image.currentSrc)}|${String(image.complete)}|${String(image.naturalWidth)}|${String(image.naturalHeight)};`;
+      }
+      const ready = images.every((image) => image.complete && image.naturalWidth > 0);
+      if (ready && signature === previousSignature) stableFrames += 1;
+      else stableFrames = 0;
+      if (stableFrames >= 20) {
+        for (const image of images) await image.decode();
+        return;
+      }
+      previousSignature = signature;
+    }
+    throw new Error('Evidence image sources did not stabilize before capture.');
+  });
   await page.waitForFunction(() => document.fonts.status === 'loaded');
   await page.evaluate(async (captureOptions) => {
     await document.fonts.ready;
@@ -223,6 +248,18 @@ async function captureMilestoneEvidence(
   }
   await mkdir(fixture.evidenceDirectory, { recursive: true });
   await captureEvidence(page, resolve(fixture.evidenceDirectory, filename), {
+    ...options,
+    stabilizePage: true,
+  });
+}
+
+async function captureMilestoneFiveEvidence(
+  page: Page,
+  filename: string,
+  options: { preserveFocus?: boolean } = {},
+): Promise<void> {
+  await mkdir(milestoneFiveEvidenceDirectory, { recursive: true });
+  await captureEvidence(page, resolve(milestoneFiveEvidenceDirectory, filename), {
     ...options,
     stabilizePage: true,
   });
@@ -586,6 +623,26 @@ test('administration is responsive and exposes validation and inventory states',
       await expect(page.locator('.admin-brand .brand-wordmark-fa')).toBeHidden();
       await expect(page.locator('.admin-brand .brand-wordmark-latin')).toBeVisible();
     }
+    const visibleWordmark = page.locator(
+      typographyVariant === 'markazi'
+        ? '.admin-brand .brand-wordmark-fa'
+        : '.admin-brand .brand-wordmark-latin',
+    );
+    expect(
+      await visibleWordmark.evaluate((wordmark) => {
+        const bounds = wordmark.getBoundingClientRect();
+        return bounds.left >= 0 && bounds.right <= window.innerWidth;
+      }),
+    ).toBe(true);
+    await expect(page.locator('.admin-sidebar nav a')).toHaveCount(4);
+    expect(
+      await page.locator('.admin-sidebar nav a').evaluateAll((links) =>
+        links.every((link) => {
+          const bounds = link.getBoundingClientRect();
+          return bounds.left >= 0 && bounds.right <= window.innerWidth;
+        }),
+      ),
+    ).toBe(true);
     expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
       true,
     );
@@ -605,17 +662,22 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.goto(`${e2eUrls.storefront}/outfits`);
     await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await page.evaluate(() => {
+      document.body.tabIndex = -1;
+      document.body.focus();
+    });
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'رفتن به محتوای اصلی' })).toBeFocused();
+    await page.evaluate(() => {
+      document.body.removeAttribute('tabindex');
+    });
     await expect(
       page.getByRole('heading', { name: 'یک انتخاب کامل، بدون حدس میان اندازه‌ها' }),
     ).toBeVisible();
     await expect(page.getByRole('link', { name: /مشاهدهٔ استایل استایل لینن آرام/ })).toBeVisible();
-    await captureEvidence(
-      page,
-      resolve(milestoneFiveEvidenceDirectory, 'outfits-index-laptop.png'),
-      { preserveFocus: true },
-    );
+    await captureMilestoneFiveEvidence(page, 'outfits-index-laptop.png', {
+      preserveFocus: true,
+    });
 
     for (const state of [
       { name: 'loading', label: 'در حال چیدن استایل‌ها…' },
@@ -624,10 +686,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     ] as const) {
       await page.goto(`${e2eUrls.storefront}/outfits?state=${state.name}`);
       await expect(page.getByText(state.label).first()).toBeVisible();
-      await captureEvidence(
-        page,
-        resolve(milestoneFiveEvidenceDirectory, `outfits-${state.name}-laptop.png`),
-      );
+      await captureMilestoneFiveEvidence(page, `outfits-${state.name}-laptop.png`);
     }
 
     for (const viewport of [
@@ -647,10 +706,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
-      await captureEvidence(
-        page,
-        resolve(milestoneFiveEvidenceDirectory, `outfit-detail-${viewport.name}.png`),
-      );
+      await captureMilestoneFiveEvidence(page, `outfit-detail-${viewport.name}.png`);
     }
 
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -679,10 +735,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
-      await captureEvidence(
-        page,
-        resolve(milestoneFiveEvidenceDirectory, `admin-outfits-${viewport.name}.png`),
-      );
+      await captureMilestoneFiveEvidence(page, `admin-outfits-${viewport.name}.png`);
     }
 
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -695,10 +748,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await expect(page.getByLabel(/کت‌وشلوار لینن بژ · بژ/).first()).toContainText(
       'KELE-LINEN-BEIGE-5Y',
     );
-    await captureEvidence(
-      page,
-      resolve(milestoneFiveEvidenceDirectory, 'admin-outfit-edit-laptop.png'),
-    );
+    await captureMilestoneFiveEvidence(page, 'admin-outfit-edit-laptop.png');
     await page.getByLabel('نام استایل').fill('استایل لینن آرام — ویرایش دوم');
     await page.getByRole('button', { name: 'ذخیره در پیش‌نویس تازه' }).click();
     await expect(page).toHaveURL(/\/outfits\/[^/]+\/edit\?notice=updated/);
@@ -709,10 +759,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await expect(
       page.getByRole('heading', { level: 1, name: 'استایل لینن آرام — ویرایش دوم' }),
     ).toBeVisible();
-    await captureEvidence(
-      page,
-      resolve(milestoneFiveEvidenceDirectory, 'admin-outfit-preview-laptop.png'),
-    );
+    await captureMilestoneFiveEvidence(page, 'admin-outfit-preview-laptop.png');
     await page.getByRole('link', { name: 'بازگشت به ویرایش' }).click();
     await page.getByRole('button', { name: 'انتشار این ویرایش' }).click();
     await expect(page.getByRole('status')).toContainText('ویرایش قبلی تاریخی شد');
@@ -721,10 +768,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.goto(`${e2eUrls.storefront}/cart`);
     await expect(page.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
     await expect(page.getByText(/ادامه خرید تا رفع/)).toBeVisible();
-    await captureEvidence(
-      page,
-      resolve(milestoneFiveEvidenceDirectory, 'cart-outfit-old-revision-review-laptop.png'),
-    );
+    await captureMilestoneFiveEvidence(page, 'cart-outfit-old-revision-review-laptop.png');
     await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
     await expect(
       page.getByRole('heading', { name: 'استایل لینن آرام — ویرایش دوم' }),

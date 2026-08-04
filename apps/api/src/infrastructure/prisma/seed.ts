@@ -174,6 +174,7 @@ async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<v
         id: outfitRevisionId,
         outfitId,
         revisionNumber: 1,
+        createdAt: publishedAt,
         state: OutfitRevisionState.DRAFT,
         name: 'استایل لینن آرام',
         description:

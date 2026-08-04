@@ -625,6 +625,7 @@ bdi,
 
   .admin-sidebar {
     position: static;
+    min-inline-size: 0;
     min-block-size: auto;
     block-size: auto;
     padding: 1.25rem;
@@ -654,6 +655,16 @@ bdi,
 }
 
 @media (max-width: 44rem) {
+  .admin-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .admin-sidebar nav a {
+    padding-inline: 0.5rem;
+    text-align: center;
+  }
+
   .admin-main {
     padding: 1.25rem;
   }

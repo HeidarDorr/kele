@@ -5,6 +5,8 @@ import {
   type OutfitCatalogPort,
 } from '../catalog/application/outfit-catalog.contract.js';
 import { PrismaTransactionContext } from '../../infrastructure/prisma/prisma-transaction.context.js';
+import { environment } from '../../platform/config/environment.js';
+import { runtimeClock } from '../../shared/deterministic-runtime.js';
 import { UNIT_OF_WORK, type UnitOfWork } from '../../shared/unit-of-work.js';
 import { OUTFIT_REPOSITORY, type OutfitRepository } from './application/outfit.repository.js';
 import { OutfitService } from './application/outfit.service.js';
@@ -20,7 +22,7 @@ import { AdminSessionGuard } from '../catalog/presentation/admin-session.guard.j
     {
       provide: OUTFIT_REPOSITORY,
       useFactory: (transactions: PrismaTransactionContext): OutfitRepository =>
-        new PrismaOutfitRepository(transactions),
+        new PrismaOutfitRepository(transactions, runtimeClock(environment.E2E_FIXED_TIME)),
       inject: [PrismaTransactionContext],
     },
     {

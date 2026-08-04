@@ -68,6 +68,20 @@ export function OutfitForm({
       ),
     [items, products],
   );
+  const orderedMedia = useMemo(() => {
+    const existingOrder = new Map(outfit?.mediaIds.map((id, index) => [id, index]) ?? []);
+    return media
+      .map((asset, sourceIndex) => ({ asset, sourceIndex }))
+      .sort((left, right) => {
+        const leftIndex = existingOrder.get(left.asset.id);
+        const rightIndex = existingOrder.get(right.asset.id);
+        if (leftIndex !== undefined && rightIndex !== undefined) return leftIndex - rightIndex;
+        if (leftIndex !== undefined) return -1;
+        if (rightIndex !== undefined) return 1;
+        return left.sourceIndex - right.sourceIndex;
+      })
+      .map(({ asset }) => asset);
+  }, [media, outfit]);
   const model = JSON.stringify({
     items: items.map((item, displayOrder) => ({
       id: item.id,
@@ -162,7 +176,7 @@ export function OutfitForm({
           <label>
             تصاویر سردبیری؛ نخستین مورد تصویر شاخص است
             <select name="mediaIds" multiple required defaultValue={outfit?.mediaIds}>
-              {media.map((asset) => (
+              {orderedMedia.map((asset) => (
                 <option key={asset.id} value={asset.id}>
                   {asset.alt}
                 </option>

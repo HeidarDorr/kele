@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { PrismaTransactionContext } from '../../../infrastructure/prisma/prisma-transaction.context.js';
 import { ApplicationError } from '../../../shared/application-error.js';
+import type { Clock } from '../../../shared/deterministic-runtime.js';
 import type { OutfitActor, OutfitRepository } from '../application/outfit.repository.js';
 import type {
   OutfitDraftInput,
@@ -106,7 +107,10 @@ function mapRevision(revision: RevisionWithRelations): OutfitRevisionRecord {
 }
 
 export class PrismaOutfitRepository implements OutfitRepository {
-  constructor(private readonly transactions: PrismaTransactionContext) {}
+  constructor(
+    private readonly transactions: PrismaTransactionContext,
+    private readonly clock: Clock = () => new Date(),
+  ) {}
 
   async listPublic(): Promise<OutfitRevisionRecord[]> {
     const revisions = await this.transactions.client().outfitRevision.findMany({
@@ -292,7 +296,7 @@ export class PrismaOutfitRepository implements OutfitRepository {
     const outfit = await client.outfit.findUnique({ where: { id: outfitId } });
     if (outfit === null) this.notFound();
     if (outfit.version !== expectedVersion) this.versionConflict();
-    const now = new Date();
+    const now = this.clock();
     await client.outfitRevision.updateMany({
       where: { outfitId, state: OutfitRevisionState.PUBLISHED },
       data: { state: OutfitRevisionState.HISTORICAL, supersededAt: now },
@@ -342,7 +346,7 @@ export class PrismaOutfitRepository implements OutfitRepository {
       where: { id: outfitId },
       data: {
         status: PublicationStatus.ARCHIVED,
-        archivedAt: new Date(),
+        archivedAt: this.clock(),
         version: { increment: 1 },
       },
     });

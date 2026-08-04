@@ -527,7 +527,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
   async listMedia(): Promise<MediaValue[]> {
     const media = await this.prisma.mediaAsset.findMany({
       where: { archivedAt: null },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
     });
     return media.map((item) => ({
       id: item.id,
