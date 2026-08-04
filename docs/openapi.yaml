@@ -1610,7 +1610,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrackingInput'
+              $ref: '#/components/schemas/TrackingRevisionInput'
       responses:
         '200':
           description: Tracking revision appended.
@@ -3245,6 +3245,28 @@ components:
             recordedAt:
               type: string
               format: date-time
+
+    TrackingRevisionInput:
+      type: object
+      additionalProperties: false
+      required: [carrier, trackingNumber, reason]
+      properties:
+        carrier:
+          type: string
+          minLength: 2
+          maxLength: 120
+        trackingNumber:
+          type: string
+          minLength: 2
+          maxLength: 160
+        trackingUrl:
+          type: [string, 'null']
+          format: uri
+          maxLength: 1000
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
 
     OrderTimelineEvent:
       type: object
