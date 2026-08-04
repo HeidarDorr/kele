@@ -1428,6 +1428,7 @@ paths:
                   enum:
                     - production
                     - instagram_sale
+                    - instagram_return
                     - manual_correction
                     - damaged_goods
                 quantity:
@@ -3189,7 +3190,9 @@ components:
       required: [toStatus, reason]
       properties:
         toStatus:
-          $ref: '#/components/schemas/OrderFulfillmentStatus'
+          type: string
+          description: Explicit staff-command targets; Returned is derived only after a completed full return.
+          enum: [preparing, shipped, delivered, cancelled]
         reason:
           type: string
           minLength: 3
@@ -3238,7 +3241,15 @@ components:
           format: uuid
         type:
           type: string
-          enum: [created, fulfillment_transition, tracking_updated, return_submitted, return_decided, refund_updated]
+          enum:
+            [
+              created,
+              fulfillment_transition,
+              tracking_updated,
+              return_submitted,
+              return_decided,
+              refund_updated,
+            ]
         fromStatus:
           anyOf:
             - $ref: '#/components/schemas/OrderFulfillmentStatus'
@@ -3581,7 +3592,8 @@ components:
           items:
             type: object
             additionalProperties: false
-            required: [skuId, skuCode, beforeValue, proposedValue, expectedVersion, status, failureCode]
+            required:
+              [skuId, skuCode, beforeValue, proposedValue, expectedVersion, status, failureCode]
             properties:
               skuId:
                 type: string

@@ -23,22 +23,22 @@ append-only transition, inventory, refund and business-event facts.
 Authorization is enforced by server-side policies and never inferred from visible
 navigation, submitted role names or UI state.
 
-| Capability | Super Admin | Inventory Admin | Instagram Admin | Customer |
-| --- | --- | --- | --- | --- |
-| Read/search all Orders and timelines | Allow | Allow | Deny | Own Orders only |
-| Move Paid to Preparing | Allow | Allow | Deny | Deny |
-| Add/edit tracking before delivery | Allow | Allow | Deny | Read own only |
-| Move Preparing to Shipped | Allow | Allow | Deny | Deny |
-| Confirm Shipped as Delivered | Allow | Allow | Deny | Deny |
-| Cancel Paid/Preparing Order | Allow | Allow | Deny | Deny |
-| Submit eligible Website return | Deny | Deny | Deny | Own delivered Order only |
-| Approve/reject Website return | Allow | Allow | Deny | Deny |
-| Request/retry refund | Allow | Allow | Deny | Read own result only |
-| Individual/bulk price operations | Allow | Deny | Deny | Deny |
-| Production/manual/damaged inventory actions | Allow | Allow | Deny | Deny |
-| Instagram sale/return inventory workflow | Allow | Deny | Allow | Deny |
-| Preview/apply bulk inventory operations | Allow | Allow | Deny | Deny |
-| Explore all audit/business events | Allow | Allow | Own Instagram events only | Deny |
+| Capability                                  | Super Admin | Inventory Admin | Instagram Admin           | Customer                 |
+| ------------------------------------------- | ----------- | --------------- | ------------------------- | ------------------------ |
+| Read/search all Orders and timelines        | Allow       | Allow           | Deny                      | Own Orders only          |
+| Move Paid to Preparing                      | Allow       | Allow           | Deny                      | Deny                     |
+| Add/edit tracking before delivery           | Allow       | Allow           | Deny                      | Read own only            |
+| Move Preparing to Shipped                   | Allow       | Allow           | Deny                      | Deny                     |
+| Confirm Shipped as Delivered                | Allow       | Allow           | Deny                      | Deny                     |
+| Cancel Paid/Preparing Order                 | Allow       | Allow           | Deny                      | Deny                     |
+| Submit eligible Website return              | Deny        | Deny            | Deny                      | Own delivered Order only |
+| Approve/reject Website return               | Allow       | Allow           | Deny                      | Deny                     |
+| Request/retry refund                        | Allow       | Allow           | Deny                      | Read own result only     |
+| Individual/bulk price operations            | Allow       | Deny            | Deny                      | Deny                     |
+| Production/manual/damaged inventory actions | Allow       | Allow           | Deny                      | Deny                     |
+| Instagram sale/return inventory workflow    | Allow       | Deny            | Allow                     | Deny                     |
+| Preview/apply bulk inventory operations     | Allow       | Allow           | Deny                      | Deny                     |
+| Explore all audit/business events           | Allow       | Allow           | Own Instagram events only | Deny                     |
 
 All high-impact commands require an idempotency key and an audit reason. Bulk
 apply additionally requires a persisted, unexpired preview and the exact preview
@@ -58,13 +58,13 @@ Cancellation after shipment is rejected; operations must complete shipment and
 use the return workflow. `Cancelled` and `Returned` are terminal. A partial
 approved return does not change a Delivered Order to Returned.
 
-| Transition | Required conditions | Atomic effects |
-| --- | --- | --- |
-| Paid -> Preparing | authorized actor; matching expected version | append transition and Business Event; update projection |
+| Transition                  | Required conditions                                                            | Atomic effects                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Paid -> Preparing           | authorized actor; matching expected version                                    | append transition and Business Event; update projection                                                                                       |
 | Paid/Preparing -> Cancelled | authorized actor; reason; no completed cancellation; provider refund confirmed | append cancellation/refund facts; restore sold SKU quantities through Inventory movements once; update projection after provider confirmation |
-| Preparing -> Shipped | authorized actor; carrier and tracking reference present | append Shipment and transition facts; update projection |
-| Shipped -> Delivered | authorized actor; Shipment exists; server delivery timestamp | append delivery confirmation and transition facts; expose return deadline |
-| Delivered -> Returned | all fulfilled quantities have approved returns and confirmed refund outcomes | append transition; never rewrite Order items or totals |
+| Preparing -> Shipped        | authorized actor; carrier and tracking reference present                       | append Shipment and transition facts; update projection                                                                                       |
+| Shipped -> Delivered        | authorized actor; Shipment exists; server delivery timestamp                   | append delivery confirmation and transition facts; expose return deadline                                                                     |
+| Delivered -> Returned       | all fulfilled quantities have approved returns and confirmed refund outcomes   | append transition; never rewrite Order items or totals                                                                                        |
 
 Tracking updates append immutable Shipment tracking revisions. The latest
 revision is the current projection. A customer sees only tracking data belonging
@@ -150,4 +150,3 @@ return journeys, RTL, keyboard/accessibility, mixed-direction identifiers, all
 four required viewports and loading/empty/error/disabled/unavailable/success
 states. Deterministic screenshots are written under
 `output/playwright/milestone-6/`.
-

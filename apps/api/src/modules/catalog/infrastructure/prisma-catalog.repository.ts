@@ -91,6 +91,7 @@ const toPrismaInventoryAction: Record<InventoryActionInput['action'], PrismaInve
   manual_correction: PrismaInventoryAction.MANUAL_CORRECTION,
   damaged_goods: PrismaInventoryAction.DAMAGED_GOODS,
   instagram_sale: PrismaInventoryAction.INSTAGRAM_SALE,
+  instagram_return: PrismaInventoryAction.INSTAGRAM_RETURN,
 };
 
 function toSafeNumber(value: bigint): number {

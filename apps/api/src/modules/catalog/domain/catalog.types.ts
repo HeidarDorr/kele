@@ -197,7 +197,13 @@ export interface PublicationValidation {
 }
 
 export interface InventoryActionInput {
-  action: 'production' | 'sale' | 'manual_correction' | 'damaged_goods' | 'instagram_sale';
+  action:
+    | 'production'
+    | 'sale'
+    | 'manual_correction'
+    | 'damaged_goods'
+    | 'instagram_sale'
+    | 'instagram_return';
   quantity: number;
   reason: string;
 }

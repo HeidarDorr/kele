@@ -939,6 +939,18 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
         },
       });
     }
+    await client.orderTimelineEvent.create({
+      data: {
+        orderId: input.orderId,
+        type: 'created',
+        toStatus: 'PAID',
+        actorId: 'payment:fake',
+        reason: 'Verified payment created the commercial Order.',
+        correlationId: input.correlationId,
+        idempotencyKey: `order-created:${input.orderId}`,
+        createdAt: input.paidAt,
+      },
+    });
     return {
       status: 'paid',
       paymentAttemptId: input.paymentAttemptId,

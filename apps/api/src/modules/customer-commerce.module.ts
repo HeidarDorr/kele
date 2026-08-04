@@ -75,16 +75,26 @@ import {
 import {
   AdminShippingController,
   CheckoutController,
-  CustomerOrderController,
   ShippingController,
 } from './checkout/presentation/checkout.controller.js';
 import { AdminSessionGuard } from './catalog/presentation/admin-session.guard.js';
-import { OrderService } from './checkout/application/order.service.js';
 import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.js';
 import {
   CHECKOUT_OUTFIT_PORT,
   type CheckoutOutfitPort,
 } from './checkout/application/checkout-outfit.contract.js';
+import {
+  AdminOperationsController,
+  CustomerOperationsController,
+} from './operations/presentation/operations.controller.js';
+import {
+  OPERATIONS_REPOSITORY,
+  type OperationsRepository,
+} from './operations/application/operations.repository.js';
+import { PrismaOperationsRepository } from './operations/infrastructure/prisma-operations.repository.js';
+import { OperationsService } from './operations/application/operations.service.js';
+import type { RefundGateway } from './foundation/application/refund-gateway.port.js';
+import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
 
 @Module({
   imports: [FoundationModule, CatalogModule, OutfitModule],
@@ -95,7 +105,8 @@ import {
     ShippingController,
     CheckoutController,
     AdminShippingController,
-    CustomerOrderController,
+    CustomerOperationsController,
+    AdminOperationsController,
   ],
   providers: [
     AdminSessionGuard,
@@ -262,9 +273,25 @@ import {
       inject: [CHECKOUT_REPOSITORY, CheckoutService, UNIT_OF_WORK],
     },
     {
-      provide: OrderService,
-      useFactory: (repository: CheckoutRepository): OrderService => new OrderService(repository),
-      inject: [CHECKOUT_REPOSITORY],
+      provide: OPERATIONS_REPOSITORY,
+      useFactory: (transactions: PrismaTransactionContext): OperationsRepository =>
+        new PrismaOperationsRepository(transactions),
+      inject: [PrismaTransactionContext],
+    },
+    {
+      provide: OperationsService,
+      useFactory: (
+        repository: OperationsRepository,
+        refunds: RefundGateway,
+        unitOfWork: UnitOfWork,
+      ): OperationsService =>
+        new OperationsService(
+          repository,
+          refunds,
+          unitOfWork,
+          runtimeClock(environment.E2E_FIXED_TIME),
+        ),
+      inject: [OPERATIONS_REPOSITORY, REFUND_GATEWAY, UNIT_OF_WORK],
     },
     CheckoutJobScheduler,
   ],

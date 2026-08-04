@@ -419,6 +419,8 @@ afterAll(async () => {
     await prisma.orderOutfitComponent.deleteMany({
       where: { orderItem: { orderId: { in: orderIds } } },
     });
+    await prisma.orderTimelineEvent.deleteMany({ where: { orderId: { in: orderIds } } });
+    await prisma.shipmentTrackingRevision.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
     await prisma.paymentAttempt.deleteMany({ where: { id: { in: attemptIds } } });

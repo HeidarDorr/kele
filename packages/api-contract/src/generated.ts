@@ -1467,7 +1467,11 @@ export interface components {
       page: components['schemas']['CursorPage'];
     };
     OrderTransitionInput: {
-      toStatus: components['schemas']['OrderFulfillmentStatus'];
+      /**
+       * @description Explicit staff-command targets; Returned is derived only after a completed full return.
+       * @enum {string}
+       */
+      toStatus: 'preparing' | 'shipped' | 'delivered' | 'cancelled';
       reason: string;
       tracking?: components['schemas']['TrackingInput'];
     };
@@ -3394,7 +3398,12 @@ export interface operations {
       content: {
         'application/json': {
           /** @enum {string} */
-          action: 'production' | 'instagram_sale' | 'manual_correction' | 'damaged_goods';
+          action:
+            | 'production'
+            | 'instagram_sale'
+            | 'instagram_return'
+            | 'manual_correction'
+            | 'damaged_goods';
           quantity: number;
           reason: string;
         };

@@ -277,7 +277,11 @@ export class AdminCatalogController {
     @Req() request: CatalogAdminRequest,
   ) {
     const actor = actorFromRequest(request);
-    if (actor.role === 'instagram_admin' && body.action !== 'instagram_sale') {
+    if (
+      actor.role === 'instagram_admin' &&
+      body.action !== 'instagram_sale' &&
+      body.action !== 'instagram_return'
+    ) {
       throw new CatalogError(
         'forbidden',
         'INVENTORY_ACTION_FORBIDDEN',
