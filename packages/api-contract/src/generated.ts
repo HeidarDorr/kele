@@ -281,7 +281,10 @@ export interface paths {
     };
     get: operations['listCurrentCustomerReturns'];
     put?: never;
-    /** Submit a return request within 24 hours after confirmed delivery. */
+    /**
+     * Submit a return request within 24 hours after confirmed delivery.
+     * @description Exact key replay is side-effect free; a changed owner/Order or normalized body returns 409 `IDEMPOTENCY_KEY_REUSED`.
+     */
     post: operations['createCurrentCustomerReturn'];
     delete?: never;
     options?: never;
@@ -756,6 +759,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /** @description The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation. */
     post: operations['createAdminInventoryAction'];
     delete?: never;
     options?: never;
@@ -772,6 +776,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /** @description The canonical receipt binds the key to approval, ReturnRequest ID, null resource version and trimmed reason; exact replay does not restore inventory or call the provider twice. */
     post: operations['approveAdminReturn'];
     delete?: never;
     options?: never;
@@ -788,6 +793,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /** @description The canonical receipt binds the key to rejection, ReturnRequest ID, null resource version and trimmed reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`. */
     post: operations['rejectAdminReturn'];
     delete?: never;
     options?: never;
@@ -838,7 +844,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Apply one explicit authorized fulfillment or cancellation transition. */
+    /**
+     * Apply one explicit authorized fulfillment or cancellation transition.
+     * @description The canonical receipt binds the key to command type, Order number, submitted `If-Match`, target status, trimmed reason and tracking payload. Exact replay is side-effect free; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
+     */
     post: operations['transitionAdminOrder'];
     delete?: never;
     options?: never;
@@ -855,7 +864,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Append a tracking revision without rewriting prior tracking facts. */
+    /**
+     * Append a tracking revision without rewriting prior tracking facts.
+     * @description The canonical receipt binds the key to the Order number, submitted `If-Match` and normalized tracking/reason payload. Exact replay appends no second revision; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
+     */
     post: operations['appendAdminOrderTracking'];
     delete?: never;
     options?: never;
@@ -889,7 +901,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Retry one non-confirmed provider-neutral refund idempotently. */
+    /**
+     * Retry one non-confirmed provider-neutral refund idempotently.
+     * @description The canonical receipt is claimed and compared before the provider call and binds the key to the Refund ID, null resource version and trimmed reason. Exact replay returns the current result without another provider call; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
+     */
     post: operations['retryAdminRefund'];
     delete?: never;
     options?: never;
@@ -974,7 +989,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Apply exactly the validated targets from an unexpired preview. */
+    /**
+     * Apply exactly the validated targets from an unexpired preview.
+     * @description The canonical receipt binds the key to the BulkOperation ID and submitted `If-Match`; exact replay returns the stored result and a target/version mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before any target is changed.
+     */
     post: operations['applyAdminBulkOperation'];
     delete?: never;
     options?: never;
@@ -1487,6 +1505,13 @@ export interface components {
       /** Format: date-time */
       recordedAt: string;
     };
+    TrackingRevisionInput: {
+      carrier: string;
+      trackingNumber: string;
+      /** Format: uri */
+      trackingUrl?: string | null;
+      reason: string;
+    };
     OrderTimelineEvent: {
       /** Format: uuid */
       id: string;
@@ -1871,6 +1896,14 @@ export interface components {
     OrderNumber: string;
     RefundId: string;
     BulkOperationId: string;
+    /**
+     * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+     *     a global SHA-256 fingerprint over fingerprint version, command type,
+     *     target, optimistic resource version (or null) and normalized payload.
+     *     An exact replay returns the current result without another side effect;
+     *     reuse for any different fingerprint returns 409
+     *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+     */
     IdempotencyKey: string;
     /** @description Optimistic resource version. */
     IfMatch: string;
@@ -2421,6 +2454,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Double-submit token matching the signed anti-CSRF cookie. */
         'X-CSRF-Token': components['parameters']['CsrfToken'];
@@ -2620,6 +2661,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Double-submit token matching the signed anti-CSRF cookie. */
         'X-CSRF-Token': components['parameters']['CsrfToken'];
@@ -2682,6 +2731,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Double-submit token matching the signed anti-CSRF cookie. */
         'X-CSRF-Token': components['parameters']['CsrfToken'];
@@ -3000,6 +3057,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3102,6 +3167,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3285,6 +3358,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Optimistic resource version. */
         'If-Match': components['parameters']['IfMatch'];
@@ -3338,6 +3419,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3387,6 +3476,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3427,6 +3524,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3457,6 +3562,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3538,6 +3651,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Optimistic resource version. */
         'If-Match': components['parameters']['IfMatch'];
@@ -3571,6 +3692,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Optimistic resource version. */
         'If-Match': components['parameters']['IfMatch'];
@@ -3582,7 +3711,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['TrackingInput'];
+        'application/json': components['schemas']['TrackingRevisionInput'];
       };
     };
     responses: {
@@ -3632,6 +3761,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
       };
       path: {
@@ -3772,6 +3909,14 @@ export interface operations {
     parameters: {
       query?: never;
       header: {
+        /**
+         * @description High-entropy command replay key. Sensitive Milestone 6 commands persist
+         *     a global SHA-256 fingerprint over fingerprint version, command type,
+         *     target, optimistic resource version (or null) and normalized payload.
+         *     An exact replay returns the current result without another side effect;
+         *     reuse for any different fingerprint returns 409
+         *     `IDEMPOTENCY_KEY_REUSED` before a business mutation.
+         */
         'Idempotency-Key': components['parameters']['IdempotencyKey'];
         /** @description Optimistic resource version. */
         'If-Match': components['parameters']['IfMatch'];
