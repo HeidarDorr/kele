@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { formatIrrAsToman } from '@kele/design-system/money';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service.js';
+import { commandFingerprint } from '../../../shared/command-fingerprint.js';
 import { CatalogError } from '../application/catalog.error.js';
 import type { CatalogRepository } from '../application/catalog.repository.js';
 import { applyInventoryDelta, InventoryInvariantError } from '../domain/inventory.js';
@@ -911,14 +912,63 @@ export class PrismaCatalogRepository implements CatalogRepository {
     actor: ActorContext,
   ): Promise<InventoryValue> {
     return this.prisma.$transaction(async (transaction) => {
+      const normalizedInput: InventoryActionInput = { ...input, reason: input.reason.trim() };
+      const fingerprint = commandFingerprint({
+        commandType: 'operations.inventory.action',
+        target: { type: 'SKU', id: skuId },
+        version: null,
+        payload: {
+          action: normalizedInput.action,
+          quantity: normalizedInput.quantity,
+          reason: normalizedInput.reason,
+        },
+      });
+      const claim = await transaction.commandReceipt.createMany({
+        data: [
+          {
+            idempotencyKey,
+            commandType: fingerprint.commandType,
+            requestHash: fingerprint.requestHash,
+            entityId: fingerprint.targetId,
+          },
+        ],
+        skipDuplicates: true,
+      });
+      const receipt = await transaction.commandReceipt.findUniqueOrThrow({
+        where: { idempotencyKey },
+      });
+      if (
+        receipt.commandType !== fingerprint.commandType ||
+        receipt.entityId !== fingerprint.targetId ||
+        receipt.requestHash !== fingerprint.requestHash
+      ) {
+        throw new CatalogError(
+          'conflict',
+          'IDEMPOTENCY_KEY_REUSED',
+          'Idempotency key was reused with different inventory input.',
+        );
+      }
+
+      if (claim.count === 0) {
+        const current = await transaction.inventory.findUnique({ where: { skuId } });
+        if (current === null) {
+          throw new CatalogError('not_found', 'INVENTORY_NOT_FOUND', 'Inventory was not found.');
+        }
+        return mapInventory(current);
+      }
+
       const replay = await transaction.inventoryMovement.findUnique({
         where: { idempotencyKey },
       });
       if (replay !== null) {
         if (
           replay.skuId !== skuId ||
-          replay.action !== toPrismaInventoryAction[input.action] ||
-          replay.reason !== input.reason
+          replay.action !== toPrismaInventoryAction[normalizedInput.action] ||
+          replay.quantityDelta !==
+            (['production', 'instagram_return'].includes(normalizedInput.action)
+              ? Math.abs(normalizedInput.quantity)
+              : -Math.abs(normalizedInput.quantity)) ||
+          replay.reason !== normalizedInput.reason
         ) {
           throw new CatalogError(
             'conflict',
@@ -940,7 +990,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       const current = mapInventory(inventory);
       let next: InventoryValue;
       try {
-        next = applyInventoryDelta(current, input);
+        next = applyInventoryDelta(current, normalizedInput);
       } catch (error: unknown) {
         if (error instanceof InventoryInvariantError) {
           throw new CatalogError('validation', 'INVENTORY_INVARIANT', error.message);
@@ -964,14 +1014,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
       await transaction.inventoryMovement.create({
         data: {
           skuId,
-          action: toPrismaInventoryAction[input.action],
+          action: toPrismaInventoryAction[normalizedInput.action],
           quantityDelta: next.physicalQuantity - current.physicalQuantity,
           beforePhysicalQuantity: current.physicalQuantity,
           afterPhysicalQuantity: next.physicalQuantity,
           beforeReservedQuantity: current.reservedQuantity,
           afterReservedQuantity: next.reservedQuantity,
           actorId: actor.actorId,
-          reason: input.reason,
+          reason: normalizedInput.reason,
           correlationId: actor.correlationId,
           idempotencyKey,
         },
@@ -985,7 +1035,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
         'SKU',
         skuId,
         {
-          action: input.action,
+          action: normalizedInput.action,
           beforePhysicalQuantity: current.physicalQuantity,
           afterPhysicalQuantity: next.physicalQuantity,
         },

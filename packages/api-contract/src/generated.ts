@@ -759,7 +759,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** @description The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation. */
+    /** @description The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation. Super Admin may use every listed action, Inventory Admin may use production/manual correction/damaged goods, and Instagram Admin may use only Instagram sale/return. */
     post: operations['createAdminInventoryAction'];
     delete?: never;
     options?: never;
@@ -970,7 +970,10 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Read one persisted bulk preview or apply result. */
+    /**
+     * Read one persisted bulk preview or apply result.
+     * @description Super Admin may read price or inventory operations. Inventory Admin may read inventory operations only; a price-operation identifier is rejected with 403.
+     */
     get: operations['getAdminBulkOperation'];
     put?: never;
     post?: never;
@@ -1494,7 +1497,9 @@ export interface components {
       tracking?: components['schemas']['TrackingInput'];
     };
     TrackingInput: {
+      /** @description Trimmed, non-blank carrier name. */
       carrier: string;
+      /** @description Trimmed, non-blank provider tracking reference. */
       trackingNumber: string;
       /** Format: uri */
       trackingUrl?: string | null;
@@ -1506,7 +1511,9 @@ export interface components {
       recordedAt: string;
     };
     TrackingRevisionInput: {
+      /** @description Trimmed, non-blank carrier name. */
       carrier: string;
+      /** @description Trimmed, non-blank provider tracking reference. */
       trackingNumber: string;
       /** Format: uri */
       trackingUrl?: string | null;

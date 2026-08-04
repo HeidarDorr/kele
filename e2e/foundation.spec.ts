@@ -8,6 +8,7 @@ import {
   addE2EOutfitReviewLine,
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
+  cleanupE2EInventoryActions,
   createE2EOperationsOrder,
   expireE2EPayment,
   prepareE2EOperationsCustomer,
@@ -1194,13 +1195,47 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
   const operationsId = runtimeOrderedIdFactory(evidenceIdSeed, 'operations');
   const operationsIds = Array.from({ length: 19 }, () => operationsId());
   const staffHeaders = { cookie: `kele_session=${encodeURIComponent(superSession)}` };
+  const instagramActionKeys = [
+    milestoneSixFixture.idempotencyKeys.instagramReturn,
+    milestoneSixFixture.idempotencyKeys.instagramSale,
+  ] as const;
   try {
     await mkdir(milestoneSixFixture.evidenceDirectory, { recursive: true });
+    await cleanupE2ECustomer(mobile, cartIds);
+    await cleanupE2EInventoryActions(skuId, instagramActionKeys);
     await setE2EInventory(skuId, 4);
     await prepareE2EOperationsCustomer(mobile, milestoneSixFixture.ids.customer);
     await customer.goto(`${e2eUrls.storefront}/sign-in`);
     await completeOtp(customer, mobile);
     const { orderNumber } = await createE2EOperationsOrder(mobile, milestoneSixFixture);
+
+    const malformedVersion = await request.post(
+      `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}/transitions`,
+      {
+        headers: {
+          ...staffHeaders,
+          'if-match': '"1x"',
+          'idempotency-key': milestoneSixFixture.idempotencyKeys.invalidIfMatch,
+        },
+        data: {
+          toStatus: 'preparing',
+          reason: milestoneSixFixture.transitionReasons.preparing,
+        },
+      },
+    );
+    expect(malformedVersion.status()).toBe(422);
+    await expect(malformedVersion.json()).resolves.toMatchObject({
+      status: 422,
+      code: 'IF_MATCH_INVALID',
+    });
+    const afterMalformedVersion = await request.get(
+      `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
+      { headers: staffHeaders },
+    );
+    await expect(afterMalformedVersion.json()).resolves.toMatchObject({
+      fulfillmentStatus: 'paid',
+      version: 1,
+    });
 
     expect((await request.get(`${e2eUrls.api}/admin/orders`)).status()).toBe(401);
     expect(
@@ -1225,6 +1260,29 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     expect(
       (
         await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
+          headers: {
+            cookie: `kele_session=${encodeURIComponent(
+              process.env.ADMIN_INVENTORY_SESSION_TOKEN ??
+                'development-inventory-admin-session-token-00001',
+            )}`,
+            'idempotency-key': milestoneSixFixture.idempotencyKeys.forbiddenInventoryInstagram,
+          },
+          data: {
+            action: 'instagram_return',
+            quantity: 1,
+            reason: 'کنش اینستاگرام خارج از نقش موجودی',
+          },
+        })
+      ).status(),
+    ).toBe(403);
+    const instagramReturnCommand = {
+      action: 'instagram_return',
+      quantity: 1,
+      reason: 'بازگشت ثبت‌شده از اینستاگرام',
+    } as const;
+    expect(
+      (
+        await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
           headers: instagramHeaders,
           data: { action: 'manual_correction', quantity: 1, reason: 'کنش خارج از نقش' },
         })
@@ -1237,10 +1295,36 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
             ...instagramHeaders,
             'idempotency-key': milestoneSixFixture.idempotencyKeys.instagramReturn,
           },
-          data: { action: 'instagram_return', quantity: 1, reason: 'بازگشت ثبت‌شده از اینستاگرام' },
+          data: instagramReturnCommand,
         })
       ).status(),
     ).toBe(201);
+    const exactInventoryReplay = await request.post(
+      `${e2eUrls.api}/admin/inventory/${skuId}/actions`,
+      {
+        headers: {
+          ...instagramHeaders,
+          'idempotency-key': milestoneSixFixture.idempotencyKeys.instagramReturn,
+        },
+        data: instagramReturnCommand,
+      },
+    );
+    expect(exactInventoryReplay.status()).toBe(201);
+    const inventoryReuseConflict = await request.post(
+      `${e2eUrls.api}/admin/inventory/${skuId}/actions`,
+      {
+        headers: {
+          ...instagramHeaders,
+          'idempotency-key': milestoneSixFixture.idempotencyKeys.instagramReturn,
+        },
+        data: { ...instagramReturnCommand, quantity: 2 },
+      },
+    );
+    expect(inventoryReuseConflict.status()).toBe(409);
+    await expect(inventoryReuseConflict.json()).resolves.toMatchObject({
+      status: 409,
+      code: 'IDEMPOTENCY_KEY_REUSED',
+    });
     expect(
       (
         await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
@@ -1483,8 +1567,15 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     try {
       await Promise.all([customerContext.close(), adminContext.close()]);
     } finally {
-      await cleanupE2ECustomer(mobile, cartIds);
-      await setE2EInventory(skuId, 4);
+      try {
+        await cleanupE2ECustomer(mobile, cartIds);
+      } finally {
+        try {
+          await cleanupE2EInventoryActions(skuId, instagramActionKeys);
+        } finally {
+          await setE2EInventory(skuId, 4);
+        }
+      }
     }
   }
 });

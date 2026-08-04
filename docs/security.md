@@ -93,16 +93,38 @@ Milestone 6 additionally enforces:
 
 - order, return, refund, audit and bulk permissions in API guards; customer
   ownership is resolved from the server session and never accepted from input;
-- CSRF validation on customer return submission plus mandatory idempotency keys
-  and optimistic versions on retryable staff commands;
-- Instagram administrators can submit only `instagram_sale` and
-  `instagram_return`; their audit search is scoped to their own actor identity;
+- CSRF validation on customer return submission plus mandatory idempotency keys;
+  Order transition, tracking and bulk apply bind the submitted optimistic
+  version, while unversioned return/refund/inventory commands bind an explicit
+  `null` resource version and retain their row/state locks;
+- sensitive M6 keys are global command identities. A canonical SHA-256 receipt
+  binds command type, target, resource version and normalized payload before a
+  target lock, business write or refund-provider call. Exact replay passes
+  authorization again but creates no second fact/provider call; any mismatch
+  fails with 409 `IDEMPOTENCY_KEY_REUSED` before domain mutation;
+- raw keys are constrained to 16–120 characters at every M6 HTTP boundary.
+  Internally derived timeline/tracking/inventory fact keys are always 133
+  characters, outside that client namespace, and fit only in audited
+  160-character fact columns. PostgreSQL rejects CommandReceipt updates;
+- `If-Match` accepts only a fully quoted positive safe integer; malformed,
+  partially parsed and unsafe versions fail before fingerprinting or mutation;
+- Inventory Admin can submit only production/manual/damaged actions. Instagram
+  Admin can submit only `instagram_sale` and `instagram_return`; Website `sale`
+  is not an administration command, and Instagram audit search is scoped to its
+  own actor identity;
+- a pending/failed cancellation Refund blocks fulfillment under the Order lock,
+  and provider confirmation locks/revalidates the Order before restoring stock
+  or moving its projection to Cancelled;
+- confirmations for different partial-return Refunds serialize on their shared
+  Order before whole-return evaluation and cannot lose or duplicate the terminal
+  Returned transition;
 - a refund is called confirmed only from the configured gateway response. The
   Fake Refund adapter is local/test evidence and cannot establish a production
   refund claim; OQ-002-PROD remains open;
 - bulk writes require a persisted preview, reason, expiry and per-target version
-  check. Stale targets fail individually and never authorize an unpreviewed
-  destructive operation;
+  check. Price preview details remain Super-Admin-only. Target projections lock
+  in stable SKU-ID order; stale/lost-CAS targets fail individually and never
+  authorize an unpreviewed destructive operation or erase earlier item results;
 - audit payload search uses parameterized SQL and returns safe event payloads;
   session, OTP, CSRF and provider secrets are forbidden from those payloads.
 

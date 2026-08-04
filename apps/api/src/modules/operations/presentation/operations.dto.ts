@@ -90,7 +90,7 @@ export class ReturnSubmissionDto {
 
   @IsString()
   @MinLength(3)
-  @MaxLength(1000)
+  @MaxLength(500)
   reason!: string;
 
   @IsBoolean()
@@ -120,7 +120,7 @@ export class ReturnSubmissionDto {
 export class DecisionDto {
   @IsString()
   @MinLength(3)
-  @MaxLength(1000)
+  @MaxLength(500)
   reason!: string;
 }
 

@@ -57,8 +57,9 @@ function requireKey(value: string | undefined): string {
 }
 
 function expectedVersion(value: string | undefined): number {
-  const version = Number.parseInt((value ?? '').replaceAll('"', ''), 10);
-  if (!Number.isInteger(version) || version < 1) {
+  const match = /^"([1-9][0-9]*)"$/.exec(value ?? '');
+  const version = match === null ? Number.NaN : Number(match[1]);
+  if (!Number.isSafeInteger(version)) {
     throw new ApplicationError(
       'validation',
       'IF_MATCH_INVALID',
@@ -304,6 +305,7 @@ export class AdminOperationsController {
   }
 
   @Post('orders/:orderNumber/transitions')
+  @HttpCode(HttpStatus.OK)
   @RequireAdminRoles('super_admin', 'inventory_admin')
   async transition(
     @Param('orderNumber') orderNumber: string,
@@ -328,6 +330,7 @@ export class AdminOperationsController {
   }
 
   @Post('orders/:orderNumber/tracking')
+  @HttpCode(HttpStatus.OK)
   @RequireAdminRoles('super_admin', 'inventory_admin')
   async tracking(
     @Param('orderNumber') orderNumber: string,
@@ -468,8 +471,8 @@ export class AdminOperationsController {
 
   @Get('bulk-operations/:bulkOperationId')
   @RequireAdminRoles('super_admin', 'inventory_admin')
-  async bulk(@Param('bulkOperationId') id: string) {
-    return bulkView(await this.operations.getBulkOperation(id));
+  async bulk(@Param('bulkOperationId') id: string, @Req() request: CatalogAdminRequest) {
+    return bulkView(await this.operations.getBulkOperation(id, actorFromRequest(request)));
   }
 
   @Post('bulk-operations/:bulkOperationId/apply')

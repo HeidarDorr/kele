@@ -1,4 +1,5 @@
 import type { RefundProviderResult } from '../../foundation/application/refund-gateway.port.js';
+import type { CommandFingerprint } from '../../../shared/command-fingerprint.js';
 import type { FulfillmentStatus } from '../domain/order-state-machine.js';
 import type {
   AuditQuery,
@@ -13,6 +14,11 @@ import type {
 } from '../domain/operations.types.js';
 
 export const OPERATIONS_REPOSITORY = Symbol('OPERATIONS_REPOSITORY');
+
+export type PreparedRefundCommand = Readonly<{
+  refund: RefundRecord;
+  replayed: boolean;
+}>;
 
 export interface OperationsRepository {
   listOrders(query: {
@@ -29,6 +35,7 @@ export interface OperationsRepository {
     reason: string;
     tracking: TrackingInput | null;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<OperationalOrderRecord>;
@@ -38,6 +45,7 @@ export interface OperationsRepository {
     tracking: TrackingInput;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<OperationalOrderRecord>;
@@ -46,13 +54,15 @@ export interface OperationsRepository {
     expectedVersion: number;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
-  }): Promise<RefundRecord>;
+  }): Promise<PreparedRefundCommand>;
   submitReturn(input: {
     customerId: string;
     submission: ReturnSubmission;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     correlationId: string;
     now: Date;
   }): Promise<ReturnRecord>;
@@ -63,16 +73,26 @@ export interface OperationsRepository {
     returnId: string;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
-  }): Promise<RefundRecord>;
+  }): Promise<PreparedRefundCommand>;
   rejectReturn(input: {
     returnId: string;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<ReturnRecord>;
+  prepareRefundRetry(input: {
+    refundId: string;
+    reason: string;
+    idempotencyKey: string;
+    fingerprint: CommandFingerprint;
+    actor: OperationsActor;
+    now: Date;
+  }): Promise<PreparedRefundCommand>;
   getRefund(refundId: string): Promise<RefundRecord>;
   recordRefundResult(input: {
     refundId: string;
@@ -105,6 +125,7 @@ export interface OperationsRepository {
     id: string;
     expectedVersion: number;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<BulkOperationRecord>;

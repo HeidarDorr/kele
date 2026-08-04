@@ -27,7 +27,7 @@ navigation, submitted role names or UI state.
 | ------------------------------------------- | ----------- | --------------- | ------------------------- | ------------------------ |
 | Read/search all Orders and timelines        | Allow       | Allow           | Deny                      | Own Orders only          |
 | Move Paid to Preparing                      | Allow       | Allow           | Deny                      | Deny                     |
-| Add/edit tracking before delivery           | Allow       | Allow           | Deny                      | Read own only            |
+| Attach/edit tracking after dispatch         | Allow       | Allow           | Deny                      | Read own only            |
 | Move Preparing to Shipped                   | Allow       | Allow           | Deny                      | Deny                     |
 | Confirm Shipped as Delivered                | Allow       | Allow           | Deny                      | Deny                     |
 | Cancel Paid/Preparing Order                 | Allow       | Allow           | Deny                      | Deny                     |
@@ -62,9 +62,10 @@ and a SHA-256 request hash over this canonical version-1 envelope:
 
 Object keys are sorted recursively, arrays retain business ordering except that
 return items are normalized by Order-item identity, omitted optional tracking
-URLs become `null`, and reasons are trimmed before hashing. Actor, correlation
-ID, server time and provider results are audit/runtime context and are not part
-of the customer or staff command payload.
+URLs become `null`, tracking identifiers are trimmed and must remain non-blank,
+and reasons are trimmed and limited to 500 characters before hashing or
+persistence. Actor, correlation ID, server time and provider results are
+audit/runtime context and are not part of the customer or staff command payload.
 
 | Command                                        | Canonical target                         | Version              | Canonical payload                                                          |
 | ---------------------------------------------- | ---------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
@@ -84,6 +85,13 @@ type, target, optimistic version or payload fails with HTTP 409 and
 mutation. Concurrent contenders for one raw key are serialized by the global
 receipt identity; only the matching request can proceed.
 
+Raw command keys are 16–120 characters. Internally generated tracking, timeline
+and Inventory-movement identities use a deterministic 133-character namespace
+inside 160-character fact columns, so a valid raw key cannot collide with a
+derived fact key. This hardening ships as part of the first M6 release on the
+reviewed M5 baseline; an environment that ran any earlier M6 mutation build
+requires a reviewed receipt backfill before rollout.
+
 ## Fulfillment transition acceptance
 
 The conservative version-1 state graph is:
@@ -96,7 +104,11 @@ Paid -> Preparing -> Shipped -> Delivered -> Returned (only when all fulfilled q
 
 Cancellation after shipment is rejected; operations must complete shipment and
 use the return workflow. `Cancelled` and `Returned` are terminal. A partial
-approved return does not change a Delivered Order to Returned.
+approved return does not change a Delivered Order to Returned. Creating a
+cancellation Refund blocks every later fulfillment transition while its provider
+result is pending or failed. Provider confirmation locks and revalidates the
+Order before cancellation/restoration, so a shipment can never be overwritten by
+a late refund result.
 
 | Transition                  | Required conditions                                                            | Atomic effects                                                                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,7 +120,9 @@ approved return does not change a Delivered Order to Returned.
 
 Tracking updates append immutable Shipment tracking revisions. The latest
 revision is the current projection. A customer sees only tracking data belonging
-to their Order.
+to their Order. Tracking supplied with a transition is accepted only for
+`Preparing -> Shipped`; whitespace-only carrier/reference values and tracking on
+any other transition fail before a command receipt or Order mutation.
 
 ## Return and refund acceptance
 
@@ -130,6 +144,9 @@ to their Order.
   cannot be presented as refunded.
 - A retry uses the same immutable Refund record and provider idempotency key;
   confirmed refunds cannot be repeated or reduced.
+- Confirmations for multiple partial returns serialize on their shared Order;
+  the final completion observes every committed partial return and appends
+  exactly one `Delivered -> Returned` transition.
 
 ## Inventory, Instagram and bulk-operation acceptance
 
@@ -137,7 +154,9 @@ to their Order.
   physical and reserved quantities, actor, reason, correlation and idempotency.
 - Instagram sale decreases physical quantity; Instagram return increases it
   through its dedicated authorized workflow. Neither can make stock negative or
-  below reserved quantity.
+  below reserved quantity. Inventory Admin cannot invoke either Instagram action,
+  and Instagram Admin cannot invoke production/manual/damaged actions; the
+  application service enforces this even when no UI is involved.
 - A bulk preview validates filter criteria, selected SKU identities, operation,
   amount/percentage, integer-IRR rounding, resulting non-negative stock and
   positive prices without changing data.
@@ -146,8 +165,10 @@ to their Order.
 - Stale or independently invalid targets are reported per item. Valid items may
   succeed while the operation ends `partial_failed`; every result is auditable.
 - A repeated apply returns the stored result and never applies a delta twice.
-- Concurrent inventory updates lock SKU projections in stable ID order and
-  preserve `0 <= reserved <= physical`.
+- Concurrent price/inventory apply locks and revalidates each projection in
+  stable SKU-ID order shared with cancellation/return restoration. A lost
+  optimistic compare is an item-level stale failure, never a rollback of earlier
+  successful items, and `0 <= reserved <= physical` remains preserved.
 
 ## Audit exploration acceptance
 
@@ -165,6 +186,8 @@ effects and with a stable problem code:
 - any transition out of Cancelled or Returned;
 - cancellation after Shipped/Delivered or customer cancellation;
 - shipment without tracking data and delivery without a Shipment;
+- tracking on a non-shipment transition, blank tracking identifiers, or a
+  malformed/unsafe `If-Match` value;
 - return before delivery, after the inclusive 24-hour boundary, with a false or
   missing declaration, for another customer's Order, unknown item or excessive
   quantity;
@@ -174,7 +197,9 @@ effects and with a stable problem code:
   presented as success, or reuse of an idempotency key with a different request;
 - reuse of a sensitive-command key with a different command type, Order, SKU,
   ReturnRequest, Refund, BulkOperation, expected version or normalized payload;
-- Instagram-only role using production/manual/damaged actions;
+- Inventory Admin using Instagram sale/return, Instagram-only role using
+  production/manual/damaged actions, or any administrator submitting the
+  internal Website `sale` ledger action over the administration API;
 - bulk apply without preview, against an expired or stale preview, with changed
   filters/operation, zero targets, unsafe arithmetic or an unauthorized role;
 - concurrent adjustments that would make stock negative/below reserved quantity;

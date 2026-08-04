@@ -54,6 +54,7 @@ Use a real browser and production-like applications for:
 | Return submitted twice | Idempotent decision; quantity never exceeds purchased |
 | Return after 24-hour deadline | Rejected using server time and recorded delivery timestamp |
 | Return condition declaration missing | Request rejected without inventory/refund changes |
+| Sensitive M6 key reused for another command/target/version/payload | 409 `IDEMPOTENCY_KEY_REUSED`; receipt and every secondary projection/fact/provider-call count remain unchanged |
 | Local Courier outside Tehran | Method absent/rejected server-side |
 | Shipping setting changes after checkout | Checkout/Order retains original policy snapshot |
 | Free-shipping threshold boundary | Equality qualifies against Products/Outfits subtotal; shipping, discounts and taxes do not affect eligibility |
@@ -227,14 +228,34 @@ assertions pass.
 - `operations.integration.test.ts` uses PostgreSQL locks and real repositories
   for fulfillment replay, cancellation restoration, exact 24-hour and +1 ms
   return boundaries, false declarations, ownership isolation, failed-refund
-  retry, price preview/replay, stale inventory partial failure, searchable
-  audit payloads and concurrent Instagram stock updates.
+  retry/replay, cancellation-versus-transition serialization, concurrent
+  partial-return confirmation, tracking scope and normalization, price
+  preview/read RBAC, stale and synchronized concurrent inventory partial
+  failure, searchable audit payloads and concurrent Instagram stock updates.
+  Catalog integration separately proves the role/action matrix before command
+  receipts or ledger writes.
+- Canonical-fingerprint unit tests pin the version-1 SHA-256 envelope and prove
+  recursive object-key normalization plus command/target/version/payload
+  separation. PostgreSQL negative tests reuse one raw key across different
+  Orders, tracking payloads, customer Orders, ReturnRequests, decisions,
+  Refunds, bulk previews and SKUs. Across that negative matrix the suite
+  snapshots the relevant projection, timeline/tracking/movement/audit facts,
+  immutable receipt and provider-call count to prove zero secondary mutation.
+  Exact tracking and reject-decision replay are explicit, an overlong refund
+  reason proves zero provider calls, a failed refund retry replay proves one
+  provider call/attempt until a new key is chosen, and a parallel
+  different-Order claim proves one global receipt winner.
 - Browser acceptance uses the guarded `kele_e2e` database and production builds.
   It signs in a customer, creates a paid Order, drives staff preparation,
   shipment/tracking and delivery, submits a customer return, approves it through
   the staff UI, verifies provider-confirmed refund visibility and searches the
-  immutable audit trail. Anonymous/Instagram role failures and allowed
-  Instagram return/sale actions are asserted at the API boundary.
+  immutable audit trail. Anonymous/Instagram/Inventory role failures and allowed
+  Instagram return/sale actions are asserted at the API boundary. Strict
+  malformed-`If-Match` rejection proves the Order remains unchanged. The same
+  production API path also proves exact inventory replay and literal HTTP 409
+  plus `IDEMPOTENCY_KEY_REUSED` for a changed quantity. Fixture teardown removes
+  its Order/Return/Refund and Instagram command receipts, movements and audit
+  facts so a second run exercises a fresh allowed effect before replay.
 - RTL, `fa-IR`, reduced motion, no horizontal overflow, semantic controls and
   loading/empty/error/unavailable/success states are covered. Evidence is stored
   in `output/playwright/milestone-6/`; an independent Playwright CLI snapshot

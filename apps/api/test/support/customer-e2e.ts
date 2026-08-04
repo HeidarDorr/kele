@@ -36,6 +36,34 @@ export async function setE2EInventory(skuId: string, physicalQuantity: number): 
   }
 }
 
+export async function cleanupE2EInventoryActions(
+  skuId: string,
+  idempotencyKeys: readonly string[],
+): Promise<void> {
+  const prisma = guardedClient();
+  const keys = [...idempotencyKeys];
+  try {
+    await prisma.$transaction([
+      prisma.businessEvent.deleteMany({
+        where: {
+          entityType: 'SKU',
+          entityId: skuId,
+          actorId: 'admin-instagram',
+          type: { in: ['InventoryIncreased', 'InventoryDecreased'] },
+        },
+      }),
+      prisma.inventoryMovement.deleteMany({
+        where: { skuId, idempotencyKey: { in: keys } },
+      }),
+      prisma.commandReceipt.deleteMany({
+        where: { idempotencyKey: { in: keys } },
+      }),
+    ]);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function addE2EOutfitReviewLine(cartId: string): Promise<void> {
   const prisma = guardedClient();
   try {
@@ -318,9 +346,10 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
     const attemptIds = attempts.map((attempt) => attempt.id);
     const orders = await prisma.order.findMany({
       where: { checkoutSessionId: { in: checkoutIds } },
-      select: { id: true },
+      select: { id: true, orderNumber: true },
     });
     const orderIds = orders.map((order) => order.id);
+    const orderNumbers = orders.map((order) => order.orderNumber);
     const returns = await prisma.returnRequest.findMany({
       where: { orderId: { in: orderIds } },
       select: { id: true },
@@ -336,6 +365,14 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
       select: { id: true },
     });
     const reservationIds = reservations.map((reservation) => reservation.id);
+    const commandEntityIds = [
+      ...orderNumbers,
+      ...returnIds,
+      ...refundIds,
+      ...(customer === null
+        ? []
+        : orderNumbers.map((orderNumber) => `${customer.id}:${orderNumber}`)),
+    ];
     await prisma.paymentCallbackReceipt.deleteMany({
       where: { paymentAttemptId: { in: attemptIds } },
     });
@@ -367,8 +404,11 @@ export async function cleanupE2ECustomer(mobile: string, cartIds: string[]): Pro
     });
     await prisma.returnRequest.deleteMany({ where: { id: { in: returnIds } } });
     await prisma.businessEvent.deleteMany({
-      where: { entityId: { in: [...checkoutIds, ...attemptIds, ...orderIds] } },
+      where: {
+        entityId: { in: [...checkoutIds, ...attemptIds, ...orderIds, ...returnIds, ...refundIds] },
+      },
     });
+    await prisma.commandReceipt.deleteMany({ where: { entityId: { in: commandEntityIds } } });
     await prisma.orderOutfitComponent.deleteMany({
       where: { orderItem: { orderId: { in: orderIds } } },
     });

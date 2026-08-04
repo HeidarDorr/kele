@@ -162,27 +162,52 @@ pricing approval.
 
 ## Milestone 6 operations and refund runbook
 
+- Rollout precondition: this is the first M6 release and the deployed revision
+  must be the reviewed Milestone 5 baseline. If an environment ran an earlier,
+  uncommitted M6 mutation build, stop rollout and design a reviewed fact/receipt
+  backfill; do not attempt to replay those commands through the hardened API.
 - Apply `20260804124000_milestone_6_operations_fulfillment_returns` after all
-  Milestone 5 migrations. It is additive, backfills one created timeline fact
-  per existing Order and installs update-rejection triggers on new historical
-  fact tables. Verify the backfill count equals the pre-migration Order count.
+  Milestone 5 migrations, then
+  `20260804170000_m6_internal_fact_key_namespace` and
+  `20260804171000_m6_command_receipt_immutability`. The first migration is
+  additive, backfills one created timeline fact per existing Order and installs
+  update-rejection triggers. The second only widens
+  `inventory_movements.idempotency_key` from 120 to 160 characters for the
+  disjoint internal fact-key namespace; the third rejects receipt updates in
+  PostgreSQL. Verify the Order backfill count equals the pre-migration Order
+  count, the final column limit is 160 and the receipt trigger exists.
 - Before enabling staff writes, smoke one paid-to-delivered transition with a
   tracking revision, one exact-boundary return, one rejection, one failed Fake
   refund followed by confirmed retry, Instagram sale/return and a bulk preview
   whose stale target reports `partial_failed`.
 - Monitor refund attempts stuck in `pending_provider` or `failed`, returns in
   `refund_pending`, illegal transition/version-conflict rates, expired bulk
-  previews, partial failures and any inventory constraint rejection. Search by
-  Order number/correlation ID in the audit explorer before intervention.
+  previews, partial failures, `IDEMPOTENCY_KEY_REUSED` rates and any inventory
+  constraint rejection. Search by Order number/correlation ID in the audit
+  explorer and inspect the immutable command receipt before intervention.
+- A legitimate network replay must resend the same raw key and canonically
+  equivalent normalized command semantics. Never edit or delete a receipt to force a
+  changed target/payload through. After a failed/pending provider outcome, an
+  operator starts the explicit refund-retry command with a new key; replaying
+  the prior approval/cancellation/retry key intentionally performs no second
+  provider call.
 - Never change an Order snapshot, ReturnRequest declaration, RefundAttempt,
   timeline/tracking fact, price fact or inventory movement to repair state.
   Recovery uses idempotent commands and the provider inquiry/retry path.
 - Production refund activation remains blocked by OQ-002-PROD. The Fake Refund
   adapter proves orchestration only and must not be described as a real refund.
-- Code rollback keeps the additive tables and migration in place. Disable staff
-  mutation routes, roll back application images, preserve audit/provider facts
-  and reconcile pending refunds/stock. Do not reverse the migration after any
-  Milestone 6 write without an approved export and destructive-migration plan.
+- Code rollback keeps the additive tables and migrations in place. Put every M6
+  mutation route into read-only/disabled mode first, including staff operations,
+  inventory/bulk endpoints and customer `POST /me/returns`. A rollback to the
+  reviewed M5 image is safe because it exposes no M6 mutation routes; do not run
+  an earlier, pre-hardening M6 image that can bypass canonical receipts. Preserve
+  audit/provider facts and reconcile pending refunds/stock. Do not reverse the
+  migration after any Milestone 6 write without an approved export and
+  destructive-migration plan.
+  Canonical receipts reuse the pre-existing `command_receipts` table. Keep the
+  160-character Inventory movement widening in place after any M6 fact is
+  written; shrinking it would truncate/reject the 133-character internal keys.
+  Any image used during recovery must preserve receipt and fact rows.
 
 ## Incident minimum
 

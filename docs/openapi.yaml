@@ -1410,7 +1410,7 @@ paths:
     post:
       operationId: createAdminInventoryAction
       tags: [Admin Inventory]
-      description: The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation.
+      description: The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation. Super Admin may use every listed action, Inventory Admin may use production/manual correction/damaged goods, and Instagram Admin may use only Instagram sale/return.
       security:
         - SessionCookie: [inventory:write]
       parameters:
@@ -1805,6 +1805,7 @@ paths:
       operationId: getAdminBulkOperation
       tags: [Admin Bulk Operations]
       summary: Read one persisted bulk preview or apply result.
+      description: Super Admin may read price or inventory operations. Inventory Admin may read inventory operations only; a price-operation identifier is rejected with 403.
       security:
         - SessionCookie: [inventory:read]
       parameters:
@@ -2062,7 +2063,7 @@ components:
       description: Optimistic resource version.
       schema:
         type: string
-        pattern: '^"[0-9]+"$'
+        pattern: '^"[1-9][0-9]*"$'
     CsrfToken:
       name: X-CSRF-Token
       in: header
@@ -3222,10 +3223,12 @@ components:
       properties:
         carrier:
           type: string
+          description: Trimmed, non-blank carrier name.
           minLength: 2
           maxLength: 120
         trackingNumber:
           type: string
+          description: Trimmed, non-blank provider tracking reference.
           minLength: 2
           maxLength: 160
         trackingUrl:
@@ -3253,10 +3256,12 @@ components:
       properties:
         carrier:
           type: string
+          description: Trimmed, non-blank carrier name.
           minLength: 2
           maxLength: 120
         trackingNumber:
           type: string
+          description: Trimmed, non-blank provider tracking reference.
           minLength: 2
           maxLength: 160
         trackingUrl:
@@ -3356,7 +3361,7 @@ components:
         reason:
           type: string
           minLength: 3
-          maxLength: 1000
+          maxLength: 500
         unused:
           type: boolean
           const: true
@@ -3410,7 +3415,7 @@ components:
         reason:
           type: string
           minLength: 3
-          maxLength: 1000
+          maxLength: 500
 
     RefundStatus:
       type: string

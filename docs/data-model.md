@@ -243,7 +243,9 @@ through a recoverable orchestrated workflow.
 - `Refund` is the current provider-neutral projection. Every call is retained
   in `RefundAttempt`; only a provider-confirmed result can complete a return or
   cancellation. Failure and pending-provider results remain retryable and are
-  never presented as successful.
+  never presented as successful. Confirmed partial-return refunds serialize on
+  their shared Order before evaluating whole-Order completion, so exactly one
+  final `Delivered -> Returned` fact is appended.
 - Approved return and cancellation stock effects append
   `InventoryMovement` rows linked to their source. Outfit effects expand the
   immutable component snapshot and never write an Outfit inventory balance.
@@ -251,6 +253,32 @@ through a recoverable orchestrated workflow.
   before/proposed values and expected projection versions. Apply revalidates
   each target and records an explicit partial failure instead of silently
   widening the requested scope.
+- The existing global `CommandReceipt` is the replay guard for every sensitive
+  Milestone 6 command. Its primary key is the raw `Idempotency-Key`; it stores
+  the namespaced command type, canonical target identity and a SHA-256 hash of
+  `{ fingerprintVersion, commandType, target, version, payload }`. Version is
+  the submitted optimistic resource version for Order/tracking/bulk commands
+  and explicit `null` for unversioned return, refund and inventory commands.
+  Application contracts create and read receipts but never update them.
+- A command transaction claims its receipt with an insert-on-conflict before
+  target locks or domain writes. A concurrent same-key insert waits on the
+  global primary key and can proceed only when command type, target and hash
+  match. A failed domain transaction rolls its claim back. Provider-bearing
+  cancellation, return approval and refund retry are the deliberate exception:
+  their preflight transaction commits the receipt and Refund projection before
+  the provider call so exact replay cannot call the provider twice. A
+  failed/pending result is persisted as a RefundAttempt; recovery uses a
+  deliberate new retry key against the same immutable Refund/provider identity.
+- Client command keys are validated at 16 to 120 characters. Timeline,
+  tracking and inventory facts generated from those commands use a stable
+  133-character, domain-separated hash key in their 160-character fact column.
+  The disjoint lengths prevent a raw key from colliding with an internally
+  derived fact identity. Migration
+  `20260804170000_m6_internal_fact_key_namespace` widens the legacy Inventory
+  movement key column from 120 to the 160 characters already declared by the
+  Prisma model; no historical value is rewritten. Migration
+  `20260804171000_m6_command_receipt_immutability` adds a PostgreSQL update
+  rejection trigger to the existing receipt table.
 - The migration adds database update-rejection triggers to operational fact
   tables. Cleanup/deletion remains unavailable through application contracts;
   production retention or erasure work requires a separately approved policy.

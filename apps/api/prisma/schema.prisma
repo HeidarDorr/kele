@@ -678,7 +678,7 @@ model InventoryMovement {
   actorId                String                @map("actor_id") @db.VarChar(120)
   reason                 String                @db.VarChar(500)
   correlationId          String                @map("correlation_id") @db.Uuid
-  idempotencyKey         String                @unique @map("idempotency_key") @db.VarChar(120)
+  idempotencyKey         String                @unique @map("idempotency_key") @db.VarChar(160)
   reservationId          String?               @map("reservation_id") @db.Uuid
   orderId                String?               @map("order_id") @db.Uuid
   returnRequestId        String?               @map("return_request_id") @db.Uuid

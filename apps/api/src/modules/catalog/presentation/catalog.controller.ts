@@ -33,6 +33,17 @@ function requiredHeader(value: string | undefined, name: string): string {
   return value;
 }
 
+function requiredIdempotencyKey(value: string | undefined): string {
+  if (value === undefined || value.length < 16 || value.length > 120) {
+    throw new CatalogError(
+      'validation',
+      'IDEMPOTENCY_KEY_INVALID',
+      'Idempotency-Key must contain between 16 and 120 characters.',
+    );
+  }
+  return value;
+}
+
 function expectedVersion(value: string | undefined): number {
   const normalized = requiredHeader(value, 'If-Match').replaceAll('"', '');
   const version = Number.parseInt(normalized, 10);
@@ -229,7 +240,7 @@ export class AdminCatalogController {
     return toAdminProduct(
       await this.catalog.publishProduct(
         productId,
-        requiredHeader(idempotencyKey, 'Idempotency-Key'),
+        requiredIdempotencyKey(idempotencyKey),
         actorFromRequest(request),
       ),
     );
@@ -246,7 +257,7 @@ export class AdminCatalogController {
     return toAdminProduct(
       await this.catalog.archiveProduct(
         productId,
-        requiredHeader(idempotencyKey, 'Idempotency-Key'),
+        requiredIdempotencyKey(idempotencyKey),
         actorFromRequest(request),
       ),
     );
@@ -277,21 +288,10 @@ export class AdminCatalogController {
     @Req() request: CatalogAdminRequest,
   ) {
     const actor = actorFromRequest(request);
-    if (
-      actor.role === 'instagram_admin' &&
-      body.action !== 'instagram_sale' &&
-      body.action !== 'instagram_return'
-    ) {
-      throw new CatalogError(
-        'forbidden',
-        'INVENTORY_ACTION_FORBIDDEN',
-        'Instagram administrator cannot perform this inventory action.',
-      );
-    }
     return this.catalog.applyInventoryAction(
       skuId,
       body.toDomain(),
-      requiredHeader(idempotencyKey, 'Idempotency-Key'),
+      requiredIdempotencyKey(idempotencyKey),
       actor,
     );
   }

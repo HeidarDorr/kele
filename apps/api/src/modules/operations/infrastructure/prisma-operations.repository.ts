@@ -13,9 +13,16 @@ import {
 } from '@prisma/client';
 import { PrismaTransactionContext } from '../../../infrastructure/prisma/prisma-transaction.context.js';
 import { ApplicationError } from '../../../shared/application-error.js';
+import {
+  internalFactIdempotencyKey,
+  type CommandFingerprint,
+} from '../../../shared/command-fingerprint.js';
 import type { IdFactory } from '../../../shared/deterministic-runtime.js';
 import type { RefundProviderResult } from '../../foundation/application/refund-gateway.port.js';
-import type { OperationsRepository } from '../application/operations.repository.js';
+import type {
+  OperationsRepository,
+  PreparedRefundCommand,
+} from '../application/operations.repository.js';
 import {
   assertFulfillmentTransition,
   type FulfillmentStatus,
@@ -114,6 +121,27 @@ function safeInteger(value: bigint): number {
 
 function hash(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function commandFactKey(
+  factType: string,
+  input: Readonly<{ idempotencyKey: string; fingerprint: CommandFingerprint }>,
+): string {
+  return internalFactIdempotencyKey([
+    factType,
+    input.fingerprint.requestHash,
+    input.idempotencyKey,
+  ]);
+}
+
+function assertBulkApplyPermission(kind: BulkOperationKind, actor: OperationsActor): void {
+  if (kind === BulkOperationKind.PRICE && actor.role !== 'super_admin') {
+    throw new ApplicationError(
+      'forbidden',
+      'BULK_OPERATION_FORBIDDEN',
+      'Only Super Admin may apply price operations.',
+    );
+  }
 }
 
 function shippingMethod(
@@ -355,29 +383,28 @@ export class PrismaOperationsRepository implements OperationsRepository {
     reason: string;
     tracking: TrackingInput | null;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<OperationalOrderRecord> {
     const client = this.transactions.client();
-    const replay = await client.orderTimelineEvent.findUnique({
-      where: { idempotencyKey: input.idempotencyKey },
-    });
-    if (replay !== null) {
-      if (replay.toStatus !== toFulfillment[input.toStatus] || replay.reason !== input.reason) {
-        throw new ApplicationError(
-          'conflict',
-          'IDEMPOTENCY_KEY_REUSED',
-          'Idempotency key was used for another transition.',
-        );
-      }
-      const replayOrder = await client.order.findUnique({
-        where: { id: replay.orderId },
-        include: orderInclude,
-      });
-      if (replayOrder === null) throw new Error('Transition replay is missing its Order.');
-      return mapOrder(replayOrder);
-    }
+    if (await this.claimCommand(input)) return this.getAdminOrder(input.orderNumber);
     const order = await this.lockOrder(input.orderNumber);
+    const cancellation = await client.refund.findFirst({
+      where: {
+        orderId: order.id,
+        source: RefundSource.CANCELLATION,
+        status: { in: [RefundStatus.PENDING_PROVIDER, RefundStatus.FAILED] },
+      },
+      select: { id: true },
+    });
+    if (cancellation !== null) {
+      throw new ApplicationError(
+        'conflict',
+        'ORDER_CANCELLATION_PENDING',
+        'Fulfillment cannot advance while cancellation refund confirmation is pending.',
+      );
+    }
     if (order.version !== input.expectedVersion) {
       throw new ApplicationError('conflict', 'ORDER_VERSION_CONFLICT', 'Order version is stale.');
     }
@@ -413,7 +440,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
           actorId: input.actor.actorId,
           reason: input.reason,
           correlationId: input.actor.correlationId,
-          idempotencyKey: `tracking:${input.idempotencyKey}`,
+          idempotencyKey: commandFactKey('order-transition-tracking', input),
           createdAt: input.now,
         },
       });
@@ -436,7 +463,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: input.idempotencyKey,
+        idempotencyKey: commandFactKey('order-transition-timeline', input),
         createdAt: input.now,
       },
     });
@@ -457,21 +484,12 @@ export class PrismaOperationsRepository implements OperationsRepository {
     tracking: TrackingInput;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<OperationalOrderRecord> {
     const client = this.transactions.client();
-    const replay = await client.shipmentTrackingRevision.findUnique({
-      where: { idempotencyKey: input.idempotencyKey },
-    });
-    if (replay !== null) {
-      const replayOrder = await client.order.findUnique({
-        where: { id: replay.orderId },
-        include: orderInclude,
-      });
-      if (replayOrder === null) throw new Error('Tracking replay is missing its Order.');
-      return mapOrder(replayOrder);
-    }
+    if (await this.claimCommand(input)) return this.getAdminOrder(input.orderNumber);
     const order = await this.lockOrder(input.orderNumber);
     if (order.version !== input.expectedVersion) {
       throw new ApplicationError('conflict', 'ORDER_VERSION_CONFLICT', 'Order version is stale.');
@@ -494,7 +512,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: input.idempotencyKey,
+        idempotencyKey: commandFactKey('tracking-revision', input),
         createdAt: input.now,
       },
     });
@@ -507,7 +525,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: `timeline:${input.idempotencyKey}`,
+        idempotencyKey: commandFactKey('tracking-timeline', input),
         createdAt: input.now,
       },
     });
@@ -527,16 +545,31 @@ export class PrismaOperationsRepository implements OperationsRepository {
     expectedVersion: number;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
-  }): Promise<RefundRecord> {
+  }): Promise<PreparedRefundCommand> {
     const client = this.transactions.client();
+    if (await this.claimCommand(input)) {
+      const order = await this.findOrder({ orderNumber: input.orderNumber });
+      const replay = await client.refund.findUnique({
+        where: { providerIdempotencyKey: `refund:cancellation:${order.id}` },
+      });
+      if (replay === null) throw new Error('Cancellation replay is missing its Refund.');
+      return { refund: await this.getRefund(replay.id), replayed: true };
+    }
     const order = await this.lockOrder(input.orderNumber);
     const providerKey = `refund:cancellation:${order.id}`;
     const existing = await client.refund.findUnique({
       where: { providerIdempotencyKey: providerKey },
     });
-    if (existing !== null) return this.getRefund(existing.id);
+    if (existing !== null) {
+      throw new ApplicationError(
+        'conflict',
+        'ORDER_CANCELLATION_ALREADY_REQUESTED',
+        'Order cancellation has already been requested.',
+      );
+    }
     if (order.version !== input.expectedVersion) {
       throw new ApplicationError('conflict', 'ORDER_VERSION_CONFLICT', 'Order version is stale.');
     }
@@ -563,7 +596,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: `cancellation-request:${input.idempotencyKey}`,
+        idempotencyKey: commandFactKey('cancellation-request', input),
         createdAt: input.now,
       },
     });
@@ -575,39 +608,33 @@ export class PrismaOperationsRepository implements OperationsRepository {
       { orderNumber: order.orderNumber, refundId: refund.id },
       input.now,
     );
-    return this.getRefund(refund.id);
+    return { refund: await this.getRefund(refund.id), replayed: false };
   }
 
   async submitReturn(input: {
     customerId: string;
     submission: ReturnSubmission;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     correlationId: string;
     now: Date;
   }): Promise<ReturnRecord> {
     const client = this.transactions.client();
-    const requestHash = hash(input.submission);
-    const replay = await client.returnRequest.findUnique({
-      where: {
-        customerId_idempotencyKey: {
-          customerId: input.customerId,
-          idempotencyKey: input.idempotencyKey,
+    if (await this.claimCommand(input)) {
+      const replay = await client.returnRequest.findUnique({
+        where: {
+          customerId_idempotencyKey: {
+            customerId: input.customerId,
+            idempotencyKey: input.idempotencyKey,
+          },
         },
-      },
-      include: {
-        items: true,
-        refund: true,
-        order: { select: { orderNumber: true, providerTransactionId: true } },
-      },
-    });
-    if (replay !== null) {
-      if (replay.requestHash !== requestHash) {
-        throw new ApplicationError(
-          'conflict',
-          'IDEMPOTENCY_KEY_REUSED',
-          'Idempotency key was used for another return request.',
-        );
-      }
+        include: {
+          items: true,
+          refund: true,
+          order: { select: { orderNumber: true, providerTransactionId: true } },
+        },
+      });
+      if (replay === null) throw new Error('Return replay is missing its ReturnRequest.');
       return mapReturn(replay, replay.order);
     }
     const order = await this.lockOrder(input.submission.orderNumber);
@@ -703,7 +730,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         eligibilityDeadline: deadline,
         requestedAt: input.now,
         idempotencyKey: input.idempotencyKey,
-        requestHash,
+        requestHash: input.fingerprint.requestHash,
         correlationId: input.correlationId,
         items: {
           create: input.submission.items.map((item) => ({ id: this.idFactory(), ...item })),
@@ -719,7 +746,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: `customer:${input.customerId}`,
         reason: input.submission.reason,
         correlationId: input.correlationId,
-        idempotencyKey: `return-submit:${input.customerId}:${input.idempotencyKey}`,
+        idempotencyKey: commandFactKey('return-submit', input),
         createdAt: input.now,
       },
     });
@@ -786,10 +813,21 @@ export class PrismaOperationsRepository implements OperationsRepository {
     returnId: string;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
-  }): Promise<RefundRecord> {
+  }): Promise<PreparedRefundCommand> {
     const client = this.transactions.client();
+    if (await this.claimCommand(input)) {
+      const replay = await client.returnRequest.findUnique({
+        where: { id: input.returnId },
+        select: { refund: { select: { id: true } } },
+      });
+      if (replay === null || replay.refund === null) {
+        throw new Error('Return approval replay is missing its Refund.');
+      }
+      return { refund: await this.getRefund(replay.refund.id), replayed: true };
+    }
     await client.$queryRaw`SELECT id FROM "return_requests" WHERE id = ${input.returnId}::uuid FOR UPDATE`;
     const request = await client.returnRequest.findUnique({
       where: { id: input.returnId },
@@ -797,7 +835,13 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     if (request === null)
       throw new ApplicationError('not_found', 'RETURN_NOT_FOUND', 'Return request was not found.');
-    if (request.refund !== null) return this.getRefund(request.refund.id);
+    if (request.refund !== null) {
+      throw new ApplicationError(
+        'conflict',
+        'RETURN_DECISION_CONFLICT',
+        'Return request has already been decided.',
+      );
+    }
     if (request.status !== ReturnRequestStatus.SUBMITTED) {
       throw new ApplicationError(
         'conflict',
@@ -840,7 +884,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: `return-approve:${input.idempotencyKey}`,
+        idempotencyKey: commandFactKey('return-approve', input),
         createdAt: input.now,
       },
     });
@@ -852,21 +896,19 @@ export class PrismaOperationsRepository implements OperationsRepository {
       { orderNumber: request.order.orderNumber, refundId: refund.id },
       input.now,
     );
-    return this.getRefund(refund.id);
+    return { refund: await this.getRefund(refund.id), replayed: false };
   }
 
   async rejectReturn(input: {
     returnId: string;
     reason: string;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<ReturnRecord> {
     const client = this.transactions.client();
-    const replay = await client.orderTimelineEvent.findUnique({
-      where: { idempotencyKey: `return-reject:${input.idempotencyKey}` },
-    });
-    if (replay !== null) return this.getReturn(input.returnId);
+    if (await this.claimCommand(input)) return this.getReturn(input.returnId);
     await client.$queryRaw`SELECT id FROM "return_requests" WHERE id = ${input.returnId}::uuid FOR UPDATE`;
     const request = await client.returnRequest.findUnique({
       where: { id: input.returnId },
@@ -898,7 +940,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: `return-reject:${input.idempotencyKey}`,
+        idempotencyKey: commandFactKey('return-reject', input),
         createdAt: input.now,
       },
     });
@@ -911,6 +953,40 @@ export class PrismaOperationsRepository implements OperationsRepository {
       input.now,
     );
     return this.getReturn(request.id);
+  }
+
+  async prepareRefundRetry(input: {
+    refundId: string;
+    reason: string;
+    idempotencyKey: string;
+    fingerprint: CommandFingerprint;
+    actor: OperationsActor;
+    now: Date;
+  }): Promise<PreparedRefundCommand> {
+    const client = this.transactions.client();
+    if (await this.claimCommand(input)) {
+      return { refund: await this.getRefund(input.refundId), replayed: true };
+    }
+    await client.$queryRaw`SELECT id FROM "refunds" WHERE id = ${input.refundId}::uuid FOR UPDATE`;
+    const refund = await client.refund.findUnique({
+      where: { id: input.refundId },
+      include: { order: { select: { orderNumber: true } } },
+    });
+    if (refund === null) {
+      throw new ApplicationError('not_found', 'REFUND_NOT_FOUND', 'Refund was not found.');
+    }
+    if (refund.status === RefundStatus.CONFIRMED) {
+      throw new ApplicationError(
+        'conflict',
+        'REFUND_ALREADY_CONFIRMED',
+        'Refund is already confirmed.',
+      );
+    }
+    if (refund.source === RefundSource.CANCELLATION) {
+      const order = await this.lockOrder(refund.order.orderNumber);
+      assertFulfillmentTransition(fromFulfillment[order.fulfillmentStatus], 'cancelled');
+    }
+    return { refund: await this.getRefund(refund.id), replayed: false };
   }
 
   async getRefund(refundId: string): Promise<RefundRecord> {
@@ -950,6 +1026,20 @@ export class PrismaOperationsRepository implements OperationsRepository {
         'Refund is already confirmed.',
       );
     }
+    let lockedOrder: OrderRow | null = null;
+    if (refund.source === RefundSource.CANCELLATION) {
+      const orderLock = await this.lockOrder(refund.order.orderNumber);
+      assertFulfillmentTransition(fromFulfillment[orderLock.fulfillmentStatus], 'cancelled');
+      lockedOrder = await client.order.findUnique({
+        where: { id: orderLock.id },
+        include: orderInclude,
+      });
+      if (lockedOrder === null) throw new Error('Locked cancellation Order disappeared.');
+    }
+    const returnOrderLock =
+      refund.source === RefundSource.RETURN && input.result.status === 'confirmed'
+        ? await this.lockOrder(refund.order.orderNumber)
+        : null;
     const status =
       input.result.status === 'confirmed'
         ? RefundStatus.CONFIRMED
@@ -983,8 +1073,9 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     if (status === RefundStatus.CONFIRMED) {
       if (refund.source === RefundSource.CANCELLATION) {
-        await this.restoreWholeOrderInventory(refund.order, input.actor, refund.id, input.now);
-        const from = refund.order.fulfillmentStatus;
+        if (lockedOrder === null) throw new Error('Cancellation confirmation requires Order lock.');
+        await this.restoreWholeOrderInventory(lockedOrder, input.actor, refund.id, input.now);
+        const from = lockedOrder.fulfillmentStatus;
         await client.order.update({
           where: { id: refund.orderId },
           data: { fulfillmentStatus: OrderFulfillmentStatus.CANCELLED, version: { increment: 1 } },
@@ -999,7 +1090,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
             actorId: input.actor.actorId,
             reason: input.reason,
             correlationId: input.actor.correlationId,
-            idempotencyKey: `cancellation-confirmed:${refund.id}`,
+            idempotencyKey: internalFactIdempotencyKey(['cancellation-confirmed', refund.id]),
             createdAt: input.now,
           },
         });
@@ -1009,24 +1100,41 @@ export class PrismaOperationsRepository implements OperationsRepository {
           data: { status: ReturnRequestStatus.COMPLETED },
         });
         if (await this.isWholeOrderReturned(refund.orderId)) {
-          await client.order.update({
-            where: { id: refund.orderId },
-            data: { fulfillmentStatus: OrderFulfillmentStatus.RETURNED, version: { increment: 1 } },
-          });
-          await client.orderTimelineEvent.create({
-            data: {
-              id: this.idFactory(),
-              orderId: refund.orderId,
-              type: 'fulfillment_transition',
-              fromStatus: OrderFulfillmentStatus.DELIVERED,
-              toStatus: OrderFulfillmentStatus.RETURNED,
-              actorId: input.actor.actorId,
-              reason: input.reason,
-              correlationId: input.actor.correlationId,
-              idempotencyKey: `return-completed:${refund.returnRequestId}`,
-              createdAt: input.now,
-            },
-          });
+          if (returnOrderLock === null) {
+            throw new Error('Return confirmation requires Order lock.');
+          }
+          if (returnOrderLock.fulfillmentStatus === OrderFulfillmentStatus.DELIVERED) {
+            await client.order.update({
+              where: { id: refund.orderId },
+              data: {
+                fulfillmentStatus: OrderFulfillmentStatus.RETURNED,
+                version: { increment: 1 },
+              },
+            });
+            await client.orderTimelineEvent.create({
+              data: {
+                id: this.idFactory(),
+                orderId: refund.orderId,
+                type: 'fulfillment_transition',
+                fromStatus: OrderFulfillmentStatus.DELIVERED,
+                toStatus: OrderFulfillmentStatus.RETURNED,
+                actorId: input.actor.actorId,
+                reason: input.reason,
+                correlationId: input.actor.correlationId,
+                idempotencyKey: internalFactIdempotencyKey([
+                  'return-completed',
+                  refund.returnRequestId,
+                ]),
+                createdAt: input.now,
+              },
+            });
+          } else if (returnOrderLock.fulfillmentStatus !== OrderFulfillmentStatus.RETURNED) {
+            throw new ApplicationError(
+              'conflict',
+              'RETURN_ORDER_STATE_INVALID',
+              'A confirmed return cannot rewrite the current Order state.',
+            );
+          }
         }
       }
     }
@@ -1038,7 +1146,11 @@ export class PrismaOperationsRepository implements OperationsRepository {
         actorId: input.actor.actorId,
         reason: input.reason,
         correlationId: input.actor.correlationId,
-        idempotencyKey: `refund-result:${input.idempotencyKey}`,
+        idempotencyKey: internalFactIdempotencyKey([
+          'refund-result',
+          refund.id,
+          input.idempotencyKey,
+        ]),
         createdAt: input.now,
       },
     });
@@ -1232,10 +1344,20 @@ export class PrismaOperationsRepository implements OperationsRepository {
     id: string;
     expectedVersion: number;
     idempotencyKey: string;
+    fingerprint: CommandFingerprint;
     actor: OperationsActor;
     now: Date;
   }): Promise<BulkOperationRecord> {
     const client = this.transactions.client();
+    if (await this.claimCommand(input)) {
+      const replay = await client.bulkOperation.findUnique({
+        where: { id: input.id },
+        include: bulkInclude,
+      });
+      if (replay === null) throw new Error('Bulk replay is missing its BulkOperation.');
+      assertBulkApplyPermission(replay.kind, input.actor);
+      return mapBulk(replay);
+    }
     await client.$queryRaw`SELECT id FROM "bulk_operations" WHERE id = ${input.id}::uuid FOR UPDATE`;
     const operation = await client.bulkOperation.findUnique({
       where: { id: input.id },
@@ -1247,6 +1369,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         'BULK_OPERATION_NOT_FOUND',
         'Bulk operation was not found.',
       );
+    assertBulkApplyPermission(operation.kind, input.actor);
     if (operation.applyIdempotencyKey !== null) {
       if (operation.applyIdempotencyKey !== input.idempotencyKey) {
         throw new ApplicationError(
@@ -1273,8 +1396,14 @@ export class PrismaOperationsRepository implements OperationsRepository {
     let succeeded = 0;
     let failed = 0;
     const inventoryOperation = operation.operation as { action?: string; quantity?: number };
-    for (const item of operation.items) {
+    // Inventory restoration uses the same SKU order. Keeping every multi-SKU
+    // mutation in this order prevents cancellation/return and bulk deadlocks.
+    const mutationItems = [...operation.items].sort((left, right) =>
+      left.skuId.localeCompare(right.skuId),
+    );
+    for (const item of mutationItems) {
       if (operation.kind === BulkOperationKind.PRICE) {
+        await client.$queryRaw`SELECT "sku_id" FROM "current_sku_prices" WHERE "sku_id" = ${item.skuId}::uuid FOR UPDATE`;
         const current = await client.currentSkuPrice.findUnique({ where: { skuId: item.skuId } });
         if (
           current === null ||
@@ -1306,7 +1435,17 @@ export class PrismaOperationsRepository implements OperationsRepository {
             version: { increment: 1 },
           },
         });
-        if (updated.count !== 1) throw new Error('Locked price projection changed unexpectedly.');
+        if (updated.count !== 1) {
+          // The proposed fact never became externally visible; remove it inside this
+          // transaction and preserve the item's auditable partial-failure outcome.
+          await client.priceRecord.delete({ where: { id: record.id } });
+          failed += 1;
+          await client.bulkOperationItem.update({
+            where: { id: item.id },
+            data: { status: BulkOperationItemStatus.FAILED, failureCode: 'STALE_PRICE_VERSION' },
+          });
+          continue;
+        }
         await client.bulkOperationItem.update({
           where: { id: item.id },
           data: { status: BulkOperationItemStatus.APPLIED },
@@ -1325,6 +1464,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         );
         succeeded += 1;
       } else {
+        await client.$queryRaw`SELECT "sku_id" FROM "inventory" WHERE "sku_id" = ${item.skuId}::uuid FOR UPDATE`;
         const current = await client.inventory.findUnique({ where: { skuId: item.skuId } });
         if (
           current === null ||
@@ -1347,8 +1487,17 @@ export class PrismaOperationsRepository implements OperationsRepository {
           where: { skuId: item.skuId, version: item.expectedVersion },
           data: { physicalQuantity: proposed, version: { increment: 1 } },
         });
-        if (updated.count !== 1)
-          throw new Error('Locked inventory projection changed unexpectedly.');
+        if (updated.count !== 1) {
+          failed += 1;
+          await client.bulkOperationItem.update({
+            where: { id: item.id },
+            data: {
+              status: BulkOperationItemStatus.FAILED,
+              failureCode: 'STALE_INVENTORY_VERSION',
+            },
+          });
+          continue;
+        }
         const action =
           inventoryOperation.action === 'production'
             ? InventoryAction.PRODUCTION
@@ -1368,7 +1517,11 @@ export class PrismaOperationsRepository implements OperationsRepository {
             actorId: input.actor.actorId,
             reason: operation.reason,
             correlationId: input.actor.correlationId,
-            idempotencyKey: `bulk:${operation.id}:${item.skuId}`,
+            idempotencyKey: internalFactIdempotencyKey([
+              'bulk-inventory',
+              operation.id,
+              item.skuId,
+            ]),
             createdAt: input.now,
           },
         });
@@ -1519,6 +1672,41 @@ export class PrismaOperationsRepository implements OperationsRepository {
     return row;
   }
 
+  private async claimCommand(input: {
+    idempotencyKey: string;
+    fingerprint: CommandFingerprint;
+    now: Date;
+  }): Promise<boolean> {
+    const client = this.transactions.client();
+    const claimed = await client.commandReceipt.createMany({
+      data: {
+        idempotencyKey: input.idempotencyKey,
+        commandType: input.fingerprint.commandType,
+        requestHash: input.fingerprint.requestHash,
+        entityId: input.fingerprint.targetId,
+        createdAt: input.now,
+      },
+      skipDuplicates: true,
+    });
+    if (claimed.count === 1) return false;
+    const receipt = await client.commandReceipt.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+    });
+    if (receipt === null) throw new Error('Idempotency receipt claim was lost.');
+    if (
+      receipt.commandType !== input.fingerprint.commandType ||
+      receipt.entityId !== input.fingerprint.targetId ||
+      receipt.requestHash !== input.fingerprint.requestHash
+    ) {
+      throw new ApplicationError(
+        'conflict',
+        'IDEMPOTENCY_KEY_REUSED',
+        'Idempotency key was reused with a different command fingerprint.',
+      );
+    }
+    return true;
+  }
+
   private async lockOrder(orderNumber: string) {
     const rows = await this.transactions.client().$queryRaw<Array<{ id: string }>>`
       SELECT id FROM "orders" WHERE "order_number" = ${orderNumber} FOR UPDATE
@@ -1652,7 +1840,12 @@ export class PrismaOperationsRepository implements OperationsRepository {
               ? 'Approved customer return'
               : 'Confirmed Order cancellation',
           correlationId: actor.correlationId,
-          idempotencyKey: `${action.toLowerCase()}:${scopeId}:${skuId}`,
+          idempotencyKey: internalFactIdempotencyKey([
+            'inventory-restoration',
+            action,
+            scopeId,
+            skuId,
+          ]),
           orderId,
           returnRequestId,
           createdAt: now,

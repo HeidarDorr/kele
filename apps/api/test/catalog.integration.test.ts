@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaService } from '../src/infrastructure/prisma/prisma.service.js';
 import { PrismaCatalogRepository } from '../src/modules/catalog/infrastructure/prisma-catalog.repository.js';
+import { CatalogService } from '../src/modules/catalog/application/catalog.service.js';
 import type {
   ActorContext,
   AdminProductInput,
@@ -10,6 +11,7 @@ import type {
 
 const prisma = new PrismaClient();
 const repository = new PrismaCatalogRepository(prisma as PrismaService);
+const service = new CatalogService(repository);
 const runId = randomUUID();
 const actor: ActorContext = {
   actorId: 'integration-super-admin',
@@ -106,7 +108,7 @@ afterAll(async () => {
         ...(mediaId ? [mediaId] : []),
       ];
       await prisma.$transaction([
-        prisma.commandReceipt.deleteMany({ where: { entityId: productId } }),
+        prisma.commandReceipt.deleteMany({ where: { entityId: { in: entityIds } } }),
         prisma.businessEvent.deleteMany({ where: { entityId: { in: entityIds } } }),
         prisma.inventoryMovement.deleteMany({ where: { skuId: { in: skuIds } } }),
         prisma.currentSkuPrice.deleteMany({ where: { skuId: { in: skuIds } } }),
@@ -205,5 +207,115 @@ describe('پایداری و انتشار کاتالوگ روی PostgreSQL', () =
     expect(first.physicalQuantity).toBe(2);
     expect(replay.physicalQuantity).toBe(2);
     expect(await prisma.inventoryMovement.count({ where: { idempotencyKey } })).toBe(1);
+  });
+
+  it('rejects inventory idempotency-key reuse with a different target or payload before mutation', async () => {
+    const idempotencyKey = `inventory-fingerprint-${runId}`;
+    const command = {
+      action: 'production' as const,
+      quantity: 2,
+      reason: 'canonical inventory command',
+    };
+    await repository.applyInventoryAction(skuId, command, idempotencyKey, actor);
+
+    const inventoryBeforeConflict = await prisma.inventory.findUniqueOrThrow({
+      where: { skuId },
+    });
+    const movementsBeforeConflict = await prisma.inventoryMovement.count({
+      where: { skuId },
+    });
+    const eventsBeforeConflict = await prisma.businessEvent.count({
+      where: { entityType: 'SKU', entityId: skuId },
+    });
+    const receiptBeforeConflict = await prisma.commandReceipt.findUniqueOrThrow({
+      where: { idempotencyKey },
+    });
+
+    await expect(
+      repository.applyInventoryAction(randomUUID(), command, idempotencyKey, actor),
+    ).rejects.toMatchObject({ kind: 'conflict', code: 'IDEMPOTENCY_KEY_REUSED' });
+    await expect(
+      repository.applyInventoryAction(skuId, { ...command, quantity: 3 }, idempotencyKey, actor),
+    ).rejects.toMatchObject({ kind: 'conflict', code: 'IDEMPOTENCY_KEY_REUSED' });
+
+    expect(await prisma.inventory.findUniqueOrThrow({ where: { skuId } })).toEqual(
+      inventoryBeforeConflict,
+    );
+    expect(await prisma.inventoryMovement.count({ where: { skuId } })).toBe(
+      movementsBeforeConflict,
+    );
+    expect(
+      await prisma.businessEvent.count({
+        where: { entityType: 'SKU', entityId: skuId },
+      }),
+    ).toBe(eventsBeforeConflict);
+    expect(await prisma.commandReceipt.findUniqueOrThrow({ where: { idempotencyKey } })).toEqual(
+      receiptBeforeConflict,
+    );
+    await expect(
+      prisma.commandReceipt.update({
+        where: { idempotencyKey },
+        data: { entityId: randomUUID() },
+      }),
+    ).rejects.toThrow('Milestone 6 historical facts are immutable');
+    expect(await prisma.commandReceipt.findUniqueOrThrow({ where: { idempotencyKey } })).toEqual(
+      receiptBeforeConflict,
+    );
+  });
+
+  it('authorizes each inventory channel in the application layer and rejects invalid reasons before receipts or ledger mutation', async () => {
+    const before = await prisma.inventory.findUniqueOrThrow({ where: { skuId } });
+    const movements = await prisma.inventoryMovement.count({ where: { skuId } });
+    const events = await prisma.businessEvent.count({
+      where: { entityType: 'SKU', entityId: skuId },
+    });
+    const inventoryKey = `inventory-role-${randomUUID()}`;
+    const instagramKey = `instagram-role-${randomUUID()}`;
+    const websiteSaleKey = `website-sale-${randomUUID()}`;
+    const reasonKey = `inventory-reason-${randomUUID()}`;
+
+    await expect(
+      service.applyInventoryAction(
+        skuId,
+        { action: 'instagram_return', quantity: 1, reason: 'wrong inventory channel' },
+        inventoryKey,
+        { actorId: 'integration-inventory', role: 'inventory_admin', correlationId: randomUUID() },
+      ),
+    ).rejects.toMatchObject({ kind: 'forbidden', code: 'INVENTORY_ACTION_FORBIDDEN' });
+    await expect(
+      service.applyInventoryAction(
+        skuId,
+        { action: 'production', quantity: 1, reason: 'wrong Instagram channel' },
+        instagramKey,
+        { actorId: 'integration-instagram', role: 'instagram_admin', correlationId: randomUUID() },
+      ),
+    ).rejects.toMatchObject({ kind: 'forbidden', code: 'INVENTORY_ACTION_FORBIDDEN' });
+    await expect(
+      service.applyInventoryAction(
+        skuId,
+        { action: 'sale', quantity: 1, reason: 'website sale is not an admin action' },
+        websiteSaleKey,
+        actor,
+      ),
+    ).rejects.toMatchObject({ kind: 'forbidden', code: 'INVENTORY_ACTION_FORBIDDEN' });
+    await expect(
+      service.applyInventoryAction(
+        skuId,
+        { action: 'production', quantity: 1, reason: '  a  ' },
+        reasonKey,
+        actor,
+      ),
+    ).rejects.toMatchObject({ kind: 'validation', code: 'INVENTORY_REASON_INVALID' });
+
+    expect(await prisma.inventory.findUniqueOrThrow({ where: { skuId } })).toEqual(before);
+    expect(await prisma.inventoryMovement.count({ where: { skuId } })).toBe(movements);
+    expect(
+      await prisma.businessEvent.count({ where: { entityType: 'SKU', entityId: skuId } }),
+    ).toBe(events);
+    expect(
+      await prisma.commandReceipt.count({
+        where: { idempotencyKey: { in: [inventoryKey, instagramKey, websiteSaleKey, reasonKey] } },
+      }),
+    ).toBe(0);
   });
 });

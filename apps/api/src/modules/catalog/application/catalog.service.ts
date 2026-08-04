@@ -7,6 +7,43 @@ import type {
   CatalogQuery,
   InventoryActionInput,
 } from '../domain/catalog.types.js';
+import { CatalogError } from './catalog.error.js';
+
+const inventoryActionsByRole: Readonly<
+  Record<ActorContext['role'], readonly InventoryActionInput['action'][]>
+> = {
+  super_admin: [
+    'production',
+    'manual_correction',
+    'damaged_goods',
+    'instagram_sale',
+    'instagram_return',
+  ],
+  inventory_admin: ['production', 'manual_correction', 'damaged_goods'],
+  instagram_admin: ['instagram_sale', 'instagram_return'],
+};
+
+function normalizeInventoryAction(
+  input: InventoryActionInput,
+  actor: ActorContext,
+): InventoryActionInput {
+  if (!inventoryActionsByRole[actor.role].includes(input.action)) {
+    throw new CatalogError(
+      'forbidden',
+      'INVENTORY_ACTION_FORBIDDEN',
+      'This administrator role cannot perform the requested inventory action.',
+    );
+  }
+  const reason = input.reason.trim();
+  if (reason.length < 3 || reason.length > 500) {
+    throw new CatalogError(
+      'validation',
+      'INVENTORY_REASON_INVALID',
+      'An inventory reason of 3 to 500 characters is required.',
+    );
+  }
+  return { ...input, reason };
+}
 
 export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
@@ -88,12 +125,17 @@ export class CatalogService {
     return this.repository.getInventory(skuId);
   }
 
-  applyInventoryAction(
+  async applyInventoryAction(
     skuId: string,
     input: InventoryActionInput,
     idempotencyKey: string,
     actor: ActorContext,
   ) {
-    return this.repository.applyInventoryAction(skuId, input, idempotencyKey, actor);
+    return this.repository.applyInventoryAction(
+      skuId,
+      normalizeInventoryAction(input, actor),
+      idempotencyKey,
+      actor,
+    );
   }
 }
