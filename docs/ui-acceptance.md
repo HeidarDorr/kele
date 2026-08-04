@@ -237,3 +237,22 @@ Controls expose disabled/busy states, announcements use status/alert live
 regions, and unavailable or review lines remain editable/removable while the
 cart reports that continuation is blocked. No checkout control is rendered in
 Milestone 3.
+
+## Milestone 6 operations and customer-service evidence
+
+The operations surface extends the restrained catalogue administration language
+with flat work queues, explicit reasons, versioned tracking, status text and an
+append-only timeline. It avoids inferring permissions from hidden or disabled
+controls; the API remains authoritative.
+
+The customer Order list/detail preserves the editorial storefront language.
+Tracking is mixed-direction isolated, return eligibility states the recorded
+deadline, all three condition declarations are explicit and submission copy
+does not imply approval or refund success.
+
+Production-build evidence in `output/playwright/milestone-6/` includes delivered
+staff Order detail, searchable audit results, submitted and completed customer
+return states, and mobile empty/error operations states. Playwright asserts
+390×844 and 1280×800 layouts, `lang="fa-IR"`, `dir="rtl"`, reduced motion,
+semantic labels/live regions and no horizontal overflow. The CLI capture
+independently confirms the mobile semantic tree and document direction.

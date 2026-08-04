@@ -89,6 +89,23 @@ Status: Required baseline
 - Customer condition declarations are evidence for review, not automatic
   approval. Only authorized administrators may approve a return.
 
+Milestone 6 additionally enforces:
+
+- order, return, refund, audit and bulk permissions in API guards; customer
+  ownership is resolved from the server session and never accepted from input;
+- CSRF validation on customer return submission plus mandatory idempotency keys
+  and optimistic versions on retryable staff commands;
+- Instagram administrators can submit only `instagram_sale` and
+  `instagram_return`; their audit search is scoped to their own actor identity;
+- a refund is called confirmed only from the configured gateway response. The
+  Fake Refund adapter is local/test evidence and cannot establish a production
+  refund claim; OQ-002-PROD remains open;
+- bulk writes require a persisted preview, reason, expiry and per-target version
+  check. Stale targets fail individually and never authorize an unpreviewed
+  destructive operation;
+- audit payload search uses parameterized SQL and returns safe event payloads;
+  session, OTP, CSRF and provider secrets are forbidden from those payloads.
+
 ## Application security
 
 - Validate all input at the boundary; reject unknown fields for sensitive

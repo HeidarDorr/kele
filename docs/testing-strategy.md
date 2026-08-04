@@ -218,3 +218,24 @@ unexpected focus ring or caret, real-time date, random visible identifier,
 cross-milestone output path, or any byte change in tracked Playwright evidence.
 Any such difference fails evidence acceptance even when the functional browser
 assertions pass.
+
+## Milestone 6 operations harnesses
+
+- `operations.unit.test.ts` enumerates all 36 pairs in the six-state Order
+  lifecycle and proves the six allowed edges and 30 forbidden edges with a
+  stable illegal-transition code.
+- `operations.integration.test.ts` uses PostgreSQL locks and real repositories
+  for fulfillment replay, cancellation restoration, exact 24-hour and +1 ms
+  return boundaries, false declarations, ownership isolation, failed-refund
+  retry, price preview/replay, stale inventory partial failure, searchable
+  audit payloads and concurrent Instagram stock updates.
+- Browser acceptance uses the guarded `kele_e2e` database and production builds.
+  It signs in a customer, creates a paid Order, drives staff preparation,
+  shipment/tracking and delivery, submits a customer return, approves it through
+  the staff UI, verifies provider-confirmed refund visibility and searches the
+  immutable audit trail. Anonymous/Instagram role failures and allowed
+  Instagram return/sale actions are asserted at the API boundary.
+- RTL, `fa-IR`, reduced motion, no horizontal overflow, semantic controls and
+  loading/empty/error/unavailable/success states are covered. Evidence is stored
+  in `output/playwright/milestone-6/`; an independent Playwright CLI snapshot
+  and mobile screenshot verify the semantic tree and direction.

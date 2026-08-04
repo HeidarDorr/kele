@@ -160,6 +160,30 @@ Order read. Production claims remain prohibited until the real provider replaces
 the fake adapter; synthetic E2E shipping prices are explicitly not customer
 pricing approval.
 
+## Milestone 6 operations and refund runbook
+
+- Apply `20260804124000_milestone_6_operations_fulfillment_returns` after all
+  Milestone 5 migrations. It is additive, backfills one created timeline fact
+  per existing Order and installs update-rejection triggers on new historical
+  fact tables. Verify the backfill count equals the pre-migration Order count.
+- Before enabling staff writes, smoke one paid-to-delivered transition with a
+  tracking revision, one exact-boundary return, one rejection, one failed Fake
+  refund followed by confirmed retry, Instagram sale/return and a bulk preview
+  whose stale target reports `partial_failed`.
+- Monitor refund attempts stuck in `pending_provider` or `failed`, returns in
+  `refund_pending`, illegal transition/version-conflict rates, expired bulk
+  previews, partial failures and any inventory constraint rejection. Search by
+  Order number/correlation ID in the audit explorer before intervention.
+- Never change an Order snapshot, ReturnRequest declaration, RefundAttempt,
+  timeline/tracking fact, price fact or inventory movement to repair state.
+  Recovery uses idempotent commands and the provider inquiry/retry path.
+- Production refund activation remains blocked by OQ-002-PROD. The Fake Refund
+  adapter proves orchestration only and must not be described as a real refund.
+- Code rollback keeps the additive tables and migration in place. Disable staff
+  mutation routes, roll back application images, preserve audit/provider facts
+  and reconcile pending refunds/stock. Do not reverse the migration after any
+  Milestone 6 write without an approved export and destructive-migration plan.
+
 ## Incident minimum
 
 1. Stabilize customer and business data.

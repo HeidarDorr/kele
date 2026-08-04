@@ -1,7 +1,7 @@
 # Requirements traceability baseline
 
 Version: 0.2
-Status: Coverage ownership assigned; Milestone 5 Outfit evidence linked
+Status: Coverage ownership assigned; Milestone 6 operations evidence linked
 
 All 174 identified rules in `03-business-rules.md` are assigned to a module,
 contract area and automated test suite below. When code exists, replace
@@ -143,3 +143,14 @@ merged into the business specification:
 | EVT-001–EVT-007 | immutable catalog, price and inventory business-event facts with actor/entity/correlation metadata | migration + `catalog.integration.test.ts` | Implemented for commands present in this slice |
 | LOC-001–LOC-002, SCP-001–SCP-002 | Persian RTL semantic pages, bidi isolation and absence of Wishlist/Newsletter surfaces | `e2e/foundation.spec.ts`, Playwright screenshots | Implemented |
 | HRD-001, HRD-002, HRD-007 | Prisma confined to infrastructure, tested IRR/toman boundary and useful server-rendered public HTML | architecture test, type-check/build, Playwright | Implemented |
+
+## Milestone 6 operations, fulfillment and returns evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+| --- | --- | --- | --- |
+| ORD-005–ORD-013, ORD-017 | server-authorized cancellation and explicit `Paid -> Preparing -> Shipped -> Delivered` transitions, immutable timeline/tracking revisions and customer visibility | 36-pair state-machine unit matrix, PostgreSQL replay/illegal-transition suite, Playwright staff/customer journey | Implemented; customer cancellation remains forbidden |
+| RTE-001–RTE-005, CUS-005 | owned return submission, inclusive 24-hour delivery window, mandatory declarations, quantity limits, administrator approve/reject and provider-confirmed completion | exact-boundary/+1 ms/declaration/ownership/refund-retry integration tests and browser approval flow | Implemented |
+| PAY-001–PAY-002 | provider-neutral refund port, append-only attempts, safe failure/retry and confirmed-only customer wording | flaky-gateway integration and Fake Refund browser completion | Implemented for local/test Fake adapter; PAY-003/OQ-002-PROD remains open |
+| INV-008–INV-014, INV-018 | cancellation/return component restoration through ledgers, Instagram sale/return role actions and serialized no-negative inventory | PostgreSQL movement assertions, concurrent Instagram test and API role acceptance | Implemented |
+| PRC-008–PRC-010, EVT-001–EVT-007, CMS-002–CMS-005 | filtered price/inventory preview, expiry/version validation, partial-failure reporting and searchable actor/entity/payload audit exploration | exact price/replay and stale-target integration tests, audit payload search and Playwright staff surfaces | Implemented |
+| LOC-001–LOC-002, HRD-001–HRD-002, HRD-007 | Persian RTL responsive Order/return customer pages and restrained operations administration with complete states | format/lint/type/build gates, 14-test Playwright suite, CLI snapshot and `output/playwright/milestone-6/` | Implemented |

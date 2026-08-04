@@ -231,6 +231,30 @@ restore inventory or recognize a refund. Approval updates return status,
 inventory movement, financial record, and business events atomically or
 through a recoverable orchestrated workflow.
 
+### Milestone 6 physical mapping
+
+- `Order.version` protects explicit fulfillment commands. `OrderTimelineEvent`
+  and `ShipmentTrackingRevision` are append-only facts; delivery time is set
+  only by the `shipped -> delivered` command.
+- `ReturnRequest` snapshots the delivery instant and inclusive 24-hour
+  deadline. `ReturnItem` references immutable Order items and records requested
+  quantity; condition declarations and administrator decision facts are never
+  inferred from UI state.
+- `Refund` is the current provider-neutral projection. Every call is retained
+  in `RefundAttempt`; only a provider-confirmed result can complete a return or
+  cancellation. Failure and pending-provider results remain retryable and are
+  never presented as successful.
+- Approved return and cancellation stock effects append
+  `InventoryMovement` rows linked to their source. Outfit effects expand the
+  immutable component snapshot and never write an Outfit inventory balance.
+- `BulkOperation` and `BulkOperationItem` persist a 30-minute preview,
+  before/proposed values and expected projection versions. Apply revalidates
+  each target and records an explicit partial failure instead of silently
+  widening the requested scope.
+- The migration adds database update-rejection triggers to operational fact
+  tables. Cleanup/deletion remains unavailable through application contracts;
+  production retention or erasure work requires a separately approved policy.
+
 ## Audit and business events
 
 Audit events are append-only and contain actor, action, entity type/ID,
