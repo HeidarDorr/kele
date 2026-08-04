@@ -523,6 +523,7 @@ paths:
       operationId: createCurrentCustomerReturn
       tags: [Returns]
       summary: Submit a return request within 24 hours after confirmed delivery.
+      description: Exact key replay is side-effect free; a changed owner/Order or normalized body returns 409 `IDEMPOTENCY_KEY_REUSED`.
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
         - $ref: '#/components/parameters/CsrfToken'
@@ -1409,6 +1410,7 @@ paths:
     post:
       operationId: createAdminInventoryAction
       tags: [Admin Inventory]
+      description: The canonical receipt binds the key to the SKU and normalized action, quantity and reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before inventory mutation.
       security:
         - SessionCookie: [inventory:write]
       parameters:
@@ -1455,6 +1457,7 @@ paths:
     post:
       operationId: approveAdminReturn
       tags: [Admin Returns]
+      description: The canonical receipt binds the key to approval, ReturnRequest ID, null resource version and trimmed reason; exact replay does not restore inventory or call the provider twice.
       security:
         - SessionCookie: [returns:decide]
       parameters:
@@ -1482,6 +1485,7 @@ paths:
     post:
       operationId: rejectAdminReturn
       tags: [Admin Returns]
+      description: The canonical receipt binds the key to rejection, ReturnRequest ID, null resource version and trimmed reason; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
       security:
         - SessionCookie: [returns:decide]
       parameters:
@@ -1562,6 +1566,7 @@ paths:
       operationId: transitionAdminOrder
       tags: [Admin Orders]
       summary: Apply one explicit authorized fulfillment or cancellation transition.
+      description: The canonical receipt binds the key to command type, Order number, submitted `If-Match`, target status, trimmed reason and tracking payload. Exact replay is side-effect free; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
       security:
         - SessionCookie: [orders:transition]
       parameters:
@@ -1593,6 +1598,7 @@ paths:
       operationId: appendAdminOrderTracking
       tags: [Admin Orders]
       summary: Append a tracking revision without rewriting prior tracking facts.
+      description: The canonical receipt binds the key to the Order number, submitted `If-Match` and normalized tracking/reason payload. Exact replay appends no second revision; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
       security:
         - SessionCookie: [orders:transition]
       parameters:
@@ -1656,6 +1662,7 @@ paths:
       operationId: retryAdminRefund
       tags: [Admin Returns]
       summary: Retry one non-confirmed provider-neutral refund idempotently.
+      description: The canonical receipt is claimed and compared before the provider call and binds the key to the Refund ID, null resource version and trimmed reason. Exact replay returns the current result without another provider call; any mismatch returns 409 `IDEMPOTENCY_KEY_REUSED`.
       security:
         - SessionCookie: [refunds:write]
       parameters:
@@ -1819,6 +1826,7 @@ paths:
       operationId: applyAdminBulkOperation
       tags: [Admin Bulk Operations]
       summary: Apply exactly the validated targets from an unexpired preview.
+      description: The canonical receipt binds the key to the BulkOperation ID and submitted `If-Match`; exact replay returns the stored result and a target/version mismatch returns 409 `IDEMPOTENCY_KEY_REUSED` before any target is changed.
       security:
         - SessionCookie: [inventory:write]
       parameters:
@@ -2036,6 +2044,13 @@ components:
       name: Idempotency-Key
       in: header
       required: true
+      description: |
+        High-entropy command replay key. Sensitive Milestone 6 commands persist
+        a global SHA-256 fingerprint over fingerprint version, command type,
+        target, optimistic resource version (or null) and normalized payload.
+        An exact replay returns the current result without another side effect;
+        reuse for any different fingerprint returns 409
+        `IDEMPOTENCY_KEY_REUSED` before a business mutation.
       schema:
         type: string
         minLength: 16

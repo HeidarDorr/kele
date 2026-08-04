@@ -44,6 +44,46 @@ All high-impact commands require an idempotency key and an audit reason. Bulk
 apply additionally requires a persisted, unexpired preview and the exact preview
 version.
 
+### Canonical command-replay acceptance
+
+Every sensitive Milestone 6 command persists one global command receipt before
+its transaction can commit. The receipt stores the command type, target identity
+and a SHA-256 request hash over this canonical version-1 envelope:
+
+```text
+{
+  fingerprintVersion: 1,
+  commandType,
+  target: { type, id },
+  version: expected optimistic version or null,
+  payload: normalized command payload
+}
+```
+
+Object keys are sorted recursively, arrays retain business ordering except that
+return items are normalized by Order-item identity, omitted optional tracking
+URLs become `null`, and reasons are trimmed before hashing. Actor, correlation
+ID, server time and provider results are audit/runtime context and are not part
+of the customer or staff command payload.
+
+| Command                                        | Canonical target                         | Version              | Canonical payload                                                          |
+| ---------------------------------------------- | ---------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| fulfillment transition, including cancellation | Order number                             | submitted `If-Match` | target status, trimmed reason and tracking or `null`                       |
+| tracking revision                              | Order number                             | submitted `If-Match` | carrier, tracking number/URL and trimmed reason                            |
+| customer return submission                     | authenticated customer plus Order number | `null`               | sorted items, declarations and trimmed reason                              |
+| return approval or rejection                   | ReturnRequest ID                         | `null`               | trimmed decision reason; approval and rejection are distinct command types |
+| refund retry                                   | Refund ID                                | `null`               | trimmed retry reason                                                       |
+| bulk apply                                     | BulkOperation ID                         | submitted `If-Match` | empty object; the target is the immutable persisted preview                |
+| predefined/Instagram inventory action          | SKU ID                                   | `null`               | action, quantity and trimmed reason                                        |
+
+An exact replay returns the current result without appending another timeline,
+tracking, return, refund-attempt, price, inventory or audit fact and without
+calling the refund provider again. Reuse of the raw key for another command
+type, target, optimistic version or payload fails with HTTP 409 and
+`IDEMPOTENCY_KEY_REUSED` before any commercial, inventory, financial or audit
+mutation. Concurrent contenders for one raw key are serialized by the global
+receipt identity; only the matching request can proceed.
+
 ## Fulfillment transition acceptance
 
 The conservative version-1 state graph is:
@@ -132,6 +172,8 @@ effects and with a stable problem code:
   refund amount above the approved immutable line totals;
 - refund retry after confirmation, provider response mismatch, provider failure
   presented as success, or reuse of an idempotency key with a different request;
+- reuse of a sensitive-command key with a different command type, Order, SKU,
+  ReturnRequest, Refund, BulkOperation, expected version or normalized payload;
 - Instagram-only role using production/manual/damaged actions;
 - bulk apply without preview, against an expired or stale preview, with changed
   filters/operation, zero targets, unsafe arithmetic or an unauthorized role;
