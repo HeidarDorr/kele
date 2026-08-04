@@ -47,6 +47,7 @@ export default async function ReturnsPage({
                     {new Intl.DateTimeFormat('fa-IR', {
                       dateStyle: 'short',
                       timeStyle: 'short',
+                      timeZone: 'Asia/Tehran',
                     }).format(new Date(request.eligibilityDeadline))}
                   </p>
                 </div>

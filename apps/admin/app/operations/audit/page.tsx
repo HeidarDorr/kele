@@ -57,6 +57,7 @@ export default async function AuditPage({
                 {new Intl.DateTimeFormat('fa-IR', {
                   dateStyle: 'short',
                   timeStyle: 'medium',
+                  timeZone: 'Asia/Tehran',
                 }).format(new Date(event.occurredAt))}
               </time>
               <strong>{event.eventType}</strong>

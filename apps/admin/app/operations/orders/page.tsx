@@ -89,9 +89,10 @@ export default async function OperationsOrdersPage({
                       </td>
                       <td>{order.paidTotal.display}</td>
                       <td>
-                        {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(
-                          new Date(order.createdAt),
-                        )}
+                        {new Intl.DateTimeFormat('fa-IR', {
+                          dateStyle: 'medium',
+                          timeZone: 'Asia/Tehran',
+                        }).format(new Date(order.createdAt))}
                       </td>
                       <td>
                         <Link href={`/operations/orders/${encodeURIComponent(order.orderNumber)}`}>

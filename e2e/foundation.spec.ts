@@ -1,21 +1,25 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import { cleanupCatalogTestData } from '../apps/api/test/support/catalog-cleanup.js';
+import { runtimeOrderedIdFactory } from '../apps/api/src/shared/deterministic-runtime.js';
 import {
   addE2EOutfitReviewLine,
   ageE2EOtpChallenges,
   cleanupE2ECustomer,
   createE2EOperationsOrder,
   expireE2EPayment,
+  prepareE2EOperationsCustomer,
   readE2EPaymentEvidence,
   setE2EInventory,
 } from '../apps/api/test/support/customer-e2e.js';
 import { e2eUrls, readE2EPorts } from './ports.mts';
 import {
   evidenceFixedTime,
+  evidenceIdSeed,
   milestoneFourFixture,
+  milestoneSixFixture,
   milestoneThreeFixture,
   type MilestoneEvidenceFixture,
 } from './evidence-fixtures.mjs';
@@ -27,7 +31,6 @@ const evidenceDirectory = resolve(
     : 'output/playwright/milestone-2',
 );
 const milestoneFiveEvidenceDirectory = resolve('output/playwright/milestone-5');
-const milestoneSixEvidenceDirectory = resolve('output/playwright/milestone-6');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
@@ -1181,19 +1184,23 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
   browser,
   request,
 }) => {
-  const mobile = '+989121234572';
-  const skuId = milestoneFourFixture.skuId;
+  const mobile = milestoneSixFixture.mobile;
+  const skuId = milestoneSixFixture.skuId;
   const cartIds: string[] = [];
   const customerContext = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const adminContext = await newMilestoneEvidenceContext(browser, { width: 1280, height: 800 });
   const customer = await customerContext.newPage();
   const admin = await adminContext.newPage();
+  const operationsId = runtimeOrderedIdFactory(evidenceIdSeed, 'operations');
+  const operationsIds = Array.from({ length: 19 }, () => operationsId());
+  const staffHeaders = { cookie: `kele_session=${encodeURIComponent(superSession)}` };
   try {
-    await mkdir(milestoneSixEvidenceDirectory, { recursive: true });
+    await mkdir(milestoneSixFixture.evidenceDirectory, { recursive: true });
     await setE2EInventory(skuId, 4);
+    await prepareE2EOperationsCustomer(mobile, milestoneSixFixture.ids.customer);
     await customer.goto(`${e2eUrls.storefront}/sign-in`);
     await completeOtp(customer, mobile);
-    const { orderNumber } = await createE2EOperationsOrder(mobile);
+    const { orderNumber } = await createE2EOperationsOrder(mobile, milestoneSixFixture);
 
     expect((await request.get(`${e2eUrls.api}/admin/orders`)).status()).toBe(401);
     expect(
@@ -1213,7 +1220,7 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
         process.env.ADMIN_INSTAGRAM_SESSION_TOKEN ??
           'development-instagram-admin-session-token-00001',
       )}`,
-      'idempotency-key': randomUUID(),
+      'idempotency-key': milestoneSixFixture.idempotencyKeys.forbiddenInstagram,
     };
     expect(
       (
@@ -1226,7 +1233,10 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     expect(
       (
         await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
-          headers: { ...instagramHeaders, 'idempotency-key': randomUUID() },
+          headers: {
+            ...instagramHeaders,
+            'idempotency-key': milestoneSixFixture.idempotencyKeys.instagramReturn,
+          },
           data: { action: 'instagram_return', quantity: 1, reason: 'بازگشت ثبت‌شده از اینستاگرام' },
         })
       ).status(),
@@ -1234,7 +1244,10 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     expect(
       (
         await request.post(`${e2eUrls.api}/admin/inventory/${skuId}/actions`, {
-          headers: { ...instagramHeaders, 'idempotency-key': randomUUID() },
+          headers: {
+            ...instagramHeaders,
+            'idempotency-key': milestoneSixFixture.idempotencyKeys.instagramSale,
+          },
           data: { action: 'instagram_sale', quantity: 1, reason: 'فروش ثبت‌شده در اینستاگرام' },
         })
       ).status(),
@@ -1247,19 +1260,57 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     await expect(admin.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(admin.getByText(orderNumber)).toBeVisible();
     await admin.getByRole('link', { name: 'بررسی سفارش' }).click();
+    await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.preparing);
     await admin.getByRole('button', { name: 'ثبت «در حال آماده‌سازی»' }).click();
     await expect(admin.getByRole('status')).toBeVisible();
-    await admin.getByLabel('حامل').fill('پست ایران');
-    await admin.getByLabel('کد رهگیری').fill('KELE-M6-TRACK-001');
-    await admin.getByLabel('پیوند رهگیری').fill('https://example.test/track/KELE-M6-TRACK-001');
+    await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.shipped);
+    await admin.getByLabel('حامل').fill(milestoneSixFixture.tracking.carrier);
+    await admin.getByLabel('کد رهگیری').fill(milestoneSixFixture.tracking.number);
+    await admin.getByLabel('پیوند رهگیری').fill(milestoneSixFixture.tracking.url);
     await admin.getByRole('button', { name: 'ثبت «ارسال‌شده»' }).click();
-    await expect(admin.getByText('KELE-M6-TRACK-001')).toBeVisible();
+    await expect(admin.getByText(milestoneSixFixture.tracking.number)).toBeVisible();
+    await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.delivered);
     await admin.getByRole('button', { name: 'ثبت «تحویل‌شده»' }).click();
-    await expect(admin.getByText(/تحویل‌شده/).first()).toBeVisible();
-    await captureEvidence(
-      admin,
-      resolve(milestoneSixEvidenceDirectory, 'staff-order-delivered-desktop.png'),
+    await expect(admin.getByText('این سفارش گذار اجرایی بعدی ندارد.')).toBeVisible();
+    const deliveredResponse = await request.get(
+      `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
+      { headers: staffHeaders },
     );
+    expect(deliveredResponse.status()).toBe(200);
+    const deliveredOrder = (await deliveredResponse.json()) as {
+      customerId: string;
+      createdAt: string;
+      paidAt: string;
+      tracking: { id: string; trackingNumber: string; recordedAt: string } | null;
+      timeline: Array<{ id: string; toStatus: string | null; occurredAt: string }>;
+    };
+    expect(deliveredOrder).toMatchObject({
+      customerId: milestoneSixFixture.ids.customer,
+      createdAt: evidenceFixedTime,
+      paidAt: evidenceFixedTime,
+      tracking: {
+        id: operationsIds[2],
+        trackingNumber: milestoneSixFixture.tracking.number,
+        recordedAt: evidenceFixedTime,
+      },
+    });
+    expect(
+      deliveredOrder.timeline.map(({ id, toStatus, occurredAt }) => ({
+        id,
+        toStatus,
+        occurredAt,
+      })),
+    ).toEqual([
+      {
+        id: milestoneSixFixture.ids.createdTimelineEvent,
+        toStatus: 'paid',
+        occurredAt: evidenceFixedTime,
+      },
+      { id: operationsIds[0], toStatus: 'preparing', occurredAt: evidenceFixedTime },
+      { id: operationsIds[3], toStatus: 'shipped', occurredAt: evidenceFixedTime },
+      { id: operationsIds[5], toStatus: 'delivered', occurredAt: evidenceFixedTime },
+    ]);
+    await captureMilestoneEvidence(admin, milestoneSixFixture, 'staff-order-delivered-desktop.png');
 
     await customer.goto(`${e2eUrls.storefront}/orders`);
     await expect(customer.getByRole('heading', { name: 'سفارش‌های من' })).toBeVisible();
@@ -1268,27 +1319,141 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
       await customer.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),
     ).toBe(true);
     await customer.getByRole('link', { name: 'جزئیات و رهگیری' }).click();
-    await expect(customer.getByText('KELE-M6-TRACK-001')).toBeVisible();
+    await expect(customer.getByText(milestoneSixFixture.tracking.number)).toBeVisible();
     await customer.locator('.return-form input[type="number"]').fill('1');
-    await customer.locator('.return-form textarea').fill('اندازه برای کودک مناسب نیست');
+    await customer.locator('.return-form textarea').fill(milestoneSixFixture.returnReason);
     await customer.getByLabel('کالا استفاده نشده است').check();
     await customer.getByLabel('کالا شسته نشده است').check();
     await customer.getByLabel('همهٔ برچسب‌ها متصل‌اند').check();
     await customer.getByRole('button', { name: 'ثبت درخواست برای بررسی' }).click();
     await expect(customer.getByRole('status')).toContainText('درخواست مرجوعی ثبت شد');
-    await captureEvidence(
+    const submittedResponse = await request.get(
+      `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
+      { headers: staffHeaders },
+    );
+    expect(submittedResponse.status()).toBe(200);
+    const submittedOrder = (await submittedResponse.json()) as {
+      returns: Array<{ id: string; requestedAt: string; deliveryConfirmedAt: string }>;
+      timeline: Array<{ id: string; occurredAt: string }>;
+    };
+    expect(submittedOrder.returns).toMatchObject([
+      {
+        id: operationsIds[7],
+        requestedAt: evidenceFixedTime,
+        deliveryConfirmedAt: evidenceFixedTime,
+      },
+    ]);
+    expect(submittedOrder.timeline.at(-1)).toMatchObject({
+      id: operationsIds[9],
+      occurredAt: evidenceFixedTime,
+    });
+    await captureMilestoneEvidence(
       customer,
-      resolve(milestoneSixEvidenceDirectory, 'customer-return-submitted-desktop.png'),
+      milestoneSixFixture,
+      'customer-return-submitted-desktop.png',
     );
 
     await admin.goto(`${e2eUrls.admin}/operations/returns`);
     await expect(admin.getByText(orderNumber)).toBeVisible();
-    await admin.getByLabel('دلیل تأیید').fill('اظهارها و مهلت تحویل بررسی شد');
+    await admin.getByLabel('دلیل تأیید').fill(milestoneSixFixture.approvalReason);
     await admin.getByRole('button', { name: 'تأیید و شروع بازپرداخت' }).click();
     await expect(admin.getByRole('status')).toHaveText('تصمیم ثبت شد.');
     await admin.goto(`${e2eUrls.admin}/operations/audit?search=${encodeURIComponent(orderNumber)}`);
     await expect(admin.locator('.audit-timeline li').first()).toBeVisible();
-    await captureEvidence(admin, resolve(milestoneSixEvidenceDirectory, 'staff-audit-desktop.png'));
+    const auditResponse = await request.get(
+      `${e2eUrls.api}/admin/audit-events?search=${encodeURIComponent(orderNumber)}`,
+      { headers: staffHeaders },
+    );
+    expect(auditResponse.status()).toBe(200);
+    const audit = (await auditResponse.json()) as {
+      items: Array<{
+        id: string;
+        entityType: string;
+        entityId: string;
+        actorId: string;
+        occurredAt: string;
+      }>;
+    };
+    expect(
+      audit.items.map(({ id, entityType, entityId, actorId, occurredAt }) => ({
+        id,
+        entityType,
+        entityId,
+        actorId,
+        occurredAt,
+      })),
+    ).toEqual([
+      {
+        id: operationsIds[18],
+        entityType: 'Refund',
+        entityId: operationsIds[11],
+        actorId: 'admin-super',
+        occurredAt: evidenceFixedTime,
+      },
+      {
+        id: operationsIds[14],
+        entityType: 'ReturnRequest',
+        entityId: operationsIds[7],
+        actorId: 'admin-super',
+        occurredAt: evidenceFixedTime,
+      },
+      {
+        id: operationsIds[10],
+        entityType: 'ReturnRequest',
+        entityId: operationsIds[7],
+        actorId: `customer:${milestoneSixFixture.ids.customer}`,
+        occurredAt: evidenceFixedTime,
+      },
+      ...[operationsIds[6], operationsIds[4], operationsIds[1]].map((id) => ({
+        id,
+        entityType: 'Order',
+        entityId: milestoneSixFixture.ids.order,
+        actorId: 'admin-super',
+        occurredAt: evidenceFixedTime,
+      })),
+    ]);
+    await captureMilestoneEvidence(admin, milestoneSixFixture, 'staff-audit-desktop.png');
+
+    const completedResponse = await request.get(
+      `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
+      { headers: staffHeaders },
+    );
+    expect(completedResponse.status()).toBe(200);
+    const completedOrder = (await completedResponse.json()) as {
+      returns: Array<{
+        id: string;
+        status: string;
+        requestedAt: string;
+        decidedAt: string | null;
+        refund: { id: string; requestedAt: string; confirmedAt: string | null } | null;
+      }>;
+      timeline: Array<{ id: string; occurredAt: string }>;
+    };
+    expect(completedOrder.returns).toMatchObject([
+      {
+        id: operationsIds[7],
+        status: 'completed',
+        requestedAt: evidenceFixedTime,
+        decidedAt: evidenceFixedTime,
+        refund: {
+          id: operationsIds[11],
+          requestedAt: evidenceFixedTime,
+          confirmedAt: evidenceFixedTime,
+        },
+      },
+    ]);
+    expect(completedOrder.timeline.map(({ id, occurredAt }) => ({ id, occurredAt }))).toEqual(
+      [
+        milestoneSixFixture.ids.createdTimelineEvent,
+        operationsIds[0],
+        operationsIds[3],
+        operationsIds[5],
+        operationsIds[9],
+        operationsIds[13],
+        operationsIds[16],
+        operationsIds[17],
+      ].map((id) => ({ id, occurredAt: evidenceFixedTime })),
+    );
 
     await customer.reload();
     await expect(customer.getByText(/بازپرداخت تأیید شد/)).toBeVisible();
@@ -1296,9 +1461,10 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     expect(
       await customer.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),
     ).toBe(true);
-    await captureEvidence(
+    await captureMilestoneEvidence(
       customer,
-      resolve(milestoneSixEvidenceDirectory, 'customer-return-completed-mobile.png'),
+      milestoneSixFixture,
+      'customer-return-completed-mobile.png',
     );
 
     await admin.setViewportSize({ width: 390, height: 844 });
@@ -1309,7 +1475,7 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     );
     await captureEvidence(
       admin,
-      resolve(milestoneSixEvidenceDirectory, 'staff-orders-empty-mobile.png'),
+      resolve(milestoneSixFixture.evidenceDirectory, 'staff-orders-empty-mobile.png'),
     );
     await admin.goto(`${e2eUrls.admin}/operations/orders?state=error`);
     await expect(admin.locator('section.admin-error[role="alert"]')).toBeVisible();

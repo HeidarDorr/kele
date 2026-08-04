@@ -144,9 +144,11 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
           <div>
             <dt>زمان پرداخت</dt>
             <dd>
-              {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long', timeStyle: 'short' }).format(
-                new Date(order.paidAt),
-              )}
+              {new Intl.DateTimeFormat('fa-IR', {
+                dateStyle: 'long',
+                timeStyle: 'short',
+                timeZone: 'Asia/Tehran',
+              }).format(new Date(order.paidAt))}
             </dd>
           </div>
         </dl>
@@ -250,6 +252,7 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
                 {new Intl.DateTimeFormat('fa-IR', {
                   dateStyle: 'short',
                   timeStyle: 'short',
+                  timeZone: 'Asia/Tehran',
                 }).format(new Date(event.occurredAt))}
               </time>
               <strong>
@@ -269,9 +272,11 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
           {eligibility.deadline ? (
             <p>
               مهلت ثبت:{' '}
-              {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long', timeStyle: 'short' }).format(
-                new Date(eligibility.deadline),
-              )}
+              {new Intl.DateTimeFormat('fa-IR', {
+                dateStyle: 'long',
+                timeStyle: 'short',
+                timeZone: 'Asia/Tehran',
+              }).format(new Date(eligibility.deadline))}
             </p>
           ) : null}
         </div>
@@ -368,9 +373,10 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
               <li key={request.id}>
                 <strong>{request.status}</strong>
                 <time>
-                  {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(
-                    new Date(request.requestedAt),
-                  )}
+                  {new Intl.DateTimeFormat('fa-IR', {
+                    dateStyle: 'long',
+                    timeZone: 'Asia/Tehran',
+                  }).format(new Date(request.requestedAt))}
                 </time>
                 <span>
                   {request.refund?.status === 'confirmed'

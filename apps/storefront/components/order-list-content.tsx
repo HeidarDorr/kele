@@ -125,9 +125,10 @@ export function OrderListContent() {
               </div>
               <div>
                 <time>
-                  {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(
-                    new Date(order.createdAt),
-                  )}
+                  {new Intl.DateTimeFormat('fa-IR', {
+                    dateStyle: 'long',
+                    timeZone: 'Asia/Tehran',
+                  }).format(new Date(order.createdAt))}
                 </time>
                 <span>{order.paidTotal.display}</span>
               </div>

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   BulkOperationItemStatus,
   BulkOperationKind,
@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { PrismaTransactionContext } from '../../../infrastructure/prisma/prisma-transaction.context.js';
 import { ApplicationError } from '../../../shared/application-error.js';
+import type { IdFactory } from '../../../shared/deterministic-runtime.js';
 import type { RefundProviderResult } from '../../foundation/application/refund-gateway.port.js';
 import type { OperationsRepository } from '../application/operations.repository.js';
 import {
@@ -301,7 +302,10 @@ function requirePreviewTargets(count: number): void {
 }
 
 export class PrismaOperationsRepository implements OperationsRepository {
-  constructor(private readonly transactions: PrismaTransactionContext) {}
+  constructor(
+    private readonly transactions: PrismaTransactionContext,
+    private readonly idFactory: IdFactory = randomUUID,
+  ) {}
 
   async listOrders(query: {
     status: FulfillmentStatus | null;
@@ -401,6 +405,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     if (input.tracking !== null) {
       await client.shipmentTrackingRevision.create({
         data: {
+          id: this.idFactory(),
           orderId: order.id,
           carrier: input.tracking.carrier,
           trackingNumber: input.tracking.trackingNumber,
@@ -423,6 +428,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         type: 'fulfillment_transition',
         fromStatus: order.fulfillmentStatus,
@@ -482,6 +488,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     }
     await client.shipmentTrackingRevision.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         ...input.tracking,
         actorId: input.actor.actorId,
@@ -494,6 +501,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     await client.order.update({ where: { id: order.id }, data: { version: { increment: 1 } } });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         type: 'tracking_updated',
         actorId: input.actor.actorId,
@@ -536,6 +544,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     assertFulfillmentTransition(from, 'cancelled');
     const refund = await client.refund.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         source: RefundSource.CANCELLATION,
         amountRial: order.paidTotalRial,
@@ -547,6 +556,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     await client.order.update({ where: { id: order.id }, data: { version: { increment: 1 } } });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         type: 'refund_updated',
         fromStatus: order.fulfillmentStatus,
@@ -682,6 +692,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     }
     const created = await client.returnRequest.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         customerId: input.customerId,
         reason: input.submission.reason,
@@ -694,12 +705,15 @@ export class PrismaOperationsRepository implements OperationsRepository {
         idempotencyKey: input.idempotencyKey,
         requestHash,
         correlationId: input.correlationId,
-        items: { create: input.submission.items.map((item) => ({ ...item })) },
+        items: {
+          create: input.submission.items.map((item) => ({ id: this.idFactory(), ...item })),
+        },
       },
       include: { items: true, refund: true },
     });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: order.id,
         type: 'return_submitted',
         actorId: `customer:${input.customerId}`,
@@ -711,6 +725,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     await client.businessEvent.create({
       data: {
+        id: this.idFactory(),
         type: 'ReturnRequested',
         actorId: `customer:${input.customerId}`,
         entityType: 'ReturnRequest',
@@ -797,6 +812,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     const providerKey = `refund:return:${request.id}`;
     const refund = await client.refund.create({
       data: {
+        id: this.idFactory(),
         orderId: request.orderId,
         returnRequestId: request.id,
         source: RefundSource.RETURN,
@@ -818,6 +834,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: request.orderId,
         type: 'return_decided',
         actorId: input.actor.actorId,
@@ -875,6 +892,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: request.orderId,
         type: 'return_decided',
         actorId: input.actor.actorId,
@@ -940,6 +958,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
           : RefundStatus.FAILED;
     await client.refundAttempt.create({
       data: {
+        id: this.idFactory(),
         refundId: refund.id,
         provider: input.result.provider,
         providerReference: input.result.providerReference || null,
@@ -972,6 +991,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         });
         await client.orderTimelineEvent.create({
           data: {
+            id: this.idFactory(),
             orderId: refund.orderId,
             type: 'fulfillment_transition',
             fromStatus: from,
@@ -995,6 +1015,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
           });
           await client.orderTimelineEvent.create({
             data: {
+              id: this.idFactory(),
               orderId: refund.orderId,
               type: 'fulfillment_transition',
               fromStatus: OrderFulfillmentStatus.DELIVERED,
@@ -1011,6 +1032,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     }
     await client.orderTimelineEvent.create({
       data: {
+        id: this.idFactory(),
         orderId: refund.orderId,
         type: 'refund_updated',
         actorId: input.actor.actorId,
@@ -1089,6 +1111,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     const row = await client.bulkOperation.create({
       data: {
+        id: this.idFactory(),
         kind: BulkOperationKind.PRICE,
         reason: input.reason,
         filters: input.filters,
@@ -1102,7 +1125,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
           reason: input.reason,
         }),
         createdAt: input.now,
-        items: { create: items },
+        items: { create: items.map((item) => ({ id: this.idFactory(), ...item })) },
       },
       include: bulkInclude,
     });
@@ -1167,6 +1190,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     const operation = { action: input.action, quantity: input.quantity };
     const row = await client.bulkOperation.create({
       data: {
+        id: this.idFactory(),
         kind: BulkOperationKind.INVENTORY,
         reason: input.reason,
         filters: input.filters,
@@ -1176,7 +1200,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         expiresAt: new Date(input.now.getTime() + 30 * 60_000),
         requestHash: hash({ filters: input.filters, operation, reason: input.reason }),
         createdAt: input.now,
-        items: { create: items },
+        items: { create: items.map((item) => ({ id: this.idFactory(), ...item })) },
       },
       include: bulkInclude,
     });
@@ -1266,6 +1290,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
         }
         const record = await client.priceRecord.create({
           data: {
+            id: this.idFactory(),
             skuId: item.skuId,
             amountRial: item.proposedValue,
             actorId: input.actor.actorId,
@@ -1332,6 +1357,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
               : InventoryAction.MANUAL_CORRECTION;
         await client.inventoryMovement.create({
           data: {
+            id: this.idFactory(),
             skuId: item.skuId,
             action,
             quantityDelta: proposed - current.physicalQuantity,
@@ -1343,6 +1369,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
             reason: operation.reason,
             correlationId: input.actor.correlationId,
             idempotencyKey: `bulk:${operation.id}:${item.skuId}`,
+            createdAt: input.now,
           },
         });
         await client.bulkOperationItem.update({
@@ -1515,6 +1542,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
   ): Promise<void> {
     await this.transactions.client().businessEvent.create({
       data: {
+        id: this.idFactory(),
         type,
         actorId: actor.actorId,
         entityType,
@@ -1610,6 +1638,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
       });
       await client.inventoryMovement.create({
         data: {
+          id: this.idFactory(),
           skuId,
           action,
           quantityDelta: quantity,

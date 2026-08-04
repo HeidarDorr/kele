@@ -40,6 +40,7 @@ const sharedEnvironment = {
   E2E_DATABASE_URL: databaseConfiguration.databaseUrl,
   E2E_FIXED_TIME: evidenceFixedTime,
   E2E_DETERMINISTIC_ID_SEED: evidenceIdSeed,
+  TZ: 'Asia/Tehran',
 };
 const generatedDeclarationPaths = [
   path.join(workspace, 'apps/storefront/next-env.d.ts'),

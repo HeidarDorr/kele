@@ -5,7 +5,7 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: true,
-  retries: process.env.CI === 'true' ? 1 : 0,
+  retries: 0,
   workers: 1,
   use: {
     baseURL: e2eUrls.storefront,

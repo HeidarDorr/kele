@@ -78,7 +78,11 @@ import {
   ShippingController,
 } from './checkout/presentation/checkout.controller.js';
 import { AdminSessionGuard } from './catalog/presentation/admin-session.guard.js';
-import { runtimeClock, runtimeIdFactory } from '../shared/deterministic-runtime.js';
+import {
+  runtimeClock,
+  runtimeIdFactory,
+  runtimeOrderedIdFactory,
+} from '../shared/deterministic-runtime.js';
 import {
   CHECKOUT_OUTFIT_PORT,
   type CheckoutOutfitPort,
@@ -275,7 +279,10 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
     {
       provide: OPERATIONS_REPOSITORY,
       useFactory: (transactions: PrismaTransactionContext): OperationsRepository =>
-        new PrismaOperationsRepository(transactions),
+        new PrismaOperationsRepository(
+          transactions,
+          runtimeOrderedIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'operations'),
+        ),
       inject: [PrismaTransactionContext],
     },
     {

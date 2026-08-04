@@ -74,9 +74,11 @@ export default async function BulkPage({
           <p>
             وضعیت: {operation.status} · {operation.summary.total.toLocaleString('fa-IR')} هدف ·
             انقضا{' '}
-            {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(
-              new Date(operation.expiresAt),
-            )}
+            {new Intl.DateTimeFormat('fa-IR', {
+              dateStyle: 'short',
+              timeStyle: 'short',
+              timeZone: 'Asia/Tehran',
+            }).format(new Date(operation.expiresAt))}
           </p>
           <div className="admin-table-wrap">
             <table>

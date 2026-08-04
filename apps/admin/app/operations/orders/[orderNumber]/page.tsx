@@ -175,6 +175,7 @@ export default async function OperationsOrderPage({
                 {new Intl.DateTimeFormat('fa-IR', {
                   dateStyle: 'short',
                   timeStyle: 'short',
+                  timeZone: 'Asia/Tehran',
                 }).format(new Date(event.occurredAt))}
               </time>
               <strong>{event.type}</strong>

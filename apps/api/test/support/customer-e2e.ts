@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
-import { randomUUID } from 'node:crypto';
 
 function guardedClient(): PrismaClient {
   assertE2EDatabaseResetEnvironment(process.env);
@@ -81,7 +80,68 @@ export async function addE2EOutfitReviewLine(cartId: string): Promise<void> {
   }
 }
 
-export async function createE2EOperationsOrder(mobile: string): Promise<{
+export type E2EOperationsOrderFixture = Readonly<{
+  skuId: string;
+  orderNumber: string;
+  ids: Readonly<{
+    customer: string;
+    checkoutSession: string;
+    paymentAttempt: string;
+    order: string;
+    orderItem: string;
+    createdTimelineEvent: string;
+    saleInventoryMovement: string;
+    createdCorrelation: string;
+    saleCorrelation: string;
+  }>;
+  idempotencyKeys: Readonly<{
+    checkout: string;
+    payment: string;
+    createdTimeline: string;
+    saleInventory: string;
+  }>;
+  providerReference: string;
+  providerTransactionId: string;
+  createdReason: string;
+  saleReason: string;
+  recipient: Readonly<{
+    name: string;
+    province: string;
+    city: string;
+    addressLine: string;
+    postalCode: string;
+  }>;
+  shipping: Readonly<{
+    methodCode: 'IRAN_POST' | 'TIPAX' | 'TEHRAN_LOCAL_COURIER';
+    methodName: string;
+    fixedPriceRial: number;
+  }>;
+}>;
+
+export async function prepareE2EOperationsCustomer(
+  mobile: string,
+  customerId: string,
+): Promise<void> {
+  const prisma = guardedClient();
+  try {
+    const now = deterministicE2ENow();
+    const customer = await prisma.customer.upsert({
+      where: { mobile },
+      create: { id: customerId, mobile, createdAt: now, updatedAt: now },
+      update: {},
+    });
+    if (customer.id !== customerId) {
+      throw new Error('M6 E2E customer does not match the deterministic fixture ID.');
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function createE2EOperationsOrder(
+  mobile: string,
+  fixture: E2EOperationsOrderFixture,
+): Promise<{
   orderNumber: string;
   orderItemId: string;
 }> {
@@ -89,9 +149,12 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
   try {
     const now = deterministicE2ENow();
     const customer = await prisma.customer.findUniqueOrThrow({ where: { mobile } });
+    if (customer.id !== fixture.ids.customer) {
+      throw new Error('M6 E2E Order customer does not match the deterministic fixture ID.');
+    }
     const cart = await prisma.cart.findUniqueOrThrow({ where: { customerId: customer.id } });
     const sku = await prisma.sku.findUniqueOrThrow({
-      where: { id: '20000000-0000-4000-8000-000000000041' },
+      where: { id: fixture.skuId },
       include: {
         colorVariant: { include: { product: true } },
         inventory: true,
@@ -107,33 +170,32 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
       where: { effectiveAt: { lte: now } },
       orderBy: { version: 'desc' },
     });
-    const token = randomUUID();
-    const orderNumber = `M6-E2E-${token.slice(0, 8).toUpperCase()}`;
     const addressSnapshot = {
-      recipientName: 'مشتری عملیات کِلِه',
+      recipientName: fixture.recipient.name,
       recipientMobile: mobile,
-      province: 'تهران',
-      city: 'تهران',
-      addressLine: 'خیابان ولیعصر، پلاک ۲۴',
-      postalCode: '1234567890',
+      province: fixture.recipient.province,
+      city: fixture.recipient.city,
+      addressLine: fixture.recipient.addressLine,
+      postalCode: fixture.recipient.postalCode,
       normalizedZone: 'tehran',
     };
     const result = await prisma.$transaction(async (transaction) => {
       const checkout = await transaction.checkoutSession.create({
         data: {
+          id: fixture.ids.checkoutSession,
           customerId: customer.id,
           cartId: cart.id,
           cartVersion: cart.version,
           status: 'PAID',
-          idempotencyKey: `m6-e2e-checkout-${token}`,
+          idempotencyKey: fixture.idempotencyKeys.checkout,
           requestHash: '6'.repeat(64),
           itemsSubtotalRial: currentPrice.amountRial,
-          shippingTotalRial: 800_000,
-          payableTotalRial: currentPrice.amountRial + 800_000n,
+          shippingTotalRial: fixture.shipping.fixedPriceRial,
+          payableTotalRial: currentPrice.amountRial + BigInt(fixture.shipping.fixedPriceRial),
           addressSnapshot,
-          shippingMethodCode: 'IRAN_POST',
-          shippingMethodName: 'پست ایران',
-          shippingFixedPriceRial: 800_000,
+          shippingMethodCode: fixture.shipping.methodCode,
+          shippingMethodName: fixture.shipping.methodName,
+          shippingFixedPriceRial: fixture.shipping.fixedPriceRial,
           freeShippingApplied: false,
           shippingSettingsVersion: policy.version,
           expiresAt: new Date(now.getTime() + 30 * 60_000),
@@ -143,38 +205,42 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
       });
       const attempt = await transaction.paymentAttempt.create({
         data: {
+          id: fixture.ids.paymentAttempt,
           checkoutSessionId: checkout.id,
           provider: 'fake',
-          providerReference: `m6-e2e-provider-${token}`,
-          providerTransactionId: `m6-e2e-transaction-${token}`,
+          providerReference: fixture.providerReference,
+          providerTransactionId: fixture.providerTransactionId,
           status: 'VERIFIED',
-          amountRial: currentPrice.amountRial + 800_000n,
-          idempotencyKey: `m6-e2e-attempt-${token}`,
+          amountRial: currentPrice.amountRial + BigInt(fixture.shipping.fixedPriceRial),
+          idempotencyKey: fixture.idempotencyKeys.payment,
           requestHash: '7'.repeat(64),
           verifiedAt: now,
+          createdAt: now,
         },
       });
       const order = await transaction.order.create({
         data: {
-          orderNumber,
+          id: fixture.ids.order,
+          orderNumber: fixture.orderNumber,
           customerId: customer.id,
           checkoutSessionId: checkout.id,
           paymentAttemptId: attempt.id,
           itemsSubtotalRial: currentPrice.amountRial,
-          shippingTotalRial: 800_000,
-          paidTotalRial: currentPrice.amountRial + 800_000n,
+          shippingTotalRial: fixture.shipping.fixedPriceRial,
+          paidTotalRial: currentPrice.amountRial + BigInt(fixture.shipping.fixedPriceRial),
           addressSnapshot,
-          shippingMethodCode: 'IRAN_POST',
-          shippingMethodName: 'پست ایران',
-          shippingFixedPriceRial: 800_000,
+          shippingMethodCode: fixture.shipping.methodCode,
+          shippingMethodName: fixture.shipping.methodName,
+          shippingFixedPriceRial: fixture.shipping.fixedPriceRial,
           freeShippingApplied: false,
           shippingSettingsVersion: policy.version,
           paymentProvider: 'fake',
-          providerTransactionId: attempt.providerTransactionId ?? `m6-e2e-transaction-${token}`,
+          providerTransactionId: attempt.providerTransactionId ?? fixture.providerTransactionId,
           paidAt: now,
           createdAt: now,
           items: {
             create: {
+              id: fixture.ids.orderItem,
               kind: 'PRODUCT',
               skuId: sku.id,
               titleSnapshot: sku.colorVariant.product.name,
@@ -183,16 +249,18 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
               quantity: 1,
               unitPriceRial: currentPrice.amountRial,
               lineTotalRial: currentPrice.amountRial,
+              createdAt: now,
             },
           },
           timeline: {
             create: {
+              id: fixture.ids.createdTimelineEvent,
               type: 'created',
               toStatus: 'PAID',
               actorId: 'payment:fake',
-              reason: 'پرداخت تأییدشدهٔ آزمون پذیرش',
-              correlationId: randomUUID(),
-              idempotencyKey: `m6-e2e-created-${token}`,
+              reason: fixture.createdReason,
+              correlationId: fixture.ids.createdCorrelation,
+              idempotencyKey: fixture.idempotencyKeys.createdTimeline,
               createdAt: now,
             },
           },
@@ -205,6 +273,7 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
       });
       await transaction.inventoryMovement.create({
         data: {
+          id: fixture.ids.saleInventoryMovement,
           skuId: sku.id,
           action: 'SALE',
           quantityDelta: -1,
@@ -213,10 +282,11 @@ export async function createE2EOperationsOrder(mobile: string): Promise<{
           beforeReservedQuantity: startingInventory.reservedQuantity,
           afterReservedQuantity: startingInventory.reservedQuantity,
           actorId: 'payment:fake',
-          reason: 'فروش تأییدشدهٔ آزمون پذیرش',
-          correlationId: randomUUID(),
-          idempotencyKey: `m6-e2e-sale-${token}`,
+          reason: fixture.saleReason,
+          correlationId: fixture.ids.saleCorrelation,
+          idempotencyKey: fixture.idempotencyKeys.saleInventory,
           orderId: order.id,
+          createdAt: now,
         },
       });
       return order;

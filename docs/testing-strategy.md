@@ -239,3 +239,14 @@ assertions pass.
   loading/empty/error/unavailable/success states are covered. Evidence is stored
   in `output/playwright/milestone-6/`; an independent Playwright CLI snapshot
   and mobile screenshot verify the semantic tree and direction.
+- The M6 evidence contract uses one named fixture for the customer, Order,
+  checkout/payment facts, tracking copy, transition/return copy and exactly four
+  dynamic visual baselines. API facts use the shared fixed clock and an
+  insertion-ordered, operations-scoped deterministic UUID factory; browser and
+  server formatting use the Tehran timezone. Timeline and audit assertions pin
+  IDs, timestamps and equal-time ordering before capture. Accepted baselines
+  must survive two consecutive complete E2E runs with both the Playwright output
+  diff and the whole worktree remaining clean after each run.
+- Visual acceptance retries are disabled. A race, layout instability or failed
+  capture must fail that run instead of producing evidence from a continued
+  deterministic-ID sequence on a retry.
