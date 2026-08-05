@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { reviewEvidencePath } from './evidence-paths.mts';
 
 export type MilestoneEvidenceFixture = Readonly<{
   milestone: 'milestone-3' | 'milestone-4' | 'milestone-6';
@@ -9,7 +9,7 @@ export type MilestoneEvidenceFixture = Readonly<{
 
 export const milestoneThreeFixture = {
   milestone: 'milestone-3',
-  evidenceDirectory: resolve('output/playwright/milestone-3'),
+  evidenceDirectory: reviewEvidencePath('milestone-3'),
   skuId: '20000000-0000-4000-8000-000000000041',
   screenshotFilenames: [
     'account-profile-address-desktop.png',
@@ -30,7 +30,7 @@ export const milestoneThreeFixture = {
 
 export const milestoneFourFixture = {
   milestone: 'milestone-4',
-  evidenceDirectory: resolve('output/playwright/milestone-4'),
+  evidenceDirectory: reviewEvidencePath('milestone-4'),
   skuId: '20000000-0000-4000-8000-000000000041',
   screenshotFilenames: [
     'checkout-desktop.png',
@@ -59,7 +59,7 @@ export const milestoneFourFixture = {
 
 export const milestoneSixFixture = {
   milestone: 'milestone-6',
-  evidenceDirectory: resolve('output/playwright/milestone-6'),
+  evidenceDirectory: reviewEvidencePath('milestone-6'),
   skuId: '20000000-0000-4000-8000-000000000041',
   screenshotFilenames: [
     'staff-order-delivered-desktop.png',

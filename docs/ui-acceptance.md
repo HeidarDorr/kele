@@ -162,13 +162,31 @@ Playwright CLI evidence is stored in `output/playwright/milestone-7/` for
 customer Homepage at 360 × 800, 768 × 1024, 1280 × 800 and 1440 × 900; Journal
 at mobile/desktop; Occasion at tablet; and Homepage editor, Journal editor and
 Media-reference administration. The repeatable production-build suite is
-`e2e/editorial.spec.ts` and writes `output/playwright/milestone-7-e2e/`.
+`e2e/editorial.spec.ts`. Gate-time captures are written below the ignored
+`output/playwright/.e2e-run/milestone-7/` root, so reviewing Milestone 7 cannot
+rewrite accepted evidence from an earlier milestone.
 
 Acceptance covers `fa-IR`/RTL roots, responsive overflow, keyboard skip-link,
 semantic headings/navigation, descriptive image alternatives, reduced motion,
 SEO title/description/canonical/Open Graph/Article JSON-LD, Draft/public
 isolation, protected previews, immediate post-publication reads, loading,
 empty, error, disabled and success states, and zero browser console errors.
+The repeatable state matrix includes Homepage loading/unavailable; Journal
+loading/empty/error/success; Occasion index loading/empty/error/success;
+Occasion detail unavailable; and administration loading/error/empty,
+referenced-Media deletion disabled, and successful Homepage, Journal,
+discovery and Site Settings routes. Relevant states are captured across
+390x844, 768x1024, 1280x800 and 1440x900 viewports with overflow assertions.
+
+Journal detail acceptance requires exactly one document-wide
+`script[type="application/ld+json"]` whose parsed `@type` is `Article`. The
+assertion is repeated after client navigation and a full reload; a locator
+shortcut must not hide duplicate structured data.
+
+The Milestone 6 fulfillment regression is also guarded in the full suite. Each
+Server Action redirects to a transition-specific completion URL, its submit
+control remains disabled while pending, and the final customer-service API
+read must report `fulfillmentStatus=delivered` with `version=4`.
 
 ## Milestone 1 shell evidence
 

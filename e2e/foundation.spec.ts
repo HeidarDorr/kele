@@ -24,14 +24,15 @@ import {
   milestoneThreeFixture,
   type MilestoneEvidenceFixture,
 } from './evidence-fixtures.mjs';
+import { reviewEvidencePath } from './evidence-paths.mjs';
 
 const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
 const evidenceDirectory = resolve(
   typographyVariant === 'markazi'
-    ? 'output/playwright/milestone-2-markazi'
-    : 'output/playwright/milestone-2',
+    ? reviewEvidencePath('milestone-2-markazi')
+    : reviewEvidencePath('milestone-2'),
 );
-const milestoneFiveEvidenceDirectory = resolve('output/playwright/milestone-5');
+const milestoneFiveEvidenceDirectory = reviewEvidencePath('milestone-5');
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
 let acceptanceProductSlug: string | undefined;
@@ -1349,17 +1350,28 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     await admin.getByRole('link', { name: 'بررسی سفارش' }).click();
     await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.preparing);
     await admin.getByRole('button', { name: 'ثبت «در حال آماده‌سازی»' }).click();
-    await expect(admin.getByRole('status')).toBeVisible();
+    await expect(admin).toHaveURL(/transition=preparing/);
+    await expect(admin.locator('.admin-heading span')).toHaveText('در حال آماده‌سازی · نسخه ۲', {
+      timeout: 15_000,
+    });
     await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.shipped);
     await admin.getByLabel('حامل').fill(milestoneSixFixture.tracking.carrier);
     await admin.getByLabel('کد رهگیری').fill(milestoneSixFixture.tracking.number);
     await admin.getByLabel('پیوند رهگیری').fill(milestoneSixFixture.tracking.url);
     await admin.getByRole('button', { name: 'ثبت «ارسال‌شده»' }).click();
+    await expect(admin).toHaveURL(/transition=shipped/);
+    await expect(admin.locator('.admin-heading span')).toHaveText('ارسال‌شده · نسخه ۳', {
+      timeout: 15_000,
+    });
     await expect(admin.getByText(milestoneSixFixture.tracking.number)).toBeVisible();
     await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.delivered);
     await admin.getByRole('button', { name: 'ثبت «تحویل‌شده»' }).click();
-    await expect(admin.getByText('این سفارش گذار اجرایی بعدی ندارد.')).toBeVisible({
+    await expect(admin).toHaveURL(/transition=delivered/);
+    await expect(admin.locator('.admin-heading span')).toHaveText('تحویل‌شده · نسخه ۴', {
       timeout: 15_000,
+    });
+    await expect(admin.getByText('این سفارش گذار اجرایی بعدی ندارد.')).toBeVisible({
+      timeout: 5_000,
     });
     const deliveredResponse = await request.get(
       `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
@@ -1369,19 +1381,23 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     const deliveredOrder = (await deliveredResponse.json()) as {
       customerId: string;
       createdAt: string;
+      fulfillmentStatus: string;
       paidAt: string;
       tracking: { id: string; trackingNumber: string; recordedAt: string } | null;
       timeline: Array<{ id: string; toStatus: string | null; occurredAt: string }>;
+      version: number;
     };
     expect(deliveredOrder).toMatchObject({
       customerId: milestoneSixFixture.ids.customer,
       createdAt: evidenceFixedTime,
+      fulfillmentStatus: 'delivered',
       paidAt: evidenceFixedTime,
       tracking: {
         id: operationsIds[2],
         trackingNumber: milestoneSixFixture.tracking.number,
         recordedAt: evidenceFixedTime,
       },
+      version: 4,
     });
     expect(
       deliveredOrder.timeline.map(({ id, toStatus, occurredAt }) => ({

@@ -29,6 +29,7 @@ test-results/
 .playwright-cli/
 screenshots/actual/
 screenshots/diff/
+output/playwright/.e2e-run/
 
 # Local object storage and database volumes
 .data/
