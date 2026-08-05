@@ -17,6 +17,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <Link href="/products/new">محصول تازه</Link>
           <Link href="/outfits">استایل‌ها</Link>
           <Link href="/outfits/new">استایل تازه</Link>
+          <Link href="/editorial">تحریریه</Link>
+          <Link href="/editorial/homepage">صفحهٔ اصلی</Link>
+          <Link href="/editorial/journal">ژورنال</Link>
+          <Link href="/editorial/discovery">کشف موقعیتی</Link>
+          <Link href="/editorial/settings">تنظیمات سایت</Link>
+          <Link href="/editorial/media">رسانه‌ها</Link>
           <Link href="/operations/orders">سفارش‌ها</Link>
           <Link href="/operations/returns">مرجوعی‌ها</Link>
           <Link href="/operations/bulk">عملیات گروهی</Link>

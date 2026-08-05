@@ -1,22 +1,40 @@
 import Link from 'next/link';
 import type { Category } from '../lib/catalog-api';
+import type { PublishedSiteSettings } from '../lib/editorial-api';
 import { BrandWordmark } from './brand-wordmark';
 import { HeaderCommerceActions } from './header-commerce-actions';
 
-export function SiteHeader({ categories }: { categories: Category[] }) {
+export function SiteHeader({
+  categories,
+  settings,
+}: {
+  categories: Category[];
+  settings?: PublishedSiteSettings | null;
+}) {
+  const navigation = settings?.configuration.primaryNavigation ?? [
+    { label: 'تازه‌ها', href: '/catalog' },
+    { label: 'استایل‌ها', href: '/outfits' },
+    { label: 'موقعیت‌ها', href: '/occasions' },
+    { label: 'ژورنال', href: '/journal' },
+  ];
   return (
     <>
       <a className="skip-link" href="#main-content">
         رفتن به محتوای اصلی
       </a>
       <header className="site-header">
-        <div className="announcement">فروشگاه KELE</div>
+        {settings?.configuration.announcement ? (
+          <div className="announcement">{settings.configuration.announcement}</div>
+        ) : null}
         <div className="shell header-row">
           <details className="mobile-menu">
             <summary aria-label="باز کردن فهرست">فهرست</summary>
             <nav aria-label="فهرست موبایل">
-              <Link href="/catalog">محصولات</Link>
-              <Link href="/outfits">استایل‌ها</Link>
+              {navigation.map((item) => (
+                <Link key={`${item.href}-${item.label}`} href={item.href}>
+                  {item.label}
+                </Link>
+              ))}
               {categories.map((category) => (
                 <Link key={category.id} href={`/category/${category.slug}`}>
                   {category.name}
@@ -25,11 +43,9 @@ export function SiteHeader({ categories }: { categories: Category[] }) {
             </nav>
           </details>
           <nav className="desktop-nav" aria-label="فهرست اصلی">
-            <Link href="/catalog">تازه‌ها</Link>
-            <Link href="/outfits">استایل‌ها</Link>
-            {categories.slice(0, 3).map((category) => (
-              <Link key={category.id} href={`/category/${category.slug}`}>
-                {category.name}
+            {navigation.map((item) => (
+              <Link key={`${item.href}-${item.label}`} href={item.href}>
+                {item.label}
               </Link>
             ))}
           </nav>

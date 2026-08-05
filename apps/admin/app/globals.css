@@ -692,6 +692,319 @@ label small,
   }
 }
 
+/* Milestone 7 editorial administration */
+.admin-lead {
+  max-inline-size: 56rem;
+  margin-block: 0 2.5rem;
+  color: var(--kele-ink-muted);
+  line-height: 1.9;
+}
+
+.editorial-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block-start: 1px solid var(--kele-line);
+  border-inline-start: 1px solid var(--kele-line);
+}
+
+.editorial-admin-grid > a {
+  min-block-size: 13rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-block-end: 1px solid var(--kele-line);
+  border-inline-end: 1px solid var(--kele-line);
+  color: inherit;
+  text-decoration: none;
+  transition: background 160ms ease;
+}
+
+.editorial-admin-grid > a:hover {
+  background: var(--kele-surface);
+}
+
+.editorial-admin-grid small,
+.editorial-version-bar,
+.journal-block-editor header span {
+  color: var(--kele-accent-strong);
+  font-size: 0.72rem;
+}
+
+.editorial-admin-grid strong {
+  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-size: 2rem;
+  font-weight: 400;
+}
+
+.editorial-admin-grid span {
+  color: var(--kele-ink-muted);
+  font-size: 0.82rem;
+}
+
+.editorial-version-bar {
+  margin-block-end: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  border: 1px solid var(--kele-line);
+  background: var(--kele-surface);
+}
+
+.editorial-builder {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.editorial-builder fieldset {
+  margin: 0;
+  padding: clamp(1.25rem, 3vw, 2.4rem);
+  border: 1px solid var(--kele-line);
+  background: var(--kele-surface);
+}
+
+.editorial-builder legend {
+  padding-inline: 0.7rem;
+  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-size: 1.65rem;
+}
+
+.editorial-builder legend span {
+  margin-inline-end: 0.75rem;
+  color: var(--kele-accent-strong);
+  font-family: var(--font-peyda), sans-serif;
+  font-size: 0.7rem;
+}
+
+.editorial-builder .admin-primary {
+  justify-self: start;
+}
+
+.editorial-toggle {
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.editorial-toggle input {
+  inline-size: 1.2rem;
+  block-size: 1.2rem;
+}
+
+.editorial-publish {
+  margin-block-start: 2rem;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  border-block: 1px solid var(--kele-line);
+}
+
+.editorial-publish p {
+  margin-block-end: 0;
+  color: var(--kele-ink-muted);
+}
+
+.admin-preview-banner,
+.admin-warning {
+  margin-block: 1rem 2rem;
+  padding: 1rem 1.25rem;
+  border-inline-start: 3px solid var(--kele-accent-strong);
+  background: color-mix(in srgb, var(--kele-accent) 8%, transparent);
+  line-height: 1.8;
+}
+
+.homepage-admin-preview {
+  display: grid;
+  gap: 1px;
+  background: var(--kele-line);
+  border: 1px solid var(--kele-line);
+}
+
+.homepage-admin-preview section {
+  min-block-size: 18rem;
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.85fr) minmax(0, 1.15fr);
+  background: #f1ebe3;
+}
+
+.homepage-admin-preview-media {
+  position: relative;
+  min-block-size: 18rem;
+}
+
+.homepage-admin-preview-media img {
+  object-fit: cover;
+}
+
+.homepage-admin-preview section > div {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.homepage-admin-preview h2 {
+  margin: 0.6rem 0;
+  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+}
+
+.journal-block-editor {
+  margin-block: 1rem;
+  padding: 1.2rem;
+  display: grid;
+  gap: 1rem;
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.journal-block-editor header {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.journal-block-editor label {
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+}
+
+.journal-block-editor input,
+.journal-block-editor textarea,
+.journal-block-editor select {
+  inline-size: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--kele-line);
+  background: #f1ebe3;
+  color: inherit;
+}
+
+.editorial-action-row {
+  margin-block-start: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-danger {
+  min-block-size: 2.8rem;
+  padding-inline: 1rem;
+  border: 1px solid #7f2f2a;
+  background: transparent;
+  color: #7f2f2a;
+  cursor: pointer;
+}
+
+.admin-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.journal-admin-preview {
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  font-size: 1rem;
+  line-height: 2;
+}
+
+.journal-admin-preview img {
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.journal-admin-preview h2 {
+  margin-block-start: 3rem;
+  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-size: 2.8rem;
+  font-weight: 400;
+}
+
+.admin-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.admin-media-grid > a {
+  display: grid;
+  gap: 0.6rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-media-grid > a > span {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--kele-surface);
+}
+
+.admin-media-grid img {
+  object-fit: cover;
+}
+
+.admin-media-grid small {
+  color: var(--kele-ink-muted);
+}
+
+.media-reference-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr);
+  gap: 2rem;
+}
+
+.media-reference-layout figure {
+  margin: 0;
+}
+
+.media-reference-layout figure img {
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.media-reference-layout figcaption {
+  margin-block-start: 0.7rem;
+  color: var(--kele-ink-muted);
+}
+
+.media-reference-list {
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.media-reference-list li {
+  padding-block: 1rem;
+  display: grid;
+  gap: 0.3rem;
+  border-block-end: 1px solid var(--kele-line);
+}
+
+.media-reference-list bdi,
+.media-reference-list span,
+.media-reference-list small {
+  color: var(--kele-ink-muted);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 760px) {
+  .editorial-admin-grid,
+  .homepage-admin-preview section,
+  .admin-media-grid,
+  .media-reference-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial-publish,
+  .editorial-action-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 bdi,
 .identifier {
   display: inline-block;

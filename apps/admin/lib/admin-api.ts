@@ -21,6 +21,13 @@ export interface ReturnRequestPage {
 }
 export type AuditEventPage = components['schemas']['AuditEventPage'];
 export type BulkOperation = components['schemas']['BulkOperation'];
+export type AdminHomepage = components['schemas']['AdminHomepage'];
+export type PublishedHomepage = components['schemas']['PublishedHomepage'];
+export type AdminJournalArticle = components['schemas']['AdminJournalArticle'];
+export type PublishedJournalArticle = components['schemas']['PublishedJournalArticle'];
+export type AdminSiteSettings = components['schemas']['AdminSiteSettings'];
+export type PublishedSiteSettings = components['schemas']['PublishedSiteSettings'];
+export type MediaReferenceReport = components['schemas']['MediaReferenceReport'];
 
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
 const sessionToken =
@@ -90,3 +97,13 @@ export const listAuditEvents = (query = '') =>
   adminRequest<AuditEventPage>(`/admin/audit-events${query.length > 0 ? `?${query}` : ''}`);
 export const getBulkOperation = (id: string) =>
   adminRequest<BulkOperation>(`/admin/bulk-operations/${encodeURIComponent(id)}`);
+export const getHomepageDraft = () => adminRequest<AdminHomepage>('/admin/homepage');
+export const previewHomepage = () => adminRequest<PublishedHomepage>('/admin/homepage/preview');
+export const listJournalDrafts = () => adminRequest<AdminJournalArticle[]>('/admin/journal');
+export const getJournalDraft = (id: string) =>
+  adminRequest<AdminJournalArticle>(`/admin/journal/${encodeURIComponent(id)}`);
+export const previewJournal = (id: string) =>
+  adminRequest<PublishedJournalArticle>(`/admin/journal/${encodeURIComponent(id)}/preview`);
+export const getSiteSettingsDraft = () => adminRequest<AdminSiteSettings>('/admin/settings/site');
+export const getMediaReferenceReport = (id: string) =>
+  adminRequest<MediaReferenceReport>(`/admin/media/${encodeURIComponent(id)}/references`);

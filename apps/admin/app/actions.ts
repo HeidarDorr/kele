@@ -361,3 +361,210 @@ export async function applyBulkAction(id: string, version: number): Promise<void
   });
   redirect(`/operations/bulk?preview=${encodeURIComponent(id)}&notice=applied`);
 }
+
+function lines(formData: FormData, name: string): string[] {
+  return stringValue(formData, name)
+    .split(/\r?\n/u)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+export async function saveHomepageAction(version: number, formData: FormData): Promise<void> {
+  const sectionIds = formData
+    .getAll('sectionId')
+    .filter((value): value is string => typeof value === 'string');
+  const sections = sectionIds.map((id) => {
+    const type = stringValue(formData, `type:${id}`);
+    const mediaSection = ['hero', 'editorial_banner', 'brand_story'].includes(type);
+    return {
+      id,
+      type,
+      enabled: formData.get(`enabled:${id}`) === 'on',
+      order: numberValue(formData, `order:${id}`),
+      content: mediaSection
+        ? {
+            title: stringValue(formData, `title:${id}`),
+            subtitle: stringValue(formData, `subtitle:${id}`) || null,
+            mediaId: stringValue(formData, `mediaId:${id}`),
+            ctaLabel: stringValue(formData, `ctaLabel:${id}`) || null,
+            href: stringValue(formData, `href:${id}`) || null,
+          }
+        : {
+            title: stringValue(formData, `title:${id}`),
+            referenceIds: stringValue(formData, `referenceIds:${id}`)
+              .split(/[\s,]+/u)
+              .map((value) => value.trim())
+              .filter(Boolean),
+          },
+    };
+  });
+  await adminRequest('/admin/homepage', {
+    method: 'PUT',
+    headers: { 'if-match': `"${String(version)}"` },
+    body: JSON.stringify({ sections }),
+  });
+  redirect('/editorial/homepage?notice=saved');
+}
+
+export async function publishHomepageAction(version: number): Promise<void> {
+  await adminRequest('/admin/homepage/publish', {
+    method: 'POST',
+    headers: { 'if-match': `"${String(version)}"` },
+  });
+  redirect('/editorial/homepage?notice=published');
+}
+
+function journalPayload(formData: FormData) {
+  const blockIds = formData
+    .getAll('blockId')
+    .filter((value): value is string => typeof value === 'string');
+  const blocks = blockIds.map((id) => {
+    const type = stringValue(formData, `blockType:${id}`);
+    if (type === 'heading')
+      return {
+        id,
+        type,
+        level: numberValue(formData, `blockLevel:${id}`),
+        text: stringValue(formData, `blockText:${id}`),
+      };
+    if (type === 'ordered_list' || type === 'unordered_list')
+      return { id, type, items: lines(formData, `blockItems:${id}`) };
+    if (type === 'image') return { id, type, mediaId: stringValue(formData, `blockMediaId:${id}`) };
+    if (type === 'product_reference' || type === 'outfit_reference')
+      return {
+        id,
+        type,
+        referenceId: stringValue(formData, `blockReferenceId:${id}`),
+        label: stringValue(formData, `blockLabel:${id}`) || undefined,
+      };
+    if (type === 'external_link')
+      return {
+        id,
+        type,
+        label: stringValue(formData, `blockLabel:${id}`),
+        href: stringValue(formData, `blockHref:${id}`),
+      };
+    if (type === 'divider') return { id, type };
+    return { id, type, text: stringValue(formData, `blockText:${id}`) };
+  });
+  return {
+    slug: stringValue(formData, 'slug'),
+    title: stringValue(formData, 'title'),
+    excerpt: stringValue(formData, 'excerpt') || null,
+    coverMediaId: stringValue(formData, 'coverMediaId') || null,
+    blocks,
+    seoTitle: stringValue(formData, 'seoTitle') || null,
+    seoDescription: stringValue(formData, 'seoDescription') || null,
+  };
+}
+
+export async function createJournalAction(formData: FormData): Promise<void> {
+  const article = await adminRequest<{ id: string }>('/admin/journal', {
+    method: 'POST',
+    body: JSON.stringify(journalPayload(formData)),
+  });
+  redirect(`/editorial/journal/${article.id}?notice=created`);
+}
+
+export async function saveJournalAction(
+  id: string,
+  version: number,
+  formData: FormData,
+): Promise<void> {
+  await adminRequest(`/admin/journal/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'if-match': `"${String(version)}"` },
+    body: JSON.stringify(journalPayload(formData)),
+  });
+  redirect(`/editorial/journal/${id}?notice=saved`);
+}
+
+export async function publishJournalAction(id: string, version: number): Promise<void> {
+  await adminRequest(`/admin/journal/${encodeURIComponent(id)}/publish`, {
+    method: 'POST',
+    headers: { 'if-match': `"${String(version)}"` },
+  });
+  redirect(`/editorial/journal/${id}?notice=published`);
+}
+
+export async function archiveJournalAction(id: string, version: number): Promise<void> {
+  await adminRequest(`/admin/journal/${encodeURIComponent(id)}/archive`, {
+    method: 'POST',
+    headers: { 'if-match': `"${String(version)}"` },
+  });
+  redirect('/editorial/journal?notice=archived');
+}
+
+function navigationLines(formData: FormData, name: string) {
+  return lines(formData, name).map((line) => {
+    const delimiter = line.indexOf('|');
+    return {
+      label: delimiter >= 0 ? line.slice(0, delimiter).trim() : line,
+      href: delimiter >= 0 ? line.slice(delimiter + 1).trim() : '',
+    };
+  });
+}
+
+export async function saveSiteSettingsAction(version: number, formData: FormData): Promise<void> {
+  const announcementKind = stringValue(formData, 'announcementKind');
+  await adminRequest('/admin/settings/site', {
+    method: 'PUT',
+    headers: { 'if-match': `"${String(version)}"` },
+    body: JSON.stringify({
+      configuration: {
+        brandName: stringValue(formData, 'brandName'),
+        brandTagline: stringValue(formData, 'brandTagline'),
+        contactEmail: stringValue(formData, 'contactEmail') || null,
+        primaryNavigation: navigationLines(formData, 'primaryNavigation'),
+        footerNavigation: navigationLines(formData, 'footerNavigation'),
+        announcement: stringValue(formData, 'announcement') || null,
+        announcementKind: announcementKind || null,
+        seoDefaults: {
+          title: stringValue(formData, 'seoTitle'),
+          description: stringValue(formData, 'seoDescription'),
+        },
+      },
+      contentApprovedBy: stringValue(formData, 'contentApprovedBy') || null,
+      contentApprovedAt: stringValue(formData, 'contentApprovedAt') || null,
+    }),
+  });
+  redirect('/editorial/settings?notice=saved');
+}
+
+export async function publishSiteSettingsAction(version: number): Promise<void> {
+  await adminRequest('/admin/settings/site/publish', {
+    method: 'POST',
+    headers: { 'if-match': `"${String(version)}"` },
+  });
+  redirect('/editorial/settings?notice=published');
+}
+
+export async function updateDiscoveryAction(
+  id: string,
+  version: number,
+  formData: FormData,
+): Promise<void> {
+  await adminRequest(`/admin/categories/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'if-match': `"${String(version)}"` },
+    body: JSON.stringify({
+      name: stringValue(formData, 'name'),
+      slug: stringValue(formData, 'slug'),
+      description: stringValue(formData, 'description') || null,
+      displayOrder: numberValue(formData, 'displayOrder'),
+      status: stringValue(formData, 'status'),
+      discoveryKind: 'occasion',
+      editorialTitle: stringValue(formData, 'editorialTitle') || null,
+      editorialDescription: stringValue(formData, 'editorialDescription') || null,
+      heroMediaId: stringValue(formData, 'heroMediaId') || null,
+      seoTitle: stringValue(formData, 'seoTitle') || null,
+      seoDescription: stringValue(formData, 'seoDescription') || null,
+    }),
+  });
+  redirect('/editorial/discovery?notice=saved');
+}
+
+export async function deleteEditorialMediaAction(id: string): Promise<void> {
+  await adminRequest(`/admin/media/${encodeURIComponent(id)}/references`, { method: 'DELETE' });
+  redirect('/editorial/media?notice=deleted');
+}
