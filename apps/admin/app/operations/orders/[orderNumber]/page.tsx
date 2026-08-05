@@ -1,4 +1,5 @@
 import { AdminShell } from '../../../../components/admin-shell';
+import { PendingSubmitButton } from '../../../../components/pending-submit-button';
 import { retryRefundAction, reviseTrackingAction, transitionOrderAction } from '../../../actions';
 import { getAdminOrder } from '../../../../lib/admin-api';
 
@@ -18,7 +19,7 @@ export default async function OperationsOrderPage({
   searchParams,
 }: {
   params: Promise<{ orderNumber: string }>;
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ notice?: string; transition?: string }>;
 }) {
   const [{ orderNumber }, query] = await Promise.all([params, searchParams]);
   const order = await getAdminOrder(orderNumber);
@@ -45,7 +46,7 @@ export default async function OperationsOrderPage({
         </div>
       </header>
       {query.notice ? (
-        <p className="admin-success" role="status">
+        <p className="admin-success" data-transition={query.transition} role="status">
           عملیات با موفقیت ثبت و تاریخچه به‌روزرسانی شد.
         </p>
       ) : null}
@@ -102,9 +103,11 @@ export default async function OperationsOrderPage({
                   </label>
                 </>
               ) : null}
-              <button className="admin-primary" type="submit">
-                ثبت «{labels[next]}»
-              </button>
+              <PendingSubmitButton
+                className="admin-primary"
+                label={`ثبت «${labels[next] ?? next}»`}
+                pendingLabel="در حال ثبت گذار…"
+              />
             </form>
           ) : (
             <p className="admin-note">این سفارش گذار اجرایی بعدی ندارد.</p>
@@ -119,9 +122,11 @@ export default async function OperationsOrderPage({
                 دلیل لغو
                 <textarea name="reason" required minLength={3} />
               </label>
-              <button className="admin-secondary" type="submit">
-                لغو و درخواست بازپرداخت
-              </button>
+              <PendingSubmitButton
+                className="admin-secondary"
+                label="لغو و درخواست بازپرداخت"
+                pendingLabel="در حال ثبت لغو…"
+              />
             </form>
           ) : null}
         </section>

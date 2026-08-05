@@ -277,7 +277,9 @@ export async function transitionOrderAction(
         : {}),
     }),
   });
-  redirect(`/operations/orders/${encodeURIComponent(orderNumber)}?notice=transitioned`);
+  redirect(
+    `/operations/orders/${encodeURIComponent(orderNumber)}?notice=transitioned&transition=${encodeURIComponent(toStatus)}`,
+  );
 }
 
 export async function reviseTrackingAction(
