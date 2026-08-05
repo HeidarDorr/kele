@@ -7,9 +7,26 @@ export const dynamic = 'force-dynamic';
 export default async function EditorialMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string }>;
+  searchParams: Promise<{ notice?: string; state?: 'loading' | 'empty' | 'error' }>;
 }) {
-  const [media, parameters] = await Promise.all([listMedia(), searchParams]);
+  const parameters = await searchParams;
+  if (parameters.state === 'loading')
+    return (
+      <AdminShell>
+        <header className="admin-heading">
+          <div>
+            <p>Editorial / Media</p>
+            <h1>رسانه‌های امن</h1>
+          </div>
+        </header>
+        <section className="editorial-admin-state" role="status" aria-busy="true">
+          <strong>در حال دریافت رسانه‌ها</strong>
+          <span>ارجاع‌های فعال و تاریخی پیش از نمایش بررسی می‌شوند.</span>
+        </section>
+      </AdminShell>
+    );
+  const result = parameters.state === 'error' ? null : await listMedia().catch(() => null);
+  const media = parameters.state === 'empty' ? [] : (result ?? []);
   return (
     <AdminShell>
       <header className="admin-heading">
@@ -23,7 +40,17 @@ export default async function EditorialMediaPage({
           رسانهٔ بدون ارجاع حذف شد.
         </div>
       ) : null}
+      {result === null ? (
+        <section className="admin-error" role="alert">
+          <strong>دریافت رسانه‌ها و وضعیت ارجاع ممکن نشد.</strong> حذف رسانه غیرفعال باقی ماند.
+        </section>
+      ) : null}
       <p className="admin-lead">هیچ رسانه‌ای پیش از مشاهدهٔ ارجاع‌های فعال و تاریخی حذف نمی‌شود.</p>
+      {result !== null && media.length === 0 ? (
+        <section className="admin-empty-state" role="status">
+          رسانه‌ای برای بررسی وجود ندارد.
+        </section>
+      ) : null}
       <div className="admin-media-grid">
         {media.map((item) => (
           <Link href={`/editorial/media/${item.id}`} key={item.id}>

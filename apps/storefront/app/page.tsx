@@ -41,8 +41,13 @@ function isMediaSection(section: Section): section is Section & {
   return 'mediaId' in section.content;
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: 'loading' | 'unavailable' }>;
+}) {
   const [
+    parameters,
     homepageResult,
     categoryResult,
     productResult,
@@ -50,6 +55,7 @@ export default async function HomePage() {
     journalResult,
     settingsResult,
   ] = await Promise.allSettled([
+    searchParams,
     getHomepage(),
     getCategories(),
     getProducts({ limit: 24 }),
@@ -57,7 +63,9 @@ export default async function HomePage() {
     getJournal(6),
     getSiteSettings(),
   ]);
-  const homepage = homepageResult.status === 'fulfilled' ? homepageResult.value : null;
+  const state = parameters.status === 'fulfilled' ? parameters.value.state : undefined;
+  const homepage =
+    state === 'unavailable' || homepageResult.status === 'rejected' ? null : homepageResult.value;
   const categories = categoryResult.status === 'fulfilled' ? categoryResult.value.items : [];
   const products = productResult.status === 'fulfilled' ? productResult.value.items : [];
   const occasions = occasionResult.status === 'fulfilled' ? occasionResult.value.items : [];
@@ -69,7 +77,18 @@ export default async function HomePage() {
     <>
       <SiteHeader categories={categories} settings={settings} />
       <main id="main-content" className="editorial-home">
-        {!homepage ? (
+        {state === 'loading' ? (
+          <section
+            className="shell editorial-unavailable editorial-loading-state"
+            role="status"
+            aria-busy="true"
+          >
+            <p className="eyebrow">صفحهٔ اصلی</p>
+            <h1>در حال دریافت روایت تازهٔ KELE</h1>
+            <div className="editorial-loading-line" aria-hidden="true" />
+            <p>چیدمان منتشرشده و رسانه‌های آن در حال آماده‌سازی‌اند.</p>
+          </section>
+        ) : !homepage ? (
           <section className="shell editorial-unavailable" role="status">
             <p className="eyebrow">صفحهٔ اصلی</p>
             <h1>روایت تازهٔ KELE در دسترس نیست</h1>

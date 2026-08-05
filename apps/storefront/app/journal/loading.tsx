@@ -1,6 +1,6 @@
 export default function JournalLoading() {
   return (
-    <main id="main-content" className="journal-index shell" aria-busy="true">
+    <main id="main-content" className="journal-index shell" role="status" aria-busy="true">
       <div className="editorial-loading-line" />
       <div className="editorial-loading-grid">
         <span />

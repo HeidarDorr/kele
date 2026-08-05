@@ -9,6 +9,16 @@ import { EditorialApiError, getJournalArticle, getSiteSettings } from '../../../
 
 export const dynamic = 'force-dynamic';
 
+function ArticleStructuredData({ json }: { json: string }) {
+  return (
+    <script
+      id="kele-journal-article-json-ld"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: json }}
+    />
+  );
+}
+
 async function articleOrNull(slug: string) {
   try {
     return await getJournalArticle(slug);
@@ -74,6 +84,7 @@ export default async function JournalArticlePage({
     <>
       <SiteHeader categories={categories} settings={settings} />
       <main id="main-content">
+        <ArticleStructuredData json={jsonLd} />
         <article className="journal-article">
           <header className="journal-article-header shell">
             <p>ژورنال KELE</p>
@@ -165,7 +176,6 @@ export default async function JournalArticlePage({
               }
             })}
           </div>
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
         </article>
       </main>
       <SiteFooter settings={settings} />

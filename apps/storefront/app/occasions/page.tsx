@@ -13,13 +13,20 @@ export const metadata: Metadata = {
   alternates: { canonical: '/occasions' },
 };
 
-export default async function OccasionsPage() {
-  const [occasionResult, categoryResult, settingsResult] = await Promise.allSettled([
+export default async function OccasionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: 'loading' | 'empty' | 'error' }>;
+}) {
+  const [parameters, occasionResult, categoryResult, settingsResult] = await Promise.allSettled([
+    searchParams,
     getOccasions(),
     getCategories(),
     getSiteSettings(),
   ]);
-  const occasions = occasionResult.status === 'fulfilled' ? occasionResult.value.items : [];
+  const state = parameters.status === 'fulfilled' ? parameters.value.state : undefined;
+  const occasions =
+    state === 'empty' || occasionResult.status === 'rejected' ? [] : occasionResult.value.items;
   const categories = categoryResult.status === 'fulfilled' ? categoryResult.value.items : [];
   const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
   return (
@@ -31,7 +38,13 @@ export default async function OccasionsPage() {
           <h1>برای هر لحظه، انتخابی آرام</h1>
           <p>مجموعه‌هایی که بر اساس حال‌وهوای مراسم و آزادی حرکت کودک کنار هم قرار گرفته‌اند.</p>
         </header>
-        {occasionResult.status === 'rejected' ? (
+        {state === 'loading' ? (
+          <section className="state-panel editorial-state-loading" role="status" aria-busy="true">
+            <h2>در حال دریافت موقعیت‌ها</h2>
+            <div className="editorial-loading-line" aria-hidden="true" />
+            <p>روایت‌ها و تصاویر منتشرشده در حال آماده‌سازی‌اند.</p>
+          </section>
+        ) : state === 'error' || occasionResult.status === 'rejected' ? (
           <section className="state-panel" role="alert">
             <h2>موقعیت‌ها در دسترس نیستند</h2>
             <p>فروشگاه همچنان قابل استفاده است.</p>

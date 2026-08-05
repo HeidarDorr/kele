@@ -2850,6 +2850,18 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
   font-weight: 400;
 }
 
+.editorial-loading-state .editorial-loading-line,
+.editorial-state-loading .editorial-loading-line {
+  inline-size: min(28rem, 82vw);
+  block-size: 0.35rem;
+  margin-block: 1rem;
+}
+
+.editorial-state-loading {
+  position: relative;
+  overflow: hidden;
+}
+
 .journal-index,
 .occasion-index {
   padding-block: clamp(5rem, 10vw, 9rem) 9rem;

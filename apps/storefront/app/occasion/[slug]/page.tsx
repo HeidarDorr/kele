@@ -39,8 +39,14 @@ export async function generateMetadata({
     : { title: 'موقعیت پیدا نشد' };
 }
 
-export default async function OccasionPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function OccasionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ state?: 'unavailable' }>;
+}) {
+  const [{ slug }, parameters] = await Promise.all([params, searchParams]);
   const [occasion, categoryResult, settingsResult] = await Promise.all([
     occasionOrNull(slug),
     Promise.resolve(getCategories())
@@ -82,7 +88,7 @@ export default async function OccasionPage({ params }: { params: Promise<{ slug:
             <p>انتخاب KELE</p>
             <h2 id="occasion-products-title">پوشش‌های این موقعیت</h2>
           </header>
-          {occasion.products.items.length > 0 ? (
+          {parameters.state !== 'unavailable' && occasion.products.items.length > 0 ? (
             <div className="product-grid">
               {occasion.products.items.map((product) => (
                 <ProductCard

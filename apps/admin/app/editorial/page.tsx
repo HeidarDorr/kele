@@ -4,7 +4,42 @@ import { getHomepageDraft, getSiteSettingsDraft, listJournalDrafts } from '../..
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditorialHubPage() {
+export default async function EditorialHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ state?: 'loading' | 'error' }>;
+}) {
+  const parameters = await searchParams;
+  if (parameters.state === 'loading')
+    return (
+      <AdminShell>
+        <header className="admin-heading">
+          <div>
+            <p>Content / Editorial</p>
+            <h1>تحریریهٔ KELE</h1>
+          </div>
+        </header>
+        <section className="editorial-admin-state" role="status" aria-busy="true">
+          <strong>در حال دریافت فضای تحریریه</strong>
+          <span>نسخه‌های پیش‌نویس و منتشرشده در حال همگام‌سازی‌اند.</span>
+        </section>
+      </AdminShell>
+    );
+  if (parameters.state === 'error')
+    return (
+      <AdminShell>
+        <header className="admin-heading">
+          <div>
+            <p>Content / Editorial</p>
+            <h1>تحریریهٔ KELE</h1>
+          </div>
+        </header>
+        <section className="admin-error editorial-admin-state" role="alert">
+          <strong>دریافت وضعیت تحریریه ممکن نشد.</strong>
+          <span>هیچ تغییری ذخیره یا منتشر نشده است؛ اتصال را بررسی و دوباره تلاش کنید.</span>
+        </section>
+      </AdminShell>
+    );
   const [homepage, journal, settings] = await Promise.all([
     getHomepageDraft(),
     listJournalDrafts(),
