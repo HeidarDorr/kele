@@ -93,6 +93,34 @@ export class AdminCategoryDto {
   @IsEnum(publicationStatuses)
   status?: PublicationStatus;
 
+  @IsOptional()
+  @IsIn(['catalog', 'occasion'])
+  discoveryKind?: AdminCategoryInput['discoveryKind'];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  editorialTitle?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  editorialDescription?: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  heroMediaId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  seoTitle?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(320)
+  seoDescription?: string | null;
+
   toDomain(): AdminCategoryInput {
     return {
       name: this.name,
@@ -100,6 +128,12 @@ export class AdminCategoryDto {
       description: this.description ?? null,
       displayOrder: this.displayOrder,
       status: this.status ?? 'draft',
+      discoveryKind: this.discoveryKind ?? 'catalog',
+      editorialTitle: this.editorialTitle ?? null,
+      editorialDescription: this.editorialDescription ?? null,
+      heroMediaId: this.heroMediaId ?? null,
+      seoTitle: this.seoTitle ?? null,
+      seoDescription: this.seoDescription ?? null,
     };
   }
 }

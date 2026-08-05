@@ -58,6 +58,11 @@ export interface CategoryValue {
   displayOrder: number;
   status: PublicationStatus;
   version: number;
+  discoveryKind?: 'catalog' | 'occasion';
+  editorialTitle?: string | null;
+  editorialDescription?: string | null;
+  heroMedia?: MediaValue | null;
+  seo?: SeoValue;
 }
 
 export interface ProductValue {
@@ -159,6 +164,12 @@ export interface AdminCategoryInput {
   description: string | null;
   displayOrder: number;
   status: PublicationStatus;
+  discoveryKind?: 'catalog' | 'occasion';
+  editorialTitle?: string | null;
+  editorialDescription?: string | null;
+  heroMediaId?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 }
 
 export interface AdminMediaInput {

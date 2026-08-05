@@ -19,6 +19,7 @@ export const CATALOG_REPOSITORY = Symbol('CATALOG_REPOSITORY');
 
 export interface CatalogRepository {
   listPublicCategories(): Promise<CategoryValue[]>;
+  listPublicOccasions(): Promise<CategoryValue[]>;
   getPublicCategory(
     slug: string,
     query: CatalogQuery,
@@ -27,6 +28,12 @@ export interface CatalogRepository {
   getPublicProduct(slug: string, colorVariantId: string | null): Promise<ProductDetailValue>;
   listAdminCategories(): Promise<CategoryValue[]>;
   createCategory(input: AdminCategoryInput, actor: ActorContext): Promise<CategoryValue>;
+  updateCategory(
+    id: string,
+    input: AdminCategoryInput,
+    expectedVersion: number,
+    actor: ActorContext,
+  ): Promise<CategoryValue>;
   listMedia(): Promise<MediaValue[]>;
   createMedia(input: AdminMediaInput, actor: ActorContext): Promise<MediaValue>;
   listAdminProducts(query: CatalogQuery): Promise<ProductValue[]>;

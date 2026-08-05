@@ -45,11 +45,35 @@ function normalizeInventoryAction(
   return { ...input, reason };
 }
 
+function validatedCategory(input: AdminCategoryInput): AdminCategoryInput {
+  if (input.discoveryKind === 'occasion' && input.status === 'published') {
+    const missing = [
+      ['editorialTitle', input.editorialTitle],
+      ['editorialDescription', input.editorialDescription],
+      ['heroMediaId', input.heroMediaId],
+      ['seoTitle', input.seoTitle],
+      ['seoDescription', input.seoDescription],
+    ].filter(([, value]) => typeof value !== 'string' || value.trim().length === 0);
+    if (missing.length > 0) {
+      throw new CatalogError(
+        'validation',
+        'OCCASION_PUBLICATION_INVALID',
+        `Published occasion content is incomplete: ${missing.map(([field]) => field).join(', ')}.`,
+      );
+    }
+  }
+  return input;
+}
+
 export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
 
   listPublicCategories() {
     return this.repository.listPublicCategories();
+  }
+
+  listPublicOccasions() {
+    return this.repository.listPublicOccasions();
   }
 
   getPublicCategory(slug: string, query: CatalogQuery) {
@@ -69,7 +93,16 @@ export class CatalogService {
   }
 
   createCategory(input: AdminCategoryInput, actor: ActorContext) {
-    return this.repository.createCategory(input, actor);
+    return this.repository.createCategory(validatedCategory(input), actor);
+  }
+
+  updateCategory(
+    id: string,
+    input: AdminCategoryInput,
+    expectedVersion: number,
+    actor: ActorContext,
+  ) {
+    return this.repository.updateCategory(id, validatedCategory(input), expectedVersion, actor);
   }
 
   listMedia() {

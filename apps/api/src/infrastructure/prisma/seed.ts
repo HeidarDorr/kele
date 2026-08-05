@@ -1,4 +1,6 @@
 import {
+  DiscoveryKind,
+  EditorialRevisionState,
   InventoryAction,
   MediaFormat,
   MediaGroup,
@@ -10,7 +12,7 @@ import {
 } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
 
-const seedVersion = 'milestone-5-outfit';
+const seedVersion = 'milestone-7-editorial-platform';
 const categoryId = '20000000-0000-4000-8000-000000000001';
 const productId = '20000000-0000-4000-8000-000000000010';
 const variantId = '20000000-0000-4000-8000-000000000020';
@@ -28,6 +30,18 @@ const outfitMediaIds = [
   '50000000-0000-4000-8000-000000000032',
   '50000000-0000-4000-8000-000000000033',
 ] as const;
+const occasionCategoryId = '70000000-0000-4000-8000-000000000001';
+const homepagePublishedId = '70000000-0000-4000-8000-000000000010';
+const homepageDraftId = '70000000-0000-4000-8000-000000000011';
+const journalArticleId = '70000000-0000-4000-8000-000000000020';
+const journalPublicationId = '70000000-0000-4000-8000-000000000021';
+const settingsPublishedId = '70000000-0000-4000-8000-000000000030';
+const settingsDraftId = '70000000-0000-4000-8000-000000000031';
+const editorialMediaIds = {
+  homepageHero: '70000000-0000-4000-8000-000000000041',
+  occasionFormal: '70000000-0000-4000-8000-000000000042',
+  journalTailoring: '70000000-0000-4000-8000-000000000043',
+} as const;
 const publishedAt = new Date('2026-07-31T00:00:00.000Z');
 const mediaIds = [frontMediaId, backMediaId, detailMediaId];
 const prisma = new PrismaClient();
@@ -95,6 +109,9 @@ const skuInputs = [
 async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promise<void> {
   // E2E reset is guarded by assertE2EDatabaseResetEnvironment. TRUNCATE bypasses
   // published-revision row guards while CASCADE clears only the disposable test graph.
+  await transaction.$executeRawUnsafe('TRUNCATE TABLE "homepage_revisions" CASCADE');
+  await transaction.$executeRawUnsafe('TRUNCATE TABLE "journal_articles" CASCADE');
+  await transaction.$executeRawUnsafe('TRUNCATE TABLE "site_settings_versions" CASCADE');
   await transaction.$executeRawUnsafe('TRUNCATE TABLE "outfits" CASCADE');
   await transaction.paymentCallbackReceipt.deleteMany();
   await transaction.paymentReconciliation.deleteMany();
@@ -509,6 +526,294 @@ async function reconcileSeed(transaction: Prisma.TransactionClient): Promise<voi
   });
 }
 
+async function reconcileEditorial(transaction: Prisma.TransactionClient): Promise<void> {
+  const editorialMedia = [
+    {
+      id: editorialMediaIds.homepageHero,
+      url: '/media/editorial/homepage-hero.webp',
+      width: 1536,
+      height: 1024,
+      altText: 'پسربچه با کت‌وشلوار لینن روشن در فضای سنگی آرام',
+      group: MediaGroup.HOMEPAGE,
+      focalPointX: 0.32,
+      focalPointY: 0.48,
+    },
+    {
+      id: editorialMediaIds.occasionFormal,
+      url: '/media/editorial/occasion-formal.webp',
+      width: 1122,
+      height: 1402,
+      altText: 'پوشش رسمی قهوه‌ای برای مهمانی کودکانه',
+      group: MediaGroup.HOMEPAGE,
+      focalPointX: 0.65,
+      focalPointY: 0.43,
+    },
+    {
+      id: editorialMediaIds.journalTailoring,
+      url: '/media/editorial/journal-tailoring.webp',
+      width: 1536,
+      height: 1024,
+      altText: 'جزئیات دوخت کت لینن در کارگاه خیاطی',
+      group: MediaGroup.JOURNAL,
+      focalPointX: 0.68,
+      focalPointY: 0.5,
+    },
+  ] as const;
+  for (const item of editorialMedia) {
+    await transaction.mediaAsset.upsert({
+      where: { id: item.id },
+      create: { ...item, format: MediaFormat.WEBP },
+      update: { ...item, format: MediaFormat.WEBP, archivedAt: null },
+    });
+  }
+
+  await transaction.category.upsert({
+    where: { id: occasionCategoryId },
+    create: {
+      id: occasionCategoryId,
+      name: 'مراسم رسمی',
+      slug: 'formal-occasions',
+      description: 'انتخاب‌های آرام و سنجیده برای مهمانی‌ها و مراسم رسمی.',
+      status: PublicationStatus.PUBLISHED,
+      displayOrder: 1,
+      discoveryKind: DiscoveryKind.OCCASION,
+      editorialTitle: 'برای لحظه‌های به‌یادماندنی',
+      editorialDescription:
+        'پوشش‌های رسمی با تناسب راحت، بافت طبیعی و جزئیاتی که در عکس و خاطره ماندگار می‌شوند.',
+      heroMediaId: editorialMediaIds.occasionFormal,
+      seoTitle: 'لباس رسمی کودک برای مراسم | KELE',
+      seoDescription:
+        'انتخاب پوشش رسمی کودک KELE برای مهمانی و مراسم با پارچه‌های طبیعی و طراحی آرام.',
+    },
+    update: {
+      status: PublicationStatus.PUBLISHED,
+      discoveryKind: DiscoveryKind.OCCASION,
+      heroMediaId: editorialMediaIds.occasionFormal,
+      archivedAt: null,
+    },
+  });
+  await transaction.productCategory.upsert({
+    where: { productId_categoryId: { productId, categoryId: occasionCategoryId } },
+    create: { productId, categoryId: occasionCategoryId },
+    update: {},
+  });
+
+  const homepageSections: Prisma.InputJsonValue = [
+    {
+      id: '71000000-0000-4000-8000-000000000001',
+      type: 'hero',
+      enabled: true,
+      order: 1,
+      content: {
+        title: 'لباس‌هایی برای خاطره‌های آرام کودکی',
+        subtitle: 'پارچه‌های طبیعی، فرم‌های سنجیده و راحتی برای هر روز و هر مراسم',
+        mediaId: editorialMediaIds.homepageHero,
+        ctaLabel: 'دیدن مجموعه',
+        href: '/catalog',
+      },
+    },
+    {
+      id: '71000000-0000-4000-8000-000000000002',
+      type: 'occasion_grid',
+      enabled: true,
+      order: 2,
+      content: { title: 'انتخاب بر اساس موقعیت', referenceIds: [occasionCategoryId] },
+    },
+    {
+      id: '71000000-0000-4000-8000-000000000003',
+      type: 'featured_products',
+      enabled: true,
+      order: 3,
+      content: { title: 'انتخاب‌های تازه', referenceIds: [productId] },
+    },
+    {
+      id: '71000000-0000-4000-8000-000000000004',
+      type: 'brand_story',
+      enabled: true,
+      order: 4,
+      content: {
+        title: 'آرام، ماندگار، برای کودک',
+        subtitle: 'KELE لباس کودک را با احترام به حرکت، لمس و خاطره طراحی می‌کند.',
+        mediaId: editorialMediaIds.journalTailoring,
+        ctaLabel: 'خواندن ژورنال',
+        href: '/journal',
+      },
+    },
+  ];
+  await transaction.homepageRevision.upsert({
+    where: { id: homepagePublishedId },
+    create: {
+      id: homepagePublishedId,
+      revisionNumber: 1,
+      state: EditorialRevisionState.PUBLISHED,
+      sections: homepageSections,
+      actorId: 'seed',
+      publishedAt,
+    },
+    update: {},
+  });
+  await transaction.homepageRevision.upsert({
+    where: { id: homepageDraftId },
+    create: {
+      id: homepageDraftId,
+      revisionNumber: 2,
+      state: EditorialRevisionState.DRAFT,
+      sections: homepageSections,
+      actorId: 'seed',
+    },
+    update: {},
+  });
+
+  const journalBlocks: Prisma.InputJsonValue = [
+    {
+      id: '72000000-0000-4000-8000-000000000001',
+      type: 'paragraph',
+      text: 'یک کت خوب از ظاهر آغاز نمی‌شود؛ از آزادی حرکت کودک و انتخاب پارچه‌ای شروع می‌شود که با پوست او مهربان باشد.',
+    },
+    {
+      id: '72000000-0000-4000-8000-000000000002',
+      type: 'heading',
+      level: 2,
+      text: 'جزئیاتی که تفاوت می‌سازند',
+    },
+    {
+      id: '72000000-0000-4000-8000-000000000003',
+      type: 'unordered_list',
+      items: ['آستر نرم و تنفس‌پذیر', 'درزهای تمیز و بدون زبری', 'فضای کافی برای حرکت و بازی'],
+    },
+    {
+      id: '72000000-0000-4000-8000-000000000004',
+      type: 'image',
+      mediaId: editorialMediaIds.journalTailoring,
+    },
+    {
+      id: '72000000-0000-4000-8000-000000000005',
+      type: 'product_reference',
+      referenceId: productId,
+      label: 'مشاهده کت‌وشلوار لینن',
+    },
+  ];
+  await transaction.journalArticle.upsert({
+    where: { id: journalArticleId },
+    create: {
+      id: journalArticleId,
+      slug: 'quiet-craft-of-tailoring',
+      status: PublicationStatus.PUBLISHED,
+      title: 'هنر آرام دوخت برای کودک',
+      excerpt: 'نگاهی نزدیک به پارچه، تناسب و جزئیاتی که پوشش کودک را راحت و ماندگار می‌کنند.',
+      coverMediaId: editorialMediaIds.journalTailoring,
+      blocks: journalBlocks,
+      seoTitle: 'راهنمای دوخت و پارچه لباس کودک | ژورنال KELE',
+      seoDescription: 'نگاهی به انتخاب پارچه و جزئیات دوخت لباس کودک برای راحتی، حرکت و ماندگاری.',
+    },
+    update: {},
+  });
+  await transaction.journalPublication.upsert({
+    where: { id: journalPublicationId },
+    create: {
+      id: journalPublicationId,
+      articleId: journalArticleId,
+      publicationNumber: 1,
+      slug: 'quiet-craft-of-tailoring',
+      title: 'هنر آرام دوخت برای کودک',
+      excerpt: 'نگاهی نزدیک به پارچه، تناسب و جزئیاتی که پوشش کودک را راحت و ماندگار می‌کنند.',
+      coverMediaId: editorialMediaIds.journalTailoring,
+      blocks: journalBlocks,
+      seoTitle: 'راهنمای دوخت و پارچه لباس کودک | ژورنال KELE',
+      seoDescription: 'نگاهی به انتخاب پارچه و جزئیات دوخت لباس کودک برای راحتی، حرکت و ماندگاری.',
+      actorId: 'seed',
+      publishedAt,
+    },
+    update: {},
+  });
+
+  const settings: Prisma.InputJsonValue = {
+    brandName: 'KELE',
+    brandTagline: 'پوشش آرام برای کودکی آزاد',
+    contactEmail: 'hello@kele.ir',
+    primaryNavigation: [
+      { label: 'فروشگاه', href: '/catalog' },
+      { label: 'استایل‌ها', href: '/outfits' },
+      { label: 'موقعیت‌ها', href: '/occasions' },
+      { label: 'ژورنال', href: '/journal' },
+    ],
+    footerNavigation: [
+      { label: 'فروشگاه', href: '/catalog' },
+      { label: 'موقعیت‌ها', href: '/occasions' },
+      { label: 'ژورنال', href: '/journal' },
+    ],
+    announcement: null,
+    announcementKind: null,
+    seoDefaults: {
+      title: 'KELE | پوشش کودک',
+      description: 'پوشش کودک با پارچه‌های طبیعی، طراحی سنجیده و آزادی حرکت.',
+    },
+  };
+  await transaction.siteSettingsVersion.upsert({
+    where: { id: settingsPublishedId },
+    create: {
+      id: settingsPublishedId,
+      revisionNumber: 1,
+      state: EditorialRevisionState.PUBLISHED,
+      configuration: settings,
+      actorId: 'seed',
+      publishedAt,
+    },
+    update: {},
+  });
+  await transaction.siteSettingsVersion.upsert({
+    where: { id: settingsDraftId },
+    create: {
+      id: settingsDraftId,
+      revisionNumber: 2,
+      state: EditorialRevisionState.DRAFT,
+      configuration: settings,
+      actorId: 'seed',
+    },
+    update: {},
+  });
+
+  const references = [
+    {
+      mediaAssetId: editorialMediaIds.homepageHero,
+      ownerType: 'homepage_revision',
+      ownerId: homepagePublishedId,
+      field: 'media.0',
+    },
+    {
+      mediaAssetId: editorialMediaIds.journalTailoring,
+      ownerType: 'homepage_revision',
+      ownerId: homepagePublishedId,
+      field: 'media.1',
+    },
+    {
+      mediaAssetId: editorialMediaIds.homepageHero,
+      ownerType: 'homepage_revision',
+      ownerId: homepageDraftId,
+      field: 'media.0',
+    },
+    {
+      mediaAssetId: editorialMediaIds.journalTailoring,
+      ownerType: 'homepage_revision',
+      ownerId: homepageDraftId,
+      field: 'media.1',
+    },
+    {
+      mediaAssetId: editorialMediaIds.journalTailoring,
+      ownerType: 'journal_publication',
+      ownerId: journalPublicationId,
+      field: 'media.0',
+    },
+  ];
+  for (const reference of references) {
+    await transaction.editorialMediaReference.upsert({
+      where: { mediaAssetId_ownerType_ownerId_field: reference },
+      create: reference,
+      update: {},
+    });
+  }
+}
+
 async function assertExactE2EFixture(): Promise<void> {
   const counts = await prisma.$transaction([
     prisma.product.count(),
@@ -521,8 +826,12 @@ async function assertExactE2EFixture(): Promise<void> {
     prisma.outfit.count(),
     prisma.outfitRevision.count(),
     prisma.outfitSize.count(),
+    prisma.homepageRevision.count(),
+    prisma.journalArticle.count(),
+    prisma.journalPublication.count(),
+    prisma.siteSettingsVersion.count(),
   ]);
-  const expected = [1, 1, 1, 6, 3, 3, 3, 1, 1, 3];
+  const expected = [1, 2, 1, 9, 3, 3, 3, 1, 1, 3, 2, 1, 1, 2];
   if (counts.some((count, index) => count !== expected[index])) {
     throw new Error(
       `E2E fixture is not exclusive. Expected ${expected.join('/')} but found ${counts.join('/')}.`,
@@ -538,6 +847,7 @@ async function seed(): Promise<void> {
     if (resetForE2E) await resetCatalogForE2E(transaction);
     await reconcileSeed(transaction);
     await reconcileOutfit(transaction);
+    await reconcileEditorial(transaction);
     if (resetForE2E) await reconcileE2EShipping(transaction);
   });
   if (resetForE2E) await assertExactE2EFixture();

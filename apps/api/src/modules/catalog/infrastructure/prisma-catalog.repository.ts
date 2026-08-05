@@ -116,9 +116,15 @@ function mapMoney(amountRial: bigint): MoneyValue {
   };
 }
 
-function mapMedia(
-  media: ProductRecord['variants'][number]['mediaAssignments'][number]['mediaAsset'],
-): MediaValue {
+function mapMedia(media: {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+  altText: string;
+  focalPointX: number;
+  focalPointY: number;
+}): MediaValue {
   return {
     id: media.id,
     url: media.url,
@@ -137,6 +143,20 @@ function mapCategory(category: {
   displayOrder: number;
   status: PrismaPublicationStatus;
   version: number;
+  discoveryKind: 'CATALOG' | 'OCCASION';
+  editorialTitle: string | null;
+  editorialDescription: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  heroMedia?: {
+    id: string;
+    url: string;
+    width: number;
+    height: number;
+    altText: string;
+    focalPointX: number;
+    focalPointY: number;
+  } | null;
 }): CategoryValue {
   return {
     id: category.id,
@@ -146,6 +166,14 @@ function mapCategory(category: {
     displayOrder: category.displayOrder,
     status: toDomainStatus[category.status],
     version: category.version,
+    discoveryKind: category.discoveryKind.toLocaleLowerCase() as 'catalog' | 'occasion',
+    editorialTitle: category.editorialTitle,
+    editorialDescription: category.editorialDescription,
+    heroMedia: category.heroMedia == null ? null : mapMedia(category.heroMedia),
+    seo: {
+      title: category.seoTitle,
+      description: category.seoDescription,
+    },
   };
 }
 
@@ -370,7 +398,17 @@ export class PrismaCatalogRepository implements CatalogRepository {
 
   async listPublicCategories(): Promise<CategoryValue[]> {
     const categories = await this.prisma.category.findMany({
-      where: { status: PrismaPublicationStatus.PUBLISHED },
+      where: { status: PrismaPublicationStatus.PUBLISHED, discoveryKind: 'CATALOG' },
+      include: { heroMedia: true },
+      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
+    });
+    return categories.map(mapCategory);
+  }
+
+  async listPublicOccasions(): Promise<CategoryValue[]> {
+    const categories = await this.prisma.category.findMany({
+      where: { status: PrismaPublicationStatus.PUBLISHED, discoveryKind: 'OCCASION' },
+      include: { heroMedia: true },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
     });
     return categories.map(mapCategory);
@@ -382,6 +420,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
   ): Promise<{ category: CategoryValue; products: ProductCardPageValue }> {
     const category = await this.prisma.category.findFirst({
       where: { slug, status: PrismaPublicationStatus.PUBLISHED },
+      include: { heroMedia: true },
     });
     if (category === null) {
       throw new CatalogError('not_found', 'CATEGORY_NOT_FOUND', 'Category was not found.');
@@ -433,6 +472,13 @@ export class PrismaCatalogRepository implements CatalogRepository {
         ON s."color_variant_id" = cv."id"
         AND s."status" = 'PUBLISHED'::"publication_status"
       JOIN "current_sku_prices" cp ON cp."sku_id" = s."id"
+      JOIN "inventory" i ON i."sku_id" = s."id"
+      JOIN "media_assignments" ma
+        ON ma."color_variant_id" = cv."id"
+        AND ma."featured" = true
+      JOIN "media_assets" m
+        ON m."id" = ma."media_asset_id"
+        AND m."archived_at" IS NULL
       WHERE p."status" = 'PUBLISHED'::"publication_status"
         ${categoryClause}
         ${searchClause}
@@ -491,6 +537,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
 
   async listAdminCategories(): Promise<CategoryValue[]> {
     const categories = await this.prisma.category.findMany({
+      include: { heroMedia: true },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
     });
     return categories.map(mapCategory);
@@ -506,7 +553,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
             description: input.description,
             displayOrder: input.displayOrder,
             status: toPrismaStatus[input.status],
+            discoveryKind: input.discoveryKind === 'occasion' ? 'OCCASION' : 'CATALOG',
+            editorialTitle: input.editorialTitle ?? null,
+            editorialDescription: input.editorialDescription ?? null,
+            heroMediaId: input.heroMediaId ?? null,
+            seoTitle: input.seoTitle ?? null,
+            seoDescription: input.seoDescription ?? null,
           },
+          include: { heroMedia: true },
         });
         await transaction.businessEvent.create({
           data: {
@@ -521,6 +575,76 @@ export class PrismaCatalogRepository implements CatalogRepository {
         return created;
       });
       return mapCategory(category);
+    } catch (error: unknown) {
+      this.mapPrismaConflict(error, 'CATEGORY_SLUG_CONFLICT', 'Category slug already exists.');
+    }
+  }
+
+  async updateCategory(
+    id: string,
+    input: AdminCategoryInput,
+    expectedVersion: number,
+    actor: ActorContext,
+  ): Promise<CategoryValue> {
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        if (input.heroMediaId != null) {
+          const media = await transaction.mediaAsset.findFirst({
+            where: { id: input.heroMediaId, archivedAt: null },
+            select: { id: true },
+          });
+          if (media === null) {
+            throw new CatalogError(
+              'validation',
+              'CATEGORY_MEDIA_INVALID',
+              'Category Hero Media is unavailable.',
+            );
+          }
+        }
+        const result = await transaction.category.updateMany({
+          where: { id, version: expectedVersion },
+          data: {
+            name: input.name,
+            slug: input.slug,
+            description: input.description,
+            displayOrder: input.displayOrder,
+            status: toPrismaStatus[input.status],
+            discoveryKind: input.discoveryKind === 'occasion' ? 'OCCASION' : 'CATALOG',
+            editorialTitle: input.editorialTitle ?? null,
+            editorialDescription: input.editorialDescription ?? null,
+            heroMediaId: input.heroMediaId ?? null,
+            seoTitle: input.seoTitle ?? null,
+            seoDescription: input.seoDescription ?? null,
+            version: { increment: 1 },
+          },
+        });
+        if (result.count !== 1) {
+          throw new CatalogError(
+            'conflict',
+            'CATEGORY_VERSION_CONFLICT',
+            'Category changed. Reload before saving.',
+          );
+        }
+        const updated = await transaction.category.findUniqueOrThrow({
+          where: { id },
+          include: { heroMedia: true },
+        });
+        await transaction.businessEvent.create({
+          data: {
+            type: 'CategoryEditorialUpdated',
+            actorId: actor.actorId,
+            entityType: 'Category',
+            entityId: id,
+            correlationId: actor.correlationId,
+            payload: {
+              slug: updated.slug,
+              discoveryKind: input.discoveryKind,
+              status: input.status,
+            },
+          },
+        });
+        return mapCategory(updated);
+      });
     } catch (error: unknown) {
       this.mapPrismaConflict(error, 'CATEGORY_SLUG_CONFLICT', 'Category slug already exists.');
     }

@@ -28,6 +28,21 @@ enum OutfitRevisionState {
   @@map("outfit_revision_state")
 }
 
+enum EditorialRevisionState {
+  DRAFT
+  PUBLISHED
+  HISTORICAL
+
+  @@map("editorial_revision_state")
+}
+
+enum DiscoveryKind {
+  CATALOG
+  OCCASION
+
+  @@map("discovery_kind")
+}
+
 enum MediaFormat {
   JPG
   PNG
@@ -372,18 +387,25 @@ model CartMergeReceipt {
 }
 
 model Category {
-  id           String            @id @default(uuid()) @db.Uuid
-  name         String            @db.VarChar(120)
-  slug         String            @unique @db.VarChar(160)
-  description  String?           @db.Text
-  status       PublicationStatus @default(DRAFT)
-  displayOrder Int               @default(0) @map("display_order")
-  version      Int               @default(1)
-  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  archivedAt   DateTime?         @map("archived_at") @db.Timestamptz(6)
-  products     ProductCategory[]
-  outfits      OutfitCategory[]
+  id                   String            @id @default(uuid()) @db.Uuid
+  name                 String            @db.VarChar(120)
+  slug                 String            @unique @db.VarChar(160)
+  description          String?           @db.Text
+  status               PublicationStatus @default(DRAFT)
+  displayOrder         Int               @default(0) @map("display_order")
+  version              Int               @default(1)
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt           DateTime?         @map("archived_at") @db.Timestamptz(6)
+  discoveryKind        DiscoveryKind     @default(CATALOG) @map("discovery_kind")
+  editorialTitle       String?           @map("editorial_title") @db.VarChar(180)
+  editorialDescription String?           @map("editorial_description") @db.Text
+  heroMediaId          String?           @map("hero_media_id") @db.Uuid
+  seoTitle             String?           @map("seo_title") @db.VarChar(180)
+  seoDescription       String?           @map("seo_description") @db.VarChar(320)
+  products             ProductCategory[]
+  outfits              OutfitCategory[]
+  heroMedia            MediaAsset?       @relation("CategoryHero", fields: [heroMediaId], references: [id], onDelete: Restrict)
 
   @@index([status, displayOrder])
   @@map("categories")
@@ -571,22 +593,116 @@ model ColorVariant {
 }
 
 model MediaAsset {
-  id                  String                @id @default(uuid()) @db.Uuid
-  url                 String                @db.VarChar(500)
-  width               Int
-  height              Int
-  altText             String                @map("alt_text") @db.VarChar(500)
-  focalPointX         Float                 @default(0.5) @map("focal_point_x")
-  focalPointY         Float                 @default(0.5) @map("focal_point_y")
-  format              MediaFormat
-  group               MediaGroup
-  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  archivedAt          DateTime?             @map("archived_at") @db.Timestamptz(6)
-  assignments         MediaAssignment[]
-  outfitRevisionMedia OutfitRevisionMedia[]
+  id                     String                    @id @default(uuid()) @db.Uuid
+  url                    String                    @db.VarChar(500)
+  width                  Int
+  height                 Int
+  altText                String                    @map("alt_text") @db.VarChar(500)
+  focalPointX            Float                     @default(0.5) @map("focal_point_x")
+  focalPointY            Float                     @default(0.5) @map("focal_point_y")
+  format                 MediaFormat
+  group                  MediaGroup
+  createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  archivedAt             DateTime?                 @map("archived_at") @db.Timestamptz(6)
+  assignments            MediaAssignment[]
+  outfitRevisionMedia    OutfitRevisionMedia[]
+  categoryHeroes         Category[]                @relation("CategoryHero")
+  journalDraftCovers     JournalArticle[]          @relation("JournalDraftCover")
+  journalPublishedCovers JournalPublication[]      @relation("JournalPublishedCover")
+  editorialReferences    EditorialMediaReference[]
 
   @@index([group, createdAt])
   @@map("media_assets")
+}
+
+model HomepageRevision {
+  id             String                 @id @default(uuid()) @db.Uuid
+  revisionNumber Int                    @unique @map("revision_number")
+  state          EditorialRevisionState @default(DRAFT)
+  version        Int                    @default(1)
+  sections       Json
+  actorId        String                 @map("actor_id") @db.VarChar(120)
+  publishedAt    DateTime?              @map("published_at") @db.Timestamptz(6)
+  supersededAt   DateTime?              @map("superseded_at") @db.Timestamptz(6)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([state, revisionNumber])
+  @@map("homepage_revisions")
+}
+
+model JournalArticle {
+  id             String               @id @default(uuid()) @db.Uuid
+  slug           String               @unique @db.VarChar(160)
+  status         PublicationStatus    @default(DRAFT)
+  title          String               @db.VarChar(180)
+  excerpt        String?              @db.VarChar(500)
+  coverMediaId   String?              @map("cover_media_id") @db.Uuid
+  blocks         Json
+  seoTitle       String?              @map("seo_title") @db.VarChar(180)
+  seoDescription String?              @map("seo_description") @db.VarChar(320)
+  version        Int                  @default(1)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt     DateTime?            @map("archived_at") @db.Timestamptz(6)
+  coverMedia     MediaAsset?          @relation("JournalDraftCover", fields: [coverMediaId], references: [id], onDelete: Restrict)
+  publications   JournalPublication[]
+
+  @@index([status, updatedAt])
+  @@map("journal_articles")
+}
+
+model JournalPublication {
+  id                String         @id @default(uuid()) @db.Uuid
+  articleId         String         @map("article_id") @db.Uuid
+  publicationNumber Int            @map("publication_number")
+  slug              String         @db.VarChar(160)
+  title             String         @db.VarChar(180)
+  excerpt           String         @db.VarChar(500)
+  coverMediaId      String         @map("cover_media_id") @db.Uuid
+  blocks            Json
+  seoTitle          String         @map("seo_title") @db.VarChar(180)
+  seoDescription    String         @map("seo_description") @db.VarChar(320)
+  actorId           String         @map("actor_id") @db.VarChar(120)
+  publishedAt       DateTime       @default(now()) @map("published_at") @db.Timestamptz(6)
+  article           JournalArticle @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  coverMedia        MediaAsset     @relation("JournalPublishedCover", fields: [coverMediaId], references: [id], onDelete: Restrict)
+
+  @@unique([articleId, publicationNumber])
+  @@index([slug, publishedAt])
+  @@map("journal_publications")
+}
+
+model SiteSettingsVersion {
+  id                String                 @id @default(uuid()) @db.Uuid
+  revisionNumber    Int                    @unique @map("revision_number")
+  state             EditorialRevisionState @default(DRAFT)
+  version           Int                    @default(1)
+  configuration     Json
+  contentApprovedBy String?                @map("content_approved_by") @db.VarChar(120)
+  contentApprovedAt DateTime?              @map("content_approved_at") @db.Timestamptz(6)
+  actorId           String                 @map("actor_id") @db.VarChar(120)
+  publishedAt       DateTime?              @map("published_at") @db.Timestamptz(6)
+  supersededAt      DateTime?              @map("superseded_at") @db.Timestamptz(6)
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([state, revisionNumber])
+  @@map("site_settings_versions")
+}
+
+model EditorialMediaReference {
+  id           String     @id @default(uuid()) @db.Uuid
+  mediaAssetId String     @map("media_asset_id") @db.Uuid
+  ownerType    String     @map("owner_type") @db.VarChar(40)
+  ownerId      String     @map("owner_id") @db.Uuid
+  field        String     @db.VarChar(120)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@unique([mediaAssetId, ownerType, ownerId, field])
+  @@index([ownerType, ownerId])
+  @@map("editorial_media_references")
 }
 
 model MediaAssignment {

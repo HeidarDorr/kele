@@ -24,6 +24,8 @@ tags:
   - name: Checkout
   - name: Orders
   - name: Returns
+  - name: Editorial
+    description: Published Homepage, Journal, discovery and site-setting projections.
   - name: Admin Catalog
   - name: Admin Outfits
     description: Immutable Outfit authoring, validation, publication and revision history.
@@ -80,6 +82,101 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthUnavailable'
+
+  /homepage:
+    get:
+      operationId: getPublishedHomepage
+      summary: Read the current published Homepage.
+      tags: [Editorial]
+      security: []
+      responses:
+        '200':
+          description: Current published Homepage revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedHomepage'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /journal:
+    get:
+      operationId: listPublishedJournal
+      summary: List published Journal entries.
+      tags: [Editorial]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageCursor'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Published Journal entries, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalPage'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /journal/{slug}:
+    get:
+      operationId: getPublishedJournalArticle
+      summary: Read a published Journal article by slug.
+      tags: [Editorial]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+      responses:
+        '200':
+          description: Latest published snapshot for the Journal slug.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedJournalArticle'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /discovery/occasions:
+    get:
+      operationId: listPublishedOccasions
+      summary: List published Occasion discovery entries.
+      tags: [Editorial]
+      security: []
+      responses:
+        '200':
+          description: Published Occasion discovery entries in configured order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryPage'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /settings/site:
+    get:
+      operationId: getPublishedSiteSettings
+      summary: Read current published public Site Settings.
+      tags: [Editorial]
+      security: []
+      responses:
+        '200':
+          description: Current published public Site Settings projection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedSiteSettings'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /catalog/products:
     get:
       operationId: listCatalogProducts
@@ -928,6 +1025,35 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /admin/categories/{categoryId}:
+    patch:
+      operationId: updateAdminCategory
+      tags: [Admin Catalog]
+      summary: Update versioned Category or Occasion discovery content.
+      security:
+        - SessionCookie: [catalog:write]
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCategoryInput'
+      responses:
+        '200':
+          description: Category discovery content updated and audited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCategory'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /admin/media:
     get:
       operationId: listAdminMedia
@@ -1854,15 +1980,16 @@ paths:
         - SessionCookie: [content:read]
       responses:
         '200':
-          description: Homepage composition.
+          description: Current editable Homepage draft.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Homepage'
+                $ref: '#/components/schemas/AdminHomepage'
         default:
           $ref: '#/components/responses/Problem'
-    patch:
-      operationId: updateAdminHomepage
+    put:
+      operationId: saveAdminHomepageDraft
+      summary: Save the isolated Homepage draft.
       tags: [Admin Content]
       security:
         - SessionCookie: [content:write]
@@ -1873,15 +2000,314 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Homepage'
+              $ref: '#/components/schemas/HomepageDraftInput'
       responses:
         '200':
-          description: Homepage saved and publicly visible.
+          description: Draft saved; public projection is unchanged.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Homepage'
+                $ref: '#/components/schemas/AdminHomepage'
         '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/homepage/preview:
+    get:
+      operationId: previewAdminHomepage
+      summary: Preview the protected Homepage draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      responses:
+        '200':
+          description: Protected storefront-shaped Homepage draft preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedHomepage'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/homepage/publish:
+    post:
+      operationId: publishAdminHomepage
+      summary: Publish the validated Homepage draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:publish]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Draft atomically published and prior publication retained as history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedHomepage'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/journal:
+    get:
+      operationId: listAdminJournalArticles
+      summary: List managed Journal drafts.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      responses:
+        '200':
+          description: Journal identities with editable drafts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminJournalArticle'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createAdminJournalArticle
+      summary: Create a Journal draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalDraftInput'
+      responses:
+        '201':
+          description: Journal draft created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJournalArticle'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/journal/{articleId}:
+    get:
+      operationId: getAdminJournalArticle
+      summary: Read a managed Journal draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      parameters:
+        - $ref: '#/components/parameters/ArticleId'
+      responses:
+        '200':
+          description: Editable Journal draft and publication metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJournalArticle'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      operationId: updateAdminJournalArticle
+      summary: Update an isolated Journal draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/ArticleId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalDraftInput'
+      responses:
+        '200':
+          description: Draft updated without changing the public snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJournalArticle'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/journal/{articleId}/preview:
+    get:
+      operationId: previewAdminJournalArticle
+      summary: Preview a protected Journal draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      parameters:
+        - $ref: '#/components/parameters/ArticleId'
+      responses:
+        '200':
+          description: Protected storefront-shaped Journal draft preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedJournalArticle'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/journal/{articleId}/publish:
+    post:
+      operationId: publishAdminJournalArticle
+      summary: Publish an immutable Journal snapshot.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:publish]
+      parameters:
+        - $ref: '#/components/parameters/ArticleId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Immutable Journal snapshot published.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedJournalArticle'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/journal/{articleId}/archive:
+    post:
+      operationId: archiveAdminJournalArticle
+      summary: Archive a Journal article.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:publish]
+      parameters:
+        - $ref: '#/components/parameters/ArticleId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: Article archived and removed from public routes.
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/media/{mediaId}/references:
+    get:
+      operationId: getAdminMediaReferences
+      summary: Inspect every Media retention reference.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:read]
+      parameters:
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '200':
+          description: Active and historical retention references.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaReferenceReport'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteAdminMedia
+      summary: Delete an unreferenced Media asset.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/MediaId'
+      responses:
+        '204':
+          description: Unreferenced Media asset permanently deleted and audited.
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/settings/site:
+    get:
+      operationId: getAdminSiteSettings
+      summary: Read the current Site Settings draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [settings:read]
+      responses:
+        '200':
+          description: Current editable Site Settings draft.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSiteSettings'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      operationId: saveAdminSiteSettingsDraft
+      summary: Save the isolated Site Settings draft.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [settings:write]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteSettingsDraftInput'
+      responses:
+        '200':
+          description: Draft saved; published settings unchanged.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSiteSettings'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/settings/site/publish:
+    post:
+      operationId: publishAdminSiteSettings
+      summary: Publish a validated Site Settings version.
+      tags: [Admin Content]
+      security:
+        - SessionCookie: [settings:publish]
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Site Settings revision published and prior revision retained.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishedSiteSettings'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
           $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
@@ -1993,6 +2419,27 @@ components:
         format: uuid
     ProductId:
       name: productId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ArticleId:
+      name: articleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MediaId:
+      name: mediaId
       in: path
       required: true
       schema:
@@ -2156,7 +2603,19 @@ components:
     CategorySummary:
       type: object
       additionalProperties: false
-      required: [id, slug, name, description, displayOrder]
+      required:
+        [
+          id,
+          slug,
+          name,
+          description,
+          displayOrder,
+          discoveryKind,
+          editorialTitle,
+          editorialDescription,
+          heroMedia,
+          seo,
+        ]
       properties:
         id:
           type: string
@@ -2170,6 +2629,19 @@ components:
         displayOrder:
           type: integer
           minimum: 0
+        discoveryKind:
+          type: string
+          enum: [catalog, occasion]
+        editorialTitle:
+          type: [string, 'null']
+        editorialDescription:
+          type: [string, 'null']
+        heroMedia:
+          oneOf:
+            - $ref: '#/components/schemas/Media'
+            - type: 'null'
+        seo:
+          $ref: '#/components/schemas/Seo'
 
     CategoryPage:
       type: object
@@ -3676,6 +4148,24 @@ components:
           minimum: 0
         status:
           $ref: '#/components/schemas/PublicationStatus'
+        discoveryKind:
+          type: string
+          enum: [catalog, occasion]
+        editorialTitle:
+          type: [string, 'null']
+          maxLength: 180
+        editorialDescription:
+          type: [string, 'null']
+          maxLength: 2000
+        heroMediaId:
+          type: [string, 'null']
+          format: uuid
+        seoTitle:
+          type: [string, 'null']
+          maxLength: 180
+        seoDescription:
+          type: [string, 'null']
+          maxLength: 320
 
     AdminCategory:
       allOf:
@@ -4118,32 +4608,437 @@ components:
         product:
           $ref: '#/components/schemas/ProductDetail'
 
-    Homepage:
+    HomepageSection:
       type: object
-      required: [version, sections]
+      additionalProperties: false
+      required: [id, type, enabled, order, content]
       properties:
-        version:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            [
+              hero,
+              editorial_banner,
+              featured_products,
+              featured_outfits,
+              occasion_grid,
+              journal_highlights,
+              brand_story,
+            ]
+        enabled:
+          type: boolean
+        order:
           type: integer
           minimum: 0
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/HomepageMediaContent'
+            - $ref: '#/components/schemas/HomepageReferenceContent'
+
+    HomepageMediaContent:
+      type: object
+      additionalProperties: false
+      required: [title, mediaId]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 180
+        subtitle:
+          type: [string, 'null']
+          maxLength: 320
+        mediaId:
+          type: string
+          format: uuid
+        ctaLabel:
+          type: [string, 'null']
+          maxLength: 80
+        href:
+          type: [string, 'null']
+          maxLength: 500
+
+    HomepageReferenceContent:
+      type: object
+      additionalProperties: false
+      required: [title, referenceIds]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 180
+        referenceIds:
+          type: array
+          maxItems: 12
+          items:
+            type: string
+            format: uuid
+
+    HomepageDraftInput:
+      type: object
+      additionalProperties: false
+      required: [sections]
+      properties:
+        sections:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/HomepageSection'
+
+    AdminHomepage:
+      type: object
+      additionalProperties: false
+      required: [id, revisionNumber, state, version, sections, media, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
+        state:
+          type: string
+          enum: [draft, published, historical]
+        version:
+          type: integer
+          minimum: 1
         sections:
           type: array
           items:
+            $ref: '#/components/schemas/HomepageSection'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublishedHomepage:
+      type: object
+      additionalProperties: false
+      required: [revisionNumber, publishedAt, sections, media]
+      properties:
+        revisionNumber:
+          type: integer
+          minimum: 1
+        publishedAt:
+          type: string
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageSection'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+
+    JournalBlock:
+      type: object
+      additionalProperties: false
+      required: [id, type]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            [
+              heading,
+              paragraph,
+              quote,
+              ordered_list,
+              unordered_list,
+              image,
+              product_reference,
+              outfit_reference,
+              external_link,
+              divider,
+            ]
+        text:
+          type: string
+          maxLength: 5000
+        level:
+          type: integer
+          minimum: 2
+          maximum: 3
+        items:
+          type: array
+          maxItems: 30
+          items:
+            type: string
+            maxLength: 500
+        mediaId:
+          type: string
+          format: uuid
+        referenceId:
+          type: string
+          format: uuid
+        label:
+          type: string
+          maxLength: 180
+        href:
+          type: string
+          format: uri
+          maxLength: 1000
+
+    JournalDraftInput:
+      type: object
+      additionalProperties: false
+      required: [slug, title, blocks]
+      properties:
+        slug:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 160
+        title:
+          type: string
+          minLength: 1
+          maxLength: 180
+        excerpt:
+          type: [string, 'null']
+          maxLength: 500
+        coverMediaId:
+          type: [string, 'null']
+          format: uuid
+        blocks:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/JournalBlock'
+        seoTitle:
+          type: [string, 'null']
+          maxLength: 180
+        seoDescription:
+          type: [string, 'null']
+          maxLength: 320
+
+    AdminJournalArticle:
+      allOf:
+        - $ref: '#/components/schemas/JournalDraftInput'
+        - type: object
+          required: [id, status, version, publicationCount, updatedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: '#/components/schemas/PublicationStatus'
+            version:
+              type: integer
+              minimum: 1
+            publicationCount:
+              type: integer
+              minimum: 0
+            updatedAt:
+              type: string
+              format: date-time
+
+    JournalCard:
+      type: object
+      additionalProperties: false
+      required: [id, slug, title, excerpt, coverMedia, publishedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        coverMedia:
+          $ref: '#/components/schemas/Media'
+        publishedAt:
+          type: string
+          format: date-time
+
+    JournalPage:
+      type: object
+      additionalProperties: false
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalCard'
+        page:
+          $ref: '#/components/schemas/CursorPage'
+
+    PublishedJournalArticle:
+      type: object
+      additionalProperties: false
+      required: [id, slug, title, excerpt, coverMedia, blocks, media, seo, publishedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        excerpt:
+          type: string
+        coverMedia:
+          $ref: '#/components/schemas/Media'
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalBlock'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        seo:
+          $ref: '#/components/schemas/Seo'
+        publishedAt:
+          type: string
+          format: date-time
+
+    SiteLink:
+      type: object
+      additionalProperties: false
+      required: [label, href]
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 80
+        href:
+          type: string
+          minLength: 1
+          maxLength: 500
+
+    SiteSettingsConfiguration:
+      type: object
+      additionalProperties: false
+      required: [brandName, brandTagline, primaryNavigation, footerNavigation, seoDefaults]
+      properties:
+        brandName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        brandTagline:
+          type: string
+          minLength: 1
+          maxLength: 240
+        contactEmail:
+          type: [string, 'null']
+          format: email
+        primaryNavigation:
+          type: array
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/SiteLink'
+        footerNavigation:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/SiteLink'
+        announcement:
+          type: [string, 'null']
+          maxLength: 240
+        announcementKind:
+          type: [string, 'null']
+          enum: [brand, legal, pricing, shipping, returns, null]
+        seoDefaults:
+          $ref: '#/components/schemas/Seo'
+
+    SiteSettingsDraftInput:
+      type: object
+      additionalProperties: false
+      required: [configuration]
+      properties:
+        configuration:
+          $ref: '#/components/schemas/SiteSettingsConfiguration'
+        contentApprovedBy:
+          type: [string, 'null']
+          maxLength: 120
+        contentApprovedAt:
+          type: [string, 'null']
+          format: date-time
+
+    AdminSiteSettings:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          revisionNumber,
+          state,
+          version,
+          configuration,
+          contentApprovedBy,
+          contentApprovedAt,
+          updatedAt,
+        ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
+        state:
+          type: string
+          enum: [draft, published, historical]
+        version:
+          type: integer
+          minimum: 1
+        configuration:
+          $ref: '#/components/schemas/SiteSettingsConfiguration'
+        contentApprovedBy:
+          type: [string, 'null']
+        contentApprovedAt:
+          type: [string, 'null']
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PublishedSiteSettings:
+      type: object
+      additionalProperties: false
+      required: [revisionNumber, configuration, publishedAt]
+      properties:
+        revisionNumber:
+          type: integer
+          minimum: 1
+        configuration:
+          $ref: '#/components/schemas/SiteSettingsConfiguration'
+        publishedAt:
+          type: string
+          format: date-time
+
+    MediaReferenceReport:
+      type: object
+      additionalProperties: false
+      required: [media, references, canDelete]
+      properties:
+        media:
+          $ref: '#/components/schemas/Media'
+        references:
+          type: array
+          items:
             type: object
-            required: [id, type, enabled, order, content]
+            additionalProperties: false
+            required: [ownerType, ownerId, field, historical]
             properties:
-              id:
+              ownerType:
                 type: string
-                format: uuid
-              type:
+              ownerId:
                 type: string
-              enabled:
+              field:
+                type: string
+              historical:
                 type: boolean
-              order:
-                type: integer
-                minimum: 0
-              content:
-                type: object
-                additionalProperties: true
+        canDelete:
+          type: boolean
 
     Problem:
       type: object

@@ -7,6 +7,7 @@ import { AdminSessionGuard } from './presentation/admin-session.guard.js';
 import {
   AdminCatalogController,
   PublicCatalogController,
+  PublicDiscoveryController,
 } from './presentation/catalog.controller.js';
 import {
   CART_CATALOG_READER,
@@ -26,7 +27,7 @@ import {
 import { PrismaOutfitCatalogAdapter } from './infrastructure/prisma-outfit-catalog.adapter.js';
 
 @Module({
-  controllers: [PublicCatalogController, AdminCatalogController],
+  controllers: [PublicCatalogController, PublicDiscoveryController, AdminCatalogController],
   providers: [
     AdminSessionGuard,
     {

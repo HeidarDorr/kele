@@ -38,6 +38,91 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/homepage': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read the current published Homepage. */
+    get: operations['getPublishedHomepage'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/journal': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List published Journal entries. */
+    get: operations['listPublishedJournal'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/journal/{slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read a published Journal article by slug. */
+    get: operations['getPublishedJournalArticle'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/discovery/occasions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List published Occasion discovery entries. */
+    get: operations['listPublishedOccasions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/settings/site': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read current published public Site Settings. */
+    get: operations['getPublishedSiteSettings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/catalog/products': {
     parameters: {
       query?: never;
@@ -478,6 +563,23 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/admin/categories/{categoryId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update versioned Category or Occasion discovery content. */
+    patch: operations['updateAdminCategory'];
     trace?: never;
   };
   '/admin/media': {
@@ -1011,12 +1113,187 @@ export interface paths {
       cookie?: never;
     };
     get: operations['getAdminHomepage'];
+    /** Save the isolated Homepage draft. */
+    put: operations['saveAdminHomepageDraft'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/homepage/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Preview the protected Homepage draft. */
+    get: operations['previewAdminHomepage'];
     put?: never;
     post?: never;
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations['updateAdminHomepage'];
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/homepage/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Publish the validated Homepage draft. */
+    post: operations['publishAdminHomepage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/journal': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List managed Journal drafts. */
+    get: operations['listAdminJournalArticles'];
+    put?: never;
+    /** Create a Journal draft. */
+    post: operations['createAdminJournalArticle'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/journal/{articleId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read a managed Journal draft. */
+    get: operations['getAdminJournalArticle'];
+    /** Update an isolated Journal draft. */
+    put: operations['updateAdminJournalArticle'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/journal/{articleId}/preview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Preview a protected Journal draft. */
+    get: operations['previewAdminJournalArticle'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/journal/{articleId}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Publish an immutable Journal snapshot. */
+    post: operations['publishAdminJournalArticle'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/journal/{articleId}/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Archive a Journal article. */
+    post: operations['archiveAdminJournalArticle'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/media/{mediaId}/references': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Inspect every Media retention reference. */
+    get: operations['getAdminMediaReferences'];
+    put?: never;
+    post?: never;
+    /** Delete an unreferenced Media asset. */
+    delete: operations['deleteAdminMedia'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/settings/site': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read the current Site Settings draft. */
+    get: operations['getAdminSiteSettings'];
+    /** Save the isolated Site Settings draft. */
+    put: operations['saveAdminSiteSettingsDraft'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/settings/site/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Publish a validated Site Settings version. */
+    post: operations['publishAdminSiteSettings'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   '/admin/settings/shipping': {
@@ -1073,6 +1350,12 @@ export interface components {
       name: string;
       description: string | null;
       displayOrder: number;
+      /** @enum {string} */
+      discoveryKind: 'catalog' | 'occasion';
+      editorialTitle: string | null;
+      editorialDescription: string | null;
+      heroMedia: components['schemas']['Media'] | null;
+      seo: components['schemas']['Seo'];
     };
     CategoryPage: {
       items: components['schemas']['CategorySummary'][];
@@ -1686,6 +1969,14 @@ export interface components {
       description?: string | null;
       displayOrder: number;
       status?: components['schemas']['PublicationStatus'];
+      /** @enum {string} */
+      discoveryKind?: 'catalog' | 'occasion';
+      editorialTitle?: string | null;
+      editorialDescription?: string | null;
+      /** Format: uuid */
+      heroMediaId?: string | null;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
     };
     AdminCategory: components['schemas']['AdminCategoryInput'] & {
       /** Format: uuid */
@@ -1846,18 +2137,181 @@ export interface components {
       preview: true;
       product: components['schemas']['ProductDetail'];
     };
-    Homepage: {
+    HomepageSection: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      type:
+        | 'hero'
+        | 'editorial_banner'
+        | 'featured_products'
+        | 'featured_outfits'
+        | 'occasion_grid'
+        | 'journal_highlights'
+        | 'brand_story';
+      enabled: boolean;
+      order: number;
+      content:
+        | components['schemas']['HomepageMediaContent']
+        | components['schemas']['HomepageReferenceContent'];
+    };
+    HomepageMediaContent: {
+      title: string;
+      subtitle?: string | null;
+      /** Format: uuid */
+      mediaId: string;
+      ctaLabel?: string | null;
+      href?: string | null;
+    };
+    HomepageReferenceContent: {
+      title: string;
+      referenceIds: string[];
+    };
+    HomepageDraftInput: {
+      sections: components['schemas']['HomepageSection'][];
+    };
+    AdminHomepage: {
+      /** Format: uuid */
+      id: string;
+      revisionNumber: number;
+      /** @enum {string} */
+      state: 'draft' | 'published' | 'historical';
       version: number;
-      sections: {
-        /** Format: uuid */
-        id: string;
-        type: string;
-        enabled: boolean;
-        order: number;
-        content: {
-          [key: string]: unknown;
-        };
+      sections: components['schemas']['HomepageSection'][];
+      media: components['schemas']['Media'][];
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    PublishedHomepage: {
+      revisionNumber: number;
+      /** Format: date-time */
+      publishedAt: string;
+      sections: components['schemas']['HomepageSection'][];
+      media: components['schemas']['Media'][];
+    };
+    JournalBlock: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      type:
+        | 'heading'
+        | 'paragraph'
+        | 'quote'
+        | 'ordered_list'
+        | 'unordered_list'
+        | 'image'
+        | 'product_reference'
+        | 'outfit_reference'
+        | 'external_link'
+        | 'divider';
+      text?: string;
+      level?: number;
+      items?: string[];
+      /** Format: uuid */
+      mediaId?: string;
+      /** Format: uuid */
+      referenceId?: string;
+      label?: string;
+      /** Format: uri */
+      href?: string;
+    };
+    JournalDraftInput: {
+      slug: string;
+      title: string;
+      excerpt?: string | null;
+      /** Format: uuid */
+      coverMediaId?: string | null;
+      blocks: components['schemas']['JournalBlock'][];
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+    };
+    AdminJournalArticle: components['schemas']['JournalDraftInput'] & {
+      /** Format: uuid */
+      id: string;
+      status: components['schemas']['PublicationStatus'];
+      version: number;
+      publicationCount: number;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    JournalCard: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      title: string;
+      excerpt: string;
+      coverMedia: components['schemas']['Media'];
+      /** Format: date-time */
+      publishedAt: string;
+    };
+    JournalPage: {
+      items: components['schemas']['JournalCard'][];
+      page: components['schemas']['CursorPage'];
+    };
+    PublishedJournalArticle: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      title: string;
+      excerpt: string;
+      coverMedia: components['schemas']['Media'];
+      blocks: components['schemas']['JournalBlock'][];
+      media: components['schemas']['Media'][];
+      seo: components['schemas']['Seo'];
+      /** Format: date-time */
+      publishedAt: string;
+    };
+    SiteLink: {
+      label: string;
+      href: string;
+    };
+    SiteSettingsConfiguration: {
+      brandName: string;
+      brandTagline: string;
+      /** Format: email */
+      contactEmail?: string | null;
+      primaryNavigation: components['schemas']['SiteLink'][];
+      footerNavigation: components['schemas']['SiteLink'][];
+      announcement?: string | null;
+      /** @enum {string|null} */
+      announcementKind?: 'brand' | 'legal' | 'pricing' | 'shipping' | 'returns' | null;
+      seoDefaults: components['schemas']['Seo'];
+    };
+    SiteSettingsDraftInput: {
+      configuration: components['schemas']['SiteSettingsConfiguration'];
+      contentApprovedBy?: string | null;
+      /** Format: date-time */
+      contentApprovedAt?: string | null;
+    };
+    AdminSiteSettings: {
+      /** Format: uuid */
+      id: string;
+      revisionNumber: number;
+      /** @enum {string} */
+      state: 'draft' | 'published' | 'historical';
+      version: number;
+      configuration: components['schemas']['SiteSettingsConfiguration'];
+      contentApprovedBy: string | null;
+      /** Format: date-time */
+      contentApprovedAt: string | null;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    PublishedSiteSettings: {
+      revisionNumber: number;
+      configuration: components['schemas']['SiteSettingsConfiguration'];
+      /** Format: date-time */
+      publishedAt: string;
+    };
+    MediaReferenceReport: {
+      media: components['schemas']['Media'];
+      references: {
+        ownerType: string;
+        ownerId: string;
+        field: string;
+        historical: boolean;
       }[];
+      canDelete: boolean;
     };
     Problem: {
       /** Format: uri-reference */
@@ -1897,6 +2351,9 @@ export interface components {
     CheckoutSessionId: string;
     PaymentAttemptId: string;
     ProductId: string;
+    CategoryId: string;
+    ArticleId: string;
+    MediaId: string;
     OutfitId: string;
     SkuId: string;
     ReturnId: string;
@@ -1978,6 +2435,121 @@ export interface operations {
           'application/json': components['schemas']['HealthUnavailable'];
         };
       };
+    };
+  };
+  getPublishedHomepage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current published Homepage revision. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedHomepage'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listPublishedJournal: {
+    parameters: {
+      query?: {
+        cursor?: components['parameters']['PageCursor'];
+        limit?: components['parameters']['PageSize'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Published Journal entries, newest first. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JournalPage'];
+        };
+      };
+      400: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getPublishedJournalArticle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: components['parameters']['Slug'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Latest published snapshot for the Journal slug. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedJournalArticle'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listPublishedOccasions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Published Occasion discovery entries in configured order. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CategoryPage'];
+        };
+      };
+      400: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getPublishedSiteSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current published public Site Settings projection. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedSiteSettings'];
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
     };
   };
   listCatalogProducts: {
@@ -2903,6 +3475,38 @@ export interface operations {
         };
       };
       409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  updateAdminCategory: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        categoryId: components['parameters']['CategoryId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdminCategoryInput'];
+      };
+    };
+    responses: {
+      /** @description Category discovery content updated and audited. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminCategory'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };
@@ -3957,19 +4561,19 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Homepage composition. */
+      /** @description Current editable Homepage draft. */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Homepage'];
+          'application/json': components['schemas']['AdminHomepage'];
         };
       };
       default: components['responses']['Problem'];
     };
   };
-  updateAdminHomepage: {
+  saveAdminHomepageDraft: {
     parameters: {
       query?: never;
       header: {
@@ -3981,20 +4585,371 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['Homepage'];
+        'application/json': components['schemas']['HomepageDraftInput'];
       };
     };
     responses: {
-      /** @description Homepage saved and publicly visible. */
+      /** @description Draft saved; public projection is unchanged. */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Homepage'];
+          'application/json': components['schemas']['AdminHomepage'];
         };
       };
       409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminHomepage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Protected storefront-shaped Homepage draft preview. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedHomepage'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  publishAdminHomepage: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Draft atomically published and prior publication retained as history. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedHomepage'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  listAdminJournalArticles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Journal identities with editable drafts. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminJournalArticle'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JournalDraftInput'];
+      };
+    };
+    responses: {
+      /** @description Journal draft created. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminJournalArticle'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        articleId: components['parameters']['ArticleId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Editable Journal draft and publication metadata. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminJournalArticle'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  updateAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        articleId: components['parameters']['ArticleId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JournalDraftInput'];
+      };
+    };
+    responses: {
+      /** @description Draft updated without changing the public snapshot. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminJournalArticle'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  previewAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        articleId: components['parameters']['ArticleId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Protected storefront-shaped Journal draft preview. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedJournalArticle'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  publishAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        articleId: components['parameters']['ArticleId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Immutable Journal snapshot published. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedJournalArticle'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  archiveAdminJournalArticle: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path: {
+        articleId: components['parameters']['ArticleId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Article archived and removed from public routes. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminMediaReferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        mediaId: components['parameters']['MediaId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Active and historical retention references. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MediaReferenceReport'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  deleteAdminMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        mediaId: components['parameters']['MediaId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Unreferenced Media asset permanently deleted and audited. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  getAdminSiteSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current editable Site Settings draft. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminSiteSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  saveAdminSiteSettingsDraft: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SiteSettingsDraftInput'];
+      };
+    };
+    responses: {
+      /** @description Draft saved; published settings unchanged. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminSiteSettings'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  publishAdminSiteSettings: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Site Settings revision published and prior revision retained. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublishedSiteSettings'];
+        };
+      };
+      409: components['responses']['Problem'];
+      422: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };

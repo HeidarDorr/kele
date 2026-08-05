@@ -97,6 +97,11 @@ function toCategorySummary(category: CategoryValue) {
     slug: category.slug,
     description: category.description,
     displayOrder: category.displayOrder,
+    discoveryKind: category.discoveryKind ?? 'catalog',
+    editorialTitle: category.editorialTitle ?? null,
+    editorialDescription: category.editorialDescription ?? null,
+    heroMedia: category.heroMedia ?? null,
+    seo: category.seo ?? { title: category.name, description: category.description },
   };
 }
 
@@ -124,7 +129,7 @@ export class PublicCatalogController {
     return {
       ...toCategorySummary(result.category),
       products: result.products,
-      seo: {
+      seo: result.category.seo ?? {
         title: result.category.name,
         description: result.category.description,
       },
@@ -139,6 +144,16 @@ export class PublicCatalogController {
   @Get('products/:slug')
   async getProduct(@Param('slug') slug: string, @Query('color') colorVariantId?: string) {
     return toPublicProductDetail(await this.catalog.getPublicProduct(slug, colorVariantId ?? null));
+  }
+}
+
+@Controller('discovery')
+export class PublicDiscoveryController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get('occasions')
+  async listOccasions() {
+    return { items: (await this.catalog.listPublicOccasions()).map(toCategorySummary) };
   }
 }
 
@@ -157,6 +172,22 @@ export class AdminCatalogController {
   @RequireAdminRoles('super_admin')
   createCategory(@Body() body: AdminCategoryDto, @Req() request: CatalogAdminRequest) {
     return this.catalog.createCategory(body.toDomain(), actorFromRequest(request));
+  }
+
+  @Patch('categories/:categoryId')
+  @RequireAdminRoles('super_admin')
+  updateCategory(
+    @Param('categoryId') categoryId: string,
+    @Headers('if-match') ifMatch: string | undefined,
+    @Body() body: AdminCategoryDto,
+    @Req() request: CatalogAdminRequest,
+  ) {
+    return this.catalog.updateCategory(
+      categoryId,
+      body.toDomain(),
+      expectedVersion(ifMatch),
+      actorFromRequest(request),
+    );
   }
 
   @Get('media')
