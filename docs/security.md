@@ -142,6 +142,27 @@ Milestone 6 additionally enforces:
 - SVG upload is forbidden or sanitized through a dedicated pipeline.
 - SSRF-prone remote image fetching uses strict host allowlists.
 
+### Milestone 7 editorial enforcement
+
+- Every editorial management and preview route is guarded by a server-managed
+  administrator session and Super Admin role; missing, invalid and lower-role
+  sessions fail closed.
+- Homepage links and Site navigation accept safe internal paths only. Journal
+  external links require HTTPS. Journal bodies are a closed union of structured
+  blocks and are rendered through React text encoding rather than arbitrary
+  HTML.
+- Draft reads and previews are never exposed by public controllers. Public
+  routes read Published Homepage/Settings rows or immutable Journal snapshots.
+- If-Match is a fully quoted positive safe integer on editorial writes and
+  publication, preventing stale overwrite.
+- Media deletion first returns every direct and polymorphic Draft, active and
+  historical reference; a foreign-key race is converted to a safe conflict.
+- Legal, pricing, shipping and returns announcements cannot publish without an
+  attributable content approver and ISO approval time. Checkout-owned shipping
+  prices and thresholds are not writable through editorial settings.
+- Audit events record actor, entity, correlation ID and non-secret change
+  metadata for save, publish, archive, discovery, settings and Media deletion.
+
 ## Secrets and privacy
 
 - Secrets come from environment/secret management and are never committed.

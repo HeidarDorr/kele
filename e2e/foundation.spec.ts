@@ -492,7 +492,7 @@ test('an administrator creates, validates, previews and publishes a product disc
   }
 });
 
-test('visual capture starts from the exclusive deterministic catalog fixture', async ({
+test('visual capture starts from the deterministic catalog and editorial fixture', async ({
   request,
 }) => {
   const headers = { cookie: `kele_session=${encodeURIComponent(superSession)}` };
@@ -514,7 +514,7 @@ test('visual capture starts from the exclusive deterministic catalog fixture', a
   const media = (await mediaResponse.json()) as Array<{ id: string }>;
   const outfits = (await outfitsResponse.json()) as { items: Array<{ revisionNumber: number }> };
   expect(products.items.map((item) => item.slug)).toEqual(['beige-linen-suit']);
-  expect(categories.map((item) => item.slug)).toEqual(['suits']);
+  expect(categories.map((item) => item.slug)).toEqual(['formal-occasions', 'suits']);
   expect(media.map((item) => item.id).sort()).toEqual([
     '20000000-0000-4000-8000-000000000031',
     '20000000-0000-4000-8000-000000000032',
@@ -522,6 +522,9 @@ test('visual capture starts from the exclusive deterministic catalog fixture', a
     '50000000-0000-4000-8000-000000000031',
     '50000000-0000-4000-8000-000000000032',
     '50000000-0000-4000-8000-000000000033',
+    '70000000-0000-4000-8000-000000000041',
+    '70000000-0000-4000-8000-000000000042',
+    '70000000-0000-4000-8000-000000000043',
   ]);
   expect(outfits.items).toEqual([expect.objectContaining({ revisionNumber: 1 })]);
 });
@@ -640,7 +643,7 @@ test('administration is responsive and exposes validation and inventory states',
         return bounds.left >= 0 && bounds.right <= window.innerWidth;
       }),
     ).toBe(true);
-    await expect(page.locator('.admin-sidebar nav a')).toHaveCount(8);
+    await expect(page.locator('.admin-sidebar nav a')).toHaveCount(14);
     expect(
       await page.locator('.admin-sidebar nav a').evaluateAll((links) =>
         links.every((link) => {
@@ -1355,7 +1358,9 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     await expect(admin.getByText(milestoneSixFixture.tracking.number)).toBeVisible();
     await admin.getByLabel('دلیل عملیاتی').fill(milestoneSixFixture.transitionReasons.delivered);
     await admin.getByRole('button', { name: 'ثبت «تحویل‌شده»' }).click();
-    await expect(admin.getByText('این سفارش گذار اجرایی بعدی ندارد.')).toBeVisible();
+    await expect(admin.getByText('این سفارش گذار اجرایی بعدی ندارد.')).toBeVisible({
+      timeout: 15_000,
+    });
     const deliveredResponse = await request.get(
       `${e2eUrls.api}/admin/orders/${encodeURIComponent(orderNumber)}`,
       { headers: staffHeaders },

@@ -997,7 +997,8 @@ of the Storefront homepage.
 
 Homepage content is editorial and marketing-oriented.
 
-Changes are applied immediately after saving.
+Saving updates an isolated Draft. Public content changes only after an
+explicit, validated Publish command.
 
 ---
 
@@ -1022,7 +1023,11 @@ Changes are applied immediately after saving.
 
 | 3 | Admin | Modify Section Content | Live Preview updated |
 
-| 4 | Admin | Save | Changes published immediately |
+| 4 | Admin | Save | Draft revision updated; public revision unchanged |
+
+| 5 | Admin | Preview | Protected Storefront-shaped Draft displayed |
+
+| 6 | Admin | Publish | Draft validated and atomically published |
 
 ---
 
@@ -1035,6 +1040,8 @@ Supported Homepage Sections include:
 - Featured Outfits
 
 - Featured Products
+
+- Occasion Grid
 
 - Brand Story
 
@@ -1067,7 +1074,7 @@ Administrator drags a Section to a new position.
 
 ↓
 
-Homepage order updates immediately.
+Draft order updates; the public order remains unchanged until publication.
 
 ↓
 
@@ -1081,7 +1088,8 @@ Administrator disables a Homepage Section.
 
 ↓
 
-Section is immediately hidden from the Storefront.
+Section is disabled in the Draft and remains unchanged publicly until
+publication.
 
 ↓
 
@@ -1115,13 +1123,16 @@ Administrator saves changes.
 
 ↓
 
-Homepage updates immediately.
+Homepage Draft updates immediately; the public Homepage updates only after
+Publish.
 
 ---
 
 ## Validation Rules
 
 Every Hero SHALL include at least one Image.
+
+A publication SHALL contain exactly one enabled Hero.
 
 Editorial Sections SHALL support optional links.
 
@@ -1149,9 +1160,9 @@ Validation error displayed.
 
 ## Post Conditions
 
-Homepage content updated.
+Homepage Draft or Published revision updated according to the explicit command.
 
-Changes become publicly visible immediately.
+Successful publication becomes publicly visible on the next Storefront request.
 
 Business Event generated.
 
@@ -1287,21 +1298,9 @@ Business Event generated.
 
 ### A4. Delete Article
 
-Administrator selects:
-
-Delete
-
-↓
-
-System requests confirmation.
-
-↓
-
-Article permanently removed.
-
-↓
-
-Business Event generated.
+Published Journal snapshots are not deleted or rewritten. The administrator
+uses Archive to remove the public route while immutable publication and audit
+history remain retained.
 
 ---
 
@@ -1314,6 +1313,18 @@ Every published Article SHALL include:
 - Cover Image
 
 - Content
+
+- Excerpt
+
+- SEO Title and Description
+
+- Unique Slug
+
+Journal content is stored as allowlisted structured blocks. Arbitrary HTML,
+script, iframe and non-HTTPS external links are rejected or encoded as text.
+
+Scheduled publication is not included because no approved scheduling semantics
+exist for version 1.
 
 ---
 
@@ -1584,7 +1595,7 @@ Administrator selects Delete.
 
 ↓
 
-System checks active references.
+System checks Draft, active and historical references.
 
 ↓
 
@@ -1630,7 +1641,7 @@ Supported Formats:
 
 Unsupported formats SHALL be rejected.
 
-Assets currently referenced by the system SHALL NOT be deleted.
+Assets currently or historically referenced by the system SHALL NOT be deleted.
 
 ---
 
@@ -1668,7 +1679,8 @@ This workflow defines how global system configuration is managed.
 
 Settings affect the behavior of the Storefront and Administration Panel.
 
-Changes SHALL be applied immediately unless otherwise specified.
+Saving updates an isolated Draft. Validated publication creates a new effective
+version and becomes visible on the next Storefront request.
 
 ---
 
@@ -1692,9 +1704,11 @@ Changes SHALL be applied immediately unless otherwise specified.
 
 | 3 | Admin | Modify Values | Validation performed |
 
-| 4 | Admin | Save | Settings updated |
+| 4 | Admin | Save | Draft settings updated; public settings unchanged |
 
-| 5 | System | Generate Business Event | Settings History recorded
+| 5 | Admin | Publish | Validated version becomes effective |
+
+| 6 | System | Generate Business Event | Settings History recorded
 |
 
 ---
@@ -1723,6 +1737,11 @@ The system SHALL support configuring:
 
 -   SEO Defaults
 
+Shipping policy price and threshold settings remain owned by the versioned
+Checkout shipping policy workflow. The editorial settings editor MUST NOT
+publish replacement shipping, pricing, legal or returns claims without explicit
+content approval.
+
 ---
 
 ## Alternative Flows
@@ -1733,7 +1752,7 @@ Administrator updates contact details.
 
 ↓
 
-Changes immediately reflected on the Storefront.
+Changes are reflected on the Storefront after publication.
 
 ---
 
@@ -1743,7 +1762,7 @@ Administrator updates social links.
 
 ↓
 
-Footer updated immediately.
+Footer is updated after publication.
 
 ---
 

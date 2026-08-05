@@ -61,6 +61,29 @@ erDiagram
   presentation conversion only.
 - Quantities are non-negative integers.
 
+## Editorial platform
+
+- `HomepageRevision` owns ordered, typed section JSON and has exactly one Draft
+  and at most one Published row. Publication moves the former Published row to
+  Historical and creates a fresh Draft without rewriting history.
+- `JournalArticle` is the editable identity with a unique slug. Every Publish
+  command appends an immutable `JournalPublication` snapshot containing title,
+  excerpt, cover, allowlisted blocks and SEO metadata. Public reads use the
+  newest snapshot only.
+- `Category.discoveryKind` distinguishes catalog grouping from Occasion
+  discovery. Occasion presentation fields and hero Media do not own price or
+  inventory; linked Products remain canonical.
+- `SiteSettingsVersion` uses Draft, Published and Historical states. Each row
+  records the actor; sensitive announcement copy also records its approver and
+  approval timestamp.
+- `EditorialMediaReference` records polymorphic Media retention references for
+  typed Homepage and Journal content. Direct foreign keys protect Category and
+  Journal covers. Deletion checks both sources inside the command and database
+  foreign keys close the concurrent-reference race.
+- Editorial updates use optimistic integer versions. Publication and audit
+  event append occur in one transaction; public Storefront fetches use
+  `no-store`, so publication is visible on the next request.
+
 ## Catalog
 
 ### Product

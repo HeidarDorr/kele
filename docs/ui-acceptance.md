@@ -139,6 +139,37 @@ Every page includes:
   administration;
 - legal and operational copy.
 
+## Milestone 7 editorial acceptance
+
+The approved KELE visual language is extrapolated to Homepage, Journal and
+Occasion routes without treating screenshot copy as business policy. The
+implementation uses a warm ivory canvas, large editorial Persian display type,
+asymmetric image-led compositions, thin dividers and a dark footer. It does not
+introduce cards-within-cards, gradients as decoration, dark mode, Wishlist or
+Newsletter.
+
+Three generated development assets provide reviewable composition while
+DES-003 final art direction remains open:
+
+- `apps/storefront/public/media/editorial/homepage-hero.webp`;
+- `apps/storefront/public/media/editorial/occasion-formal.webp`;
+- `apps/storefront/public/media/editorial/journal-tailoring.webp`.
+
+They are implementation prototypes, not final customer-approved campaign
+imagery or approval of any legal, shipping, pricing or returns claim.
+
+Playwright CLI evidence is stored in `output/playwright/milestone-7/` for
+customer Homepage at 360 × 800, 768 × 1024, 1280 × 800 and 1440 × 900; Journal
+at mobile/desktop; Occasion at tablet; and Homepage editor, Journal editor and
+Media-reference administration. The repeatable production-build suite is
+`e2e/editorial.spec.ts` and writes `output/playwright/milestone-7-e2e/`.
+
+Acceptance covers `fa-IR`/RTL roots, responsive overflow, keyboard skip-link,
+semantic headings/navigation, descriptive image alternatives, reduced motion,
+SEO title/description/canonical/Open Graph/Article JSON-LD, Draft/public
+isolation, protected previews, immediate post-publication reads, loading,
+empty, error, disabled and success states, and zero browser console errors.
+
 ## Milestone 1 shell evidence
 
 Milestone 1 supplies only static storefront and administration shells, not a

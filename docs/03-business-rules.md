@@ -2510,9 +2510,12 @@ SHALL
 
 The Homepage SHALL support configurable editorial sections.
 
-Changes SHALL become publicly visible immediately after saving.
+Homepage saves SHALL update an isolated Draft revision and SHALL NOT change the
+public Homepage.
 
-Draft mode is out of scope for Homepage management.
+Only an explicit, authorized Publish command SHALL make a validated Homepage
+revision publicly visible. A successful publication SHALL become visible on
+the next Storefront request without a deployment or stale application cache.
 
 ### Impacted Objects
 
@@ -2621,6 +2624,14 @@ Journal Articles SHALL support the following publication lifecycle:
 
 - Archived
 
+Each publication SHALL create an immutable public snapshot. Later Draft edits
+SHALL NOT rewrite the current or historical public snapshot. A published
+Article SHALL include an allowlisted structured body, cover Media, excerpt,
+unique slug, SEO title and SEO description.
+
+Scheduled publication is not defined for version 1 and SHALL NOT be inferred
+until its timezone, cancellation and retry semantics are approved.
+
 Deleting published Journal Articles is discouraged and SHALL require
 explicit administrator confirmation.
 
@@ -2640,6 +2651,11 @@ SHALL
 
 The system SHALL provide centralized Site Settings for managing global
 platform configuration.
+
+Editorial Site Settings SHALL use isolated Draft, Published and Historical
+revisions. Sensitive customer-facing legal, pricing, shipping or returns copy
+SHALL require an attributable approver and approval timestamp before
+publication.
 
 Site Settings SHALL include, but not be limited to:
 
@@ -2673,6 +2689,9 @@ SHALL
 
 Products, Outfits and Journal Articles SHALL support Preview before
 publication.
+
+Homepage and editorial Site Settings SHALL also support authorized Preview
+before publication.
 
 Preview SHALL NOT expose unpublished content to public users.
 
@@ -2759,6 +2778,10 @@ Media assets SHALL NOT be permanently deleted while actively referenced
 by any business object.
 
 The system SHALL identify all usage locations before allowing deletion.
+
+Reference checks SHALL include current Drafts, active publications and
+immutable historical publications. A delete command SHALL fail closed if a
+reference is added concurrently.
 
 ### Impacted Objects
 

@@ -30,6 +30,7 @@ not silently choose older wording.
 |---|---|---|
 | SRC-M5-001 | Frozen `02-domain-model.md` describes one Outfit selling price, while accepted ADR-0003 and OTF-004 define a price for every Outfit size. | ADR-0003 is authoritative. Price belongs to the immutable Outfit Revision size; Product component prices do not derive or mutate it. |
 | SRC-M5-002 | OTF-006 says manual Outfit-size definition is forbidden, while accepted ADR-0003 and later OTF-014 require an explicit mapping from every Outfit size to exact component SKUs. | ADR-0003 is authoritative. Administrators explicitly author and validate each revision-size mapping; no size or SKU is inferred by string equality. |
+| SRC-M7-001 | Draft CMS-006 and the draft Homepage workflow said Homepage saves publish immediately and draft mode was out of scope, while the approved Milestone 7 implementation brief explicitly requires Homepage draft/published isolation, protected preview and publication. | Resolved for Milestone 7: the explicit brief governs, and CMS-006 plus the supporting workflow now specify isolated save, protected preview and explicit publication. No Frozen document or accepted ADR changed. |
 
 ## Blocking production-provider decisions
 

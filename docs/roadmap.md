@@ -134,6 +134,9 @@ authorization controls and auditable transitions.
 
 ## Milestone 7 — editorial platform and site settings
 
+Implementation status: complete on `feat/m07-editorial-platform`; final
+production content and campaign Media approval remain launch dependencies.
+
 Deliverables:
 
 1. Implement homepage section management and preview.

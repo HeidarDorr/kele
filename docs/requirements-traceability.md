@@ -42,11 +42,11 @@ manual UX acceptance.
 | REV-004–REV-010 | Review Admin, Audit | moderation API | `review-moderation.integration` | Pending |
 | REV-011 | Review, Order | review projection | `verified-purchase.integration` | Pending |
 | CMS-001–CMS-005 | Admin, Identity | admin navigation/policies | `admin-rbac.e2e` | Pending |
-| CMS-006–CMS-007 | Homepage | homepage admin/public API | `homepage-publication.integration` | Pending |
-| CMS-008–CMS-009 | Media | media API | `media-library.integration` | Pending |
-| CMS-010–CMS-015 | Category, Journal, Admin | admin APIs | `cms-workflows.e2e` | Pending |
-| CMS-016 | Media | media delete | `media-reference-safety.integration` | Pending |
-| CMS-017–CMS-018 | Audit, Admin UX | admin APIs/UI | integration + manual UX evidence | Pending |
+| CMS-006–CMS-007 | Homepage | typed revision API, protected preview and responsive renderer | `editorial.integration.test.ts`, `e2e/editorial.spec.ts` | Implemented in Milestone 7 |
+| CMS-008–CMS-009 | Media | grouped reusable Media plus editorial reference report | integration and browser reference evidence | Implemented for referenced M7 media |
+| CMS-010–CMS-015 | Category, Journal, Admin | Occasion discovery, immutable Journal snapshots, SEO and protected previews | unit, integration and `e2e/editorial.spec.ts` | Implemented except unrequested cross-object search/filter |
+| CMS-016 | Media | fail-closed active/historical reference report and guarded delete | `editorial.integration.test.ts`, `e2e/editorial.spec.ts` | Implemented |
+| CMS-017–CMS-018 | Audit, Admin UX | append-only Business Events plus restrained RTL editorial administration | integration plus Playwright evidence | Implemented for M7 commands |
 | EVT-001–EVT-004 | Audit/Event | event store/read API | `business-event.domain` | Pending |
 | EVT-005–EVT-009 | Inventory, Pricing, Catalog, Order | module commands | module integration suites | Pending |
 | EVT-010–EVT-012 | Reporting, Audit | event query API | `business-event-query.integration` | Pending |
@@ -140,7 +140,7 @@ merged into the business specification:
 | INV-001–INV-002, INV-008–INV-010, INV-012–INV-014, INV-017 | SKU inventory projection, append-only movements, authorized predefined actions, idempotency and derived availability | `catalog.unit.test.ts`, `catalog.integration.test.ts` | Implemented for non-checkout catalog actions |
 | INV-011 | `customer_return` is absent from the generic inventory contract and rejected before application logic; stock restoration remains reserved for the Milestone 6 Order/Return workflow | `docs/openapi.yaml`, `e2e/foundation.spec.ts` | Direct inventory increase closed; Order/Return workflow intentionally pending |
 | CMS-002–CMS-005, CMS-008–CMS-010, CMS-013, CMS-017–CMS-018 | fail-closed role guard, media/category/product forms, protected preview, event recording and restrained administration UI | unit, integration and Playwright evidence above | Implemented for this slice |
-| CMS-001, CMS-014, CMS-016 | catalog domain navigation/listing exists; cross-domain admin navigation, full filtering and media deletion/usage reporting remain later work | scope review | Partial; not claimed complete |
+| CMS-001, CMS-014, CMS-016 | catalog domain navigation/listing existed; at Milestone 2, cross-domain admin navigation, full filtering and media deletion/usage reporting remained later work | scope review | Historical Milestone 2 status; CMS-016 is superseded by the Milestone 7 evidence below |
 | EVT-001–EVT-007 | immutable catalog, price and inventory business-event facts with actor/entity/correlation metadata | migration + `catalog.integration.test.ts` | Implemented for commands present in this slice |
 | LOC-001–LOC-002, SCP-001–SCP-002 | Persian RTL semantic pages, bidi isolation and absence of Wishlist/Newsletter surfaces | `e2e/foundation.spec.ts`, Playwright screenshots | Implemented |
 | HRD-001, HRD-002, HRD-007 | Prisma confined to infrastructure, tested IRR/toman boundary and useful server-rendered public HTML | architecture test, type-check/build, Playwright | Implemented |
@@ -155,3 +155,14 @@ merged into the business specification:
 | INV-008–INV-014, INV-018 | cancellation/return component restoration through ledgers, separated Inventory/Instagram role actions and serialized no-negative inventory | PostgreSQL movement/RBAC assertions, concurrent Instagram, synchronized bulk conflict and canonical SKU/payload reuse tests; production API 403/409 acceptance | Implemented |
 | PRC-008–PRC-010, EVT-001–EVT-007, CMS-002–CMS-005 | filtered price/inventory preview, kind-scoped preview reads, expiry/version validation, partial-failure reporting and searchable actor/entity/payload audit exploration | exact price/replay, price-read RBAC, cross-preview/version rejection, stale/concurrent-target integration tests, audit payload search and Playwright staff surfaces | Implemented |
 | LOC-001–LOC-002, HRD-001–HRD-002, HRD-007 | Persian RTL responsive Order/return customer pages and restrained operations administration with complete states | format/lint/type/build gates, 14-test Playwright suite, CLI snapshot and `output/playwright/milestone-6/` | Implemented |
+
+## Milestone 7 editorial platform and Site Settings evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+| --- | --- | --- | --- |
+| CMS-003, CMS-006–CMS-007, CMS-013, PUB-001–PUB-004, PUB-006–PUB-008 | Super-Admin-only typed Homepage Draft, protected preview, optimistic save, transactional publication/history and no-store public projection | `editorial.unit.test.ts`, `editorial.integration.test.ts`, `e2e/editorial.spec.ts`; CLI save/publish snapshots | Implemented |
+| CMS-008–CMS-009, CMS-016 | reusable grouped Media, direct and polymorphic Draft/active/historical references, disabled UI deletion and conflict-safe delete command | PostgreSQL integration, API 409 and Playwright Media reference page | Implemented for all current reference owners |
+| CMS-011, CMS-013, CAT-005, PUB-001–PUB-004 | Journal Draft/Published/Archived identity, immutable publication snapshots, unique slug, allowlisted blocks, preview, SEO and public index/detail routes | validation units, slug/isolation/snapshot integration and editor/customer Playwright journeys | Implemented; scheduling explicitly excluded because no semantics are specified |
+| CMS-010, CAT-001, CAT-005 | Category/Occasion editorial title, description, hero Media, ordering and SEO while Product price/Inventory remain canonical | Occasion publication validation, API contract and four-viewport customer evidence | Implemented |
+| CMS-012, CMS-017, EVT-001–EVT-007 | versioned Site Settings with actor/audit history, safe internal navigation and sensitive-copy approval metadata | settings validation/isolation integration plus management UI | Implemented for editorial settings; Checkout shipping policy ownership preserved |
+| LOC-001–LOC-002, SCP-001–SCP-002, HRD-001–HRD-002, HRD-007 | Persian RTL image-led Homepage, Journal and Occasion experiences; semantic navigation, safe text rendering, reduced motion, no Wishlist/Newsletter | production build, `e2e/editorial.spec.ts`, CLI snapshots and `output/playwright/milestone-7/` | Implemented |
