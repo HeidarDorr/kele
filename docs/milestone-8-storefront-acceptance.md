@@ -116,6 +116,12 @@ request headers or deterministic network routing. The runner generates a new
 private token for every execution; normal and production requests have no
 fixture capability. Fixtures must not alter domain or API behavior.
 
+Before M8 evidence setup, the suite reconciles the deterministic seed again
+through the pinned package runner and the existing `kele_e2e` reset guard. This
+keeps the accepted route baselines independent from earlier suites that publish
+new revisions of the shared Outfit fixture; the reset cannot target a normal or
+production database.
+
 ## Viewport and measurable visual acceptance plan
 
 Every critical route is captured from a production build with fixed seed data,

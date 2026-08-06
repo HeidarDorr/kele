@@ -112,6 +112,7 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
   await transaction.$executeRawUnsafe('TRUNCATE TABLE "homepage_revisions" CASCADE');
   await transaction.$executeRawUnsafe('TRUNCATE TABLE "journal_articles" CASCADE');
   await transaction.$executeRawUnsafe('TRUNCATE TABLE "site_settings_versions" CASCADE');
+  await transaction.$executeRawUnsafe('TRUNCATE TABLE "editorial_media_references" CASCADE');
   await transaction.$executeRawUnsafe('TRUNCATE TABLE "outfits" CASCADE');
   await transaction.paymentCallbackReceipt.deleteMany();
   await transaction.paymentReconciliation.deleteMany();

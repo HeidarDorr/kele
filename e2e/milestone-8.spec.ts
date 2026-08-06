@@ -11,6 +11,7 @@ import {
 import { reviewEvidencePath } from './evidence-paths.mjs';
 import { e2eUrls } from './ports.mts';
 import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
+import { resetDeterministicE2EFixture } from './reset-e2e-fixture.mjs';
 
 const evidenceDirectory = reviewEvidencePath('milestone-8');
 const stateDirectory = resolve(evidenceDirectory, 'states');
@@ -192,6 +193,7 @@ test.describe.serial('Milestone 8 storefront visual fidelity', () => {
   test.setTimeout(240_000);
 
   test.beforeAll(async ({ browser, request }) => {
+    await resetDeterministicE2EFixture();
     await Promise.all([
       mkdir(stateDirectory, { recursive: true }),
       mkdir(matrixDirectory, { recursive: true }),
@@ -410,11 +412,23 @@ test.describe.serial('Milestone 8 storefront visual fidelity', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: /سبد خرید/u })).toBeFocused();
     expect(await page.evaluate('document.body.style.overflow')).toBe('');
-    expect(
-      await page.evaluate(
-        'document.getAnimations().filter((animation) => animation.playState === "running" && animation.effect !== null).length',
-      ),
-    ).toBe(0);
+    const reducedMotionState = await page.evaluate(async () => {
+      await new Promise<void>((resolveFrame) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            resolveFrame();
+          });
+        });
+      });
+      return {
+        requested: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        runningAnimations: document
+          .getAnimations()
+          .filter((animation) => animation.playState === 'running' && animation.effect !== null)
+          .length,
+      };
+    });
+    expect(reducedMotionState).toEqual({ requested: true, runningAnimations: 0 });
     await page.screenshot({
       path: resolve(stateDirectory, 'keyboard-focus-return-mobile.png'),
       animations: 'disabled',
