@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { e2eUrls } from './ports.mts';
 import { reviewEvidencePath } from './evidence-paths.mjs';
+import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
 
 const evidenceDirectory = reviewEvidencePath('milestone-7');
 const superSession =
@@ -129,15 +130,23 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       ).toBe(true);
       await captureEditorialEvidence(page, `admin-${viewport.label}-success.png`);
 
-      const statePath =
+      const stateCase =
         viewport.label === 'mobile'
-          ? '/editorial?state=loading'
+          ? { path: '/editorial', state: 'loading' }
           : viewport.label === 'tablet'
-            ? '/editorial/journal?state=empty'
+            ? { path: '/editorial/journal', state: 'empty' }
             : viewport.label === 'laptop'
-              ? '/editorial/media?state=error'
-              : '/editorial/media/70000000-0000-4000-8000-000000000043';
-      await page.goto(`${e2eUrls.admin}${statePath}`);
+              ? { path: '/editorial/media', state: 'error' }
+              : null;
+      if (stateCase) {
+        await gotoAcceptancePresentationState(
+          page,
+          `${e2eUrls.admin}${stateCase.path}`,
+          stateCase.state,
+        );
+      } else {
+        await page.goto(`${e2eUrls.admin}/editorial/media/70000000-0000-4000-8000-000000000043`);
+      }
       if (viewport.label === 'mobile') {
         await expect(page.getByRole('status')).toContainText('در حال دریافت فضای تحریریه');
       } else if (viewport.label === 'tablet') {
@@ -188,7 +197,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     const stateCases = [
       {
         name: 'homepage-loading-mobile',
-        path: '/?state=loading',
+        path: '/',
+        state: 'loading',
         width: 360,
         height: 800,
         role: 'status' as const,
@@ -196,7 +206,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'homepage-unavailable-tablet',
-        path: '/?state=unavailable',
+        path: '/',
+        state: 'unavailable',
         width: 768,
         height: 1024,
         role: 'status' as const,
@@ -204,7 +215,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'journal-loading-mobile',
-        path: '/journal?state=loading',
+        path: '/journal',
+        state: 'loading',
         width: 360,
         height: 800,
         role: 'status' as const,
@@ -212,7 +224,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'journal-empty-tablet',
-        path: '/journal?state=empty',
+        path: '/journal',
+        state: 'empty',
         width: 768,
         height: 1024,
         role: 'status' as const,
@@ -220,7 +233,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'journal-error-desktop',
-        path: '/journal?state=error',
+        path: '/journal',
+        state: 'error',
         width: 1440,
         height: 900,
         role: 'alert' as const,
@@ -228,7 +242,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'occasions-loading-mobile',
-        path: '/occasions?state=loading',
+        path: '/occasions',
+        state: 'loading',
         width: 360,
         height: 800,
         role: 'status' as const,
@@ -236,7 +251,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'occasions-empty-tablet',
-        path: '/occasions?state=empty',
+        path: '/occasions',
+        state: 'empty',
         width: 768,
         height: 1024,
         role: 'generic' as const,
@@ -244,7 +260,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'occasions-error-desktop',
-        path: '/occasions?state=error',
+        path: '/occasions',
+        state: 'error',
         width: 1440,
         height: 900,
         role: 'alert' as const,
@@ -252,7 +269,8 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       },
       {
         name: 'occasion-unavailable-tablet',
-        path: '/occasion/formal-occasions?state=unavailable',
+        path: '/occasion/formal-occasions',
+        state: 'unavailable',
         width: 768,
         height: 1024,
         role: 'generic' as const,
@@ -261,7 +279,11 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     ];
     for (const stateCase of stateCases) {
       await page.setViewportSize({ width: stateCase.width, height: stateCase.height });
-      await page.goto(`${e2eUrls.storefront}${stateCase.path}`);
+      await gotoAcceptancePresentationState(
+        page,
+        `${e2eUrls.storefront}${stateCase.path}`,
+        stateCase.state,
+      );
       const state =
         stateCase.role === 'generic'
           ? page.getByText(stateCase.text, { exact: true })

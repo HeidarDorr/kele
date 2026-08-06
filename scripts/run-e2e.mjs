@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -28,6 +29,7 @@ const databaseConfiguration = readE2EDatabaseConfiguration(requestedEnvironment)
 const ports = readE2EPorts(requestedEnvironment);
 const storefrontOrigin = `http://127.0.0.1:${String(ports.storefront)}`;
 const apiBaseUrl = `http://127.0.0.1:${String(ports.api)}/api/v1`;
+const presentationToken = randomBytes(32).toString('hex');
 const sharedEnvironment = {
   ...requestedEnvironment,
   CI: 'true',
@@ -40,6 +42,7 @@ const sharedEnvironment = {
   E2E_DATABASE_URL: databaseConfiguration.databaseUrl,
   E2E_FIXED_TIME: evidenceFixedTime,
   E2E_DETERMINISTIC_ID_SEED: evidenceIdSeed,
+  KELE_E2E_PRESENTATION_TOKEN: presentationToken,
   TZ: 'Asia/Tehran',
 };
 const generatedDeclarationPaths = [
@@ -244,7 +247,9 @@ try {
   const playwrightEntry = createRequire(path.join(workspace, 'package.json')).resolve(
     '@playwright/test/cli',
   );
-  await runNode(playwrightEntry, ['test'], {
+  const forwardedArguments = process.argv.slice(2);
+  if (forwardedArguments[0] === '--') forwardedArguments.shift();
+  await runNode(playwrightEntry, ['test', ...forwardedArguments], {
     ...sharedEnvironment,
     NODE_ENV: 'test',
     E2E_DATABASE_RESET: 'true',

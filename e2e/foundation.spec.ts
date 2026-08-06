@@ -25,6 +25,7 @@ import {
   type MilestoneEvidenceFixture,
 } from './evidence-fixtures.mjs';
 import { reviewEvidencePath } from './evidence-paths.mjs';
+import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
 
 const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
 const evidenceDirectory = resolve(
@@ -592,12 +593,16 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
   });
 
   const statePaths = [
-    { name: 'loading', path: '/catalog?state=loading', label: 'در حال بارگذاری کاتالوگ' },
-    { name: 'empty', path: '/catalog?state=empty', label: 'نتیجه‌ای پیدا نشد' },
-    { name: 'error', path: '/catalog?state=error', label: 'دریافت کاتالوگ ممکن نشد' },
+    { name: 'loading', path: '/catalog', label: 'در حال بارگذاری کاتالوگ' },
+    { name: 'empty', path: '/catalog', label: 'نتیجه‌ای پیدا نشد' },
+    { name: 'error', path: '/catalog', label: 'دریافت کاتالوگ ممکن نشد' },
   ] as const;
   for (const state of statePaths) {
-    await desktop.goto(`${e2eUrls.storefront}${state.path}`);
+    await gotoAcceptancePresentationState(
+      desktop,
+      `${e2eUrls.storefront}${state.path}`,
+      state.name,
+    );
     await expect(
       state.name === 'loading'
         ? desktop.getByLabel(state.label).first()
@@ -694,7 +699,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       { name: 'empty', label: 'استایل منتشرشده‌ای وجود ندارد' },
       { name: 'error', label: 'دریافت استایل‌ها ممکن نشد' },
     ] as const) {
-      await page.goto(`${e2eUrls.storefront}/outfits?state=${state.name}`);
+      await gotoAcceptancePresentationState(page, `${e2eUrls.storefront}/outfits`, state.name);
       await expect(page.getByText(state.label).first()).toBeVisible();
       await captureMilestoneFiveEvidence(page, `outfits-${state.name}-laptop.png`);
     }
@@ -804,7 +809,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await expect(
       page.getByRole('heading', { name: 'استایل لینن آرام — ویرایش دوم' }),
     ).toBeVisible();
-    await expect(page.locator('main .product-label').first()).toHaveText('استایل کامل · ویرایش ۲');
+    await expect(page.locator('main .product-label').first()).toHaveText('استایل کامل، ویرایش ۲');
   } finally {
     try {
       await context.close();
@@ -1573,7 +1578,7 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
     );
 
     await admin.setViewportSize({ width: 390, height: 844 });
-    await admin.goto(`${e2eUrls.admin}/operations/orders?state=empty`);
+    await gotoAcceptancePresentationState(admin, `${e2eUrls.admin}/operations/orders`, 'empty');
     await expect(admin.getByText('سفارشی مطابق این فیلتر وجود ندارد.')).toBeVisible();
     expect(await admin.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
       true,
@@ -1582,7 +1587,7 @@ test('Milestone 6 staff fulfillment and customer return journeys are authorized,
       admin,
       resolve(milestoneSixFixture.evidenceDirectory, 'staff-orders-empty-mobile.png'),
     );
-    await admin.goto(`${e2eUrls.admin}/operations/orders?state=error`);
+    await gotoAcceptancePresentationState(admin, `${e2eUrls.admin}/operations/orders`, 'error');
     await expect(admin.locator('section.admin-error[role="alert"]')).toBeVisible();
   } finally {
     try {
