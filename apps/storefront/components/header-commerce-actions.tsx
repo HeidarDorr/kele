@@ -1,5 +1,7 @@
 'use client';
 
+import { BagIcon } from '@phosphor-icons/react/Bag';
+import { UserIcon } from '@phosphor-icons/react/User';
 import Link from 'next/link';
 import { useCart } from './cart-provider';
 
@@ -8,11 +10,21 @@ export function HeaderCommerceActions() {
   const quantity = cart?.lines.reduce((sum, line) => sum + line.quantity, 0) ?? 0;
   return (
     <div className="header-commerce">
-      <Link href="/account" aria-label="حساب مشتری">
-        حساب
+      <Link className="header-account-link" href="/account" aria-label="حساب مشتری">
+        <UserIcon size={21} weight="light" aria-hidden="true" />
+        <span>حساب</span>
       </Link>
-      <button type="button" onClick={openDrawer} aria-label={`سبد خرید، ${String(quantity)} کالا`}>
-        سبد <bdi dir="ltr">({quantity.toLocaleString('fa-IR')})</bdi>
+      <button
+        className="header-cart-button"
+        type="button"
+        onClick={openDrawer}
+        aria-label={`سبد خرید، ${String(quantity)} کالا`}
+      >
+        <BagIcon size={21} weight="light" aria-hidden="true" />
+        <span>سبد</span>
+        <bdi className="header-cart-count" dir="ltr">
+          {quantity.toLocaleString('fa-IR')}
+        </bdi>
       </button>
     </div>
   );

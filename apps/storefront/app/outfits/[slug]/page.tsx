@@ -67,7 +67,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
           <ProductGallery media={outfit.gallery} />
           <div className="outfit-detail-copy">
             <p className="product-label">
-              استایل کامل · ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}
+              استایل کامل، ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}
             </p>
             <h1 id="outfit-title">{outfit.name}</h1>
             <p className="outfit-starting-price">از {outfit.startingPrice.display}</p>
@@ -97,7 +97,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
                   </div>
                   <div>
                     <span>
-                      {item.quantity.toLocaleString('fa-IR')} عدد · {item.colorName}
+                      {item.quantity.toLocaleString('fa-IR')} عدد، {item.colorName}
                     </span>
                     <h3>{item.name}</h3>
                     <p>مشاهده و خرید مستقل</p>

@@ -1,18 +1,20 @@
 import { AdminShell } from '../../../components/admin-shell';
 import { decideReturnAction } from '../../actions';
 import { listReturnRequests } from '../../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReturnsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; notice?: string; state?: string }>;
+  searchParams: Promise<{ status?: string; notice?: string }>;
 }) {
   const query = await searchParams;
+  const acceptanceState = await getAcceptancePresentationState(['empty', 'error'] as const);
   const result =
-    query.state === 'error' ? null : await listReturnRequests(query.status).catch(() => null);
-  const items = query.state === 'empty' ? [] : (result?.items ?? []);
+    acceptanceState === 'error' ? null : await listReturnRequests(query.status).catch(() => null);
+  const items = acceptanceState === 'empty' ? [] : (result?.items ?? []);
   return (
     <AdminShell>
       <header className="admin-heading">

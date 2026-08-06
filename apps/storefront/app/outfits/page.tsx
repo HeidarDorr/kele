@@ -4,6 +4,7 @@ import { OutfitCard } from '../../components/outfit-card';
 import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
 import { getCategories, getOutfits } from '../../lib/catalog-api';
+import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 import OutfitsLoading from './loading';
 
 export const dynamic = 'force-dynamic';
@@ -14,14 +15,10 @@ export const metadata: Metadata = {
   alternates: { canonical: '/outfits' },
 };
 
-export default async function OutfitsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: 'loading' | 'empty' | 'error' }>;
-}) {
-  const query = await searchParams;
+export default async function OutfitsPage() {
+  const state = await getAcceptancePresentationState(['loading', 'empty', 'error'] as const);
   const categories = await getCategories().catch(() => ({ items: [] }));
-  if (query.state === 'loading') {
+  if (state === 'loading') {
     return (
       <>
         <SiteHeader categories={categories.items} />
@@ -30,8 +27,8 @@ export default async function OutfitsPage({
       </>
     );
   }
-  const result = query.state === 'error' ? null : await getOutfits().catch(() => null);
-  const outfits = query.state === 'empty' ? [] : (result?.items ?? []);
+  const result = state === 'error' ? null : await getOutfits().catch(() => null);
+  const outfits = state === 'empty' ? [] : (result?.items ?? []);
 
   return (
     <>

@@ -1,5 +1,6 @@
 import { AdminShell } from '../../../components/admin-shell';
 import { listAuditEvents } from '../../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,12 +10,15 @@ export default async function AuditPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const query = await searchParams;
+  const acceptanceState = await getAcceptancePresentationState(['empty', 'error'] as const);
   const parameters = new URLSearchParams();
   for (const key of ['search', 'eventType', 'actor', 'entityType', 'entityId', 'from', 'to'])
     if (query[key]) parameters.set(key, query[key]);
   const result =
-    query.state === 'error' ? null : await listAuditEvents(parameters.toString()).catch(() => null);
-  const items = query.state === 'empty' ? [] : (result?.items ?? []);
+    acceptanceState === 'error'
+      ? null
+      : await listAuditEvents(parameters.toString()).catch(() => null);
+  const items = acceptanceState === 'empty' ? [] : (result?.items ?? []);
   return (
     <AdminShell>
       <header className="admin-heading">

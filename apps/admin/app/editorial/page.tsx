@@ -1,16 +1,13 @@
 import Link from 'next/link';
 import { AdminShell } from '../../components/admin-shell';
 import { getHomepageDraft, getSiteSettingsDraft, listJournalDrafts } from '../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditorialHubPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: 'loading' | 'error' }>;
-}) {
-  const parameters = await searchParams;
-  if (parameters.state === 'loading')
+export default async function EditorialHubPage() {
+  const acceptanceState = await getAcceptancePresentationState(['loading', 'error'] as const);
+  if (acceptanceState === 'loading')
     return (
       <AdminShell>
         <header className="admin-heading">
@@ -25,7 +22,7 @@ export default async function EditorialHubPage({
         </section>
       </AdminShell>
     );
-  if (parameters.state === 'error')
+  if (acceptanceState === 'error')
     return (
       <AdminShell>
         <header className="admin-heading">

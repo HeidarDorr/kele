@@ -2,15 +2,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AdminShell } from '../../../components/admin-shell';
 import { listMedia } from '../../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 export default async function EditorialMediaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string; state?: 'loading' | 'empty' | 'error' }>;
+  searchParams: Promise<{ notice?: string }>;
 }) {
   const parameters = await searchParams;
-  if (parameters.state === 'loading')
+  const acceptanceState = await getAcceptancePresentationState([
+    'loading',
+    'empty',
+    'error',
+  ] as const);
+  if (acceptanceState === 'loading')
     return (
       <AdminShell>
         <header className="admin-heading">
@@ -25,8 +31,8 @@ export default async function EditorialMediaPage({
         </section>
       </AdminShell>
     );
-  const result = parameters.state === 'error' ? null : await listMedia().catch(() => null);
-  const media = parameters.state === 'empty' ? [] : (result ?? []);
+  const result = acceptanceState === 'error' ? null : await listMedia().catch(() => null);
+  const media = acceptanceState === 'empty' ? [] : (result ?? []);
   return (
     <AdminShell>
       <header className="admin-heading">

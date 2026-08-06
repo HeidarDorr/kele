@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProductGallery } from '../../../components/product-gallery';
+import { ProductCard } from '../../../components/product-card';
 import { PurchaseControls } from '../../../components/purchase-controls';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
-import { CatalogApiError, getCategories, getProduct } from '../../../lib/catalog-api';
+import { CatalogApiError, getCategories, getProduct, getProducts } from '../../../lib/catalog-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,7 @@ export async function generateMetadata({
   try {
     const product = await getProduct(slug);
     return {
-      title: product.seo.title ?? product.name,
+      title: { absolute: product.seo.title ?? `${product.name} | KELE` },
       description: product.seo.description ?? product.description,
       alternates: { canonical: `/products/${slug}` },
       openGraph: {
@@ -60,6 +61,14 @@ export default async function ProductPage({
     product.variants.find((variant) => variant.id === product.selectedVariant.id) ??
     product.variants[0];
   if (!selected) notFound();
+  const relatedProducts = (
+    await getProducts({
+      ...(product.categories[0] ? { category: product.categories[0].slug } : {}),
+      limit: 6,
+    }).catch(() => ({ items: [] }))
+  ).items
+    .filter((item) => item.productId !== product.productId)
+    .slice(0, 4);
 
   const productJsonLd = {
     '@context': 'https://schema.org',
@@ -127,10 +136,11 @@ export default async function ProductPage({
                     aria-current={
                       color.variantId === product.selectedVariant.id ? 'true' : undefined
                     }
-                    className={color.available ? '' : 'disabled-option'}
+                    className={color.available ? 'color-option' : 'color-option unavailable'}
                   >
                     <span style={{ backgroundColor: color.hex ?? 'transparent' }} />
-                    {color.name}
+                    <span>{color.name}</span>
+                    {!color.available ? <small>ناموجود</small> : null}
                   </Link>
                 ))}
               </div>
@@ -142,6 +152,21 @@ export default async function ProductPage({
               {product.available
                 ? 'حداقل یک اندازه برای این رنگ موجود است.'
                 : 'این رنگ در حال حاضر موجود نیست.'}
+            </div>
+            <div className="pdp-disclosures">
+              <details>
+                <summary>ارسال و دریافت</summary>
+                <p>
+                  روش‌ها و مبالغ قابل انتخاب پس از ثبت نشانی در تسویه از فروشگاه دریافت می‌شوند.
+                </p>
+              </details>
+              <details>
+                <summary>راهنمای مرجوعی</summary>
+                <p>
+                  وضعیت امکان ثبت درخواست پس از تحویل تأییدشده، در جزئیات همان سفارش نمایش داده
+                  می‌شود.
+                </p>
+              </details>
             </div>
           </section>
         </div>
@@ -159,6 +184,27 @@ export default async function ProductPage({
               ))}
             </ul>
           </div>
+        </section>
+        <section className="product-related" aria-labelledby="related-products-title">
+          <header className="editorial-section-heading editorial-heading-split">
+            <div>
+              <p>ادامهٔ انتخاب</p>
+              <h2 id="related-products-title">محصولات مرتبط</h2>
+            </div>
+            <Link href="/catalog">مشاهدهٔ کاتالوگ</Link>
+          </header>
+          {relatedProducts.length > 0 ? (
+            <div className="product-grid">
+              {relatedProducts.map((item) => (
+                <ProductCard key={`${item.productId}-${item.selectedVariant.id}`} product={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="state-panel">
+              <h3>محصول مرتبطی برای نمایش نیست</h3>
+              <p>با بازگشت به کاتالوگ می‌توانید همهٔ انتخاب‌های منتشرشده را ببینید.</p>
+            </div>
+          )}
         </section>
         <script
           type="application/ld+json"

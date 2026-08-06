@@ -5,6 +5,7 @@ import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
 import { getCategories } from '../../lib/catalog-api';
 import { getOccasions, getSiteSettings } from '../../lib/editorial-api';
+import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -13,18 +14,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/occasions' },
 };
 
-export default async function OccasionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: 'loading' | 'empty' | 'error' }>;
-}) {
-  const [parameters, occasionResult, categoryResult, settingsResult] = await Promise.allSettled([
-    searchParams,
+export default async function OccasionsPage() {
+  const [stateResult, occasionResult, categoryResult, settingsResult] = await Promise.allSettled([
+    getAcceptancePresentationState(['loading', 'empty', 'error'] as const),
     getOccasions(),
     getCategories(),
     getSiteSettings(),
   ]);
-  const state = parameters.status === 'fulfilled' ? parameters.value.state : undefined;
+  const state = stateResult.status === 'fulfilled' ? stateResult.value : null;
   const occasions =
     state === 'empty' || occasionResult.status === 'rejected' ? [] : occasionResult.value.items;
   const categories = categoryResult.status === 'fulfilled' ? categoryResult.value.items : [];
@@ -62,7 +59,6 @@ export default async function OccasionsPage({
             {occasions.map((occasion, index) => (
               <article key={occasion.id}>
                 <Link href={`/occasion/${occasion.slug}`}>
-                  <span className="occasion-index-number">۰{String(index + 1)}</span>
                   <span className="occasion-index-media">
                     {occasion.heroMedia ? (
                       <Image

@@ -6,6 +6,7 @@ import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getCategory } from '../../../lib/catalog-api';
 import { getSiteSettings } from '../../../lib/editorial-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,14 +40,11 @@ export async function generateMetadata({
     : { title: 'موقعیت پیدا نشد' };
 }
 
-export default async function OccasionPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ state?: 'unavailable' }>;
-}) {
-  const [{ slug }, parameters] = await Promise.all([params, searchParams]);
+export default async function OccasionPage({ params }: { params: Promise<{ slug: string }> }) {
+  const [{ slug }, state] = await Promise.all([
+    params,
+    getAcceptancePresentationState(['loading', 'error', 'unavailable'] as const),
+  ]);
   const [occasion, categoryResult, settingsResult] = await Promise.all([
     occasionOrNull(slug),
     Promise.resolve(getCategories())
@@ -88,7 +86,20 @@ export default async function OccasionPage({
             <p>انتخاب KELE</p>
             <h2 id="occasion-products-title">پوشش‌های این موقعیت</h2>
           </header>
-          {parameters.state !== 'unavailable' && occasion.products.items.length > 0 ? (
+          {state === 'loading' ? (
+            <div className="state-panel editorial-state-loading" role="status" aria-busy="true">
+              <h3>در حال دریافت انتخاب‌ها</h3>
+              <div className="editorial-loading-line" aria-hidden="true" />
+            </div>
+          ) : state === 'error' ? (
+            <div className="state-panel state-error" role="alert">
+              <h3>دریافت انتخاب‌ها ممکن نشد</h3>
+              <p>صفحهٔ موقعیت در دسترس است؛ برای دیدن همهٔ محصولات به کاتالوگ بروید.</p>
+              <a className="button-secondary" href="/catalog">
+                رفتن به کاتالوگ
+              </a>
+            </div>
+          ) : state !== 'unavailable' && occasion.products.items.length > 0 ? (
             <div className="product-grid">
               {occasion.products.items.map((product) => (
                 <ProductCard

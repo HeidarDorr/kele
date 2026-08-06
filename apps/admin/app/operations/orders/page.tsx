@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AdminShell } from '../../../components/admin-shell';
 import { listAdminOrders } from '../../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,15 +17,18 @@ const statusLabels: Record<string, string> = {
 export default async function OperationsOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; search?: string; state?: string }>;
+  searchParams: Promise<{ status?: string; search?: string }>;
 }) {
   const query = await searchParams;
+  const acceptanceState = await getAcceptancePresentationState(['empty', 'error'] as const);
   const parameters = new URLSearchParams();
   if (query.status) parameters.set('status', query.status);
   if (query.search) parameters.set('search', query.search);
   const result =
-    query.state === 'error' ? null : await listAdminOrders(parameters.toString()).catch(() => null);
-  const items = query.state === 'empty' ? [] : (result?.items ?? []);
+    acceptanceState === 'error'
+      ? null
+      : await listAdminOrders(parameters.toString()).catch(() => null);
+  const items = acceptanceState === 'empty' ? [] : (result?.items ?? []);
 
   return (
     <AdminShell>

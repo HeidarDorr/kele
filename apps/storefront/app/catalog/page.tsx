@@ -3,6 +3,7 @@ import { ProductCard } from '../../components/product-card';
 import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
 import { getCategories, getProducts } from '../../lib/catalog-api';
+import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 import CatalogLoading from './loading';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +17,13 @@ export const metadata: Metadata = {
 type SearchParameters = Promise<{
   q?: string;
   sort?: 'newest' | 'price_asc' | 'price_desc';
-  state?: 'loading' | 'empty' | 'error';
 }>;
 
 export default async function CatalogPage({ searchParams }: { searchParams: SearchParameters }) {
   const parameters = await searchParams;
+  const state = await getAcceptancePresentationState(['loading', 'empty', 'error'] as const);
   const categories = await getCategories().catch(() => ({ items: [] }));
-  if (parameters.state === 'loading') {
+  if (state === 'loading') {
     return (
       <>
         <SiteHeader categories={categories.items} />
@@ -31,15 +32,15 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
       </>
     );
   }
-  const forcedError = parameters.state === 'error';
+  const forcedError = state === 'error';
   const result = forcedError
     ? null
     : await getProducts({
         ...(parameters.q ? { search: parameters.q } : {}),
         ...(parameters.sort ? { sort: parameters.sort } : {}),
-        limit: parameters.state === 'empty' ? 1 : 24,
+        limit: state === 'empty' ? 1 : 24,
       }).catch(() => null);
-  const products = parameters.state === 'empty' ? [] : (result?.items ?? []);
+  const products = state === 'empty' ? [] : (result?.items ?? []);
 
   return (
     <>

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { type SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { commerceApi, commerceErrorMessage, type Order } from '../lib/commerce-api';
 
@@ -22,8 +21,13 @@ const eventLabels: Record<string, string> = {
   refund_updated: 'وضعیت بازپرداخت به‌روزرسانی شد',
 };
 
-export function OrderContent({ orderNumber }: { orderNumber: string }) {
-  const forcedState = useSearchParams().get('state');
+export function OrderContent({
+  orderNumber,
+  acceptanceState = null,
+}: {
+  orderNumber: string;
+  acceptanceState?: 'loading' | 'error' | 'unavailable' | null;
+}) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,24 +42,24 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   const load = useCallback(async () => {
-    if (forcedState === 'loading') return;
+    if (acceptanceState === 'loading') return;
     setLoading(true);
     setError('');
     try {
-      if (forcedState === 'error') throw new Error('forced acceptance state');
+      if (acceptanceState === 'error') throw new Error('forced acceptance state');
       const result = await commerceApi.order(orderNumber);
       setOrder(result);
       setQuantities(Object.fromEntries(result.items.map((item) => [item.id, 0])));
     } catch (requestError: unknown) {
       setError(
-        forcedState === 'error'
+        acceptanceState === 'error'
           ? 'دریافت سفارش ممکن نشد. دوباره تلاش کنید.'
           : commerceErrorMessage(requestError),
       );
     } finally {
       setLoading(false);
     }
-  }, [forcedState, orderNumber]);
+  }, [acceptanceState, orderNumber]);
 
   useEffect(() => {
     void load();
@@ -124,7 +128,7 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
     );
 
   const eligibility =
-    forcedState === 'unavailable'
+    acceptanceState === 'unavailable'
       ? { ...order.returnEligibility, eligible: false, code: 'window_expired' as const }
       : order.returnEligibility;
   return (
@@ -176,15 +180,14 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
                   {item.kind === 'outfit' && item.outfitRevisionNumber ? (
                     <section className="order-outfit-snapshot" aria-label="ترکیب ثبت‌شدهٔ استایل">
                       <span>
-                        نسخه {item.outfitRevisionNumber.toLocaleString('fa-IR')} · سایز{' '}
+                        نسخه {item.outfitRevisionNumber.toLocaleString('fa-IR')}، سایز{' '}
                         {item.outfitSize}
                       </span>
                       <ul>
                         {item.outfitComponents.map((component) => (
                           <li key={component.skuId}>
                             <span>
-                              {component.productName} · {component.colorName} ·{' '}
-                              {component.sizeLabel}
+                              {component.productName}، {component.colorName}، {component.sizeLabel}
                             </span>
                             <bdi>{component.skuCode}</bdi>
                             <span>{component.totalQuantity.toLocaleString('fa-IR')} عدد</span>
@@ -380,7 +383,7 @@ export function OrderContent({ orderNumber }: { orderNumber: string }) {
                 </time>
                 <span>
                   {request.refund?.status === 'confirmed'
-                    ? `بازپرداخت تأیید شد · ${request.refund.amount.display}`
+                    ? `بازپرداخت تأیید شد، ${request.refund.amount.display}`
                     : request.refund
                       ? `بازپرداخت: ${request.refund.status}`
                       : 'در انتظار تصمیم مدیر'}

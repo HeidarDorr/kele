@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getCategories, getProducts } from '../lib/catalog-api';
+import { getCategories, getOutfits, getProducts } from '../lib/catalog-api';
 import {
   getHomepage,
   getJournal,
@@ -10,8 +10,10 @@ import {
   type PublishedHomepage,
 } from '../lib/editorial-api';
 import { ProductCard } from '../components/product-card';
+import { OutfitCard } from '../components/outfit-card';
 import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
+import { getAcceptancePresentationState } from '../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,34 +43,33 @@ function isMediaSection(section: Section): section is Section & {
   return 'mediaId' in section.content;
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: 'loading' | 'unavailable' }>;
-}) {
+export default async function HomePage() {
   const [
-    parameters,
+    stateResult,
     homepageResult,
     categoryResult,
     productResult,
     occasionResult,
+    outfitResult,
     journalResult,
     settingsResult,
   ] = await Promise.allSettled([
-    searchParams,
+    getAcceptancePresentationState(['loading', 'unavailable'] as const),
     getHomepage(),
     getCategories(),
     getProducts({ limit: 24 }),
     getOccasions(),
+    getOutfits(),
     getJournal(6),
     getSiteSettings(),
   ]);
-  const state = parameters.status === 'fulfilled' ? parameters.value.state : undefined;
+  const state = stateResult.status === 'fulfilled' ? stateResult.value : null;
   const homepage =
     state === 'unavailable' || homepageResult.status === 'rejected' ? null : homepageResult.value;
   const categories = categoryResult.status === 'fulfilled' ? categoryResult.value.items : [];
   const products = productResult.status === 'fulfilled' ? productResult.value.items : [];
   const occasions = occasionResult.status === 'fulfilled' ? occasionResult.value.items : [];
+  const outfits = outfitResult.status === 'fulfilled' ? outfitResult.value.items : [];
   const journal = journalResult.status === 'fulfilled' ? journalResult.value.items : [];
   const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
   const media = new Map(homepage?.media.map((item) => [item.id, item]) ?? []);
@@ -103,37 +104,42 @@ export default async function HomePage({
               const asset = media.get(section.content.mediaId);
               return (
                 <section
-                  className="editorial-hero"
+                  className="shell editorial-hero"
                   aria-labelledby={`section-${section.id}`}
                   key={section.id}
                 >
-                  {asset ? (
-                    <Image
-                      src={asset.url}
-                      alt={asset.alt}
-                      fill
-                      priority
-                      sizes="100vw"
-                      style={{
-                        objectPosition: `${String(asset.focalPoint.x * 100)}% ${String(asset.focalPoint.y * 100)}%`,
-                      }}
-                    />
-                  ) : null}
-                  <div className="editorial-hero-shade" />
-                  <div className="shell editorial-hero-copy">
-                    <p className="editorial-index">۰۱ / روایت فصل</p>
+                  <div className="editorial-hero-media">
+                    {asset ? (
+                      <Image
+                        src={asset.url}
+                        alt={asset.alt}
+                        fill
+                        priority
+                        sizes="(max-width: 767px) 100vw, 58vw"
+                        style={{
+                          objectPosition: `${String(asset.focalPoint.x * 100)}% ${String(asset.focalPoint.y * 100)}%`,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="image-fallback"
+                        role="img"
+                        aria-label="تصویر روایت در دسترس نیست"
+                      >
+                        <span>تصویر در دسترس نیست</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="editorial-hero-copy">
+                    <p className="editorial-kicker">روایت فصل KELE</p>
                     <h1 id={`section-${section.id}`}>{section.content.title}</h1>
                     {section.content.subtitle ? <p>{section.content.subtitle}</p> : null}
                     {section.content.ctaLabel && section.content.href ? (
                       <Link className="editorial-cta" href={section.content.href}>
                         {section.content.ctaLabel}
-                        <span aria-hidden="true">←</span>
                       </Link>
                     ) : null}
                   </div>
-                  <span className="editorial-scroll" aria-hidden="true">
-                    پایین
-                  </span>
                 </section>
               );
             }
@@ -172,7 +178,6 @@ export default async function HomePage({
                               }}
                             />
                           ) : null}
-                          <span className="occasion-card-number">۰{String(index + 1)}</span>
                           <span className="occasion-card-copy">
                             <strong>{occasion.editorialTitle ?? occasion.name}</strong>
                             <small>{occasion.editorialDescription ?? occasion.description}</small>
@@ -219,6 +224,38 @@ export default async function HomePage({
                     <div className="state-panel">
                       <h3>انتخابی برای نمایش وجود ندارد</h3>
                       <p>محصولات پیش‌نویس تا زمان انتشار در این بخش دیده نمی‌شوند.</p>
+                    </div>
+                  )}
+                </section>
+              );
+            }
+
+            if (section.type === 'featured_outfits' && 'referenceIds' in section.content) {
+              const referenceIds = section.content.referenceIds;
+              const items = outfits.filter((item) => referenceIds.includes(item.id));
+              return (
+                <section
+                  className="shell editorial-outfits"
+                  aria-labelledby={`section-${section.id}`}
+                  key={section.id}
+                >
+                  <header className="editorial-section-heading editorial-heading-split">
+                    <div>
+                      <p>ترکیب‌های کامل</p>
+                      <h2 id={`section-${section.id}`}>{section.content.title}</h2>
+                    </div>
+                    <Link href="/outfits">همهٔ استایل‌ها</Link>
+                  </header>
+                  {items.length > 0 ? (
+                    <div className="outfit-grid">
+                      {items.map((outfit) => (
+                        <OutfitCard key={outfit.id} outfit={outfit} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="state-panel">
+                      <h3>استایلی برای نمایش وجود ندارد</h3>
+                      <p>ترکیب‌های منتشرشده پس از تأیید در این بخش دیده می‌شوند.</p>
                     </div>
                   )}
                 </section>

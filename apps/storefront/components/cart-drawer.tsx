@@ -1,5 +1,6 @@
 'use client';
 
+import { XIcon } from '@phosphor-icons/react/X';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
@@ -78,14 +79,38 @@ export function CartLineItem({ line }: { line: CartLine }) {
 export function CartDrawer() {
   const { cart, loading, error, drawerOpen, closeDrawer, clear } = useCart();
   const closeButton = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!drawerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     closeButton.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeDrawer();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeDrawer();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(
+        drawer.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => element.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [closeDrawer, drawerOpen]);
@@ -94,6 +119,7 @@ export function CartDrawer() {
   return (
     <div className="cart-overlay" role="presentation" onMouseDown={closeDrawer}>
       <aside
+        ref={drawer}
         className="cart-drawer"
         role="dialog"
         aria-modal="true"
@@ -108,7 +134,7 @@ export function CartDrawer() {
             <h2 id="cart-drawer-title">سبد خرید</h2>
           </div>
           <button ref={closeButton} type="button" className="icon-button" onClick={closeDrawer}>
-            <span aria-hidden="true">×</span>
+            <XIcon size={22} weight="light" aria-hidden="true" />
             <span className="visually-hidden">بستن سبد</span>
           </button>
         </header>

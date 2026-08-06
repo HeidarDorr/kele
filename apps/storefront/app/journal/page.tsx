@@ -5,6 +5,7 @@ import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
 import { getCategories } from '../../lib/catalog-api';
 import { getJournal, getSiteSettings } from '../../lib/editorial-api';
+import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 import JournalLoading from './loading';
 
 export const dynamic = 'force-dynamic';
@@ -15,18 +16,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/journal' },
 };
 
-export default async function JournalPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: 'loading' | 'empty' | 'error' }>;
-}) {
-  const [parameters, journalResult, categoriesResult, settingsResult] = await Promise.allSettled([
-    searchParams,
+export default async function JournalPage() {
+  const [stateResult, journalResult, categoriesResult, settingsResult] = await Promise.allSettled([
+    getAcceptancePresentationState(['loading', 'empty', 'error'] as const),
     getJournal(),
     getCategories(),
     getSiteSettings(),
   ]);
-  const state = parameters.status === 'fulfilled' ? parameters.value.state : undefined;
+  const state = stateResult.status === 'fulfilled' ? stateResult.value : null;
   const articles =
     state === 'empty' || journalResult.status === 'rejected' ? [] : journalResult.value.items;
   const categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value.items : [];

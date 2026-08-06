@@ -1,15 +1,21 @@
 import Link from 'next/link';
 import { AdminShell } from '../../../components/admin-shell';
 import { listJournalDrafts } from '../../../lib/admin-api';
+import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
 export default async function JournalAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ notice?: string; state?: 'loading' | 'empty' | 'error' }>;
+  searchParams: Promise<{ notice?: string }>;
 }) {
   const parameters = await searchParams;
-  if (parameters.state === 'loading')
+  const acceptanceState = await getAcceptancePresentationState([
+    'loading',
+    'empty',
+    'error',
+  ] as const);
+  if (acceptanceState === 'loading')
     return (
       <AdminShell>
         <header className="admin-heading">
@@ -24,8 +30,8 @@ export default async function JournalAdminPage({
         </section>
       </AdminShell>
     );
-  const result = parameters.state === 'error' ? null : await listJournalDrafts().catch(() => null);
-  const articles = parameters.state === 'empty' ? [] : (result ?? []);
+  const result = acceptanceState === 'error' ? null : await listJournalDrafts().catch(() => null);
+  const articles = acceptanceState === 'empty' ? [] : (result ?? []);
   return (
     <AdminShell>
       <header className="admin-heading">

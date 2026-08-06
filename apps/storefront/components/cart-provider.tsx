@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { commerceApi, commerceErrorMessage, type Cart } from '../lib/commerce-api';
 import { CartDrawer } from './cart-drawer';
 
@@ -30,6 +38,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [busyLineId, setBusyLineId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  const drawerOpener = useRef<HTMLElement | null>(null);
+
+  const openDrawer = useCallback(() => {
+    drawerOpener.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setDrawerOpen(true);
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    window.requestAnimationFrame(() => drawerOpener.current?.focus());
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -83,12 +103,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       busyLineId,
       drawerOpen,
       announcement,
-      openDrawer: () => {
-        setDrawerOpen(true);
-      },
-      closeDrawer: () => {
-        setDrawerOpen(false);
-      },
+      openDrawer,
+      closeDrawer,
       refresh,
       addProduct: async (skuId, quantity = 1) => {
         if (cart === null) {
@@ -136,7 +152,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       },
     }),
-    [announcement, busyLineId, cart, drawerOpen, error, loading, refresh, runMutation],
+    [
+      announcement,
+      busyLineId,
+      cart,
+      closeDrawer,
+      drawerOpen,
+      error,
+      loading,
+      openDrawer,
+      refresh,
+      runMutation,
+    ],
   );
 
   return (

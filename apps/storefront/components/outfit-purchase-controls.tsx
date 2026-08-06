@@ -45,7 +45,7 @@ export function OutfitPurchaseControls({ outfit }: { outfit: OutfitDetail }) {
         </div>
         <p aria-live="polite">
           {selected
-            ? `${selected.price.display} · امکان آماده‌سازی ${selected.availableQuantity.toLocaleString('fa-IR')} استایل`
+            ? `${selected.price.display}، امکان آماده‌سازی ${selected.availableQuantity.toLocaleString('fa-IR')} استایل`
             : 'هر اندازه به SKUهای دقیق اجزای همین ویرایش متصل است.'}
         </p>
       </fieldset>

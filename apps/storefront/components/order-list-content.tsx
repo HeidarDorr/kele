@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   CommerceApiError,
@@ -19,9 +18,11 @@ const labels: Record<string, string> = {
   returned: 'مرجوع‌شده',
 };
 
-export function OrderListContent() {
-  const searchParams = useSearchParams();
-  const forcedState = searchParams.get('state');
+export function OrderListContent({
+  acceptanceState = null,
+}: {
+  acceptanceState?: 'loading' | 'empty' | 'error' | null;
+}) {
   const [page, setPage] = useState<OrderPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
@@ -29,11 +30,11 @@ export function OrderListContent() {
 
   useEffect(() => {
     let active = true;
-    if (forcedState === 'loading')
+    if (acceptanceState === 'loading')
       return () => {
         active = false;
       };
-    if (forcedState === 'error') {
+    if (acceptanceState === 'error') {
       setError('دریافت سفارش‌ها ممکن نشد. دوباره تلاش کنید.');
       setLoading(false);
       return () => {
@@ -43,7 +44,7 @@ export function OrderListContent() {
     void commerceApi
       .orders()
       .then((result) => {
-        if (active) setPage(forcedState === 'empty' ? { ...result, items: [] } : result);
+        if (active) setPage(acceptanceState === 'empty' ? { ...result, items: [] } : result);
       })
       .catch((requestError: unknown) => {
         if (!active) return;
@@ -57,7 +58,7 @@ export function OrderListContent() {
     return () => {
       active = false;
     };
-  }, [forcedState]);
+  }, [acceptanceState]);
 
   if (loading)
     return (
@@ -111,7 +112,7 @@ export function OrderListContent() {
         <section className="commerce-page-state">
           <h2>هنوز سفارشی ثبت نشده است</h2>
           <p>پس از پرداخت تأییدشده، سفارش و وضعیت اجرایی آن اینجا دیده می‌شود.</p>
-          <Link className="button-primary" href="/products">
+          <Link className="button-primary" href="/catalog">
             دیدن محصولات
           </Link>
         </section>

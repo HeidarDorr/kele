@@ -24,11 +24,12 @@ export function ProductCard({ product }: { product: ProductCardValue }) {
             {product.available ? 'موجود' : 'ناموجود'}
           </span>
         </div>
-        <div className="swatches" aria-label="رنگ‌های موجود">
+        <div className="swatches" role="list" aria-label="رنگ‌های موجود">
           {product.availableColors.map((color) => (
             <span
               key={color.variantId}
               title={color.name}
+              role="listitem"
               aria-label={`${color.name}${color.available ? '' : '، ناموجود'}`}
               className={color.available ? '' : 'swatch-unavailable'}
               style={{ backgroundColor: color.hex ?? 'transparent' }}

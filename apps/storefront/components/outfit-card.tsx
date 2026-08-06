@@ -8,12 +8,16 @@ export function OutfitCard({ outfit }: { outfit: OutfitCardValue }) {
       <Link href={`/outfits/${outfit.slug}`} aria-label={`مشاهدهٔ استایل ${outfit.name}`}>
         <div className="outfit-card-media">
           <ProductImage media={outfit.featuredMedia} sizes="(max-width: 767px) 92vw, 42vw" />
-          <span>{outfit.available ? 'آمادهٔ انتخاب' : 'فعلاً ناموجود'}</span>
         </div>
         <div className="outfit-card-copy">
-          <p>استایل کامل · ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}</p>
+          <p>استایل کامل</p>
           <h2>{outfit.name}</h2>
-          <strong>از {outfit.startingPrice.display}</strong>
+          <div>
+            <strong>از {outfit.startingPrice.display}</strong>
+            <span className={outfit.available ? 'availability' : 'availability unavailable'}>
+              {outfit.available ? 'موجود' : 'ناموجود'}
+            </span>
+          </div>
         </div>
       </Link>
     </article>

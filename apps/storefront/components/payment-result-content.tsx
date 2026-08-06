@@ -1,5 +1,9 @@
 'use client';
 
+import { CheckCircleIcon } from '@phosphor-icons/react/CheckCircle';
+import { HourglassIcon } from '@phosphor-icons/react/Hourglass';
+import { WarningCircleIcon } from '@phosphor-icons/react/WarningCircle';
+import { XCircleIcon } from '@phosphor-icons/react/XCircle';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -89,15 +93,17 @@ export function PaymentResultContent() {
   return (
     <main id="main-content" className="shell commerce-page payment-result-page">
       <section className={`payment-result payment-result-${status ?? 'error'}`} aria-live="polite">
-        <p className="payment-result-symbol" aria-hidden="true">
-          {paid
-            ? '✓'
-            : status === 'reconciliation'
-              ? '!'
-              : status !== 'expired' && retryable.has(status ?? 'failed')
-                ? '…'
-                : '×'}
-        </p>
+        <div className="payment-result-symbol" aria-hidden="true">
+          {paid ? (
+            <CheckCircleIcon size={52} weight="light" />
+          ) : status === 'reconciliation' ? (
+            <WarningCircleIcon size={52} weight="light" />
+          ) : status !== 'expired' && retryable.has(status ?? 'failed') ? (
+            <HourglassIcon size={52} weight="light" />
+          ) : (
+            <XCircleIcon size={52} weight="light" />
+          )}
+        </div>
         {paid ? (
           <>
             <p className="commerce-eyebrow">پرداخت تأیید شد</p>

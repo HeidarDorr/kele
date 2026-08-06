@@ -152,7 +152,13 @@ export default async function JournalArticlePage({
                         loading="eager"
                       />
                     </figure>
-                  ) : null;
+                  ) : (
+                    <figure className="journal-inline-image journal-media-missing" key={block.id}>
+                      <div role="img" aria-label="تصویر این بخش در دسترس نیست">
+                        تصویر این بخش در دسترس نیست
+                      </div>
+                    </figure>
+                  );
                 }
                 case 'external_link':
                   return block.href && block.label ? (

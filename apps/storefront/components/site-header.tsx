@@ -3,6 +3,7 @@ import type { Category } from '../lib/catalog-api';
 import type { PublishedSiteSettings } from '../lib/editorial-api';
 import { BrandWordmark } from './brand-wordmark';
 import { HeaderCommerceActions } from './header-commerce-actions';
+import { MobileNavigation } from './mobile-navigation';
 
 export function SiteHeader({
   categories,
@@ -27,21 +28,7 @@ export function SiteHeader({
           <div className="announcement">{settings.configuration.announcement}</div>
         ) : null}
         <div className="shell header-row">
-          <details className="mobile-menu">
-            <summary aria-label="باز کردن فهرست">فهرست</summary>
-            <nav aria-label="فهرست موبایل">
-              {navigation.map((item) => (
-                <Link key={`${item.href}-${item.label}`} href={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-              {categories.map((category) => (
-                <Link key={category.id} href={`/category/${category.slug}`}>
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
-          </details>
+          <MobileNavigation navigation={navigation} categories={categories} />
           <nav className="desktop-nav" aria-label="فهرست اصلی">
             {navigation.map((item) => (
               <Link key={`${item.href}-${item.label}`} href={item.href}>
@@ -49,7 +36,7 @@ export function SiteHeader({
               </Link>
             ))}
           </nav>
-          <Link className="wordmark" href="/">
+          <Link className="wordmark" href="/" aria-label="صفحهٔ اصلی KELE">
             <span className="visually-hidden">صفحهٔ اصلی</span>
             <BrandWordmark />
           </Link>

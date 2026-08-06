@@ -34,6 +34,7 @@ export function AccountContent() {
   const [lastName, setLastName] = useState('');
   const [address, setAddress] = useState<AddressInput>(emptyAddress);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -110,13 +111,13 @@ export function AccountContent() {
   }
 
   async function deleteAddress(id: string) {
-    if (!window.confirm('این نشانی حذف شود؟')) return;
     setBusy(true);
     setError('');
     try {
       await commerceApi.deleteAddress(id);
       setAddresses(await commerceApi.addresses());
       setSuccess('نشانی حذف شد.');
+      setConfirmingDeleteId(null);
     } catch (requestError: unknown) {
       setError(commerceErrorMessage(requestError));
     } finally {
@@ -189,7 +190,6 @@ export function AccountContent() {
       <div className="account-grid">
         <section className="account-section" aria-labelledby="profile-heading">
           <div className="account-section-heading">
-            <span>01</span>
             <div>
               <h2 id="profile-heading">اطلاعات فردی</h2>
               <p>شمارهٔ تأییدشده قابل ویرایش نیست.</p>
@@ -226,7 +226,6 @@ export function AccountContent() {
 
         <section className="account-section addresses-section" aria-labelledby="addresses-heading">
           <div className="account-section-heading">
-            <span>02</span>
             <div>
               <h2 id="addresses-heading">نشانی‌های تحویل</h2>
               <p>هر نشانی فقط در همین حساب قابل مدیریت است.</p>
@@ -265,15 +264,41 @@ export function AccountContent() {
                     >
                       ویرایش
                     </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => {
-                        void deleteAddress(item.id);
-                      }}
-                    >
-                      حذف
-                    </button>
+                    {confirmingDeleteId === item.id ? (
+                      <span
+                        className="address-delete-confirm"
+                        role="group"
+                        aria-label="تأیید حذف نشانی"
+                      >
+                        <span>حذف شود؟</span>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void deleteAddress(item.id)}
+                        >
+                          بله، حذف
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setConfirmingDeleteId(null);
+                          }}
+                        >
+                          انصراف
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          setConfirmingDeleteId(item.id);
+                        }}
+                      >
+                        حذف
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

@@ -188,9 +188,7 @@ export function CheckoutContent() {
         <form className="checkout-grid" onSubmit={(event) => void submit(event)}>
           <div className="checkout-steps">
             <fieldset className="checkout-step">
-              <legend>
-                <span>۰۱</span> نشانی تحویل
-              </legend>
+              <legend>نشانی تحویل</legend>
               <div className="checkout-options">
                 {addresses.map((address) => (
                   <label key={address.id} className="checkout-option">
@@ -217,9 +215,7 @@ export function CheckoutContent() {
             </fieldset>
 
             <fieldset className="checkout-step" aria-busy={quoting}>
-              <legend>
-                <span>۰۲</span> روش ارسال
-              </legend>
+              <legend>روش ارسال</legend>
               {quoting ? (
                 <div className="checkout-inline-state" role="status">
                   <span className="commerce-loader" aria-hidden="true" /> محاسبهٔ روش‌ها…
@@ -270,7 +266,7 @@ export function CheckoutContent() {
               </div>
               <div>
                 <dt>ارسال</dt>
-                <dd>{selected?.quotedPrice.display ?? '—'}</dd>
+                <dd>{selected?.quotedPrice.display ?? 'در دسترس نیست'}</dd>
               </div>
               <div className="checkout-payable">
                 <dt>مبلغ قابل پرداخت</dt>

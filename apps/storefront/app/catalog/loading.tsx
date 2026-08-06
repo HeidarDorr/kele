@@ -1,6 +1,12 @@
 export default function CatalogLoading() {
   return (
-    <main className="shell catalog-page" aria-busy="true" aria-label="در حال بارگذاری کاتالوگ">
+    <main
+      id="main-content"
+      className="shell catalog-page"
+      aria-busy="true"
+      aria-label="در حال بارگذاری کاتالوگ"
+    >
+      <span className="visually-hidden">در حال بارگذاری کاتالوگ</span>
       <div className="skeleton skeleton-heading" />
       <div className="skeleton-tools">
         <div className="skeleton" />
