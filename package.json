@@ -29,13 +29,14 @@
     "seed": "dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api prisma:deploy && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api seed"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.0",
     "@redocly/cli": "2.43.0",
     "@types/node": "26.1.2",
     "@typescript-eslint/utils": "8.65.0",
-    "dotenv-cli": "11.0.0",
     "dotenv": "16.6.1",
+    "dotenv-cli": "11.0.0",
     "eslint": "10.8.0",
     "openapi-typescript": "7.13.0",
     "prettier": "3.9.6",
