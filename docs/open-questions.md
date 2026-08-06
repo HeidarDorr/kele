@@ -48,9 +48,10 @@ integration, not domain or UI development.
 Decision verification date: 2026-08-06 (`Asia/Tehran`).
 
 No approved decision record supplies a provider or provider contract for
-`OQ-002-PROD` or `OQ-003-PROD`. Likewise, `OQ-017` and `OQ-018` below remain
-unanswered. Milestone 9 therefore treats production payment/refund, SMS, error
-monitoring and object-storage/CDN adapters plus sandbox certification as four
+`OQ-002-PROD` or `OQ-003-PROD`. Likewise, `OQ-017`, `OQ-018` and `OQ-022`
+below remain unanswered. Milestone 9 therefore treats production
+payment/refund, SMS, error monitoring, object-storage/CDN adapters and
+administration identity/session provisioning plus their certifications as five
 scoped blockers. Independent security, observability, performance,
 backup/restore and rollback hardening continues under
 `docs/milestone-9-plan.md`. This record does not select, purchase, configure or
@@ -89,6 +90,7 @@ Decision record:
 | OQ-019 | Exact search ranking and Persian normalization | PostgreSQL search with documented normalization; tune after collecting real queries. |
 | OQ-020 | Review verified-purchase time window | Any delivered order containing the catalog object. |
 | OQ-021 | The draft CMS workflow mentions an optional Parent Category, while the frozen domain model defines only flat Category metadata and relationships. | Keep version-1 catalog Categories flat; approve hierarchy and its cycle/deletion semantics before adding parent persistence or nested navigation. |
+| OQ-022 | Production administration identity, session issuance, role provisioning, recovery and revocation authority | The static role tokens remain local/test fixtures only and are rejected in production. Select and approve the production administration identity/session contract before staging; no provider or provisioning behavior is inferred. |
 
 ## Resolved during hardening
 

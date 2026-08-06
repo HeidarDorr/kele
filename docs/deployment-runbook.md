@@ -96,6 +96,82 @@ dependencies without performing expensive work. Monitor:
 Every request and job carries a correlation ID. Audit history is not replaced
 by technical logs.
 
+## Milestone 9 release gate and operator controls
+
+Production or staging is `NO-GO` while OQ-002-PROD, OQ-003-PROD, OQ-017,
+OQ-018 or OQ-022 is open. Do not work around a startup failure by selecting a
+Fake adapter, local MinIO, structured-log-only monitoring or static
+administrator token. Approval must record provider/session protocol,
+credentials, region/retention, timeouts, retry and inquiry behavior, redaction,
+commercial limits and an accountable owner; sandbox certification is then a
+separate required artifact.
+
+Before starting an approved release, validate all Milestone 9 variables listed
+in `docs/engineering-foundation.md`, retrieve secrets through the approved
+secret manager, and run configuration validation without printing values.
+`HEADERS_TIMEOUT_MS` must be lower than `REQUEST_TIMEOUT_MS`; every public URL
+must be HTTPS; proxy hops and exact storefront/admin origins must match the
+reviewed ingress topology. Do not rotate credentials during a normal code
+deployment.
+
+Metrics are scraped from `GET /api/v1/metrics` with the dedicated bearer
+credential over the private operational network. A 401 is an authentication
+failure; a 503 means the database snapshot could not complete within the
+bounded readiness timeout. Never place the metrics token in a URL, dashboard,
+ticket or log. Initial engineering alerts are:
+
+| Signal                        | Trigger                                            | Severity/owner                 | Immediate checks and recovery                                                                                                                    |
+| ----------------------------- | -------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| API 5xx ratio                 | over 2% for 5 minutes                              | SEV-2, API on-call             | compare route/status-class and correlation events; recover below 1% for 10 minutes                                                               |
+| API p95 latency               | over 1 second for 10 minutes                       | SEV-2, API/DB on-call          | check in-flight, DB locks/connections and slow queries; recover below 500 ms for 10 minutes                                                      |
+| `kele_database_ready`         | zero for 2 minutes                                 | SEV-1, platform/DB             | keep liveness distinct, test DB path/readiness and fail traffic away; recover at one for 5 minutes                                               |
+| OTP dispatch failure          | over 5% for 10 minutes or no accepted sends        | SEV-2, identity/provider owner | check provider status and limits with correlation only; recover below 1% for 15 minutes                                                          |
+| OTP/callback limiting         | over 20% for 10 minutes                            | SEV-2, security/API            | check abuse pattern, ingress IP fidelity and key saturation; do not raise limits during incident                                                 |
+| Callback verification failure | 5 events in 5 minutes                              | SEV-1, payment/security owner  | preserve provider evidence outside application logs, verify endpoint/clock/key version; recover after verified traffic and reconciliation review |
+| Reconciliation                | any case older than 15 minutes or backlog above 10 | SEV-1, payments/operations     | stop duplicate customer action, query approved provider truth and preserve facts; close only through reviewed resolution                         |
+| Failed/exhausted jobs         | any failed job for 5 minutes                       | SEV-2, API operations          | inspect type/age/attempt and correlation, repair dependency, then use idempotent retry procedure                                                 |
+| Reservation expiry lag        | over 60 seconds for 5 minutes                      | SEV-2, checkout/inventory      | check worker lease and DB load; confirm no negative/over-reserved inventory after recovery                                                       |
+| Refund failure                | any failure for 5 minutes                          | SEV-1, payments/returns        | do not claim refund success; preserve pending fact and retry only with a new reviewed key after provider truth                                   |
+| Storage/media failure         | any sustained error for 5 minutes after OQ-018     | SEV-2, platform/content        | stop new upload claims, retain existing immutable metadata, check approved bucket/CDN health                                                     |
+
+Diagnosis starts with `X-Correlation-Id`; search structured technical events,
+then immutable audit/business facts. Never request a mobile number, OTP,
+session, address, callback signature or raw payload in chat/tickets. Event
+labels are bounded; business IDs belong only in access-controlled fact lookup.
+
+Provider outage procedure: keep callback verification reachable, do not switch
+to Fake, do not report payment/SMS/refund success, observe pending/reconciliation
+state, and follow the approved provider inquiry/runbook. If no provider is yet
+approved, the only valid state is launch blocked. Database outage keeps
+liveness available and readiness unavailable; traffic is removed before any
+restart decision.
+
+Run local recovery evidence only with:
+
+```text
+pnpm test:m9:recovery
+```
+
+The command destroys/recreates only `kele_m9_empty` and `kele_m9_restore`,
+reads only synthetic `kele_e2e`, refuses non-loopback hosts, applies all
+migrations, verifies the embedded SHA-256 hash, records the outer artifact
+SHA-256 hash, and probes restored
+counts, non-negative inventory and verified-payment-only Orders. Its JSON
+artifact plus migrations form an application logical rehearsal backup; it is
+not the production backup product. Production requires separately approved,
+encrypted managed backups/PITR, retention, access tests and business RPO/RTO.
+
+Rollback selects the reviewed Milestone 8 application artifacts while retaining
+the additive database schema and every immutable fact. Verify API readiness,
+storefront/admin smoke, callback reachability, reconciliation visibility and
+inventory invariants before reopening traffic. Never reverse migrations after
+commercial writes and never disable callback ingestion. Roll forward if the
+older artifact cannot safely understand current facts. Trigger rollback for a
+SEV-1 security/integrity finding, verified callback loss, negative inventory,
+readiness failure over five minutes, 5xx over 5% for five minutes or p95 over
+2 seconds for ten minutes. Release recovery requires all signals below their
+recovery thresholds for ten minutes and an incident/reconciliation owner.
+
 ## Milestone 1 local operations
 
 Use `docker compose up -d --wait postgres minio` followed by `docker compose

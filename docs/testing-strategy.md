@@ -274,3 +274,35 @@ assertions pass.
 - Visual acceptance retries are disabled. A race, layout instability or failed
   capture must fail that run instead of producing evidence from a continued
   deterministic-ID sequence on a retry.
+
+## Milestone 9 hardening harnesses
+
+- `test:m9:acceptance` builds API/storefront/admin, resets only the guarded
+  `kele_e2e` database, runs `e2e/milestone-9.spec.ts` through Playwright, then
+  runs local synthetic load profiles while those production builds are
+  serving. The harness refuses a non-loopback target and requires the literal
+  `isolated-kele-e2e` confirmation.
+- Browser acceptance proves protected metrics, correlation, security headers,
+  exact CORS, 413 bounds, anonymous administration denial, remote-Media denial,
+  RTL production smoke and local CLS/LCP/navigation budgets. The complete E2E
+  suite remains the evidence for customer payment/Order and staff
+  fulfillment/return/refund journeys, replay, CSRF, IDOR and role matrices.
+- `scripts/run-m9-load.mjs` records runtime, host shape, concurrency, duration,
+  request count, throughput, unexpected-error ratio and p50/p95/p99/max for
+  public catalog/editorial and authorized operator reads. It fails at 1% or
+  more unexpected errors or p95 at/above 500 ms. This local synthetic result is
+  a bottleneck detector, not a production capacity promise.
+- Transactional write, callback replay, last-unit contention, refund outage and
+  job retry capacity are exercised by the PostgreSQL integration concurrency
+  suites instead of destructive HTTP load. A real provider load/certification
+  profile remains blocked by its OQ decision.
+- `test:m9:recovery` refuses non-loopback PostgreSQL and any database outside
+  `kele_e2e`, `kele_m9_empty` and `kele_m9_restore`. It migrates empty/restore
+  databases, writes a versioned logical synthetic-data artifact with an
+  embedded SHA-256, restores in one transaction, and compares counts plus
+  inventory/payment invariants. Trigger suppression is transaction-local to
+  the isolated restore because immutable-history triggers correctly reject
+  ordinary historical inserts.
+- Evidence is ignored under `output/playwright/.e2e-run/milestone-9/`; committed
+  verification records contain measurements and hashes but never the backup,
+  credentials, cookies, callback bodies or personal data.

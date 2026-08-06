@@ -81,9 +81,21 @@ All variables are required and validated by `@kele/config` before API startup.
 | `E2E_DATABASE_URL`                                     | Dedicated disposable PostgreSQL database; must be distinct and named exactly `kele_e2e`.                         |
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET` | S3-compatible storage target; MinIO locally.                                                                     |
 | `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`             | Storage credentials; secrets outside local development belong in secret management.                              |
-| `PAYMENT_PROVIDER`, `SMS_PROVIDER`                     | Currently only `fake` for development/test; rejected in production.                                              |
+| `PAYMENT_PROVIDER`, `REFUND_PROVIDER`, `SMS_PROVIDER`  | Currently only `fake` for development/test; rejected in production.                                              |
 | `FAKE_SMS_OTP_CODE`                                    | Fixed six-digit local/test sign-in code; defaults to `111111` and is never allowed with Fake SMS in production.  |
 | `API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`             | API base URL for server/client transport configuration.                                                          |
+| `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`                    | Exact credentialed CORS origins; wildcard origins are not supported.                                             |
+| `STORAGE_PROVIDER`                                     | `minio` locally; production is rejected until OQ-018 approves a provider/CDN contract.                           |
+| `ERROR_MONITORING_PROVIDER`                            | Safe structured logging locally; production is rejected until OQ-017 approves a sink and data policy.            |
+| `METRICS_BEARER_TOKEN`                                 | 32+ character credential for `GET /api/v1/metrics`; keep it in secret management outside local development.      |
+| `ADMIN_SESSION_PROVIDER`                               | Static local/test fixture only; production is rejected until OQ-022 is resolved.                                 |
+| `API_JSON_BODY_LIMIT_BYTES`                            | JSON/form body bound, 16 KiB to 1 MiB; default 128 KiB.                                                          |
+| `READINESS_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`           | Bounded dependency-read and total request timeouts.                                                              |
+| `HEADERS_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS`          | Node HTTP header and keep-alive bounds; header timeout must be below request timeout.                            |
+| `TRUST_PROXY_HOPS`                                     | Explicit trusted proxy hop count, zero to two; never inferred from arbitrary forwarding headers.                 |
+| `CALLBACK_RATE_LIMIT_PER_MINUTE`                       | Per-risk-key payment callback bound for one process.                                                             |
+| `OTP_VERIFY_RATE_LIMIT_PER_MINUTE`                     | Per-risk-key OTP verification bound in addition to persisted challenge policy.                                   |
+| `RATE_LIMIT_MAX_KEYS`                                  | Maximum in-process keyed windows; saturation fails closed.                                                       |
 
 ## Boundaries and runtime behavior
 

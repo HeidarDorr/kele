@@ -10,20 +10,21 @@ Rules and decisions: ADR-0004; PAY-001 to PAY-003; SMS-001 to SMS-002;
 CUS-001 to CUS-005 and CUS-010; CMS-002 to CMS-005 and CMS-008 to CMS-009;
 CMS-016 to CMS-017; EVT-001 to EVT-012; PRC-011 to PRC-012; ORD-001 to
 ORD-004 and ORD-018; RTE-001 to RTE-005; HRD-001 to HRD-010;
-OQ-002-PROD, OQ-003-PROD, OQ-017 and OQ-018.
+OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022.
 
 ## Scope gate and provider decisions
 
 The decision register and every approved decision record were reviewed before
-implementation. None of the four production-provider questions has an
+implementation. None of the five production/provider-session questions has an
 explicit approved answer.
 
-| Decision      | Verified state                                                                                                             | Milestone 9 effect                                                                                                                                                                                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OQ-002-PROD` | Open: no payment/refund provider, verification protocol, inquiry API, settlement behavior or commercial limit is approved. | A production payment/refund adapter, provider schema, SDK, credential name, callback protocol and sandbox certification are blocked. The existing provider-neutral ports and Fake local/test adapters remain the only executable implementations. |
-| `OQ-003-PROD` | Open: no SMS provider, sender identity, delivery-report contract, retention rule or commercial limit is approved.          | A production SMS adapter, credential name, delivery callback and sandbox certification are blocked. The centralized port and Fake local/test adapter remain in place.                                                                             |
-| `OQ-017`      | Open: no error-monitoring provider, data region, retention, sampling, scrubbing or alert destination is approved.          | Provider SDK installation and remote event export are blocked. Provider-neutral safe structured events, local metrics and operator alert specifications remain in scope.                                                                          |
-| `OQ-018`      | Open: no production S3-compatible storage/CDN, region, bucket policy, signing model, hostname or lifecycle is approved.    | Production storage/CDN configuration and certification are blocked. Local MinIO and storage-neutral acceptance/runbook work remain in scope.                                                                                                      |
+| Decision      | Verified state                                                                                                                  | Milestone 9 effect                                                                                                                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OQ-002-PROD` | Open: no payment/refund provider, verification protocol, inquiry API, settlement behavior or commercial limit is approved.      | A production payment/refund adapter, provider schema, SDK, credential name, callback protocol and sandbox certification are blocked. The existing provider-neutral ports and Fake local/test adapters remain the only executable implementations. |
+| `OQ-003-PROD` | Open: no SMS provider, sender identity, delivery-report contract, retention rule or commercial limit is approved.               | A production SMS adapter, credential name, delivery callback and sandbox certification are blocked. The centralized port and Fake local/test adapter remain in place.                                                                             |
+| `OQ-017`      | Open: no error-monitoring provider, data region, retention, sampling, scrubbing or alert destination is approved.               | Provider SDK installation and remote event export are blocked. Provider-neutral safe structured events, local metrics and operator alert specifications remain in scope.                                                                          |
+| `OQ-018`      | Open: no production S3-compatible storage/CDN, region, bucket policy, signing model, hostname or lifecycle is approved.         | Production storage/CDN configuration and certification are blocked. Local MinIO and storage-neutral acceptance/runbook work remain in scope.                                                                                                      |
+| `OQ-022`      | Open: no production administration identity, session issuance, role-provisioning, recovery or revocation authority is approved. | Static administration tokens remain local/test fixtures and production startup rejects them. Staging administration access and production-like role-provisioning certification are blocked.                                                       |
 
 This is a scoped block, not permission to infer a provider. No provider will be
 selected, purchased, configured or represented as certified. Production and
@@ -218,5 +219,5 @@ to a Fake adapter in production.
 Engineering hardening may reach `CONDITIONAL GO` with all independent criteria
 passing. Milestone 9 cannot claim its roadmap provider-integration exit and no
 staging/production deployment may proceed while any of OQ-002-PROD,
-OQ-003-PROD, OQ-017 or OQ-018 remains open or provider sandbox certification
-is absent.
+OQ-003-PROD, OQ-017, OQ-018 or OQ-022 remains open or required
+provider/session certification is absent.

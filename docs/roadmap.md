@@ -169,6 +169,12 @@ and approved against objective UI acceptance evidence.
 
 ## Milestone 9 — production integrations and operational hardening
 
+Implementation status: provider-independent hardening is complete and locally
+verified on `feat/m09-production-hardening` (2026-08-06). Staging/production
+remain `NO-GO` because OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022
+have no explicit approved answer and their provider/session certifications are
+therefore blocked. See `docs/milestone-9-verification.md`.
+
 Deliverables:
 
 1. Integrate the approved payment provider behind the existing adapter.

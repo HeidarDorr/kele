@@ -286,3 +286,46 @@ production callback protocol was introduced.
 - Backup restore exercised.
 - No critical/high dependency finding without an accepted exception.
 - Privacy, returns, shipping and terms content approved by the business.
+
+## Milestone 9 production hardening
+
+- Production configuration fails closed for Fake Payment, Fake Refund, Fake
+  SMS, local MinIO, development static administrator sessions and the
+  unapproved error-monitoring selection. Development-prefixed identity,
+  administrator and metrics credentials and non-HTTPS production endpoints are
+  also rejected. This is an intentional launch block for OQ-002-PROD,
+  OQ-003-PROD, OQ-017, OQ-018 and OQ-022, not provider selection.
+- Payment/refund/SMS application ports expose provider-neutral strings and
+  canonical results only. Fake simulation remains a separate local/test port;
+  unsupported callback providers are rejected before verification or a
+  commercial transaction.
+- API parsing is bounded to `API_JSON_BODY_LIMIT_BYTES`; 400/413 transport
+  errors become stable Problem Details without stack traces. Request, header,
+  keep-alive and readiness timeouts are validated. CORS accepts only the exact
+  storefront and administration origins with credentials.
+- API/storefront/admin emit explicit CSP, frame denial, MIME sniffing denial,
+  referrer, permissions and cross-origin policies. HSTS is production-only.
+  Proxy trust is a bounded explicit hop count.
+- OTP verification and payment callback guards use HMAC-derived risk keys,
+  bounded in-process windows and fail-closed saturation. The persisted OTP
+  challenge limits remain authoritative. Multi-replica aggregate enforcement
+  must live at the approved edge/API gateway; Redis was not introduced.
+- Media metadata accepts only bounded raster dimensions and immutable
+  same-origin `/media/...` JPG/JPEG/PNG/WebP paths whose extension matches the
+  declared format. Remote URLs and SVG are rejected. No binary upload or
+  malware-scanning claim is made while OQ-018 is open.
+- Structured telemetry recursively redacts sensitive keys and recognizable
+  bearer/cookie/credential/mobile text, bounds depth/entries/string length and
+  emits only stable low-cardinality provider outcomes. Metrics authorization
+  uses constant-time digest comparison; metrics are `no-store` and contain no
+  customer or commercial identifiers.
+- Static administrator tokens are development/test fixtures, compare in
+  constant time and are rejected in production. OQ-022 blocks staging and
+  production until issuance, role provisioning, recovery and revocation are
+  explicitly approved and certified.
+
+Residual risks are the five open decisions above, provider-specific callback,
+inquiry and outage behavior, managed secret rotation, malware inspection,
+distributed edge limiting and the production monitoring data policy. They are
+release `NO-GO` items; none is represented as implemented by the local Fake or
+structured-log paths.
