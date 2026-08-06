@@ -154,12 +154,11 @@ function mapRefund(
   row: RefundRow,
   order: Pick<OrderRow, 'orderNumber' | 'providerTransactionId'>,
 ): RefundRecord {
-  if (row.provider !== 'fake') throw new Error('Unsupported persisted refund provider.');
   return {
     id: row.id,
     orderNumber: order.orderNumber,
     amountRial: safeInteger(row.amountRial),
-    provider: 'fake',
+    provider: row.provider,
     providerReference: row.providerReference,
     providerTransactionId: order.providerTransactionId,
     status: refundStatusMap[row.status],
@@ -207,6 +206,7 @@ function mapOrder(row: OrderRow): OperationalOrderRecord {
     itemsSubtotalRial: safeInteger(row.itemsSubtotalRial),
     shippingTotalRial: safeInteger(row.shippingTotalRial),
     providerTransactionId: row.providerTransactionId,
+    paymentProvider: row.paymentProvider,
     items: row.items.map((item) => ({
       id: item.id,
       kind: item.kind === CartLineKind.PRODUCT ? 'product' : 'outfit',

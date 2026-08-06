@@ -38,6 +38,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Read bounded provider-neutral operational metrics.
+     * @description The bearer credential is compared without logging it. Labels exclude customer, business and provider transaction identifiers.
+     */
+    get: operations['getOperationalMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/homepage': {
     parameters: {
       query?: never;
@@ -1985,7 +2005,10 @@ export interface components {
       version: number;
     };
     AdminMediaInput: {
-      /** Format: uri-reference */
+      /**
+       * Format: uri-reference
+       * @description Same-origin immutable Media path. External CDN URLs remain blocked by OQ-018.
+       */
       url: string;
       width: number;
       height: number;
@@ -2435,6 +2458,30 @@ export interface operations {
           'application/json': components['schemas']['HealthUnavailable'];
         };
       };
+    };
+  };
+  getOperationalMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Prometheus text exposition with process and operational metrics. */
+      200: {
+        headers: {
+          'Cache-Control'?: 'no-store';
+          [name: string]: unknown;
+        };
+        content: {
+          'text/plain': string;
+        };
+      };
+      401: components['responses']['Problem'];
+      503: components['responses']['Problem'];
+      default: components['responses']['Problem'];
     };
   };
   getPublishedHomepage: {
@@ -3427,6 +3474,7 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       409: components['responses']['Problem'];
+      429: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };

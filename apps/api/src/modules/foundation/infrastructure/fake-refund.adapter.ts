@@ -4,6 +4,8 @@ import type { RefundGateway, RefundProviderResult } from '../application/refund-
 
 @Injectable()
 export class FakeRefundAdapter implements RefundGateway {
+  readonly provider = 'fake';
+
   requestRefund(input: {
     providerTransactionId: string;
     amountRial: number;

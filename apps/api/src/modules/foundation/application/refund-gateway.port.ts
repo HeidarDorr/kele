@@ -1,5 +1,5 @@
 export type RefundProviderResult = Readonly<{
-  provider: 'fake';
+  provider: string;
   providerReference: string;
   status: 'confirmed' | 'pending' | 'failed';
   confirmedAt: Date | null;
@@ -7,6 +7,7 @@ export type RefundProviderResult = Readonly<{
 }>;
 
 export interface RefundGateway {
+  readonly provider?: string;
   requestRefund(input: {
     providerTransactionId: string;
     amountRial: number;

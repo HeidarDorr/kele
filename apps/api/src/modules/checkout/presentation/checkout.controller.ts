@@ -36,6 +36,7 @@ import {
   FakePaymentCompletionDto,
   ShippingSettingsDto,
 } from './checkout.dto.js';
+import { PaymentCallbackRateLimitGuard } from '../../../platform/security/abuse-rate-limit.guards.js';
 
 function requireIdempotencyKey(value: string | undefined): string {
   if (value === undefined || value.length < 16 || value.length > 120) {
@@ -168,6 +169,7 @@ export class CheckoutController {
 
   @Post('payment-callbacks/:provider')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(PaymentCallbackRateLimitGuard)
   processCallback(
     @Param('provider') provider: string,
     @Headers('x-payment-signature') signature: string | undefined,

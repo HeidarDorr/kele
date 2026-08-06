@@ -1,8 +1,10 @@
-import { LoggerService } from '@nestjs/common';
+import { Injectable, type LoggerService } from '@nestjs/common';
 import { correlationId } from './correlation-context.js';
+import { redactTelemetry, redactTelemetryText } from './safe-telemetry.js';
 
 type LogLevel = 'debug' | 'error' | 'fatal' | 'info' | 'warn';
 
+@Injectable()
 export class JsonLogger implements LoggerService {
   log(message: unknown, context?: string): void {
     this.write('info', message, context);
@@ -28,27 +30,13 @@ export class JsonLogger implements LoggerService {
     const event = {
       timestamp: new Date().toISOString(),
       level,
-      message: redact(message),
+      message: redactTelemetry(message),
       ...(context === undefined ? {} : { context }),
-      ...(trace === undefined ? {} : { trace }),
+      ...(trace === undefined ? {} : { trace: redactTelemetryText(trace) }),
       ...(correlationId() === undefined ? {} : { correlationId: correlationId() }),
     };
     const output = JSON.stringify(event);
     if (level === 'error' || level === 'fatal') process.stderr.write(`${output}\n`);
     else process.stdout.write(`${output}\n`);
   }
-}
-
-function redact(value: unknown): unknown {
-  if (typeof value !== 'object' || value === null) return value;
-  if (Array.isArray(value)) return value.map(redact);
-
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [
-      key,
-      /token|secret|password|mobile|address|authorization/i.test(key)
-        ? '[REDACTED]'
-        : redact(entry),
-    ]),
-  );
 }

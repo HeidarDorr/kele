@@ -7,6 +7,7 @@ import type {
   CatalogQuery,
   InventoryActionInput,
 } from '../domain/catalog.types.js';
+import { mediaReferenceIssues } from '../domain/media-reference.js';
 import { CatalogError } from './catalog.error.js';
 
 const inventoryActionsByRole: Readonly<
@@ -110,6 +111,15 @@ export class CatalogService {
   }
 
   createMedia(input: AdminMediaInput, actor: ActorContext) {
+    const issues = mediaReferenceIssues(input);
+    if (issues.length > 0) {
+      throw new CatalogError(
+        'validation',
+        'MEDIA_REFERENCE_INVALID',
+        'Media metadata failed security validation.',
+        issues.map((message) => ({ path: 'url', code: 'MEDIA_REFERENCE_INVALID', message })),
+      );
+    }
     return this.repository.createMedia(input, actor);
   }
 

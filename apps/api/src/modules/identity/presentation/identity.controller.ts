@@ -34,6 +34,7 @@ import {
   type CustomerRequest,
   CustomerSessionGuard,
 } from './customer-session.guard.js';
+import { OtpVerificationRateLimitGuard } from '../../../platform/security/abuse-rate-limit.guards.js';
 
 @Controller('auth')
 export class IdentityController {
@@ -58,6 +59,7 @@ export class IdentityController {
   }
 
   @Post('otp/verifications')
+  @UseGuards(OtpVerificationRateLimitGuard)
   async verify(
     @Body() body: OtpVerificationDto,
     @Req() request: Request,

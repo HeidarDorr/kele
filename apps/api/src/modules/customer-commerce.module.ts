@@ -64,10 +64,8 @@ import { CheckoutService } from './checkout/application/checkout.service.js';
 import { PaymentService } from './checkout/application/payment.service.js';
 import { CheckoutJobService } from './checkout/application/checkout-job.service.js';
 import { CheckoutJobScheduler } from './checkout/infrastructure/checkout-job.scheduler.js';
-import type {
-  FakePaymentSimulator,
-  PaymentGateway,
-} from './foundation/application/payment-gateway.port.js';
+import type { PaymentGateway } from './foundation/application/payment-gateway.port.js';
+import type { FakePaymentSimulator } from './foundation/application/fake-payment-simulator.port.js';
 import {
   FAKE_PAYMENT_SIMULATOR,
   PAYMENT_GATEWAY,
@@ -99,6 +97,10 @@ import { PrismaOperationsRepository } from './operations/infrastructure/prisma-o
 import { OperationsService } from './operations/application/operations.service.js';
 import type { RefundGateway } from './foundation/application/refund-gateway.port.js';
 import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
+import {
+  OPERATIONAL_TELEMETRY,
+  type OperationalTelemetry,
+} from '../shared/operational-telemetry.js';
 
 @Module({
   imports: [FoundationModule, CatalogModule, OutfitModule],
@@ -174,6 +176,7 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
         carts: CartService,
         sms: SmsGateway,
         unitOfWork: UnitOfWork,
+        telemetry: OperationalTelemetry,
       ): IdentityService =>
         new IdentityService(
           repository,
@@ -184,8 +187,9 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
           environment.OTP_VERIFIER_PEPPER,
           () => environment.FAKE_SMS_OTP_CODE,
           runtimeClock(environment.E2E_FIXED_TIME),
+          telemetry,
         ),
-      inject: [IDENTITY_REPOSITORY, CartService, SMS_GATEWAY, UNIT_OF_WORK],
+      inject: [IDENTITY_REPOSITORY, CartService, SMS_GATEWAY, UNIT_OF_WORK, OPERATIONAL_TELEMETRY],
     },
     {
       provide: CustomerService,
@@ -239,6 +243,7 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
         catalog: CheckoutCatalogPort,
         carts: CheckoutCartPort,
         unitOfWork: UnitOfWork,
+        telemetry: OperationalTelemetry,
       ): PaymentService =>
         new PaymentService(
           repository,
@@ -250,6 +255,7 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
           environment.STOREFRONT_ORIGIN,
           runtimeClock(environment.E2E_FIXED_TIME),
           runtimeIdFactory(environment.E2E_DETERMINISTIC_ID_SEED, 'payment'),
+          telemetry,
         ),
       inject: [
         CHECKOUT_REPOSITORY,
@@ -258,6 +264,7 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
         CHECKOUT_CATALOG_PORT,
         CHECKOUT_CART_PORT,
         UNIT_OF_WORK,
+        OPERATIONAL_TELEMETRY,
       ],
     },
     { provide: CART_CHECKOUT_LIFECYCLE, useExisting: CheckoutService },
@@ -267,14 +274,16 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
         repository: CheckoutRepository,
         checkouts: CheckoutService,
         unitOfWork: UnitOfWork,
+        telemetry: OperationalTelemetry,
       ): CheckoutJobService =>
         new CheckoutJobService(
           repository,
           checkouts,
           unitOfWork,
           runtimeClock(environment.E2E_FIXED_TIME),
+          telemetry,
         ),
-      inject: [CHECKOUT_REPOSITORY, CheckoutService, UNIT_OF_WORK],
+      inject: [CHECKOUT_REPOSITORY, CheckoutService, UNIT_OF_WORK, OPERATIONAL_TELEMETRY],
     },
     {
       provide: OPERATIONS_REPOSITORY,
@@ -291,14 +300,16 @@ import { REFUND_GATEWAY } from './foundation/application/provider.tokens.js';
         repository: OperationsRepository,
         refunds: RefundGateway,
         unitOfWork: UnitOfWork,
+        telemetry: OperationalTelemetry,
       ): OperationsService =>
         new OperationsService(
           repository,
           refunds,
           unitOfWork,
           runtimeClock(environment.E2E_FIXED_TIME),
+          telemetry,
         ),
-      inject: [OPERATIONS_REPOSITORY, REFUND_GATEWAY, UNIT_OF_WORK],
+      inject: [OPERATIONS_REPOSITORY, REFUND_GATEWAY, UNIT_OF_WORK, OPERATIONAL_TELEMETRY],
     },
     CheckoutJobScheduler,
   ],

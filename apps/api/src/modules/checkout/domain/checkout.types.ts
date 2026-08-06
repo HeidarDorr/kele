@@ -162,7 +162,7 @@ export type PaymentAttemptRecord = Readonly<{
   id: string;
   checkoutSessionId: string;
   customerId: string;
-  provider: 'fake';
+  provider: string;
   providerReference: string;
   providerTransactionId: string | null;
   status:
@@ -178,7 +178,7 @@ export type PaymentAttemptRecord = Readonly<{
 export type PaymentAttemptView = Readonly<{
   id: string;
   checkoutSessionId: string;
-  provider: 'fake';
+  provider: string;
   status: PaymentAttemptRecord['status'];
   amount: MoneyView;
   redirectUrl: string | null;
@@ -187,7 +187,7 @@ export type PaymentAttemptView = Readonly<{
   createdAt: string;
 }>;
 
-export type FakePaymentCallbackPayload = Readonly<{
+export type PaymentCallbackPayload = Readonly<{
   providerReference: string;
   providerTransactionId: string;
   status: 'success' | 'failed' | 'cancelled' | 'pending';
@@ -197,8 +197,10 @@ export type FakePaymentCallbackPayload = Readonly<{
   nonce: string;
 }>;
 
-export type VerifiedPaymentCallback = FakePaymentCallbackPayload &
-  Readonly<{ provider: 'fake'; payloadHash: string }>;
+export type FakePaymentCallbackPayload = PaymentCallbackPayload;
+
+export type VerifiedPaymentCallback = PaymentCallbackPayload &
+  Readonly<{ provider: string; payloadHash: string }>;
 
 export type PaymentCallbackOutcome = Readonly<{
   status: 'paid' | 'failed' | 'cancelled' | 'pending' | 'reconciliation';
@@ -244,7 +246,7 @@ export type OrderSnapshotRecord = Readonly<{
     settingsVersion: number;
   }>;
   payment: Readonly<{
-    provider: 'fake';
+    provider: string;
     providerTransactionId: string;
   }>;
 }>;
@@ -282,7 +284,7 @@ export type OrderView = Readonly<{
     settingsVersion: number;
   }>;
   payment: Readonly<{
-    provider: 'fake';
+    provider: string;
     providerTransactionId: string;
   }>;
 }>;

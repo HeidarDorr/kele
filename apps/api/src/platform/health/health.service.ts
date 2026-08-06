@@ -7,10 +7,30 @@ export class HealthService {
 
   async isReady(): Promise<boolean> {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
+      await withTimeout(
+        this.prisma.$queryRaw`SELECT 1`,
+        Number(process.env.READINESS_TIMEOUT_MS ?? 1_000),
+      );
       return true;
     } catch {
       return false;
     }
+  }
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error('Readiness check timed out.'));
+        }, timeoutMs);
+        timer.unref();
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
   }
 }

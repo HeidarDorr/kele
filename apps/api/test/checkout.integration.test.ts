@@ -20,6 +20,7 @@ import { PaymentService } from '../src/modules/checkout/application/payment.serv
 import { PrismaCheckoutRepository } from '../src/modules/checkout/infrastructure/prisma-checkout.repository.js';
 import { FakePaymentAdapter } from '../src/modules/foundation/infrastructure/fake-payment.adapter.js';
 import { PrismaCheckoutCustomerAdapter } from '../src/modules/identity/infrastructure/prisma-checkout-customer.adapter.js';
+import type { PaymentGateway } from '../src/modules/foundation/application/payment-gateway.port.js';
 
 const prisma = new PrismaClient();
 const runId = randomUUID();
@@ -39,6 +40,7 @@ type Fixture = Awaited<ReturnType<typeof createFixture>>;
 function createServices(
   clock: () => Date = () => new Date(),
   outfits: CheckoutOutfitPort = { getOutfitForCheckout: () => Promise.resolve(null) },
+  gateway?: PaymentGateway,
 ) {
   const transactions = new PrismaTransactionContext(prisma as unknown as PrismaService);
   const repository = new PrismaCheckoutRepository(transactions);
@@ -57,7 +59,7 @@ function createServices(
   );
   const payments = new PaymentService(
     repository,
-    fake,
+    gateway ?? fake,
     fake,
     catalog,
     carts,
@@ -458,6 +460,31 @@ afterAll(async () => {
 });
 
 describe('Milestone 4 checkout/payment/order invariants on PostgreSQL', () => {
+  it('[M9-AC-005][M9-AC-024][PAY-002] keeps checkout facts safe when payment initiation is unavailable', async () => {
+    const outageGateway: PaymentGateway = {
+      provider: 'outage',
+      createIntent: () => Promise.reject(new Error('simulated payment provider outage')),
+      verifyCallback: () => Promise.reject(new Error('not used')),
+    };
+    const services = createServices(
+      () => new Date('2026-08-06T18:00:00.000Z'),
+      { getOutfitForCheckout: () => Promise.resolve(null) },
+      outageGateway,
+    );
+    const fixture = await createFixture({ physicalQuantity: 2 });
+    const { checkout } = await reserve(fixture, services);
+
+    await expect(startPayment(fixture, checkout.id, services)).rejects.toMatchObject({
+      code: 'PAYMENT_PROVIDER_UNAVAILABLE',
+    });
+    expect(await prisma.paymentAttempt.count({ where: { checkoutSessionId: checkout.id } })).toBe(
+      0,
+    );
+    expect(
+      await prisma.inventory.findUniqueOrThrow({ where: { skuId: fixture.skuId } }),
+    ).toMatchObject({ physicalQuantity: 2, reservedQuantity: 1 });
+  });
+
   it('[PAY-002][PAY-004][ORD-001][ORD-004][INV-002] creates one immutable paid Order under callback replay and out-of-order delivery', async () => {
     const fixture = await createFixture({
       physicalQuantity: 2,

@@ -1,17 +1,14 @@
-import type {
-  FakePaymentCallbackPayload,
-  PaymentAttemptRecord,
-  VerifiedPaymentCallback,
-} from '../../checkout/domain/checkout.types.js';
+import type { VerifiedPaymentCallback } from '../../checkout/domain/checkout.types.js';
 
 export type PaymentIntent = Readonly<{
-  provider: 'fake';
+  provider: string;
   reference: string;
   redirectUrl: string;
   status: 'created';
 }>;
 
 export interface PaymentGateway {
+  readonly provider: string;
   createIntent(input: {
     applicationReference: string;
     paymentAttemptId: string;
@@ -22,15 +19,7 @@ export interface PaymentGateway {
   }): Promise<PaymentIntent>;
   verifyCallback(input: {
     signature: string;
-    payload: FakePaymentCallbackPayload;
+    payload: unknown;
     now: Date;
   }): Promise<VerifiedPaymentCallback>;
-}
-
-export interface FakePaymentSimulator {
-  simulateCallback(
-    attempt: PaymentAttemptRecord,
-    outcome: 'success' | 'failed' | 'cancelled' | 'pending' | 'tampered_amount',
-    now: Date,
-  ): Readonly<{ payload: FakePaymentCallbackPayload; signature: string }>;
 }

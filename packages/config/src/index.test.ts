@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEnvironment } from './index.js';
+import { environmentSchema, parseEnvironment } from './index.js';
 
 const storageAccessCredential = 'development-access';
 const storagePrivateCredential = 'development-secret';
@@ -37,26 +37,54 @@ describe('environment configuration', () => {
   });
 
   it('[PAY-001][SMS-001] rejects fake providers in production', () => {
-    expect(() => parseEnvironment({ ...valid, NODE_ENV: 'production' })).toThrow(
-      'The fake payment provider is forbidden in production.',
+    const parsed = environmentSchema.safeParse({ ...valid, NODE_ENV: 'production' });
+    expect(parsed.success).toBe(false);
+    if (parsed.success) throw new Error('Production Fake providers must fail closed.');
+    expect(parsed.error.issues.map((issue) => issue.path[0])).toEqual(
+      expect.arrayContaining([
+        'PAYMENT_PROVIDER',
+        'REFUND_PROVIDER',
+        'SMS_PROVIDER',
+        'STORAGE_PROVIDER',
+        'ERROR_MONITORING_PROVIDER',
+        'ADMIN_SESSION_PROVIDER',
+      ]),
     );
   });
 
   it('rejects development administrator sessions in production', () => {
-    expect(() =>
-      parseEnvironment({
-        ...valid,
-        NODE_ENV: 'production',
-        PAYMENT_PROVIDER: 'real',
-        SMS_PROVIDER: 'real',
-        ADMIN_SUPER_SESSION_TOKEN: unsafeProductionSession,
-      }),
-    ).toThrow();
+    const parsed = environmentSchema.safeParse({
+      ...valid,
+      NODE_ENV: 'production',
+      ADMIN_SUPER_SESSION_TOKEN: unsafeProductionSession,
+    });
+    expect(parsed.success).toBe(false);
+    if (parsed.success) throw new Error('Development administrator sessions must fail closed.');
+    expect(parsed.error.issues.map((issue) => issue.path[0])).toContain(
+      'ADMIN_SUPER_SESSION_TOKEN',
+    );
   });
 
   it('rejects malformed required configuration', () => {
     expect(() => parseEnvironment({ ...valid, DATABASE_URL: 'not-a-url' })).toThrow();
     expect(() => parseEnvironment({ ...valid, FAKE_SMS_OTP_CODE: '12345' })).toThrow();
+  });
+
+  it('validates bounded operational hardening controls', () => {
+    expect(parseEnvironment(valid)).toMatchObject({
+      ADMIN_ORIGIN: 'http://localhost:3002',
+      ADMIN_SESSION_PROVIDER: 'development_static',
+      API_JSON_BODY_LIMIT_BYTES: 131_072,
+      CALLBACK_RATE_LIMIT_PER_MINUTE: 120,
+      ERROR_MONITORING_PROVIDER: 'structured_log',
+      READINESS_TIMEOUT_MS: 1_000,
+      REFUND_PROVIDER: 'fake',
+      STORAGE_PROVIDER: 'minio',
+    });
+    expect(() => parseEnvironment({ ...valid, API_JSON_BODY_LIMIT_BYTES: '1000' })).toThrow();
+    expect(() =>
+      parseEnvironment({ ...valid, HEADERS_TIMEOUT_MS: '20000', REQUEST_TIMEOUT_MS: '10000' }),
+    ).toThrow('HEADERS_TIMEOUT_MS must be lower than REQUEST_TIMEOUT_MS.');
   });
 
   it('uses an explicit six-digit fake OTP code', () => {

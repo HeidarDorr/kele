@@ -13,6 +13,10 @@ import type {
   TrackingInput,
 } from '../domain/operations.types.js';
 import type { OperationsRepository } from './operations.repository.js';
+import {
+  noOperationalTelemetry,
+  type OperationalTelemetry,
+} from '../../../shared/operational-telemetry.js';
 
 function requireReason(reason: string): string {
   const value = reason.trim();
@@ -60,6 +64,7 @@ export class OperationsService {
     private readonly refunds: RefundGateway,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: Clock,
+    private readonly telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {}
 
   listAdminOrders(
@@ -375,7 +380,7 @@ export class OperationsService {
       });
     } catch {
       result = {
-        provider: 'fake' as const,
+        provider: this.refunds.provider ?? 'unavailable',
         providerReference: '',
         status: 'failed' as const,
         confirmedAt: null,
@@ -392,6 +397,11 @@ export class OperationsService {
         now: this.clock(),
       }),
     );
+    this.telemetry.record({
+      name: 'refund_provider',
+      outcome: saved.status,
+      provider: saved.provider,
+    });
     if (saved.status !== 'confirmed') {
       throw new ApplicationError(
         'conflict',

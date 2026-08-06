@@ -28,6 +28,7 @@ const requestedEnvironment = {
 const databaseConfiguration = readE2EDatabaseConfiguration(requestedEnvironment);
 const ports = readE2EPorts(requestedEnvironment);
 const storefrontOrigin = `http://127.0.0.1:${String(ports.storefront)}`;
+const adminOrigin = `http://127.0.0.1:${String(ports.admin)}`;
 const apiBaseUrl = `http://127.0.0.1:${String(ports.api)}/api/v1`;
 const presentationToken = randomBytes(32).toString('hex');
 const sharedEnvironment = {
@@ -36,6 +37,7 @@ const sharedEnvironment = {
   KELE_E2E_BUILD: 'true',
   STOREFRONT_BASE_URL: storefrontOrigin,
   STOREFRONT_ORIGIN: storefrontOrigin,
+  ADMIN_ORIGIN: adminOrigin,
   API_BASE_URL: apiBaseUrl,
   NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
   DATABASE_URL: databaseConfiguration.databaseUrl,
@@ -254,6 +256,13 @@ try {
     NODE_ENV: 'test',
     E2E_DATABASE_RESET: 'true',
   });
+  if (process.env.M9_RUN_LOAD === 'true') {
+    await runNode(path.join(workspace, 'scripts/run-m9-load.mjs'), [], {
+      ...sharedEnvironment,
+      NODE_ENV: 'test',
+      M9_LOAD_CONFIRM_SYNTHETIC: 'isolated-kele-e2e',
+    });
+  }
   console.log('[e2e] Browser acceptance completed; stopping isolated servers.');
 } catch (error) {
   runFailure = error;

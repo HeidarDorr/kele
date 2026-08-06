@@ -4,6 +4,10 @@ import { ApplicationError } from '../../../shared/application-error.js';
 import type { CheckoutRepository } from './checkout.repository.js';
 import { CheckoutService } from './checkout.service.js';
 import type { DatabaseJobRecord } from '../domain/checkout.types.js';
+import {
+  noOperationalTelemetry,
+  type OperationalTelemetry,
+} from '../../../shared/operational-telemetry.js';
 
 const LEASE_MS = 60_000;
 
@@ -19,6 +23,7 @@ export class CheckoutJobService {
     private readonly checkouts: CheckoutService,
     private readonly unitOfWork: UnitOfWork,
     private readonly clock: () => Date = () => new Date(),
+    private readonly telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {}
 
   async processDueJobs(workerId: string, limit = 10): Promise<number> {
@@ -38,6 +43,7 @@ export class CheckoutJobService {
         await this.recoverPayment(job);
       }
       await this.unitOfWork.run(() => this.repository.completeJob(job.id, workerId, this.clock()));
+      this.telemetry.record({ name: 'job_execution', outcome: 'completed' });
     } catch (error: unknown) {
       const now = this.clock();
       const backoff = Math.min(15 * 60_000, 60_000 * 2 ** Math.max(0, job.attemptCount - 1));
@@ -54,6 +60,10 @@ export class CheckoutJobService {
               : 'Job handler failed without exposing sensitive details.',
         }),
       );
+      this.telemetry.record({
+        name: 'job_execution',
+        outcome: job.attemptCount >= job.maxAttempts ? 'failed' : 'retry_scheduled',
+      });
     }
   }
 

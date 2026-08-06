@@ -208,12 +208,11 @@ function mapCheckout(row: CheckoutRow): CheckoutSessionRecord {
 }
 
 function mapPayment(row: PaymentRow): PaymentAttemptRecord {
-  if (row.provider !== 'fake') throw new Error('Unsupported persisted payment provider.');
   return {
     id: row.id,
     checkoutSessionId: row.checkoutSessionId,
     customerId: row.checkoutSession.customerId,
-    provider: 'fake',
+    provider: row.provider,
     providerReference: row.providerReference,
     providerTransactionId: row.providerTransactionId,
     status: paymentStatusMap[row.status],
@@ -227,7 +226,6 @@ function mapPayment(row: PaymentRow): PaymentAttemptRecord {
 }
 
 function mapOrder(row: OrderRow): OrderSnapshotRecord {
-  if (row.paymentProvider !== 'fake') throw new Error('Unsupported persisted payment provider.');
   return {
     orderNumber: row.orderNumber,
     createdAt: row.createdAt,
@@ -273,7 +271,7 @@ function mapOrder(row: OrderRow): OrderSnapshotRecord {
       settingsVersion: row.shippingSettingsVersion,
     },
     payment: {
-      provider: 'fake',
+      provider: row.paymentProvider,
       providerTransactionId: row.providerTransactionId,
     },
   };
@@ -685,7 +683,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
   }
 
   async lockPaymentAttemptByProviderReference(
-    provider: 'fake',
+    provider: string,
     providerReference: string,
   ): Promise<PaymentAttemptRecord | null> {
     await this.transactions
@@ -707,7 +705,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
   }
 
   async findCallbackReceipt(
-    provider: 'fake',
+    provider: string,
     providerEventId: string,
   ): Promise<CallbackReceiptRecord | null> {
     const receipt = await this.transactions.client().paymentCallbackReceipt.findUnique({
@@ -931,7 +929,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
       await client.businessEvent.create({
         data: {
           type,
-          actorId: 'payment:fake',
+          actorId: `payment:${input.callback.provider}`,
           entityType: type === 'OrderCreated' ? 'Order' : 'PaymentAttempt',
           entityId: type === 'OrderCreated' ? input.orderId : input.paymentAttemptId,
           correlationId: input.correlationId,
@@ -944,7 +942,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
         orderId: input.orderId,
         type: 'created',
         toStatus: 'PAID',
-        actorId: 'payment:fake',
+        actorId: `payment:${input.callback.provider}`,
         reason: 'Verified payment created the commercial Order.',
         correlationId: input.correlationId,
         idempotencyKey: `order-created:${input.orderId}`,
@@ -1024,7 +1022,7 @@ export class PrismaCheckoutRepository implements CheckoutRepository {
     await client.businessEvent.create({
       data: {
         type: 'PaymentReconciliationRequired',
-        actorId: 'payment:fake',
+        actorId: `payment:${input.callback.provider}`,
         entityType: 'PaymentAttempt',
         entityId: input.paymentAttempt.id,
         correlationId: input.correlationId,

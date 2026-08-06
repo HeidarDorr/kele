@@ -44,7 +44,7 @@ export type CreateCheckoutInput = Readonly<{
 export type CreatePaymentAttemptInput = Readonly<{
   id: string;
   checkoutSessionId: string;
-  provider: 'fake';
+  provider: string;
   providerReference: string;
   amountRial: number;
   redirectUrl: string;
@@ -93,11 +93,11 @@ export interface CheckoutRepository {
   ): Promise<PaymentAttemptRecord>;
   getPaymentAttemptForRecovery(paymentAttemptId: string): Promise<PaymentAttemptRecord | null>;
   lockPaymentAttemptByProviderReference(
-    provider: 'fake',
+    provider: string,
     providerReference: string,
   ): Promise<PaymentAttemptRecord | null>;
   findCallbackReceipt(
-    provider: 'fake',
+    provider: string,
     providerEventId: string,
   ): Promise<CallbackReceiptRecord | null>;
   recordNonSuccessCallback(input: {

@@ -16,6 +16,10 @@ import {
   sha256,
 } from './identity-crypto.js';
 import type { IdentityRepository } from './identity.repository.js';
+import {
+  noOperationalTelemetry,
+  type OperationalTelemetry,
+} from '../../../shared/operational-telemetry.js';
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const SESSION_IDLE_MS = 30 * 60 * 1000;
@@ -39,31 +43,46 @@ export class IdentityService {
     private readonly otpPepper: string,
     private readonly otpCode: () => string = randomOtp,
     private readonly clock: Clock = () => new Date(),
+    private readonly telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {}
 
   async createOtpChallenge(mobile: string, ip: string, deviceId: string) {
     const now = this.clock();
     const code = this.otpCode();
     const codeSalt = randomHex(16);
-    const challenge = await this.unitOfWork.run(() =>
-      this.repository.createChallenge({
-        mobile,
-        mobileHash: privacyHash(mobile, this.signingSecret),
-        ipHash: privacyHash(ip, this.signingSecret),
-        deviceHash: privacyHash(deviceId, this.signingSecret),
-        codeSalt,
-        codeVerifier: createOtpVerifier(code, codeSalt, this.otpPepper),
-        expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
-        now,
-      }),
-    );
+    let challenge: Awaited<ReturnType<IdentityRepository['createChallenge']>>;
     try {
-      await this.sms.send({
+      challenge = await this.unitOfWork.run(() =>
+        this.repository.createChallenge({
+          mobile,
+          mobileHash: privacyHash(mobile, this.signingSecret),
+          ipHash: privacyHash(ip, this.signingSecret),
+          deviceHash: privacyHash(deviceId, this.signingSecret),
+          codeSalt,
+          codeVerifier: createOtpVerifier(code, codeSalt, this.otpPepper),
+          expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS),
+          now,
+        }),
+      );
+    } catch (error: unknown) {
+      if (error instanceof ApplicationError && error.kind === 'rate_limited') {
+        this.telemetry.record({ name: 'rate_limit', outcome: 'otp_challenge' });
+      }
+      throw error;
+    }
+    try {
+      const dispatch = await this.sms.send({
         mobile,
         message: `KELE OTP: ${code}`,
         correlationId: challenge.id,
       });
+      this.telemetry.record({
+        name: 'otp_dispatch',
+        outcome: 'accepted',
+        provider: dispatch.provider,
+      });
     } catch {
+      this.telemetry.record({ name: 'otp_dispatch', outcome: 'failed' });
       await this.unitOfWork.run(() =>
         this.repository.markChallengeUndeliverable(challenge.id, this.clock()),
       );

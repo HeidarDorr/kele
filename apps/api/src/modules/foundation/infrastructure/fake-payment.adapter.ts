@@ -25,6 +25,8 @@ function canonicalCallback(payload: FakePaymentCallbackPayload): string {
 
 @Injectable()
 export class FakePaymentAdapter implements PaymentGateway {
+  readonly provider = 'fake';
+
   constructor(
     private readonly signingSecret: string,
     private readonly idFactory: IdFactory = randomUUID,
@@ -53,9 +55,16 @@ export class FakePaymentAdapter implements PaymentGateway {
 
   verifyCallback(input: {
     signature: string;
-    payload: FakePaymentCallbackPayload;
+    payload: unknown;
     now: Date;
   }): Promise<import('../../checkout/domain/checkout.types.js').VerifiedPaymentCallback> {
+    if (!isFakeCallbackPayload(input.payload)) {
+      throw new ApplicationError(
+        'forbidden',
+        'PAYMENT_CALLBACK_UNVERIFIED',
+        'Payment callback payload failed provider validation.',
+      );
+    }
     const canonical = canonicalCallback(input.payload);
     const expected = this.signature(canonical);
     const presented = Buffer.from(input.signature, 'hex');
@@ -110,4 +119,18 @@ export class FakePaymentAdapter implements PaymentGateway {
   private signature(canonical: string): string {
     return createHmac('sha256', this.signingSecret).update(canonical).digest('hex');
   }
+}
+
+function isFakeCallbackPayload(value: unknown): value is FakePaymentCallbackPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const payload = value as Partial<FakePaymentCallbackPayload>;
+  return (
+    typeof payload.providerReference === 'string' &&
+    typeof payload.providerTransactionId === 'string' &&
+    ['success', 'failed', 'cancelled', 'pending'].includes(payload.status ?? '') &&
+    typeof payload.amountRial === 'number' &&
+    payload.currency === 'IRR' &&
+    typeof payload.issuedAt === 'string' &&
+    typeof payload.nonce === 'string'
+  );
 }

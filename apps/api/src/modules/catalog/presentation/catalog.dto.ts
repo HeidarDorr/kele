@@ -153,18 +153,20 @@ class FocalPointDto {
 }
 
 export class AdminMediaDto {
-  @Matches(/^(?:https?:\/\/|\/)[^\s]+$/)
+  @Matches(/^\/media\/[A-Za-z0-9/_-]+\.(?:jpg|jpeg|png|webp)$/)
   @MaxLength(500)
   url!: string;
 
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(12000)
   width!: number;
 
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(12000)
   height!: number;
 
   @IsString()

@@ -183,7 +183,10 @@ function orderView(order: OperationalOrderRecord, now: Date, admin: boolean) {
           : money(order.shipping.freeShippingThresholdRial),
       settingsVersion: order.shipping.settingsVersion,
     },
-    payment: { provider: 'fake' as const, providerTransactionId: order.providerTransactionId },
+    payment: {
+      provider: order.paymentProvider,
+      providerTransactionId: order.providerTransactionId,
+    },
     tracking:
       order.tracking === null
         ? null

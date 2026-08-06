@@ -22,8 +22,13 @@ import { CartService } from '../src/modules/cart/application/cart.service.js';
 import { IdentityService } from '../src/modules/identity/application/identity.service.js';
 import { CustomerService } from '../src/modules/identity/application/customer.service.js';
 import { ApplicationError } from '../src/shared/application-error.js';
+import type {
+  OperationalEvent,
+  OperationalTelemetry,
+} from '../src/shared/operational-telemetry.js';
 
 class RecordingSmsGateway implements SmsGateway {
+  readonly provider = 'recording';
   readonly messages = new Map<string, string>();
 
   send(
@@ -31,6 +36,7 @@ class RecordingSmsGateway implements SmsGateway {
   ): Promise<SmsDispatch> {
     this.messages.set(input.correlationId, input.message);
     return Promise.resolve({
+      provider: 'recording',
       providerMessageId: `recording-${input.correlationId}`,
       accepted: true,
     });
@@ -40,6 +46,22 @@ class RecordingSmsGateway implements SmsGateway {
     const code = this.messages.get(challengeId)?.match(/[0-9]{6}/)?.[0];
     if (code === undefined) throw new Error('Recorded SMS did not contain an OTP code.');
     return code;
+  }
+}
+
+class FailingSmsGateway implements SmsGateway {
+  readonly provider = 'outage';
+
+  send(): Promise<SmsDispatch> {
+    return Promise.reject(new Error('simulated provider outage'));
+  }
+}
+
+class RecordingTelemetry implements OperationalTelemetry {
+  readonly events: OperationalEvent[] = [];
+
+  record(event: OperationalEvent): void {
+    this.events.push(event);
   }
 }
 
@@ -67,7 +89,7 @@ const customerService = new CustomerService(identityRepository, transactions);
 const runId = randomUUID();
 const mobileBase = randomInt(1_000_000, 8_999_990);
 const mobiles = Array.from(
-  { length: 8 },
+  { length: 9 },
   (_, index) => `+98912${String(mobileBase + index).padStart(7, '0')}`,
 );
 const cartIds = new Set<string>();
@@ -219,6 +241,35 @@ afterAll(async () => {
 });
 
 describe('Milestone 3 identity, ownership and cart on PostgreSQL', () => {
+  it('[M9-AC-005][M9-AC-024][SMS-002] fails an SMS outage safely and consumes the challenge', async () => {
+    const telemetry = new RecordingTelemetry();
+    const outageIdentity = new IdentityService(
+      identityRepository,
+      cartService,
+      new FailingSmsGateway(),
+      transactions,
+      'integration-signing-secret-with-thirty-two-characters',
+      'integration-otp-pepper-with-thirty-two-characters',
+      () => '222222',
+      () => new Date('2026-08-06T18:00:00.000Z'),
+      telemetry,
+    );
+
+    await expect(
+      outageIdentity.createOtpChallenge(
+        mobiles[8] as string,
+        '198.51.100.88',
+        'provider-outage-device',
+      ),
+    ).rejects.toMatchObject({ code: 'SMS_DISPATCH_FAILED' });
+
+    const challenge = await prisma.otpChallenge.findFirstOrThrow({
+      where: { mobile: mobiles[8] as string },
+    });
+    expect(challenge.consumedAt).toEqual(new Date('2026-08-06T18:00:00.000Z'));
+    expect(telemetry.events).toEqual([{ name: 'otp_dispatch', outcome: 'failed' }]);
+  });
+
   it('[CUS-010][SMS-001][SMS-002] bounds OTP attempts, rejects expiry/replay, and rate-limits resend', async () => {
     const brute = await startChallenge(mobiles[0] as string, 'brute-device', '198.51.100.10');
     for (let attempt = 0; attempt < 5; attempt += 1) {

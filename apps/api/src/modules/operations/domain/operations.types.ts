@@ -22,7 +22,7 @@ export type RefundRecord = Readonly<{
   id: string;
   orderNumber: string;
   amountRial: number;
-  provider: 'fake';
+  provider: string;
   providerReference: string | null;
   providerTransactionId: string;
   status: 'pending_provider' | 'confirmed' | 'failed';
@@ -62,6 +62,7 @@ export type OperationalOrderRecord = Readonly<{
   itemsSubtotalRial: number;
   shippingTotalRial: number;
   providerTransactionId: string;
+  paymentProvider: string;
   items: readonly Readonly<{
     id: string;
     kind: 'product' | 'outfit';
