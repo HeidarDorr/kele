@@ -1,0 +1,25 @@
+{
+  "findings": [
+    {
+      "path": "/",
+      "violations": 0
+    },
+    {
+      "path": "/catalog",
+      "violations": 0
+    },
+    {
+      "path": "/products/beige-linen-suit",
+      "violations": 0
+    },
+    {
+      "path": "/cart",
+      "violations": 0
+    },
+    {
+      "path": "/checkout",
+      "violations": 0
+    }
+  ],
+  "standard": "WCAG 2.2 AA"
+}

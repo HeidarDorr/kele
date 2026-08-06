@@ -1,0 +1,45 @@
+{
+  "environment": "local production build",
+  "observations": [
+    {
+      "route": "/",
+      "domContentLoadedMs": 59,
+      "loadMs": 105,
+      "transferBytes": 10255,
+      "imageCount": 4,
+      "scrollHeight": 4226
+    },
+    {
+      "route": "/catalog",
+      "domContentLoadedMs": 40,
+      "loadMs": 40,
+      "transferBytes": 9793,
+      "imageCount": 1,
+      "scrollHeight": 1625
+    },
+    {
+      "route": "/products/beige-linen-suit",
+      "domContentLoadedMs": 46,
+      "loadMs": 55,
+      "transferBytes": 13563,
+      "imageCount": 4,
+      "scrollHeight": 2595
+    },
+    {
+      "route": "/cart",
+      "domContentLoadedMs": 27,
+      "loadMs": 39,
+      "transferBytes": 6781,
+      "imageCount": 0,
+      "scrollHeight": 1161
+    },
+    {
+      "route": "/checkout",
+      "domContentLoadedMs": 23,
+      "loadMs": 36,
+      "transferBytes": 6695,
+      "imageCount": 0,
+      "scrollHeight": 959
+    }
+  ]
+}
