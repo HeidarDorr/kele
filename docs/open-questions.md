@@ -43,18 +43,28 @@ integration, not domain or UI development.
 | OQ-002-PROD | Iranian payment provider, refund API, verification and settlement behavior | Production payment integration |
 | OQ-003-PROD | SMS provider, sender identity, delivery reports, retention and commercial limits | Production OTP/notification integration |
 
-## Blocking design inputs
+## M8-exit design waivers and launch blockers
 
 Design identifiers use the `DES` prefix to avoid collision with the
 employer-returned decision numbering.
 
-| ID | Missing input | Impact | Proposed action |
-|---|---|---|---|
-| DES-001 | Final logo files in SVG | Header/footer sharpness and spacing | M8 measures the typed KELE wordmark and `K` favicon as provisional fallbacks. Supply and approve primary, monochrome and favicon SVG variants before launch. |
-| DES-002 | Final approved and licensed Latin/Persian fonts | Brand fidelity, RTL shaping and performance | M8 verifies the local Elize/Peyda pairing and Markazi review alternative without asserting licensing. Confirm Elize licensing and approve or replace the pairing before launch. |
-| DES-003 | Final Product/editorial photography, focal points and usage rights | Prototype and missing-media fallbacks cannot become launch assets | M8 uses only supplied repository assets and an explicit reserved fallback; no substitute photography was generated. Approve the asset inventory, rights and crops before launch. |
-| DES-004 | Approved designs for PLP, search, cart, checkout, account, Journal and CMS | References cover only Homepage and desktop PDP | M8 implements and captures one coherent extrapolation across all version-1 customer routes. Product/design approval of the 76 route baselines remains required before launch. |
-| DES-005 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise remain subjective | M8 fixes provisional behavior at 390, 768, 1280 and 1440 px with content-driven 640/1024 boundaries and zero-overflow checks. Product/design breakpoint sign-off remains required before launch. |
+Decision record:
+
+- Decision type: explicit waiver for Milestone 8 engineering exit only;
+- source: explicit user instruction in the M8 gate-remediation task;
+- decision date: 2026-08-06 (`Asia/Tehran`);
+- approval boundary: none of these waivers approves an asset, font licence,
+  usage right, design extrapolation or breakpoint for production;
+- expiry: each waiver expires at its stated release gate. An unresolved item at
+  that gate is a production-launch `NO-GO` and cannot roll forward silently.
+
+| ID      | Temporary M8 waiver                                                                                                                                       | Resolution owner                                                                 | Resolution due                                                                 | Launch effect                                                                                               |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| DES-001 | The typed KELE wordmark and `K` favicon may remain only as review/test fallbacks. No logo asset is production-approved.                                  | Product Owner (accountable); Brand/Design owner (delivery)                       | Before production release-candidate visual sign-off                            | M8 may close; launch remains `NO-GO` until primary, monochrome and favicon SVG assets are supplied and approved. |
+| DES-002 | Elize/Peyda and the Markazi review variant remain provisional. This waiver grants no licence or production-use approval.                                | Product Owner (accountable); Legal/Procurement and Design owners (delivery)      | Before any production release candidate embeds or serves these fonts           | M8 may close; launch remains `NO-GO` until licensing and the final font pairing are approved or replaced.       |
+| DES-003 | Repository prototype imagery and the reserved missing-media treatment may be used only for M8 evidence. No usage right or production approval is implied. | Product Owner (accountable); Creative/Content owner (delivery)                   | Before production content freeze and customer-facing UAT                       | M8 may close; launch remains `NO-GO` until final photography, rights, focal points and crops are approved.       |
+| DES-004 | The 76 route baselines are engineering extrapolation candidates only; they are not final product/design approval.                                      | Product Owner and Design owner (jointly accountable)                             | Before production UAT and final design sign-off                                | M8 may close; launch remains `NO-GO` until the extrapolated route families receive product/design approval.     |
+| DES-005 | The content-driven 640/1024 boundaries and 390/768/1280/1440 evidence widths are provisional M8 acceptance values only.                                | Product Owner and Design owner (accountable); Frontend lead (validation)         | Before production responsive UAT and breakpoint sign-off                       | M8 may close; launch remains `NO-GO` until responsive behavior and breakpoint boundaries are approved.          |
 
 ## Non-blocking decisions
 
