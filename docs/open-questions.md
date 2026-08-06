@@ -3,7 +3,7 @@
 Version: 1.2
 Status: Active
 Owner: Product owner
-Last reviewed: 2026-07-24
+Last reviewed: 2026-08-05
 
 The employer-approved answers in
 `decisions/2026-07-24-employer-open-questions-v1.md` resolve the original
@@ -31,6 +31,7 @@ not silently choose older wording.
 | SRC-M5-001 | Frozen `02-domain-model.md` describes one Outfit selling price, while accepted ADR-0003 and OTF-004 define a price for every Outfit size. | ADR-0003 is authoritative. Price belongs to the immutable Outfit Revision size; Product component prices do not derive or mutate it. |
 | SRC-M5-002 | OTF-006 says manual Outfit-size definition is forbidden, while accepted ADR-0003 and later OTF-014 require an explicit mapping from every Outfit size to exact component SKUs. | ADR-0003 is authoritative. Administrators explicitly author and validate each revision-size mapping; no size or SKU is inferred by string equality. |
 | SRC-M7-001 | Draft CMS-006 and the draft Homepage workflow said Homepage saves publish immediately and draft mode was out of scope, while the approved Milestone 7 implementation brief explicitly requires Homepage draft/published isolation, protected preview and publication. | Resolved for Milestone 7: the explicit brief governs, and CMS-006 plus the supporting workflow now specify isolated save, protected preview and explicit publication. No Frozen document or accepted ADR changed. |
+| SRC-M8-001 | The seeded published Site Settings footer contains `/about` and `/contact`, while no version-1 route, workflow or approved content contract defines either destination. | Milestone 8 filters those two unapproved destinations from rendered navigation and retains only existing version-1 routes. Adding the pages or repointing customer-facing links requires an approved requirement/content decision. |
 
 ## Blocking production-provider decisions
 
@@ -49,11 +50,11 @@ employer-returned decision numbering.
 
 | ID | Missing input | Impact | Proposed action |
 |---|---|---|---|
-| DES-001 | Final logo files in SVG | Header/footer sharpness and spacing | Request primary, monochrome and favicon variants; the current typed wordmark and `K` favicon are explicitly provisional. |
-| DES-002 | Final approved and licensed Latin/Persian fonts | Brand fidelity, RTL shaping and performance | Elize and Peyda plus the SIL-OFL Markazi Text alternative are integrated for review only; compare the two display variants, confirm Elize licensing and approve or replace the pairing before production. |
-| DES-003 | Product photography and usage rights | Storefront cannot ship with generated product imagery | Prepare an asset inventory with ownership and focal points. |
-| DES-004 | Designs for PLP, search, cart, checkout, account, Journal and CMS | References cover only homepage and desktop PDP | Approve low-fidelity flows before high-fidelity implementation. |
-| DES-005 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise remain subjective | Use provisional breakpoints in `design-system.md`, then approve. |
+| DES-001 | Final logo files in SVG | Header/footer sharpness and spacing | M8 measures the typed KELE wordmark and `K` favicon as provisional fallbacks. Supply and approve primary, monochrome and favicon SVG variants before launch. |
+| DES-002 | Final approved and licensed Latin/Persian fonts | Brand fidelity, RTL shaping and performance | M8 verifies the local Elize/Peyda pairing and Markazi review alternative without asserting licensing. Confirm Elize licensing and approve or replace the pairing before launch. |
+| DES-003 | Final Product/editorial photography, focal points and usage rights | Prototype and missing-media fallbacks cannot become launch assets | M8 uses only supplied repository assets and an explicit reserved fallback; no substitute photography was generated. Approve the asset inventory, rights and crops before launch. |
+| DES-004 | Approved designs for PLP, search, cart, checkout, account, Journal and CMS | References cover only Homepage and desktop PDP | M8 implements and captures one coherent extrapolation across all version-1 customer routes. Product/design approval of the 76 route baselines remains required before launch. |
+| DES-005 | Exact desktop/mobile breakpoint behavior | Visual acceptance would otherwise remain subjective | M8 fixes provisional behavior at 390, 768, 1280 and 1440 px with content-driven 640/1024 boundaries and zero-overflow checks. Product/design breakpoint sign-off remains required before launch. |
 
 ## Non-blocking decisions
 

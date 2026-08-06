@@ -213,6 +213,9 @@ Acceptance criteria:
   layout frames before PNG encoding.
 - After the accepted evidence baseline is committed, two consecutive complete
   E2E runs must each leave `git diff --exit-code -- output/playwright` at zero.
+- Presentation-state fixtures are available only to the E2E runner through a
+  fresh per-run server token and private request headers. Public query
+  parameters are inert, and production deployments do not configure the token.
 
 Failure scenarios include an unloaded font/image, changing layout signature,
 unexpected focus ring or caret, real-time date, random visible identifier,

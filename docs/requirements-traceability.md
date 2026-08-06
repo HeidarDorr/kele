@@ -117,6 +117,19 @@ merged into the business specification:
 | SHP-006–SHP-008, PRC-011–PRC-012 | Outfit price contributes to product/outfit subtotal while shipping policy, rial storage and centralized toman display remain snapshotted | mixed Checkout integration, money contracts and browser evidence | Implemented |
 | LOC-001–LOC-002, HRD-001–HRD-002, HRD-007 | Persian RTL editorial Outfit storefront and restrained administration across mobile/tablet/laptop/desktop, with inward application ports | architecture/type/build gates, 13-test Playwright suite and `output/playwright/milestone-5/` | Implemented |
 
+## Milestone 8 storefront experience and visual-fidelity evidence
+
+| Requirement IDs | Implementation | Automated evidence | State |
+| --- | --- | --- | --- |
+| LOC-001–LOC-002, HRD-007 | complete Persian RTL customer route graph, shared semantic shell, mixed-direction isolation, useful server HTML and responsive compositions at four accepted viewports | `e2e/milestone-8.spec.ts` 76-route/viewport visual matrix, internal-link crawl and `e2e/milestone-8.spec.ts-snapshots/` | Implemented; multilingual UI remains outside V1 |
+| CAT-001–CAT-006, PUB-001–PUB-004, PUB-006–PUB-008 | Homepage/Catalog/Search/Category/PDP discovery, canonical price/availability rendering, color gallery, unavailable sizes, related discovery and explicit loading/empty/error states | public route matrix, 20 fixture states, keyboard gallery assertions and `output/playwright/milestone-8/route-matrix/` | Implemented without API/schema changes |
+| OTF-008–OTF-018, INV-015–INV-018 | Outfit discovery/detail, exact revision and component links, derived availability, disabled unavailable sizes and Cart review blockers | responsive Outfit matrix, state captures and inherited integration/concurrency suites | Implemented; Outfit inventory is never stored |
+| CRT-001–CRT-018, CUS-001–CUS-010 | anonymous/authenticated Cart, focus-contained drawer, unavailable/requires-review/error feedback, OTP, Profile and owned Address workflows | authenticated fixture, keyboard-only drawer/menu journey, Cart client-failure capture and Account matrix | Implemented for V1 customer surface |
+| SHP-001–SHP-008, PAY-001–PAY-003, ORD-001–ORD-018, RTE-001–RTE-005 | server-priced Checkout, three shipping methods, fake-provider outcomes, owned Order history/detail and declaration-gated Return success | authenticated Checkout/Fake Payment/Payment Result/Order matrix and successful Return submission screenshot | UI implemented; production payment provider remains OQ-002-PROD |
+| CMS-006–CMS-013, CMS-016–CMS-018 | published Homepage, Occasion and Journal projections with missing-media fallback and safe existing-route navigation | public route matrix, internal-link integrity crawl, loading/no-data/failure captures and Article evidence | Implemented; SRC-M8-001 prevents unapproved `/about` and `/contact` links |
+| SCP-001–SCP-002 | no Wishlist or Newsletter route/control introduced by the visual extrapolation | route/link crawl and scope inspection | Accepted exclusion preserved |
+| LOC-001–LOC-002, HRD-001–HRD-002 | KELE tokens, exact toman presentation boundary, logical CSS, semantic icons, focus visibility, reduced motion and WCAG AA contrast | zero critical/serious Axe findings on five critical routes, 44×44 button checks, zero-overflow matrix and reduced-motion journey | Implemented; final brand inputs remain DES-001–DES-005 blockers |
+
 ## Milestone 1 implementation evidence
 
 | Requirement IDs | Implementation | Automated evidence | State |

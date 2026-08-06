@@ -111,9 +111,10 @@ inventing backend success:
   status feedback;
 - missing or failed imagery with reserved geometry and useful alternatives.
 
-Acceptance fixtures may select presentation state through documented test-only
-query parameters or deterministic network routing. They must not alter domain
-or API behavior and must be inert in normal navigation.
+Acceptance fixtures select presentation state through token-authenticated E2E
+request headers or deterministic network routing. The runner generates a new
+private token for every execution; normal and production requests have no
+fixture capability. Fixtures must not alter domain or API behavior.
 
 ## Viewport and measurable visual acceptance plan
 

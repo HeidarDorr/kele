@@ -2,7 +2,7 @@
 
 Version: 0.1
 Status: Provisional
-Last reviewed: 2026-07-24
+Last reviewed: 2026-08-05
 
 ## Reference inventory
 
@@ -305,3 +305,44 @@ return states, and mobile empty/error operations states. Playwright asserts
 390×844 and 1280×800 layouts, `lang="fa-IR"`, `dir="rtl"`, reduced motion,
 semantic labels/live regions and no horizontal overflow. The CLI capture
 independently confirms the mobile semantic tree and document direction.
+
+## Milestone 8 storefront experience and visual fidelity
+
+The pre-edit route/state/viewport audit and measurable contract are recorded in
+`docs/milestone-8-storefront-acceptance.md`. The completed system covers 19
+version-1 customer routes at 390×844, 768×1024, 1280×800 and 1440×900, producing
+76 stable full-page baselines with a one-percent maximum pixel-difference
+threshold. The independent comparison run passed all 14 M8 Playwright tests
+without updating those baselines.
+
+The route matrix covers Homepage, Catalog, Search, Category, Product, Outfit
+index/detail, Occasion index/detail, Journal index/article, Sign-in, Cart,
+Checkout, Account, Order list/detail, Fake Payment and Payment Result. Twenty
+token-authenticated fixture states cover slow/loading, empty/no-data and
+server/dependency failure; public query parameters cannot activate them;
+Cart client failure adds the twenty-first failure state. Separate captures prove
+mobile menu focus return and a successful owned Return submission.
+
+Objective assertions require one `main` and one visible `h1`, `lang="fa-IR"`,
+`dir="rtl"`, decoded images, zero horizontal overflow and zero browser-console
+errors on every matrix route. Keyboard tests cover Tab order, modal containment,
+Escape and opener focus restoration. Reduced-motion and representative Persian
+content mixed with mobile, postal, SKU, Order and payment identifiers are
+verified. Axe reports zero critical or serious WCAG 2.2 AA violations on
+Homepage, Catalog, PDP, Cart and Checkout; visible buttons in that scan meet the
+44×44 px target rule.
+
+Evidence is split intentionally:
+
+- stable comparisons: `e2e/milestone-8.spec.ts-snapshots/`;
+- reviewable route/state captures: `output/playwright/milestone-8/`;
+- machine-readable scan/timing observations:
+  `output/playwright/milestone-8/accessibility.json` and
+  `output/playwright/milestone-8/performance-observations.json`.
+
+The local production-build timing observations are diagnostic, not a production
+network certification: measured `load` was 36–105 ms for the five sampled
+routes. Final CDN, final Media and real-user performance remain Milestone 9.
+DES-001 through DES-005 retain the provisional fallbacks and launch-blocker
+status recorded in `docs/open-questions.md`; M8 implementation does not imply
+asset, font, extrapolation or breakpoint approval.

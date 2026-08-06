@@ -206,3 +206,44 @@ Use the same colors and typography sparingly, but prioritize clarity:
 - filters that retain URL state;
 - audit context visible near risky actions;
 - no attempt to make operational screens resemble the editorial storefront.
+
+## Milestone 8 storefront convergence
+
+Milestone 8 makes the previously incremental customer surfaces one coherent
+system without changing commerce behavior or server contracts.
+
+- Design dials are fixed at variance 6, motion 3 and density 3: discovery pages
+  may use controlled editorial asymmetry; commerce pages remain predictable;
+  motion is limited to functional menu, drawer and selection feedback.
+- `--kele-canvas`, `--kele-surface`, `--kele-surface-muted`, `--kele-ink`,
+  `--kele-ink-muted`, `--kele-line`, `--kele-accent-strong` and the inverse
+  footer palette are the only storefront foundation colors. Muted ink and the
+  strong accent were darkened to meet WCAG AA on the warm muted surface.
+- Display headings use the provisional local display family and body, labels
+  and controls use the provisional local text family. Long desktop headings
+  are constrained by readable measures rather than arbitrary narrow columns.
+- Spacing follows an 8 px rhythm with large discovery-section intervals and a
+  44 px minimum control size. Commerce groups use dividers and whitespace, not
+  nested cards or default component-library chrome.
+- Phosphor supplies the consistent menu, bag, customer, close and payment-state
+  icons. Icons never carry status or an accessible name without adjacent text
+  or an explicit control label.
+- The header, mobile navigation, cart drawer and footer are shared across the
+  complete version-1 graph. Both modal surfaces trap focus, close with Escape,
+  prevent background scroll and return focus to their opener.
+- The provisional responsive boundaries are below 768 px for the narrow
+  single-column composition, 768–1023 px for tablet composition and 1024 px or
+  wider for the desktop/laptop composition. Acceptance viewports are 390×844,
+  768×1024, 1280×800 and 1440×900. DES-005 remains open until sign-off.
+- Product and editorial media preserve aspect ratio and focal-point metadata.
+  Missing media reserve geometry and state that the image is unavailable; M8
+  does not generate replacement Product photography.
+- Reduced-motion mode removes smooth scrolling and all non-essential animation
+  while preserving state and content. Screenshot fixtures additionally disable
+  animations and caret rendering after fonts and images settle.
+
+The stable visual contract is
+`docs/milestone-8-storefront-acceptance.md`; accepted comparison images live in
+`e2e/milestone-8.spec.ts-snapshots/` and review captures live in
+`output/playwright/milestone-8/`. DES-001 through DES-005 remain explicit launch
+inputs in `docs/open-questions.md`.
