@@ -43,6 +43,19 @@ integration, not domain or UI development.
 | OQ-002-PROD | Iranian payment provider, refund API, verification and settlement behavior | Production payment integration |
 | OQ-003-PROD | SMS provider, sender identity, delivery reports, retention and commercial limits | Production OTP/notification integration |
 
+### Milestone 9 scope verification
+
+Decision verification date: 2026-08-06 (`Asia/Tehran`).
+
+No approved decision record supplies a provider or provider contract for
+`OQ-002-PROD` or `OQ-003-PROD`. Likewise, `OQ-017` and `OQ-018` below remain
+unanswered. Milestone 9 therefore treats production payment/refund, SMS, error
+monitoring and object-storage/CDN adapters plus sandbox certification as four
+scoped blockers. Independent security, observability, performance,
+backup/restore and rollback hardening continues under
+`docs/milestone-9-plan.md`. This record does not select, purchase, configure or
+approve a provider, credential, region, retention policy or commercial tier.
+
 ## M8-exit design waivers and launch blockers
 
 Design identifiers use the `DES` prefix to avoid collision with the
