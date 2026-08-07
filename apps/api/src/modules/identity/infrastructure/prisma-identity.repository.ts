@@ -151,7 +151,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
     });
     if (result.count !== 1) {
       throw new ApplicationError(
-        'validation',
+        'bad_request',
         'OTP_VERIFICATION_FAILED',
         'OTP challenge could not be verified.',
       );

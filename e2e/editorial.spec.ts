@@ -353,6 +353,7 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       await request.get(`${e2eUrls.api}/journal/quiet-craft-of-tailoring`)
     ).json()) as { publishedAt: string };
     await page.goto(`${e2eUrls.admin}/editorial/journal/70000000-0000-4000-8000-000000000020`);
+    await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'ذخیرهٔ پیش‌نویس' }).click();
     await expect(page.getByRole('status')).toContainText('انتشار قبلی دست‌نخورده ماند');
     const publicAfterDraft = (await (

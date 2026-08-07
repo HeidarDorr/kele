@@ -45,7 +45,7 @@ integration, not domain or UI development.
 
 ### Milestone 9 scope verification
 
-Decision verification date: 2026-08-06 (`Asia/Tehran`).
+Decision verification date: 2026-08-07 (`Asia/Tehran`).
 
 No approved decision record supplies a provider or provider contract for
 `OQ-002-PROD` or `OQ-003-PROD`. Likewise, `OQ-017`, `OQ-018` and `OQ-022`
@@ -56,6 +56,9 @@ scoped blockers. Independent security, observability, performance,
 backup/restore and rollback hardening continues under
 `docs/milestone-9-plan.md`. This record does not select, purchase, configure or
 approve a provider, credential, region, retention policy or commercial tier.
+The 2026-08-07 remediation run reconfirmed that no accepted ADR, frozen
+requirement or user-supplied decision closes any of these five records; they
+must therefore remain explicit launch blockers rather than inferred defaults.
 
 ## M8-exit design waivers and launch blockers
 

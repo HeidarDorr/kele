@@ -522,9 +522,14 @@ test.describe.serial('Milestone 8 storefront visual fidelity', () => {
     for (const path of ['/', '/catalog', '/products/beige-linen-suit', '/cart', '/checkout']) {
       await page.goto(`${e2eUrls.storefront}${path}`);
       await settlePage(page);
-      const links = page.locator('a[href^="/"]');
-      for (let index = 0; index < (await links.count()); index += 1) {
-        const href = await links.nth(index).getAttribute('href');
+      const hrefs = await page.locator('a[href^="/"]').evaluateAll((links) =>
+        (
+          links as unknown as Array<{
+            getAttribute(name: string): string | null;
+          }>
+        ).map((link) => link.getAttribute('href')),
+      );
+      for (const href of hrefs) {
         if (href) internalLinks.add(href);
       }
       observations.push(

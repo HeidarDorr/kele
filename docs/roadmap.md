@@ -169,11 +169,13 @@ and approved against objective UI acceptance evidence.
 
 ## Milestone 9 — production integrations and operational hardening
 
-Implementation status: provider-independent hardening is complete and locally
-verified on `feat/m09-production-hardening` (2026-08-06). Staging/production
-remain `NO-GO` because OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022
-have no explicit approved answer and their provider/session certifications are
-therefore blocked. See `docs/milestone-9-verification.md`.
+Implementation status: provider-independent hardening was independently
+reverified on `feat/m09-production-hardening` (2026-08-07), including all five
+synthetic load profiles and an isolated PostgreSQL 16 migration/backup/restore
+rehearsal. Staging/production remain `NO-GO` because OQ-002-PROD,
+OQ-003-PROD, OQ-017, OQ-018 and OQ-022 have no explicit approved answer,
+their provider/session certifications are blocked, and no release image has
+been produced and scanned. See `docs/milestone-9-verification.md`.
 
 Deliverables:
 

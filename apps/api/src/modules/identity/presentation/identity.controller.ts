@@ -59,6 +59,7 @@ export class IdentityController {
   }
 
   @Post('otp/verifications')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(OtpVerificationRateLimitGuard)
   async verify(
     @Body() body: OtpVerificationDto,

@@ -13,6 +13,7 @@ import { JsonLogger } from '../../../platform/observability/json.logger.js';
 import type { OperationalTelemetry } from '../../../shared/operational-telemetry.js';
 
 const statusByKind: Record<ApplicationError['kind'], number> = {
+  bad_request: HttpStatus.BAD_REQUEST,
   not_found: HttpStatus.NOT_FOUND,
   conflict: HttpStatus.CONFLICT,
   validation: HttpStatus.UNPROCESSABLE_ENTITY,

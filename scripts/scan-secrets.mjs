@@ -1,8 +1,10 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 const root = process.cwd();
-const ignored = new Set(['.git', 'node_modules', '.next', 'dist', 'coverage', '.data']);
+const execFileAsync = promisify(execFile);
 const allowed = new Set(['.env.example', 'docker-compose.yml']);
 const patterns = [
   { name: 'private key', expression: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
@@ -14,23 +16,15 @@ const patterns = [
   },
 ];
 
-async function sourceFiles(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const result = [];
-  for (const entry of entries) {
-    if (ignored.has(entry.name)) continue;
-    const target = path.join(directory, entry.name);
-    if (entry.isDirectory()) result.push(...(await sourceFiles(target)));
-    else result.push(target);
-  }
-  return result;
-}
-
 const findings = [];
-for (const file of await sourceFiles(root)) {
-  const relative = path.relative(root, file).replaceAll('\\', '/');
+const { stdout } = await execFileAsync('git', ['-c', `safe.directory=${root}`, 'ls-files', '-z'], {
+  cwd: root,
+  encoding: 'utf8',
+  maxBuffer: 16 * 1024 * 1024,
+});
+for (const relative of stdout.split('\0').filter(Boolean)) {
   if (allowed.has(relative)) continue;
-  const content = await readFile(file, 'utf8').catch(() => '');
+  const content = await readFile(path.resolve(root, relative), 'utf8').catch(() => '');
   for (const pattern of patterns) {
     if (pattern.expression.test(content)) findings.push(`${relative}: ${pattern.name}`);
   }

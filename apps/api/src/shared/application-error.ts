@@ -1,4 +1,5 @@
 export type ApplicationErrorKind =
+  | 'bad_request'
   | 'not_found'
   | 'conflict'
   | 'validation'

@@ -140,7 +140,7 @@ export class IdentityService {
 
     if (!outcome.valid) {
       throw new ApplicationError(
-        'validation',
+        'bad_request',
         'OTP_VERIFICATION_FAILED',
         'OTP challenge could not be verified.',
       );

@@ -9,6 +9,7 @@ export default tseslint.config(
       '**/.next-e2e/**',
       '**/coverage/**',
       '**/.data/**',
+      '**/.tmp-*/**',
       '**/node_modules/**',
       '**/*.mjs',
       'packages/api-contract/src/generated.ts',

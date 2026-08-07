@@ -201,7 +201,9 @@ Milestone 6 additionally enforces:
 - The API emits structured JSON logs with request correlation IDs and redacts
   fields whose names indicate credentials, tokens, mobile numbers or addresses.
 - CI runs a production dependency audit and Gitleaks. The local `scan:secrets`
-  command adds a fast policy scan before CI; it does not replace the CI scan.
+  command adds a fast Git-indexed tracked-file policy scan before CI; it does
+  not follow ignored/untracked runtime directories and does not replace the CI
+  scan.
 - Local PostgreSQL/MinIO credentials are explicitly development-only examples;
   `.env` remains ignored.
 
@@ -309,7 +311,9 @@ production callback protocol was introduced.
 - OTP verification and payment callback guards use HMAC-derived risk keys,
   bounded in-process windows and fail-closed saturation. The persisted OTP
   challenge limits remain authoritative. Multi-replica aggregate enforcement
-  must live at the approved edge/API gateway; Redis was not introduced.
+  must live at the approved edge/API gateway; Redis was not introduced. The
+  transport now explicitly preserves the OpenAPI 200 success, 400 invalid-code
+  and 429 limited outcomes under the HTTP abuse profile.
 - Media metadata accepts only bounded raster dimensions and immutable
   same-origin `/media/...` JPG/JPEG/PNG/WebP paths whose extension matches the
   declared format. Remote URLs and SVG are rejected. No binary upload or
@@ -323,6 +327,10 @@ production callback protocol was introduced.
   constant time and are rejected in production. OQ-022 blocks staging and
   production until issuance, role provisioning, recovery and revocation are
   explicitly approved and certified.
+- The production dependency graph overrides the affected transitive OpenAPI
+  tooling path to `js-yaml@4.3.1`; the regenerated lockfile, inspected
+  dependency path and production audit report no known vulnerability. A future
+  lockfile update must preserve the no-unaccepted-High/Critical gate.
 
 Residual risks are the five open decisions above, provider-specific callback,
 inquiry and outage behavior, managed secret rotation, malware inspection,

@@ -284,18 +284,30 @@ assertions pass.
   `isolated-kele-e2e` confirmation.
 - Browser acceptance proves protected metrics, correlation, security headers,
   exact CORS, 413 bounds, anonymous administration denial, remote-Media denial,
-  RTL production smoke and local CLS/LCP/navigation budgets. The complete E2E
-  suite remains the evidence for customer payment/Order and staff
-  fulfillment/return/refund journeys, replay, CSRF, IDOR and role matrices.
+  RTL production smoke and local CLS/LCP/navigation budgets at 390x844,
+  768x1024, 1280x800 and 1440x900. The ignored `browser.json` artifact records
+  the viewport, layout-shift, largest-contentful-paint, DOM-ready and horizontal
+  overflow observations; INP is explicitly marked unobserved when the smoke has
+  no qualifying interaction. The complete E2E suite remains the evidence for
+  customer payment/Order and staff fulfillment/return/refund journeys, loading,
+  empty, error, unavailable and success states, replay, CSRF, IDOR and role
+  matrices.
 - `scripts/run-m9-load.mjs` records runtime, host shape, concurrency, duration,
   request count, throughput, unexpected-error ratio and p50/p95/p99/max for
-  public catalog/editorial and authorized operator reads. It fails at 1% or
-  more unexpected errors or p95 at/above 500 ms. This local synthetic result is
-  a bottleneck detector, not a production capacity promise.
-- Transactional write, callback replay, last-unit contention, refund outage and
-  job retry capacity are exercised by the PostgreSQL integration concurrency
-  suites instead of destructive HTTP load. A real provider load/certification
-  profile remains blocked by its OQ decision.
+  all five approved profiles: public reads, bounded OTP abuse, independent
+  authenticated Checkout writes, exact/altered parallel callback replay and
+  authorized operator reads. Read profiles fail at 1% or more unexpected errors
+  or p95 at/above 500 ms; transactional profiles use the same error bound and a
+  1,000 ms p95 bound. Checkout evidence verifies one active reservation per
+  successful Checkout. Callback evidence verifies one Order, one callback
+  receipt and valid physical/reserved inventory. The harness refuses any
+  non-loopback target or database other than `kele_e2e`.
+- Interactive Prisma transactions use a five-second acquisition bound and a
+  ten-second execution bound; the integration runner allows fifteen seconds so
+  intentional 16-way contention measures the application transaction policy
+  instead of Vitest's shorter default. Last-unit contention, refund outage and
+  job retry behavior remain covered by the PostgreSQL concurrency suites. A
+  real-provider load/certification profile remains blocked by its OQ decision.
 - `test:m9:recovery` refuses non-loopback PostgreSQL and any database outside
   `kele_e2e`, `kele_m9_empty` and `kele_m9_restore`. It migrates empty/restore
   databases, writes a versioned logical synthetic-data artifact with an

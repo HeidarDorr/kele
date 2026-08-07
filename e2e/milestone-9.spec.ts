@@ -1,9 +1,17 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { e2eUrls } from './ports.mts';
 
 const metricsToken = process.env.METRICS_BEARER_TOKEN ?? 'development-metrics-bearer-token-000001';
 const superSession =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
+const acceptanceViewports = [
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 1024 },
+  { name: 'small-laptop', width: 1280, height: 800 },
+  { name: 'desktop', width: 1440, height: 900 },
+] as const;
 
 test.describe.serial('Milestone 9 production-like operational acceptance', () => {
   test('[M9-AC-010][M9-AC-012][M9-AC-014] API headers, bounds, CORS and metrics fail closed', async ({
@@ -85,36 +93,78 @@ test.describe.serial('Milestone 9 production-like operational acceptance', () =>
     page,
   }, testInfo) => {
     await installPerformanceObserver(page);
-    await page.setViewportSize({ width: 1280, height: 800 });
-    const storefrontResponse = await page.goto(e2eUrls.storefront, { waitUntil: 'networkidle' });
-    expect(storefrontResponse?.status()).toBe(200);
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
-    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    expect(storefrontResponse?.headers()['x-frame-options']).toBe('DENY');
-    expect(storefrontResponse?.headers()['content-security-policy']).toContain(
-      "frame-ancestors 'none'",
-    );
-    const storefrontPerformance = await readPerformance(page);
-    expect(storefrontPerformance.cls).toBeLessThanOrEqual(0.1);
-    expect(storefrontPerformance.lcpMs).toBeLessThanOrEqual(2_500);
-    expect(storefrontPerformance.domContentLoadedMs).toBeLessThanOrEqual(2_500);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-    ).toBe(true);
+    const viewportEvidence: Record<
+      string,
+      {
+        width: number;
+        height: number;
+        storefront: Awaited<ReturnType<typeof readPerformance>> & { noHorizontalOverflow: true };
+        administration: { noHorizontalOverflow: true };
+      }
+    > = {};
+    for (const viewport of acceptanceViewports) {
+      await page.setViewportSize(viewport);
+      const storefrontResponse = await page.goto(e2eUrls.storefront, {
+        waitUntil: 'networkidle',
+      });
+      expect(storefrontResponse?.status()).toBe(200);
+      await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      expect(storefrontResponse?.headers()['x-frame-options']).toBe('DENY');
+      expect(storefrontResponse?.headers()['content-security-policy']).toContain(
+        "frame-ancestors 'none'",
+      );
+      const storefrontPerformance = await readPerformance(page);
+      expect(storefrontPerformance.cls).toBeLessThanOrEqual(0.1);
+      expect(storefrontPerformance.lcpMs).toBeLessThanOrEqual(2_500);
+      expect(storefrontPerformance.domContentLoadedMs).toBeLessThanOrEqual(2_500);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
 
-    const adminResponse = await page.goto(e2eUrls.admin, { waitUntil: 'networkidle' });
-    expect(adminResponse?.status()).toBe(200);
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
-    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    expect(adminResponse?.headers()['x-frame-options']).toBe('DENY');
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-    ).toBe(true);
+      const adminResponse = await page.goto(e2eUrls.admin, { waitUntil: 'networkidle' });
+      expect(adminResponse?.status()).toBe(200);
+      await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
+      await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+      expect(adminResponse?.headers()['x-frame-options']).toBe('DENY');
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+
+      viewportEvidence[viewport.name] = {
+        width: viewport.width,
+        height: viewport.height,
+        storefront: { ...storefrontPerformance, noHorizontalOverflow: true },
+        administration: { noHorizontalOverflow: true },
+      };
+    }
 
     await testInfo.attach('milestone-9-performance.json', {
-      body: Buffer.from(JSON.stringify({ storefront: storefrontPerformance }, null, 2)),
+      body: Buffer.from(JSON.stringify({ viewports: viewportEvidence }, null, 2)),
       contentType: 'application/json',
     });
+    const evidenceDirectory = resolve('output/playwright/.e2e-run/milestone-9');
+    await mkdir(evidenceDirectory, { recursive: true });
+    await writeFile(
+      resolve(evidenceDirectory, 'browser.json'),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          productionBuilds: true,
+          locale: 'fa-IR',
+          direction: 'rtl',
+          viewports: viewportEvidence,
+          inp: {
+            observed: false,
+            reason: 'No qualifying interaction occurred in smoke navigation.',
+          },
+          completedAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      )}\n`,
+      'utf8',
+    );
   });
 });
 
