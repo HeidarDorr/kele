@@ -3,12 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "package.json"
+  ],
   "exports": {
     "./tokens.css": "./src/tokens.css",
-    "./money": "./src/money.ts",
-    "./typography": "./src/typography.ts"
+    "./money": {
+      "types": "./src/money.ts",
+      "production": "./dist/money.js",
+      "default": "./src/money.ts"
+    },
+    "./typography": {
+      "types": "./src/typography.ts",
+      "production": "./dist/typography.js",
+      "default": "./src/typography.ts"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

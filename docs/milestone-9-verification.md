@@ -1,6 +1,6 @@
 # Milestone 9 verification record
 
-Version: 0.2
+Version: 0.4
 
 Evidence date: 2026-08-07 (`Asia/Tehran`)
 
@@ -18,10 +18,11 @@ tier, deployment or destructive production operation was selected or changed.
 | --------------------------- | ----------------------------------------------------------------------------- |
 | Runtime                     | Node.js 24.18.0; pnpm 11.18.0                                                 |
 | Database                    | PostgreSQL 16.14, Visual C++ 1944, 64-bit                                     |
-| Migration/integration run   | 2026-08-07 12:07:38 `Asia/Tehran`; 14 migrations, none pending; 25.34 seconds |
-| Focused load interval       | 2026-08-07T08:08:09.169Z to 2026-08-07T08:08:27.478Z                          |
-| Recovery evidence completed | 2026-08-07T08:09:02.859Z                                                      |
-| Final browser evidence      | 2026-08-07T08:30:01.167Z; production builds                                   |
+| Migration/integration run   | 2026-08-07 13:37:14 `Asia/Tehran`; 14 migrations, none pending; 25.99 seconds |
+| Recovery evidence completed | 2026-08-07T10:08:33.316Z                                                      |
+| Full no-download browser    | 2026-08-07T10:04:06.991Z; Chrome 151.0.7922.108; 42/42 production-build tests |
+| Full no-download load       | 2026-08-07T10:04:07.414Z to 2026-08-07T10:04:26.333Z                          |
+| Runtime-bundle probes       | 2026-08-07; API health, Storefront root and Admin root all returned 200       |
 
 ## Provider decision and certification gate
 
@@ -42,39 +43,43 @@ invented.
 
 ## Verified gates
 
-| Gate                   | Result and evidence                                                                                                                                                                                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Format                 | Passed: full Prettier check.                                                                                                                                                                                                                                                    |
-| Lint                   | Passed: full ESLint workspace gate.                                                                                                                                                                                                                                             |
-| Strict type-check      | Passed: seven TypeScript projects.                                                                                                                                                                                                                                              |
-| Unit                   | Passed: 17 files, 112 tests, including redaction, headers, rate limits, metrics authorization and media validation.                                                                                                                                                             |
-| Architecture           | Passed: inward dependency and module ownership tests.                                                                                                                                                                                                                           |
-| OpenAPI                | Passed: Redocly validation; 55 pre-existing style warnings ignored by the established command. Generated client contract had no drift.                                                                                                                                          |
-| Contract               | Passed: 1 file, 2 tests.                                                                                                                                                                                                                                                        |
-| PostgreSQL integration | Passed afresh on PostgreSQL 16.14: 7 files, 45 tests in 25.34 seconds; 14 migrations applied with no pending migration. Outage, replay, idempotency, 16-way contention and inventory invariants are covered.                                                                    |
-| Production builds      | Passed for API, Storefront and Administration during the full browser gate.                                                                                                                                                                                                     |
-| Browser acceptance     | Passed on production builds: the complete 42-journey state/accessibility/security matrix in 3.4 minutes and the focused M9 suite (3/3). The focused suite additionally recorded Storefront/Admin smoke at 390x844, 768x1024, 1280x800 and 1440x900 with no horizontal overflow. |
-| Dependency posture     | Passed: the workspace override resolves the affected transitive chain to `js-yaml@4.3.1`; `pnpm why js-yaml` confirms `openapi-typescript -> @redocly/openapi-core -> js-yaml 4.3.1`, and `pnpm audit --prod --audit-level=high` reports no known vulnerability.                |
-| Secret posture         | Passed: local tracked-file policy reported no match after a test-fixture false positive was renamed; no secret value was emitted or retained. CI retains Gitleaks.                                                                                                              |
+| Gate                   | Result and evidence                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format                 | Passed: full Prettier check.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Lint                   | Passed: full ESLint workspace gate.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Strict type-check      | Passed: seven TypeScript projects.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Unit                   | Passed: 17 files, 112 tests, including redaction, headers, rate limits, metrics authorization and media validation.                                                                                                                                                                                                                                                                                                                      |
+| Architecture           | Passed: inward dependency and module ownership tests.                                                                                                                                                                                                                                                                                                                                                                                    |
+| OpenAPI                | Passed: Redocly validation; 55 pre-existing style warnings ignored by the established command. Generated client contract had no drift.                                                                                                                                                                                                                                                                                                   |
+| Contract               | Passed: 1 file, 2 tests.                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| PostgreSQL integration | Passed afresh on PostgreSQL 16.14: 7 files, 45 tests in 25.99 seconds; 14 migrations applied with no pending migration. Outage, replay, idempotency, 16-way contention and inventory invariants are covered.                                                                                                                                                                                                                             |
+| Production builds      | Passed for API, Storefront and Administration during the full browser gate.                                                                                                                                                                                                                                                                                                                                                              |
+| Browser acceptance     | Passed on production builds: the complete 42-journey state/accessibility/security matrix and focused M9 suite (3/3). The regional Playwright Headless Shell download is no longer in the gate: the runner auto-detected installed Chrome 151.0.7922.108, recorded Storefront/Admin smoke at 390x844, 768x1024, 1280x800 and 1440x900 with no horizontal overflow, and the CI path selects its preinstalled Chrome executable explicitly. |
+| Dependency posture     | Passed: the workspace override resolves the affected transitive chain to `js-yaml@4.3.1`; `pnpm why js-yaml` confirms `openapi-typescript -> @redocly/openapi-core -> js-yaml 4.3.1`, and `pnpm audit --prod --audit-level=high` reports no known vulnerability.                                                                                                                                                                         |
+| Secret posture         | Passed: local tracked-file policy reported no match after a test-fixture false positive was renamed; no secret value was emitted or retained. CI retains Gitleaks.                                                                                                                                                                                                                                                                       |
 
 The final four-viewport production-build observation was:
 
 | Viewport                | Storefront CLS | Storefront LCP | DOM ready | Storefront overflow | Admin overflow |
 | ----------------------- | -------------: | -------------: | --------: | ------------------: | -------------: |
-| Mobile `390x844`        |              0 |         152 ms |    113 ms |                none |           none |
-| Tablet `768x1024`       |              0 |          56 ms |     35 ms |                none |           none |
-| Small laptop `1280x800` |              0 |          60 ms |     35 ms |                none |           none |
-| Desktop `1440x900`      |              0 |          56 ms |     32 ms |                none |           none |
+| Mobile `390x844`        |              0 |         140 ms |    120 ms |                none |           none |
+| Tablet `768x1024`       |              0 |          72 ms |     38 ms |                none |           none |
+| Small laptop `1280x800` |              0 |          84 ms |     45 ms |                none |           none |
+| Desktop `1440x900`      |              0 |          72 ms |     38 ms |                none |           none |
 
 INP is explicitly recorded as unobserved because the smoke navigation has no
 qualifying interaction; the complete suite separately exercises keyboard,
 focus, loading, empty, error, disabled, unavailable and success states. No INP
 claim is inferred from navigation timings.
 
-The repository still has no release image definition, so a deployable container
-image scan could not be executed. Creating a production image and scanning its
-OS/application layers remains a release-candidate infrastructure blocker; this
-record does not substitute dependency and source scans for an image scan.
+The repository now defines non-root API, Storefront and Administration release
+image targets plus an independent CI build/High-Critical scan job. Their exact
+production bundles were generated locally and probed successfully: API
+liveness, Storefront root/icon and Administration root/icon returned 200. The
+local Docker client is installed, but this review identity cannot access the
+Docker Desktop engine pipe, so no local image ID or image-scan result is
+claimed. A passing CI `release-image-scan` run and retained JSON reports for the
+reviewed commit remain required before the image gate closes.
 
 ## Findings and resolution
 
@@ -91,6 +96,10 @@ record does not substitute dependency and source scans for an image scan.
 | Independent integration contention exceeded Prisma's implicit two-second transaction-acquisition default.                            | Interactive transactions now have explicit five-second acquisition and ten-second execution bounds; the integration runner allows fifteen seconds and the complete 45-test suite passes under intentional 16-way contention.                        |
 | OTP verification transport drifted from the OpenAPI 200/400 contract to Nest's default 201/422 responses.                            | The controller now explicitly returns 200 on success and OTP verification failures use a 400-class application error; the `identity-abuse` HTTP profile observes only expected 202/400/429 outcomes.                                                |
 | The transitive OpenAPI toolchain resolved vulnerable `js-yaml@4.3.0`.                                                                | A workspace override pins `js-yaml@4.3.1`, the lockfile was regenerated, the dependency path was inspected and the production audit now reports no known vulnerability.                                                                             |
+| Independent browser setup depended on downloading Playwright Headless Shell, which returned a regional 403.                          | The runner now validates an explicit executable or auto-detects installed Chrome/Edge/Chromium, passes that exact path into Playwright, and CI selects/logs its preinstalled browser instead of downloading Headless Shell.                         |
+| Initial deploy bundles placed internal TypeScript package entry points under `node_modules`, which Node refuses to type-strip.       | Internal packages now emit production JavaScript and expose it only under Node's explicit `production` condition; development/type resolution continues to use source TypeScript. Exact API and web bundles passed process-level probes.            |
+| The first API deploy bundle lacked its generated Prisma Client.                                                                      | Prisma CLI is an explicit production operational dependency and the image generates the client inside the deployed bundle; schema/migrations and the CLI remain available for the explicit one-shot migration step.                                 |
+| System Chrome preserved native lazy-loading during full-page evidence and two off-screen images never entered the load window.       | The evidence helper temporarily promotes existing image elements to eager loading, then requires bounded successful load and decode. Product runtime behavior is unchanged; the three focused regressions and final 42-test suite passed.           |
 | Journal evidence submitted while Next.js route prefetches were still active, intermittently losing the same-route notice transition. | The production-browser test now waits for the finite preload set to settle before submit; the journey passed three consecutive isolated runs and the final complete suite.                                                                          |
 | Route-integrity evidence counted a live link locator while hydration changed that collection.                                        | Link references are now captured atomically in one DOM evaluation; the isolated route test and final complete suite pass without retry.                                                                                                             |
 | The local secret scanner claimed a tracked-file policy but recursively entered ignored/untracked runtime directories.                | The scanner now obtains its exact NUL-delimited file set from the Git index with a repository-scoped safe-directory argument; the final tracked-file scan reports no match.                                                                         |
@@ -122,13 +131,13 @@ logical CPUs) and 33.75 GB memory. Each profile used concurrency 16. Read
 profiles ran for five seconds; abuse and transactional profiles used bounded
 finite workloads.
 
-| Profile           | Requests |    Throughput | Unexpected errors |    p50 |    p95 |    p99 |    Max |
-| ----------------- | -------: | ------------: | ----------------: | -----: | -----: | -----: | -----: |
-| `public-read`     |    9,159 | 1,831.8 req/s |                 0 |   9 ms |  14 ms |  17 ms |  23 ms |
-| `identity-abuse`  |       96 |    69.2 req/s |                 0 | 200 ms | 377 ms | 486 ms | 486 ms |
-| `checkout-write`  |       16 |    60.5 req/s |                 0 | 170 ms | 263 ms | 263 ms | 263 ms |
-| `callback-replay` |       16 |   733.5 req/s |                 0 |  19 ms |  21 ms |  21 ms |  21 ms |
-| `operator-read`   |   12,514 | 2,502.8 req/s |                 0 |   6 ms |  10 ms |  12 ms |  27 ms |
+| Profile           | Requests |    Throughput | Unexpected errors |    p50 |    p95 |    p99 |      Max |
+| ----------------- | -------: | ------------: | ----------------: | -----: | -----: | -----: | -------: |
+| `public-read`     |    9,353 | 1,870.6 req/s |                 0 |   8 ms |  13 ms |  15 ms | 2,080 ms |
+| `identity-abuse`  |       96 |    49.7 req/s |                 0 | 264 ms | 579 ms | 677 ms |   677 ms |
+| `checkout-write`  |       16 |    42.4 req/s |                 0 | 242 ms | 377 ms | 377 ms |   377 ms |
+| `callback-replay` |       16 |   799.6 req/s |                 0 |  16 ms |  18 ms |  18 ms |    18 ms |
+| `operator-read`   |   13,607 | 2,721.4 req/s |                 0 |   6 ms |   9 ms |  12 ms |    20 ms |
 
 All five profiles cleared the local `<1%` unexpected-error threshold, the read
 profiles cleared the `<500 ms` p95 target and the abuse/transactional profiles
@@ -148,12 +157,12 @@ named `kele_e2e`, `kele_m9_empty` and `kele_m9_restore`.
 
 | Observation                          |                                                             Result |
 | ------------------------------------ | -----------------------------------------------------------------: |
-| Empty-database migration chain       |                                                           5,667 ms |
-| Versioned application logical backup |                                                           2,104 ms |
-| Restore transaction                  |                                                           2,132 ms |
-| Migration verification after restore |                                                           5,549 ms |
-| Backup artifact                      |                                                      199,996 bytes |
-| Artifact SHA-256                     | `02ec4f03cec706102a5a500ed1dbe090648835332013446102ab086d01eb55dd` |
+| Empty-database migration chain       |                                                           5,544 ms |
+| Versioned application logical backup |                                                           2,106 ms |
+| Restore transaction                  |                                                           2,163 ms |
+| Migration verification after restore |                                                           5,513 ms |
+| Backup artifact                      |                                                      201,955 bytes |
+| Artifact SHA-256                     | `a536b1745c27e4590605952664500e7f57554716a42097805bdd08f5826fda16` |
 
 Source and restored databases each contained 14 migrations, 16 customers, one
 verified-payment Order, one PaymentAttempt, 3 inventory rows and 37 business
@@ -199,7 +208,9 @@ minutes before traffic is restored.
    revocation and recovery; execute lower-role browser acceptance.
 4. Approve business RPO/RTO and production backup/PITR/retention policy; rehearse
    them with the selected managed PostgreSQL service.
-5. Define and scan the deployable application images before release candidate.
+5. Run the CI release-image build/scan for the reviewed commit, retain all
+   three High/Critical JSON reports and record registry digests after an
+   authorized publication.
 6. Resolve the production design/rights blockers `DES-001` through `DES-005`
    before customer-facing release.
 

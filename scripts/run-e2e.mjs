@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -25,6 +26,7 @@ const requestedEnvironment = {
   E2E_STOREFRONT_PORT: process.env.E2E_STOREFRONT_PORT ?? '3100',
   E2E_ADMIN_PORT: process.env.E2E_ADMIN_PORT ?? '3102',
 };
+const browserExecutable = resolveBrowserExecutable(requestedEnvironment);
 const databaseConfiguration = readE2EDatabaseConfiguration(requestedEnvironment);
 const ports = readE2EPorts(requestedEnvironment);
 const storefrontOrigin = `http://127.0.0.1:${String(ports.storefront)}`;
@@ -45,6 +47,7 @@ const sharedEnvironment = {
   E2E_FIXED_TIME: evidenceFixedTime,
   E2E_DETERMINISTIC_ID_SEED: evidenceIdSeed,
   KELE_E2E_PRESENTATION_TOKEN: presentationToken,
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: browserExecutable,
   TZ: 'Asia/Tehran',
 };
 const generatedDeclarationPaths = [
@@ -55,6 +58,73 @@ const generatedDeclarationContents = await Promise.all(
   generatedDeclarationPaths.map((declarationPath) => readFile(declarationPath, 'utf8')),
 );
 const serverProcesses = [];
+
+function resolveBrowserExecutable(environment) {
+  const explicit = environment.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
+  if (explicit !== undefined && explicit.length > 0) {
+    const explicitPath = path.resolve(explicit);
+    if (!existsSync(explicitPath)) {
+      throw new Error(`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH does not exist: ${explicitPath}`);
+    }
+    console.log(`[e2e] Browser executable: ${explicitPath} (explicit)`);
+    return explicitPath;
+  }
+
+  const candidates = [];
+  const addCandidate = (...segments) => {
+    if (segments[0] !== undefined && segments[0].length > 0) {
+      candidates.push(path.join(...segments));
+    }
+  };
+
+  if (process.platform === 'win32') {
+    addCandidate(environment.ProgramFiles, 'Google', 'Chrome', 'Application', 'chrome.exe');
+    addCandidate(environment['ProgramFiles(x86)'], 'Google', 'Chrome', 'Application', 'chrome.exe');
+    addCandidate(environment.LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe');
+    addCandidate(environment.ProgramFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe');
+    addCandidate(
+      environment['ProgramFiles(x86)'],
+      'Microsoft',
+      'Edge',
+      'Application',
+      'msedge.exe',
+    );
+  } else if (process.platform === 'darwin') {
+    candidates.push(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    );
+  } else {
+    candidates.push(
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/snap/bin/chromium',
+    );
+  }
+
+  try {
+    const rootPackage = path.join(workspace, 'package.json');
+    const { chromium } = createRequire(rootPackage)('@playwright/test');
+    candidates.push(chromium.executablePath());
+  } catch {
+    // A system browser is sufficient; the Playwright-managed browser is optional.
+  }
+
+  const resolved = candidates.find((candidate) => existsSync(candidate));
+  if (resolved === undefined) {
+    throw new Error(
+      'No Chromium-compatible executable was found. Install Chrome/Edge/Chromium or set ' +
+        'PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH to an existing executable. The M9 gate does not ' +
+        'download Playwright Headless Shell at runtime.',
+    );
+  }
+
+  console.log(`[e2e] Browser executable: ${resolved} (auto-detected)`);
+  return resolved;
+}
 
 async function runPnpm(argumentsForPnpm, environment) {
   await new Promise((resolveRun, rejectRun) => {

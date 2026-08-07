@@ -179,6 +179,9 @@ Milestone 6 additionally enforces:
 - Lock dependencies and use automated vulnerability scanning.
 - CI performs secret scanning, dependency audit, tests and image scanning.
 - Containers run as non-root with minimal production dependencies.
+- The three release-image targets are built and scanned in CI; the Trivy Action
+  is pinned by full immutable commit SHA and High/Critical OS or library
+  findings fail the image gate without an `ignore-unfixed` waiver.
 - Database and object storage are private; backups are encrypted and tested.
 - Production access is least-privilege and attributable.
 

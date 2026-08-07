@@ -23,6 +23,7 @@
     "build": "dotenv -e .env -v NODE_ENV=production -- corepack pnpm@11.18.0 -r --if-present build",
     "test:e2e": "node scripts/run-e2e.mjs",
     "test:m9:acceptance": "dotenv -e .env -v M9_RUN_LOAD=true -- node scripts/run-e2e.mjs e2e/milestone-9.spec.ts",
+    "test:m9:full": "dotenv -e .env -v M9_RUN_LOAD=true -- node scripts/run-e2e.mjs",
     "test:m9:recovery": "dotenv -e .env -v NODE_ENV=test -v M9_RECOVERY_CONFIRM_SYNTHETIC=isolated-kele-e2e -- node scripts/rehearse-m9-recovery.mjs",
     "audit": "pnpm audit --prod --audit-level=high",
     "scan:secrets": "node scripts/scan-secrets.mjs",

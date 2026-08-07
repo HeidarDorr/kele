@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type APIResponse, type Page } from '@playwright/test';
 import { e2eUrls } from './ports.mts';
 
 const metricsToken = process.env.METRICS_BEARER_TOKEN ?? 'development-metrics-bearer-token-000001';
@@ -33,10 +33,19 @@ test.describe.serial('Milestone 9 production-like operational acceptance', () =>
     expect(deniedMetrics.status()).toBe(401);
     expect(await deniedMetrics.text()).not.toContain(metricsToken);
 
-    const metrics = await request.get(`${e2eUrls.api}/metrics`, {
-      headers: { authorization: `Bearer ${metricsToken}` },
-    });
-    expect(metrics.status()).toBe(200);
+    let metrics: APIResponse | undefined;
+    await expect
+      .poll(
+        async () => {
+          metrics = await request.get(`${e2eUrls.api}/metrics`, {
+            headers: { authorization: `Bearer ${metricsToken}` },
+          });
+          return metrics.status();
+        },
+        { message: 'Operational metrics must recover from a bounded transient snapshot timeout.' },
+      )
+      .toBe(200);
+    if (metrics === undefined) throw new Error('Operational metrics response was not captured.');
     const metricsBody = await metrics.text();
     expect(metricsBody).toContain('kele_database_ready 1');
     expect(metricsBody).toContain('kele_http_requests_total');

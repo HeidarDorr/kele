@@ -67,10 +67,18 @@ jobs:
           pnpm test:contract
       - name: Production builds
         run: pnpm build
-      - name: Install browser for smoke test
-        run: pnpm exec playwright install --with-deps chromium
-      - name: End-to-end smoke
-        run: pnpm test:e2e
+      - name: Select preinstalled browser for acceptance
+        shell: bash
+        run: |
+          browser_path="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$browser_path" || ! -x "$browser_path" ]]; then
+            echo "::error::No preinstalled Chrome/Chromium executable is available on the runner."
+            exit 1
+          fi
+          echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$browser_path" >> "$GITHUB_ENV"
+          "$browser_path" --version
+      - name: Full browser, viewport and load acceptance
+        run: pnpm test:m9:full
       - name: Dependency audit
         run: pnpm audit --prod --audit-level=high
 
@@ -83,3 +91,72 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-image-scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build immutable release-image candidates
+        shell: bash
+        run: |
+          build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          common_args=(
+            --build-arg "RELEASE_VERSION=0.1.0-${GITHUB_SHA::12}"
+            --build-arg "VCS_REF=$GITHUB_SHA"
+            --build-arg "BUILD_DATE=$build_date"
+            --build-arg "NEXT_PUBLIC_API_BASE_URL=https://api.ci.invalid/api/v1"
+            --build-arg "API_BASE_URL=https://api.ci.invalid/api/v1"
+            --build-arg "STOREFRONT_ORIGIN=https://storefront.ci.invalid"
+          )
+          docker build "${common_args[@]}" --target api-runtime --tag "kele-api:$GITHUB_SHA" .
+          docker build "${common_args[@]}" --target storefront-runtime --tag "kele-storefront:$GITHUB_SHA" .
+          docker build "${common_args[@]}" --target admin-runtime --tag "kele-admin:$GITHUB_SHA" .
+          docker image inspect --format '{{.RepoTags}} {{.Id}} revision={{index .Config.Labels "org.opencontainers.image.revision"}}' \
+            "kele-api:$GITHUB_SHA" "kele-storefront:$GITHUB_SHA" "kele-admin:$GITHUB_SHA" \
+            > image-manifest.txt
+          cat image-manifest.txt
+      - name: Scan API image for High/Critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: kele-api:${{ github.sha }}
+          format: json
+          output: trivy-api.json
+          exit-code: '1'
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+      - name: Scan Storefront image for High/Critical vulnerabilities
+        if: ${{ always() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: kele-storefront:${{ github.sha }}
+          format: json
+          output: trivy-storefront.json
+          exit-code: '1'
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          skip-setup-trivy: true
+      - name: Scan Administration image for High/Critical vulnerabilities
+        if: ${{ always() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: kele-admin:${{ github.sha }}
+          format: json
+          output: trivy-admin.json
+          exit-code: '1'
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          skip-setup-trivy: true
+      - name: Retain image-scan evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-image-scan-${{ github.sha }}
+          path: |
+            image-manifest.txt
+            trivy-*.json
+          if-no-files-found: warn
+          retention-days: 30

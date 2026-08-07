@@ -25,6 +25,7 @@ import {
   type MilestoneEvidenceFixture,
 } from './evidence-fixtures.mjs';
 import { reviewEvidencePath } from './evidence-paths.mjs';
+import { waitForPageImages } from './image-readiness.js';
 import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
 
 const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
@@ -111,9 +112,7 @@ async function captureEvidence(
 ): Promise<void> {
   if (options.stabilizePage) await page.clock.setFixedTime(evidenceFixedTime);
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
-  await page.waitForFunction(() =>
-    Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0),
-  );
+  await waitForPageImages(page);
   await page.evaluate(async () => {
     let previousSignature = '';
     let stableFrames = 0;

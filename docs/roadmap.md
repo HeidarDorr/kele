@@ -174,8 +174,10 @@ reverified on `feat/m09-production-hardening` (2026-08-07), including all five
 synthetic load profiles and an isolated PostgreSQL 16 migration/backup/restore
 rehearsal. Staging/production remain `NO-GO` because OQ-002-PROD,
 OQ-003-PROD, OQ-017, OQ-018 and OQ-022 have no explicit approved answer,
-their provider/session certifications are blocked, and no release image has
-been produced and scanned. See `docs/milestone-9-verification.md`.
+their provider/session certifications are blocked, and the new non-root release
+image targets have not yet completed their CI image scan for a reviewed commit.
+The browser gate no longer downloads Playwright Headless Shell and passes with
+an installed Chrome executable. See `docs/milestone-9-verification.md`.
 
 Deliverables:
 

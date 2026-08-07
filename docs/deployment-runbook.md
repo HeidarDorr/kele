@@ -23,6 +23,33 @@ Build immutable, versioned container images for API, storefront and admin.
 Record Git commit, image digest, schema migration version, and release time.
 Containers run as non-root and expose health endpoints.
 
+The root `Dockerfile` supplies `api-runtime`, `storefront-runtime` and
+`admin-runtime` targets pinned to the repository Node version. All targets run
+as the unprivileged `node` user, carry OCI version/revision/build-time labels,
+expose explicit ports and define liveness-only health checks. Build with the
+same non-secret public origins intended for the target environment:
+
+```text
+docker build --target api-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> -t kele-api:<commit> .
+docker build --target storefront-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg NEXT_PUBLIC_API_BASE_URL=<https-api-url> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-storefront:<commit> .
+docker build --target admin-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-admin:<commit> .
+```
+
+The API image includes the locked Prisma CLI, schema, migrations and generated
+client so the reviewed image can execute the explicit one-shot migration step:
+
+```text
+node node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma
+```
+
+Do not run that command automatically in every API replica. The CI
+`release-image-scan` job builds all three targets, records their image IDs and
+revision labels, scans OS and application packages for High/Critical findings
+with an immutable Trivy Action SHA, and retains the three JSON reports for 30
+days. A release remains blocked until that job passes for the reviewed commit;
+after registry publication, record the registry digest rather than a mutable
+tag.
+
 ## Pre-deployment
 
 1. Confirm CI and security gates.
@@ -160,6 +187,8 @@ counts, non-negative inventory and verified-payment-only Orders. Its JSON
 artifact plus migrations form an application logical rehearsal backup; it is
 not the production backup product. Production requires separately approved,
 encrypted managed backups/PITR, retention, access tests and business RPO/RTO.
+Use `docs/m9-production-approval-record.md` for the required service decision,
+measured managed-rehearsal evidence and accountable approvals.
 
 Rollback selects the reviewed Milestone 8 application artifacts while retaining
 the additive database schema and every immutable fact. Verify API readiness,

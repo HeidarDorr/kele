@@ -56,6 +56,8 @@ scoped blockers. Independent security, observability, performance,
 backup/restore and rollback hardening continues under
 `docs/milestone-9-plan.md`. This record does not select, purchase, configure or
 approve a provider, credential, region, retention policy or commercial tier.
+The complete non-secret decision and certification fields awaiting approval are
+in `docs/m9-production-approval-record.md`.
 The 2026-08-07 remediation run reconfirmed that no accepted ADR, frozen
 requirement or user-supplied decision closes any of these five records; they
 must therefore remain explicit launch blockers rather than inferred defaults.

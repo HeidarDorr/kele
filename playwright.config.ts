@@ -1,5 +1,8 @@
 import { defineConfig } from '@playwright/test';
+import { configuredBrowserExecutable } from './e2e/browser-executable.mts';
 import { e2eUrls } from './e2e/ports.mts';
+
+const browserExecutable = configuredBrowserExecutable();
 
 export default defineConfig({
   testDir: './e2e',
@@ -14,5 +17,8 @@ export default defineConfig({
     reducedMotion: 'reduce',
     timezoneId: 'Asia/Tehran',
     trace: 'retain-on-failure',
+    ...(browserExecutable === undefined || browserExecutable.length === 0
+      ? {}
+      : { launchOptions: { executablePath: browserExecutable } }),
   },
 });

@@ -3,13 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "package.json"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
+      "production": "./dist/index.js",
       "default": "./src/index.ts"
     },
     "./e2e-database": {
       "types": "./src/e2e-database.ts",
+      "production": "./dist/e2e-database.js",
       "default": "./src/e2e-database.ts"
     }
   },
@@ -17,6 +24,7 @@
     "zod": "4.4.3"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
   }
 }

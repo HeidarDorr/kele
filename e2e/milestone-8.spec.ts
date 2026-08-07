@@ -9,6 +9,7 @@ import {
   setE2EInventory,
 } from '../apps/api/test/support/customer-e2e.js';
 import { reviewEvidencePath } from './evidence-paths.mjs';
+import { waitForPageImages } from './image-readiness.js';
 import { e2eUrls } from './ports.mts';
 import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
 import { resetDeterministicE2EFixture } from './reset-e2e-fixture.mjs';
@@ -113,24 +114,10 @@ async function completeOtp(page: Page): Promise<void> {
 async function settlePage(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded');
   await page.evaluate(async () => {
-    window.scrollTo(0, document.body.scrollHeight);
-    await new Promise<void>((resolveFrame) => {
-      window.setTimeout(resolveFrame, 80);
-    });
-    window.scrollTo(0, 0);
     await document.fonts.ready;
   });
-  await page.waitForFunction(() =>
-    Array.from(document.images).every(
-      (image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0,
-    ),
-  );
+  await waitForPageImages(page, 20_000);
   await page.evaluate(async () => {
-    await Promise.all(
-      Array.from(document.images).map(async (image) => {
-        await image.decode();
-      }),
-    );
     let style = document.querySelector<HTMLStyleElement>('#m8-visual-stability');
     if (!style) {
       style = document.createElement('style');
