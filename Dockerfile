@@ -16,6 +16,9 @@ RUN npm install --global pnpm@11.18.0
 COPY . .
 
 RUN pnpm install --frozen-lockfile
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 RUN pnpm prisma:generate
 
 ARG NEXT_PUBLIC_API_BASE_URL=https://api.ci.invalid/api/v1
@@ -37,7 +40,7 @@ RUN pnpm --filter @kele/api --prod deploy --legacy /artifacts/api \
 RUN cd /artifacts/api \
     && node node_modules/prisma/build/index.js generate --schema prisma/schema.prisma
 
-FROM node:${NODE_VERSION}-bookworm-slim AS api-runtime
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:fccdbb0a547c14e23fcf4ce8ad62ca5d43b4faae8d22cd292f490fef9946c96e AS api-runtime
 
 ARG RELEASE_VERSION=0.1.0
 ARG VCS_REF=unknown
@@ -54,19 +57,21 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-COPY --chown=node:node --from=build /artifacts/api ./
-COPY --chown=node:node --from=build /workspace/apps/api/dist ./dist
-COPY --chown=node:node --from=build /workspace/apps/api/prisma ./prisma
+COPY --chown=65532:65532 --from=build /usr/local/bin/node /nodejs/bin/node
+COPY --chown=65532:65532 --from=build /artifacts/api ./
+COPY --chown=65532:65532 --from=build /workspace/apps/api/dist ./dist
+COPY --chown=65532:65532 --from=build /workspace/apps/api/prisma ./prisma
 
-USER node
+USER 65532:65532
 EXPOSE 3001
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3001') + '/api/v1/health/live').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3001') + '/api/v1/health/live').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
 
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["/nodejs/bin/node"]
+CMD ["dist/main.js"]
 
-FROM node:${NODE_VERSION}-bookworm-slim AS storefront-runtime
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:fccdbb0a547c14e23fcf4ce8ad62ca5d43b4faae8d22cd292f490fef9946c96e AS storefront-runtime
 
 ARG RELEASE_VERSION=0.1.0
 ARG VCS_REF=unknown
@@ -84,19 +89,21 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-COPY --chown=node:node --from=build /artifacts/storefront ./
-COPY --chown=node:node --from=build /workspace/apps/storefront/.next ./.next
-COPY --chown=node:node --from=build /workspace/apps/storefront/public ./public
+COPY --chown=65532:65532 --from=build /usr/local/bin/node /nodejs/bin/node
+COPY --chown=65532:65532 --from=build /artifacts/storefront ./
+COPY --chown=65532:65532 --from=build /workspace/apps/storefront/.next ./.next
+COPY --chown=65532:65532 --from=build /workspace/apps/storefront/public ./public
 
-USER node
+USER 65532:65532
 EXPOSE 3000
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3000') + '/icon.svg').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3000') + '/icon.svg').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
 
-CMD ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]
+ENTRYPOINT ["/nodejs/bin/node"]
+CMD ["node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]
 
-FROM node:${NODE_VERSION}-bookworm-slim AS admin-runtime
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:fccdbb0a547c14e23fcf4ce8ad62ca5d43b4faae8d22cd292f490fef9946c96e AS admin-runtime
 
 ARG RELEASE_VERSION=0.1.0
 ARG VCS_REF=unknown
@@ -114,13 +121,15 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-COPY --chown=node:node --from=build /artifacts/admin ./
-COPY --chown=node:node --from=build /workspace/apps/admin/.next ./.next
+COPY --chown=65532:65532 --from=build /usr/local/bin/node /nodejs/bin/node
+COPY --chown=65532:65532 --from=build /artifacts/admin ./
+COPY --chown=65532:65532 --from=build /workspace/apps/admin/.next ./.next
 
-USER node
+USER 65532:65532
 EXPOSE 3002
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3002') + '/icon.svg').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3002') + '/icon.svg').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1));"]
 
-CMD ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]
+ENTRYPOINT ["/nodejs/bin/node"]
+CMD ["node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0"]

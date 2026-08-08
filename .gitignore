@@ -30,6 +30,7 @@ test-results/
 screenshots/actual/
 screenshots/diff/
 output/playwright/.e2e-run/
+output/release-image-scan/
 
 # Local object storage and database volumes
 .data/
