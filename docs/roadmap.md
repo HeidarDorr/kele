@@ -169,16 +169,19 @@ and approved against objective UI acceptance evidence.
 
 ## Milestone 9 — production integrations and operational hardening
 
-Implementation status: provider-independent hardening was independently
-reverified on `feat/m09-production-hardening` (2026-08-07), including all five
-synthetic load profiles and an isolated PostgreSQL 16 migration/backup/restore
-rehearsal. ADR-0005 now resolves OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and
-OQ-022, and their approved adapters plus the PostgreSQL administrator-session
-path are implemented locally. Staging/production remain `NO-GO` until real
-provider/regional certifications, the managed PostgreSQL PITR/RPO/RTO rehearsal
-and a retained CI scan of all three release images pass for the reviewed
-commit. The browser gate uses an installed Chrome executable without downloading
-Playwright Headless Shell. See `docs/milestone-9-verification.md`.
+Implementation status: provider-bound hardening was independently reverified on
+`feat/m09-production-hardening` (2026-08-08), including 42 browser journeys,
+four viewports, all five synthetic load profiles, 50 PostgreSQL integration
+tests and an isolated 16-migration backup/restore rehearsal. ADR-0005 resolves
+OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022, and their approved adapters
+plus the PostgreSQL administrator-session path are implemented locally. Three
+exact non-root release images were built, smoked and scanned locally with zero
+High/Critical findings. Staging/production remain `NO-GO` until real
+provider/regional certifications, `CERT-M9-001`, administrator recovery, the
+managed PostgreSQL PITR/RPO/RTO rehearsal and a retained remote CI image scan
+pass for the reviewed commit. The browser gate uses installed Chrome without
+downloading Playwright Headless Shell. See
+`docs/milestone-9-verification.md`.
 
 Deliverables:
 

@@ -1,12 +1,12 @@
 # Milestone 9 production hardening plan
 
-Version: 0.1
+Version: 0.2
 
 Status: Approved-scope implementation contract
 
 Branch: `feat/m09-production-hardening`
 
-Rules and decisions: ADR-0004; PAY-001 to PAY-003; SMS-001 to SMS-002;
+Rules and decisions: ADR-0004; ADR-0005; PAY-001 to PAY-003; SMS-001 to SMS-002;
 CUS-001 to CUS-005 and CUS-010; CMS-002 to CMS-005 and CMS-008 to CMS-009;
 CMS-016 to CMS-017; EVT-001 to EVT-012; PRC-011 to PRC-012; ORD-001 to
 ORD-004 and ORD-018; RTE-001 to RTE-005; HRD-001 to HRD-010;
@@ -14,28 +14,23 @@ OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022.
 
 ## Scope gate and provider decisions
 
-Decision update (2026-08-08): the table below records the gate at original plan
-approval. It is superseded for implementation selection by accepted ADR-0005,
-which closes all five questions. External tenant/account certification and
-managed-service recovery evidence remain blockers exactly as specified by the
-acceptance criteria; approval alone is not certification.
+Decision update (2026-08-08): accepted ADR-0005 closes all five selection
+questions. External tenant/account certification and managed-service recovery
+evidence remain blockers exactly as specified by the acceptance criteria;
+approval and local contract evidence are not certification.
 
-The decision register and every approved decision record were reviewed before
-implementation. None of the five production/provider-session questions has an
-explicit approved answer.
+| Decision      | Approved boundary                                                      | Remaining Milestone 9 gate                                                                              |
+| ------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `OQ-002-PROD` | Vandar IPG v3 and Refund v3                                            | Real merchant sandbox/refund capability, settlement evidence and `CERT-M9-001` callback/inquiry safety. |
+| `OQ-003-PROD` | Kavenegar Verify Lookup                                                | Real account, approved template/sender and delivery evidence.                                           |
+| `OQ-017`      | KELE-managed Grafana/Loki/Prometheus in Iran                           | Regional private deployment, retention, redaction and alert delivery/acknowledgement.                   |
+| `OQ-018`      | Private Arvan Simin Object Storage/CDN                                 | Real bucket/CDN access, encryption, versioning, lifecycle, invalidation and malware behavior.           |
+| `OQ-022`      | First-party PostgreSQL principals and revocable Kavenegar OTP sessions | Production bootstrap, lower-role lifecycle, two-person break-glass and real SMS factor.                 |
 
-| Decision      | Verified state                                                                                                                  | Milestone 9 effect                                                                                                                                                                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OQ-002-PROD` | Open: no payment/refund provider, verification protocol, inquiry API, settlement behavior or commercial limit is approved.      | A production payment/refund adapter, provider schema, SDK, credential name, callback protocol and sandbox certification are blocked. The existing provider-neutral ports and Fake local/test adapters remain the only executable implementations. |
-| `OQ-003-PROD` | Open: no SMS provider, sender identity, delivery-report contract, retention rule or commercial limit is approved.               | A production SMS adapter, credential name, delivery callback and sandbox certification are blocked. The centralized port and Fake local/test adapter remain in place.                                                                             |
-| `OQ-017`      | Open: no error-monitoring provider, data region, retention, sampling, scrubbing or alert destination is approved.               | Provider SDK installation and remote event export are blocked. Provider-neutral safe structured events, local metrics and operator alert specifications remain in scope.                                                                          |
-| `OQ-018`      | Open: no production S3-compatible storage/CDN, region, bucket policy, signing model, hostname or lifecycle is approved.         | Production storage/CDN configuration and certification are blocked. Local MinIO and storage-neutral acceptance/runbook work remain in scope.                                                                                                      |
-| `OQ-022`      | Open: no production administration identity, session issuance, role-provisioning, recovery or revocation authority is approved. | Static administration tokens remain local/test fixtures and production startup rejects them. Staging administration access and production-like role-provisioning certification are blocked.                                                       |
-
-This is a scoped block, not permission to infer a provider. No provider will be
-selected, purchased, configured or represented as certified. Production and
-staging remain `NO-GO` for the affected dependency until the decision owner
-records an explicit answer and provider-specific acceptance is executed.
+No provider was purchased, configured with a real credential or represented as
+certified by local implementation. Production and staging remain `NO-GO` until
+provider-specific acceptance, managed PostgreSQL recovery and the remote CI
+release-image scan are executed and retained.
 
 ## Acceptance criteria
 

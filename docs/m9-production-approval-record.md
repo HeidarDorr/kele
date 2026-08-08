@@ -1,8 +1,9 @@
 # Milestone 9 production decision and certification record
 
-Version: 0.3
+Version: 0.4
 
-Status: **FIVE DECISIONS APPROVED; external sandbox certification remains NO-GO**
+Status: **FIVE DECISIONS APPROVED; local implementation and image gates pass;
+external certification remains NO-GO**
 
 This record is the single approval handoff for the five production decisions
 that cannot be inferred from implementation. A row becomes approved only when
@@ -39,6 +40,31 @@ with redacted request/response evidence.
 | `OQ-017`      | Scrubbed test exception and correlation; zero secret/mobile/address leakage; sampling and retention verification; alert delivery, acknowledgement and recovery; regional ingestion verification.                                                   | Pending deployable private-cluster endpoint and on-call destination.                                                                                                                                                                                               |
 | `OQ-018`      | Private upload/read/delete; signed URL expiry; denied anonymous/origin-bypass access; CDN cache/invalidation; version/lifecycle/retention; encryption and access logs; malware-failure behavior.                                                   | Pending Arvan account, access keys, bucket and CDN hostname.                                                                                                                                                                                                       |
 | `OQ-022`      | Super-Admin and lower-role issuance; deny-by-default access; expiry; logout/revocation; role change; recovery/break-glass; attributable audit and four-viewport browser acceptance.                                                                | PostgreSQL session, revocation, guard and login-flow implementation is locally testable. Offline bootstrap/recovery and the real SMS factor remain pending; the latter shares the OQ-003 credential block.                                                         |
+
+## Local implementation evidence
+
+Local evidence was refreshed on 2026-08-08 against branch
+`feat/m09-production-hardening`. It establishes application behavior only and
+does not convert any external row above to certified.
+
+| Boundary               | Evidence                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Vandar                 | Bounded IPG inquiry/verification and Refund request adapters pass unit and PostgreSQL orchestration tests; refunds remain `pending` without authenticated provider truth.                  |
+| Kavenegar              | Verify Lookup response/delivery-status contracts pass unit tests; customer and administrator OTP/session behavior passes PostgreSQL integration.                                           |
+| Administrator identity | Opaque session rotation, CSRF, idle/absolute expiry, logout, role/disable revocation and immutable security audit behavior pass; the four-viewport login shell has no horizontal overflow. |
+| Arvan storage          | The S3-compatible private object/presigning adapter and fail-closed configuration pass local contracts; no real bucket or CDN operation was attempted.                                     |
+| Observability          | Redacted correlated events, protected Prometheus metrics and alert thresholds pass application tests; no regional cluster ingestion/notification was attempted.                            |
+| Browser/load           | Chrome 151 completed 42/42 production-build journeys; all five local profiles recorded zero unexpected errors.                                                                             |
+| Recovery               | PostgreSQL 16 logical backup/restore reproduced all 16 migrations, 16 synthetic customers, one verified-payment Order and 37 business events with no invalid inventory.                    |
+
+The final local release-image candidate is
+`fd168f943b973e129b2961786aeef84e7675ca42`. Trivy 0.69.3 found zero High and
+zero Critical vulnerabilities in its API, Storefront and Administration images.
+The three raw JSON reports are retained locally under
+`output/release-image-scan/fd168f943b973e129b2961786aeef84e7675ca42/`.
+This does not satisfy the separately required remote CI run: this checkout has
+no Git remote or authenticated GitHub execution path, no image was published,
+and no registry digest exists.
 
 ### Refund completion safety boundary
 

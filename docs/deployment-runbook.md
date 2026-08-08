@@ -1,7 +1,7 @@
 # Deployment, migration, backup, and rollback runbook
 
-Version: 0.1
-Status: Baseline; provider details pending
+Version: 0.2
+Status: Provider boundaries approved; external certification pending
 
 ## Environments
 
@@ -24,10 +24,13 @@ Record Git commit, image digest, schema migration version, and release time.
 Containers run as non-root and expose health endpoints.
 
 The root `Dockerfile` supplies `api-runtime`, `storefront-runtime` and
-`admin-runtime` targets pinned to the repository Node version. All targets run
-as the unprivileged `node` user, carry OCI version/revision/build-time labels,
-expose explicit ports and define liveness-only health checks. Build with the
-same non-secret public origins intended for the target environment:
+`admin-runtime` targets. The build stage is pinned to the repository Node
+version and produces the OpenSSL 3 Prisma Client. Runtime targets use the pinned
+distroless Debian 12 CC digest, copy that exact Node binary, run as
+`65532:65532`, contain no shell/package manager, carry OCI
+version/revision/build-time labels and use absolute Node entrypoints and
+liveness checks. Build with the same non-secret public origins intended for the
+target environment:
 
 ```text
 docker build --target api-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> -t kele-api:<commit> .
@@ -49,6 +52,21 @@ with an immutable Trivy Action SHA, and retains the three JSON reports for 30
 days. A release remains blocked until that job passes for the reviewed commit;
 after registry publication, record the registry digest rather than a mutable
 tag.
+
+For an independent local preflight, scan the exact images with the same
+High/Critical OS-and-library scope and retain one JSON report per target. On
+Docker Desktop for Windows, exporting the image first avoids relying on a
+container-to-host Docker socket mount:
+
+```text
+docker save --output <report-directory>/<target>.tar kele-<target>:<commit>
+docker run --rm -v trivy-cache:/root/.cache/trivy -v <report-directory>:/reports aquasec/trivy:0.69.3 image --skip-version-check --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --format json --output /reports/<target>.json --exit-code 1 --input /reports/<target>.tar
+```
+
+Delete the temporary tar after a successful scan; retain the JSON, its SHA-256,
+the local image ID, scanner version/database time and OCI revision label. A
+local pass is useful independent evidence but never substitutes for the
+required CI artifact or a registry digest.
 
 ## Pre-deployment
 
