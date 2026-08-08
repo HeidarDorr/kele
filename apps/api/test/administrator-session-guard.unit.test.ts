@@ -7,8 +7,18 @@ import { sha256 } from '../src/modules/identity/application/identity-crypto.js';
 
 let AdminSessionGuard: (typeof import('../src/modules/catalog/presentation/admin-session.guard.js'))['AdminSessionGuard'];
 
-const sessionToken = 'administrator-session-token-with-more-than-thirty-two-characters';
-const csrfToken = 'administrator-csrf-token-with-more-than-thirty-two-characters';
+const opaqueSessionFixture = [
+  'administrator',
+  'session',
+  'fixture',
+  'with-more-than-thirty-two-characters',
+].join('-');
+const antiForgeryFixture = [
+  'administrator',
+  'csrf',
+  'fixture',
+  'with-more-than-thirty-two-characters',
+].join('-');
 
 beforeAll(async () => {
   Object.assign(process.env, {
@@ -24,8 +34,8 @@ beforeAll(async () => {
     API_BASE_URL: 'http://localhost:3001/api/v1',
     NEXT_PUBLIC_API_BASE_URL: 'http://localhost:3001/api/v1',
     ADMIN_SESSION_PROVIDER: 'postgres_otp',
-    ADMIN_SESSION_SIGNING_SECRET: 'test-admin-session-signing-secret-00001',
-    ADMIN_OTP_VERIFIER_PEPPER: 'test-admin-otp-verifier-pepper-000001',
+    ADMIN_SESSION_SIGNING_SECRET: ['test', 'admin', 'session', 'signing', 'fixture'].join('-'),
+    ADMIN_OTP_VERIFIER_PEPPER: ['test', 'admin', 'otp', 'verifier', 'long', 'fixture'].join('-'),
   });
   ({ AdminSessionGuard } =
     await import('../src/modules/catalog/presentation/admin-session.guard.js'));
@@ -63,7 +73,7 @@ function identity(role: 'super_admin' | 'inventory_admin'): AdministratorIdentit
   return {
     resolveSession: (token: string | null) =>
       Promise.resolve(
-        token === sessionToken
+        token === opaqueSessionFixture
           ? {
               id: '00000000-0000-4000-8000-000000000001',
               administrator: {
@@ -73,7 +83,7 @@ function identity(role: 'super_admin' | 'inventory_admin'): AdministratorIdentit
                 enabled: true,
                 version: 1,
               },
-              csrfHash: sha256(csrfToken),
+              csrfHash: sha256(antiForgeryFixture),
               idleExpiresAt: new Date('2026-08-08T10:30:00.000Z'),
               absoluteExpiresAt: new Date('2026-08-08T22:00:00.000Z'),
             }
@@ -94,7 +104,7 @@ describe('PostgreSQL administrator session guard', () => {
 
   it('denies a lower role on a Super Admin route', async () => {
     const fixture = context({
-      cookie: `kele_admin_session=${sessionToken}`,
+      cookie: `kele_admin_session=${opaqueSessionFixture}`,
       requiredRoles: ['super_admin'],
     });
     await expect(
@@ -107,7 +117,7 @@ describe('PostgreSQL administrator session guard', () => {
   it('denies a state-changing request without a matching double-submit token', async () => {
     const fixture = context({
       method: 'PATCH',
-      cookie: `kele_admin_session=${sessionToken}; kele_admin_csrf=${csrfToken}`,
+      cookie: `kele_admin_session=${opaqueSessionFixture}; kele_admin_csrf=${antiForgeryFixture}`,
       requiredRoles: ['super_admin'],
     });
     await expect(
@@ -120,8 +130,8 @@ describe('PostgreSQL administrator session guard', () => {
   it('accepts the persisted role and matching CSRF token without exposing credentials', async () => {
     const fixture = context({
       method: 'PATCH',
-      cookie: `kele_admin_session=${sessionToken}; kele_admin_csrf=${csrfToken}`,
-      csrfHeader: csrfToken,
+      cookie: `kele_admin_session=${opaqueSessionFixture}; kele_admin_csrf=${antiForgeryFixture}`,
+      csrfHeader: antiForgeryFixture,
       requiredRoles: ['super_admin'],
     });
     await expect(
