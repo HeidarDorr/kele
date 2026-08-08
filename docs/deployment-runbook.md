@@ -19,6 +19,13 @@ MinIO and the guarded `kele_e2e` fixture and therefore is neither staging nor
 production evidence. Codespaces setup must not receive real customer or
 provider data and cannot close any ADR-0005 external certification.
 
+When Codespaces quota is unavailable, the optional Cloudflare Quick Tunnel
+profile documented in `cloudflare-quick-tunnel-demo.md` provides the same
+synthetic functional-UAT boundary from an operator workstation. Its random
+public URLs have no Cloudflare Access policy and therefore must contain only
+synthetic data and be shared only with intended testers. Quick Tunnel is not a
+staging, availability, backup, provider or release-image certification.
+
 Production configuration MUST reject Fake Payment and Fake SMS adapters during
 startup. Production deployment remains blocked until both real providers pass
 sandbox/verification acceptance.
