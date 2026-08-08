@@ -1,6 +1,6 @@
 # Milestone 9 production decision and certification record
 
-Version: 0.4
+Version: 0.5
 
 Status: **FIVE DECISIONS APPROVED; local implementation and image gates pass;
 external certification remains NO-GO**
@@ -65,6 +65,29 @@ The three raw JSON reports are retained locally under
 This does not satisfy the separately required remote CI run: this checkout has
 no Git remote or authenticated GitHub execution path, no image was published,
 and no registry digest exists.
+
+## External access preflight — 2026-08-08
+
+Preflight time: 2026-08-08T12:53:54+03:30. Reviewed commit:
+`d066e5b73e9906d7d504663772be5b70224546a6`. This is a redacted access audit,
+not provider certification. No credential value, mobile number, account
+identifier or tenant identifier was read, emitted or stored; no external write,
+account creation, purchase or provisioning action occurred.
+
+| Boundary               | Redacted observation                                                                                                                                                                                                        | Result                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Vandar                 | Required IPG/Refund environment names are absent. The official login link redirected to a dashboard hostname that returned `ERR_NAME_NOT_RESOLVED` in the available browser. No authenticated tenant/session was available. | `BLOCKED_EXTERNAL_ACCESS`     |
+| Kavenegar              | `KAVENEGAR_API_KEY` and template configuration are absent. The provider login endpoint returned a visible `Server Unavailable` response. No authenticated tenant/session or real OTP receptor was available.                | `BLOCKED_EXTERNAL_ACCESS`     |
+| Arvan                  | Only local MinIO values exist in the development environment. The Arvan account page rendered the unauthenticated login flow; no bucket/CDN tenant, keys or signed-in session was available.                                | `BLOCKED_EXTERNAL_ACCESS`     |
+| Observability          | No private Grafana/Loki/Prometheus endpoint, bearer credential, on-call destination, Kubernetes context, Terraform root or Helm chart is configured.                                                                        | `BLOCKED_EXTERNAL_ACCESS`     |
+| Administrator exercise | No real Kavenegar factor, production administrator principal, two-person approver identities or approved break-glass escrow is available. Local database tests are not relabelled as a real-factor exercise.                | `BLOCKED_EXTERNAL_ACCESS`     |
+| Managed PostgreSQL     | `DATABASE_URL` is loopback/local only. No managed service/plan, tenant, region, backup/PITR control plane, approved RPO/RTO or authorized fault-injection target is configured.                                             | `BLOCKED_DECISION_AND_ACCESS` |
+| Remote CI              | The repository has no Git remote or authenticated GitHub execution path. The user's required separate remote/CI authorization has not been supplied.                                                                        | `BLOCKED_SEPARATE_APPROVAL`   |
+
+The next external run must replace each blocked observation with the immutable
+tenant/project identifier, operator, start/end times, reviewed Git/image digest,
+redacted request/response or control-plane evidence, expected/actual result and
+cleanup confirmation. A browser login alone is insufficient certification.
 
 ### Refund completion safety boundary
 

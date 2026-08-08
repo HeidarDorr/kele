@@ -19,6 +19,15 @@ mandatory and have not been represented as passing.
 No production credential, tenant, paid tier, deployment, push or merge was
 created by this verification.
 
+An external-access preflight was repeated at
+2026-08-08T12:53:54+03:30 against reviewed commit `d066e5b`. Required
+Vandar/Kavenegar credentials were absent, Arvan exposed only an unauthenticated
+login, no regional observability or managed PostgreSQL control plane was
+configured, no real administrator factor/two-person identities existed, and the
+repository still had no remote. These redacted `BLOCKED` observations are
+recorded in `docs/m9-production-approval-record.md`; they are not certification
+results.
+
 ## Execution identity
 
 | Observation              | Recorded value                                                                                                  |
