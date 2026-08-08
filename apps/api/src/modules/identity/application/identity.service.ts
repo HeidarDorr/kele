@@ -71,9 +71,9 @@ export class IdentityService {
       throw error;
     }
     try {
-      const dispatch = await this.sms.send({
+      const dispatch = await this.sms.sendOtp({
         mobile,
-        message: `KELE OTP: ${code}`,
+        code,
         correlationId: challenge.id,
       });
       this.telemetry.record({

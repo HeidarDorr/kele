@@ -54,7 +54,7 @@ export class FakePaymentAdapter implements PaymentGateway {
   }
 
   verifyCallback(input: {
-    signature: string;
+    authenticator: string;
     payload: unknown;
     now: Date;
   }): Promise<import('../../checkout/domain/checkout.types.js').VerifiedPaymentCallback> {
@@ -67,7 +67,7 @@ export class FakePaymentAdapter implements PaymentGateway {
     }
     const canonical = canonicalCallback(input.payload);
     const expected = this.signature(canonical);
-    const presented = Buffer.from(input.signature, 'hex');
+    const presented = Buffer.from(input.authenticator, 'hex');
     const expectedBytes = Buffer.from(expected, 'hex');
     if (presented.length !== expectedBytes.length || !timingSafeEqual(presented, expectedBytes)) {
       throw new ApplicationError(

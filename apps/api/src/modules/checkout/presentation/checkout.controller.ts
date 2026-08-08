@@ -11,8 +11,10 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { ApplicationError } from '../../../shared/application-error.js';
 import { correlationId } from '../../../platform/observability/correlation-context.js';
@@ -37,6 +39,7 @@ import {
   ShippingSettingsDto,
 } from './checkout.dto.js';
 import { PaymentCallbackRateLimitGuard } from '../../../platform/security/abuse-rate-limit.guards.js';
+import { environment } from '../../../platform/config/environment.js';
 
 function requireIdempotencyKey(value: string | undefined): string {
   if (value === undefined || value.length < 16 || value.length > 120) {
@@ -188,6 +191,36 @@ export class CheckoutController {
       body.toDomain(),
       resolvedCorrelationId(),
     );
+  }
+
+  @Get('payment-callbacks/vandar')
+  @UseGuards(PaymentCallbackRateLimitGuard)
+  async processVandarCallback(
+    @Query('token') token: string | undefined,
+    @Query('payment_status') paymentStatus: string | undefined,
+    @Res() response: Response,
+  ): Promise<void> {
+    if (
+      typeof token !== 'string' ||
+      token.length < 8 ||
+      token.length > 256 ||
+      (paymentStatus !== 'OK' && paymentStatus !== 'NOK')
+    ) {
+      throw new ApplicationError(
+        'forbidden',
+        'PAYMENT_CALLBACK_UNVERIFIED',
+        'Payment callback payload failed validation.',
+      );
+    }
+    const outcome = await this.payments.processCallback(
+      'vandar',
+      token,
+      { token, paymentStatus },
+      resolvedCorrelationId(),
+    );
+    const resultUrl = new URL('/payment/result', environment.STOREFRONT_ORIGIN);
+    resultUrl.searchParams.set('attempt', outcome.paymentAttemptId);
+    response.redirect(HttpStatus.SEE_OTHER, resultUrl.toString());
   }
 }
 

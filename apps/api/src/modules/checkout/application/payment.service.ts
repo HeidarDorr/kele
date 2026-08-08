@@ -174,7 +174,11 @@ export class PaymentService {
           'Payment provider is unsupported.',
         );
       }
-      const callback = await this.gateway.verifyCallback({ signature, payload, now });
+      const callback = await this.gateway.verifyCallback({
+        authenticator: signature,
+        payload,
+        now,
+      });
       const outcome = await this.unitOfWork.run(async () => {
         const prior = await this.repository.findCallbackReceipt(provider, callback.nonce);
         if (prior !== null) return this.requireExactReplay(prior, callback.payloadHash);

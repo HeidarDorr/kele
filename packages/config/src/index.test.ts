@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { environmentSchema, parseEnvironment } from './index.js';
 
+function fixtureCredential(name: string): string {
+  return `${name}-fixture-credential-value`;
+}
+
 const storageAccessCredential = 'development-access';
 const storagePrivateCredential = 'development-secret';
 const superSession = 'test-super-admin-session-token-00000000001';
@@ -50,6 +54,51 @@ describe('environment configuration', () => {
         'ADMIN_SESSION_PROVIDER',
       ]),
     );
+  });
+
+  it('[OQ-002-PROD][OQ-003-PROD][OQ-017][OQ-018][OQ-022] accepts only the approved production package', () => {
+    const production = parseEnvironment({
+      ...valid,
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://kele:secret@db.internal:5432/kele?sslmode=require',
+      STORAGE_ENDPOINT: 'https://s3.ir-thr-at1.arvanstorage.ir',
+      STORAGE_REGION: 'ir-thr-at1',
+      STORAGE_BUCKET: 'kele-production-media',
+      STORAGE_PROVIDER: 'arvan_s3',
+      STORAGE_PUBLIC_BASE_URL: 'https://media.kele.example',
+      ARVAN_CDN_API_TOKEN: fixtureCredential('arvan-cdn'),
+      PAYMENT_PROVIDER: 'vandar',
+      REFUND_PROVIDER: 'vandar',
+      VANDAR_IPG_API_KEY: fixtureCredential('vandar-ipg'),
+      VANDAR_REFUND_ACCESS_TOKEN: fixtureCredential('vandar-refund-access'),
+      VANDAR_REFUND_REFRESH_TOKEN: fixtureCredential('vandar-refund-refresh'),
+      VANDAR_BUSINESS_NAME: 'kele',
+      PAYMENT_CALLBACK_BASE_URL: 'https://api.kele.example/api/v1',
+      SMS_PROVIDER: 'kavenegar',
+      KAVENEGAR_API_KEY: fixtureCredential('kavenegar'),
+      API_BASE_URL: 'https://api.kele.example/api/v1',
+      NEXT_PUBLIC_API_BASE_URL: 'https://api.kele.example/api/v1',
+      STOREFRONT_ORIGIN: 'https://kele.example',
+      ADMIN_ORIGIN: 'https://admin.kele.example',
+      ERROR_MONITORING_PROVIDER: 'self_hosted_grafana',
+      LOKI_PUSH_URL: 'https://loki.internal/loki/api/v1/push',
+      LOKI_TENANT_ID: 'kele-production',
+      LOKI_PUSH_TOKEN: fixtureCredential('loki-push'),
+      METRICS_BEARER_TOKEN: fixtureCredential('metrics-bearer'),
+      IDENTITY_SIGNING_SECRET: fixtureCredential('identity-signing'),
+      OTP_VERIFIER_PEPPER: fixtureCredential('otp-verifier'),
+      ADMIN_SESSION_PROVIDER: 'postgres_otp',
+      ADMIN_SESSION_SIGNING_SECRET: fixtureCredential('admin-session-signing'),
+      ADMIN_OTP_VERIFIER_PEPPER: fixtureCredential('admin-otp-verifier'),
+    });
+    expect(production).toMatchObject({
+      PAYMENT_PROVIDER: 'vandar',
+      REFUND_PROVIDER: 'vandar',
+      SMS_PROVIDER: 'kavenegar',
+      STORAGE_PROVIDER: 'arvan_s3',
+      ERROR_MONITORING_PROVIDER: 'self_hosted_grafana',
+      ADMIN_SESSION_PROVIDER: 'postgres_otp',
+    });
   });
 
   it('rejects development administrator sessions in production', () => {

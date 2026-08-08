@@ -14,6 +14,12 @@ OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022.
 
 ## Scope gate and provider decisions
 
+Decision update (2026-08-08): the table below records the gate at original plan
+approval. It is superseded for implementation selection by accepted ADR-0005,
+which closes all five questions. External tenant/account certification and
+managed-service recovery evidence remain blockers exactly as specified by the
+acceptance criteria; approval alone is not certification.
+
 The decision register and every approved decision record were reviewed before
 implementation. None of the five production/provider-session questions has an
 explicit approved answer.
@@ -217,7 +223,8 @@ to a Fake adapter in production.
 ## Exit decision
 
 Engineering hardening may reach `CONDITIONAL GO` with all independent criteria
-passing. Milestone 9 cannot claim its roadmap provider-integration exit and no
-staging/production deployment may proceed while any of OQ-002-PROD,
-OQ-003-PROD, OQ-017, OQ-018 or OQ-022 remains open or required
-provider/session certification is absent.
+passing. ADR-0005 closes OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022,
+but Milestone 9 cannot claim its roadmap provider-integration exit and no
+staging/production deployment may proceed while required provider, regional
+infrastructure, administrator-recovery or managed-database certification is
+absent.

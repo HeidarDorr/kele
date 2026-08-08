@@ -15,14 +15,33 @@ export const environmentSchema = z
     STORAGE_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/),
     STORAGE_ACCESS_KEY: z.string().min(1),
     STORAGE_SECRET_KEY: z.string().min(1),
-    STORAGE_PROVIDER: z.literal('minio').default('minio'),
-    PAYMENT_PROVIDER: z.literal('fake'),
-    REFUND_PROVIDER: z.literal('fake').default('fake'),
+    STORAGE_PROVIDER: z.enum(['minio', 'arvan_s3']).default('minio'),
+    STORAGE_PUBLIC_BASE_URL: z.url().optional(),
+    ARVAN_CDN_API_TOKEN: z.string().min(1).optional(),
+    PAYMENT_PROVIDER: z.enum(['fake', 'vandar']),
+    REFUND_PROVIDER: z.enum(['fake', 'vandar']).default('fake'),
+    VANDAR_IPG_API_KEY: z.string().min(1).optional(),
+    VANDAR_REFUND_ACCESS_TOKEN: z.string().min(1).optional(),
+    VANDAR_REFUND_REFRESH_TOKEN: z.string().min(1).optional(),
+    VANDAR_BUSINESS_NAME: z
+      .string()
+      .regex(/^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$/)
+      .optional(),
+    VANDAR_IPG_BASE_URL: z.url().default('https://ipg.vandar.io'),
+    VANDAR_API_BASE_URL: z.url().default('https://api.vandar.io'),
+    PAYMENT_CALLBACK_BASE_URL: z.url().optional(),
     FAKE_PAYMENT_SIGNING_SECRET: z
       .string()
       .min(32)
       .default('development-fake-payment-signing-secret-0001'),
-    SMS_PROVIDER: z.literal('fake'),
+    SMS_PROVIDER: z.enum(['fake', 'kavenegar']),
+    KAVENEGAR_API_KEY: z.string().min(1).optional(),
+    KAVENEGAR_OTP_TEMPLATE: z
+      .string()
+      .regex(/^[A-Za-z0-9]+$/)
+      .default('KeleOtp'),
+    PROVIDER_CONNECT_TIMEOUT_MS: z.coerce.number().int().min(500).max(10_000).default(3_000),
+    PROVIDER_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(10_000),
     FAKE_SMS_OTP_CODE: z
       .string()
       .regex(/^\d{6}$/)
@@ -31,7 +50,13 @@ export const environmentSchema = z
     NEXT_PUBLIC_API_BASE_URL: z.url(),
     STOREFRONT_ORIGIN: z.url().default('http://localhost:3000'),
     ADMIN_ORIGIN: z.url().default('http://localhost:3002'),
-    ERROR_MONITORING_PROVIDER: z.literal('structured_log').default('structured_log'),
+    ERROR_MONITORING_PROVIDER: z
+      .enum(['structured_log', 'self_hosted_grafana'])
+      .default('structured_log'),
+    LOKI_PUSH_URL: z.url().optional(),
+    LOKI_TENANT_ID: z.string().min(1).optional(),
+    LOKI_PUSH_TOKEN: z.string().min(1).optional(),
+    GRAFANA_ADMIN_BOOTSTRAP_SECRET: z.string().min(32).optional(),
     METRICS_BEARER_TOKEN: z.string().min(32).default('development-metrics-bearer-token-000001'),
     API_JSON_BODY_LIMIT_BYTES: z.coerce.number().int().min(16_384).max(1_048_576).default(131_072),
     READINESS_TIMEOUT_MS: z.coerce.number().int().min(100).max(5_000).default(1_000),
@@ -60,7 +85,15 @@ export const environmentSchema = z
       .string()
       .min(32)
       .default('development-instagram-admin-session-token-00001'),
-    ADMIN_SESSION_PROVIDER: z.literal('development_static').default('development_static'),
+    ADMIN_SESSION_PROVIDER: z
+      .enum(['development_static', 'postgres_otp'])
+      .default('development_static'),
+    ADMIN_SESSION_SIGNING_SECRET: z.string().min(32).optional(),
+    ADMIN_OTP_VERIFIER_PEPPER: z.string().min(32).optional(),
+    ADMIN_BOOTSTRAP_TOKEN_HASH: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/i)
+      .optional(),
   })
   .superRefine((value, context) => {
     if (
@@ -74,7 +107,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production') {
+    if (value.NODE_ENV === 'production' && value.PAYMENT_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['PAYMENT_PROVIDER'],
@@ -82,7 +115,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production') {
+    if (value.NODE_ENV === 'production' && value.SMS_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['SMS_PROVIDER'],
@@ -90,26 +123,33 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production') {
+    if (value.NODE_ENV === 'production' && value.REFUND_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['REFUND_PROVIDER'],
         message: 'The fake refund provider is forbidden in production.',
       });
+    }
+
+    if (value.NODE_ENV === 'production' && value.STORAGE_PROVIDER === 'minio') {
       context.addIssue({
         code: 'custom',
         path: ['STORAGE_PROVIDER'],
-        message: 'Local MinIO is forbidden in production until OQ-018 is approved.',
+        message: 'Local MinIO is forbidden in production.',
       });
+    }
+
+    if (value.NODE_ENV === 'production' && value.ERROR_MONITORING_PROVIDER === 'structured_log') {
       context.addIssue({
         code: 'custom',
         path: ['ERROR_MONITORING_PROVIDER'],
-        message: 'Production error monitoring is blocked until OQ-017 is approved.',
+        message: 'Structured-log-only monitoring is forbidden in production.',
       });
     }
 
     if (
       value.NODE_ENV === 'production' &&
+      value.ADMIN_SESSION_PROVIDER === 'development_static' &&
       [
         value.ADMIN_SUPER_SESSION_TOKEN,
         value.ADMIN_INVENTORY_SESSION_TOKEN,
@@ -123,7 +163,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production') {
+    if (value.NODE_ENV === 'production' && value.ADMIN_SESSION_PROVIDER === 'development_static') {
       context.addIssue({
         code: 'custom',
         path: ['ADMIN_SESSION_PROVIDER'],
@@ -151,11 +191,69 @@ export const environmentSchema = z
       });
     }
 
+    const requireValue = (key: keyof typeof value, message: string): void => {
+      if (value[key] === undefined || value[key] === '') {
+        context.addIssue({ code: 'custom', path: [key], message });
+      }
+    };
+
+    if (value.PAYMENT_PROVIDER === 'vandar') {
+      requireValue('VANDAR_IPG_API_KEY', 'VANDAR_IPG_API_KEY is required for Vandar payment.');
+      requireValue(
+        'PAYMENT_CALLBACK_BASE_URL',
+        'PAYMENT_CALLBACK_BASE_URL is required for Vandar payment.',
+      );
+    }
+    if (value.REFUND_PROVIDER === 'vandar') {
+      requireValue(
+        'VANDAR_REFUND_ACCESS_TOKEN',
+        'VANDAR_REFUND_ACCESS_TOKEN is required for Vandar refunds.',
+      );
+      requireValue('VANDAR_BUSINESS_NAME', 'VANDAR_BUSINESS_NAME is required for Vandar refunds.');
+      requireValue(
+        'VANDAR_REFUND_REFRESH_TOKEN',
+        'VANDAR_REFUND_REFRESH_TOKEN is required for operator-managed Vandar token rotation.',
+      );
+    }
+    if (value.SMS_PROVIDER === 'kavenegar') {
+      requireValue('KAVENEGAR_API_KEY', 'KAVENEGAR_API_KEY is required for Kavenegar SMS.');
+    }
+    if (value.ERROR_MONITORING_PROVIDER === 'self_hosted_grafana') {
+      requireValue('LOKI_PUSH_URL', 'LOKI_PUSH_URL is required for self-hosted monitoring.');
+      requireValue('LOKI_TENANT_ID', 'LOKI_TENANT_ID is required for self-hosted monitoring.');
+      requireValue('LOKI_PUSH_TOKEN', 'LOKI_PUSH_TOKEN is required for self-hosted monitoring.');
+    }
+    if (value.STORAGE_PROVIDER === 'arvan_s3') {
+      requireValue(
+        'STORAGE_PUBLIC_BASE_URL',
+        'STORAGE_PUBLIC_BASE_URL is required for Arvan storage.',
+      );
+      requireValue('ARVAN_CDN_API_TOKEN', 'ARVAN_CDN_API_TOKEN is required for Arvan CDN.');
+    }
+    if (value.ADMIN_SESSION_PROVIDER === 'postgres_otp') {
+      requireValue(
+        'ADMIN_SESSION_SIGNING_SECRET',
+        'ADMIN_SESSION_SIGNING_SECRET is required for PostgreSQL admin sessions.',
+      );
+      requireValue(
+        'ADMIN_OTP_VERIFIER_PEPPER',
+        'ADMIN_OTP_VERIFIER_PEPPER is required for PostgreSQL admin sessions.',
+      );
+    }
+
     if (value.HEADERS_TIMEOUT_MS >= value.REQUEST_TIMEOUT_MS) {
       context.addIssue({
         code: 'custom',
         path: ['HEADERS_TIMEOUT_MS'],
         message: 'HEADERS_TIMEOUT_MS must be lower than REQUEST_TIMEOUT_MS.',
+      });
+    }
+
+    if (value.PROVIDER_CONNECT_TIMEOUT_MS >= value.PROVIDER_REQUEST_TIMEOUT_MS) {
+      context.addIssue({
+        code: 'custom',
+        path: ['PROVIDER_CONNECT_TIMEOUT_MS'],
+        message: 'PROVIDER_CONNECT_TIMEOUT_MS must be lower than PROVIDER_REQUEST_TIMEOUT_MS.',
       });
     }
 
@@ -166,6 +264,12 @@ export const environmentSchema = z
         ['STOREFRONT_ORIGIN', value.STOREFRONT_ORIGIN],
         ['ADMIN_ORIGIN', value.ADMIN_ORIGIN],
         ['STORAGE_ENDPOINT', value.STORAGE_ENDPOINT],
+        ...(value.PAYMENT_CALLBACK_BASE_URL === undefined
+          ? []
+          : ([['PAYMENT_CALLBACK_BASE_URL', value.PAYMENT_CALLBACK_BASE_URL]] as const)),
+        ...(value.STORAGE_PUBLIC_BASE_URL === undefined
+          ? []
+          : ([['STORAGE_PUBLIC_BASE_URL', value.STORAGE_PUBLIC_BASE_URL]] as const)),
       ] as const) {
         if (new URL(raw).protocol !== 'https:') {
           context.addIssue({

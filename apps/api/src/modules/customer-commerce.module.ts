@@ -185,7 +185,7 @@ import {
           unitOfWork,
           environment.IDENTITY_SIGNING_SECRET,
           environment.OTP_VERIFIER_PEPPER,
-          () => environment.FAKE_SMS_OTP_CODE,
+          environment.SMS_PROVIDER === 'fake' ? () => environment.FAKE_SMS_OTP_CODE : undefined,
           runtimeClock(environment.E2E_FIXED_TIME),
           telemetry,
         ),

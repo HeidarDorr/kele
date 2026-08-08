@@ -9,6 +9,7 @@ import {
 } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type {
+  SmsDeliveryStatus,
   SmsDispatch,
   SmsGateway,
 } from '../src/modules/foundation/application/sms-gateway.port.js';
@@ -31,14 +32,22 @@ class RecordingSmsGateway implements SmsGateway {
   readonly provider = 'recording';
   readonly messages = new Map<string, string>();
 
-  send(
-    input: Readonly<{ mobile: string; message: string; correlationId: string }>,
+  sendOtp(
+    input: Readonly<{ mobile: string; code: string; correlationId: string }>,
   ): Promise<SmsDispatch> {
-    this.messages.set(input.correlationId, input.message);
+    this.messages.set(input.correlationId, input.code);
     return Promise.resolve({
       provider: 'recording',
       providerMessageId: `recording-${input.correlationId}`,
       accepted: true,
+    });
+  }
+
+  getDeliveryStatus(providerMessageId: string): Promise<SmsDeliveryStatus> {
+    return Promise.resolve({
+      provider: this.provider,
+      providerMessageId,
+      status: 'delivered',
     });
   }
 
@@ -52,7 +61,11 @@ class RecordingSmsGateway implements SmsGateway {
 class FailingSmsGateway implements SmsGateway {
   readonly provider = 'outage';
 
-  send(): Promise<SmsDispatch> {
+  sendOtp(): Promise<SmsDispatch> {
+    return Promise.reject(new Error('simulated provider outage'));
+  }
+
+  getDeliveryStatus(): Promise<SmsDeliveryStatus> {
     return Promise.reject(new Error('simulated provider outage'));
   }
 }

@@ -109,6 +109,7 @@ test.describe.serial('Milestone 9 production-like operational acceptance', () =>
         height: number;
         storefront: Awaited<ReturnType<typeof readPerformance>> & { noHorizontalOverflow: true };
         administration: { noHorizontalOverflow: true };
+        administratorLogin: { noHorizontalOverflow: true };
       }
     > = {};
     for (const viewport of acceptanceViewports) {
@@ -140,11 +141,22 @@ test.describe.serial('Milestone 9 production-like operational acceptance', () =>
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
 
+      const loginResponse = await page.goto(`${e2eUrls.admin}/login`, {
+        waitUntil: 'networkidle',
+      });
+      expect(loginResponse?.status()).toBe(200);
+      await expect(page.getByRole('heading', { name: 'ورود به مدیریت KELE' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'دریافت کد ورود' })).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+
       viewportEvidence[viewport.name] = {
         width: viewport.width,
         height: viewport.height,
         storefront: { ...storefrontPerformance, noHorizontalOverflow: true },
         administration: { noHorizontalOverflow: true },
+        administratorLogin: { noHorizontalOverflow: true },
       };
     }
 

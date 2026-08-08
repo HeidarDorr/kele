@@ -18,7 +18,7 @@ export interface PaymentGateway {
     correlationId: string;
   }): Promise<PaymentIntent>;
   verifyCallback(input: {
-    signature: string;
+    authenticator: string;
     payload: unknown;
     now: Date;
   }): Promise<VerifiedPaymentCallback>;

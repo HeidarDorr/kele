@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: KELE API
-  version: 0.4.0
+  version: 0.5.0
   summary: Baseline contract for the KELE storefront and administration API.
   description: |
     This contract is the transport-level source of truth for version 1.
@@ -43,6 +43,8 @@ tags:
     description: Searchable immutable business-event exploration.
   - name: Admin Content
     description: Administrative content operations.
+  - name: Admin Identity
+    description: First-party administrator OTP authentication and session revocation.
 
 paths:
   /health/live:
@@ -445,6 +447,111 @@ paths:
       responses:
         '204':
           description: Session revoked.
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/auth/otp/challenges:
+    post:
+      operationId: createAdministratorOtpChallenge
+      tags: [Admin Identity]
+      summary: Start or rate-limit an administrator OTP challenge without revealing principal state.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [mobile]
+              properties:
+                mobile:
+                  $ref: '#/components/schemas/Mobile'
+      responses:
+        '202':
+          description: Generic accepted response; an OTP is dispatched only for an enabled pre-provisioned administrator.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [challengeId, retryAfterSeconds, expiresAt]
+                properties:
+                  challengeId:
+                    type: string
+                    format: uuid
+                  retryAfterSeconds:
+                    type: integer
+                    minimum: 1
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/auth/otp/verifications:
+    post:
+      operationId: verifyAdministratorOtpChallenge
+      tags: [Admin Identity]
+      summary: Verify an administrator OTP and rotate the opaque administrator session.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [challengeId, code]
+              properties:
+                challengeId:
+                  type: string
+                  format: uuid
+                code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: Administrator session and anti-CSRF cookies were rotated.
+          headers:
+            Set-Cookie:
+              description: Secure HttpOnly session and readable same-site anti-CSRF cookies.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [administrator]
+                properties:
+                  administrator:
+                    $ref: '#/components/schemas/Administrator'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/auth/session:
+    delete:
+      operationId: deleteAdministratorSession
+      tags: [Admin Identity]
+      summary: Revoke the current administrator session.
+      security:
+        - AdministratorSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Administrator session revoked and cookies cleared.
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
 
@@ -2391,6 +2498,11 @@ components:
       in: cookie
       name: kele_session
       description: Secure server-managed customer or administrator session.
+    AdministratorSessionCookie:
+      type: apiKey
+      in: cookie
+      name: kele_admin_session
+      description: Secure opaque session for a pre-provisioned administrator principal.
     AnonymousCart:
       type: apiKey
       in: cookie
@@ -3001,6 +3113,27 @@ components:
           type: [string, 'null']
         lastName:
           type: [string, 'null']
+
+    Administrator:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, role, enabled, version]
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 160
+        role:
+          type: string
+          enum: [super_admin, inventory_admin, instagram_admin]
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
 
     AuthenticationResult:
       type: object

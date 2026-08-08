@@ -295,6 +295,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/auth/otp/challenges': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start or rate-limit an administrator OTP challenge without revealing principal state. */
+    post: operations['createAdministratorOtpChallenge'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/auth/otp/verifications': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify an administrator OTP and rotate the opaque administrator session. */
+    post: operations['verifyAdministratorOtpChallenge'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/auth/session': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Revoke the current administrator session. */
+    delete: operations['deleteAdministratorSession'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me': {
     parameters: {
       query?: never;
@@ -1508,6 +1559,15 @@ export interface components {
       mobile: components['schemas']['Mobile'];
       firstName?: string | null;
       lastName?: string | null;
+    };
+    Administrator: {
+      /** Format: uuid */
+      id: string;
+      displayName: string;
+      /** @enum {string} */
+      role: 'super_admin' | 'inventory_admin' | 'instagram_admin';
+      enabled: boolean;
+      version: number;
     };
     AuthenticationResult: {
       customer: components['schemas']['Customer'];
@@ -2841,6 +2901,99 @@ export interface operations {
         };
         content?: never;
       };
+      default: components['responses']['Problem'];
+    };
+  };
+  createAdministratorOtpChallenge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          mobile: components['schemas']['Mobile'];
+        };
+      };
+    };
+    responses: {
+      /** @description Generic accepted response; an OTP is dispatched only for an enabled pre-provisioned administrator. */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            /** Format: uuid */
+            challengeId: string;
+            retryAfterSeconds: number;
+            /** Format: date-time */
+            expiresAt: string;
+          };
+        };
+      };
+      429: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  verifyAdministratorOtpChallenge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: uuid */
+          challengeId: string;
+          code: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Administrator session and anti-CSRF cookies were rotated. */
+      200: {
+        headers: {
+          /** @description Secure HttpOnly session and readable same-site anti-CSRF cookies. */
+          'Set-Cookie'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            administrator: components['schemas']['Administrator'];
+          };
+        };
+      };
+      400: components['responses']['Problem'];
+      429: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  deleteAdministratorSession: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Administrator session revoked and cookies cleared. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };
   };

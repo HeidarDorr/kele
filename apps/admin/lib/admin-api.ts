@@ -1,5 +1,6 @@
 import type { components } from '@kele/api-contract';
 import { randomUUID } from 'node:crypto';
+import { cookies } from 'next/headers';
 
 export type AdminProduct = components['schemas']['AdminProduct'];
 export type AdminProductPage = components['schemas']['AdminProductPage'];
@@ -32,6 +33,7 @@ export type MediaReferenceReport = components['schemas']['MediaReferenceReport']
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
 const sessionToken =
   process.env.ADMIN_SUPER_SESSION_TOKEN ?? 'development-super-admin-session-token-00000001';
+const postgresAdministratorSessions = process.env.ADMIN_SESSION_PROVIDER === 'postgres_otp';
 
 export class AdminApiError extends Error {
   constructor(
@@ -45,7 +47,29 @@ export class AdminApiError extends Error {
 export async function adminRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('accept', 'application/json');
-  headers.set('cookie', `kele_session=${encodeURIComponent(sessionToken)}`);
+  if (postgresAdministratorSessions) {
+    const cookieStore = await cookies();
+    const administratorSession = cookieStore.get('kele_admin_session')?.value;
+    const administratorCsrf = cookieStore.get('kele_admin_csrf')?.value;
+    if (administratorSession !== undefined) {
+      headers.set(
+        'cookie',
+        `kele_admin_session=${encodeURIComponent(administratorSession)}${
+          administratorCsrf === undefined
+            ? ''
+            : `; kele_admin_csrf=${encodeURIComponent(administratorCsrf)}`
+        }`,
+      );
+    }
+    if (
+      administratorCsrf !== undefined &&
+      !['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase())
+    ) {
+      headers.set('x-csrf-token', administratorCsrf);
+    }
+  } else {
+    headers.set('cookie', `kele_session=${encodeURIComponent(sessionToken)}`);
+  }
   headers.set('x-correlation-id', randomUUID());
   if (init.body !== undefined && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');

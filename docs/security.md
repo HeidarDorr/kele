@@ -120,7 +120,8 @@ Milestone 6 additionally enforces:
   Returned transition;
 - a refund is called confirmed only from the configured gateway response. The
   Fake Refund adapter is local/test evidence and cannot establish a production
-  refund claim; OQ-002-PROD remains open;
+  refund claim; ADR-0005 selects Vandar Refund v3, whose real merchant
+  certification remains a production gate;
 - bulk writes require a persisted preview, reason, expiry and per-target version
   check. Price preview details remain Super-Admin-only. Target projections lock
   in stable SKU-ID order; stale/lost-CAS targets fail individually and never
@@ -295,11 +296,12 @@ production callback protocol was introduced.
 ## Milestone 9 production hardening
 
 - Production configuration fails closed for Fake Payment, Fake Refund, Fake
-  SMS, local MinIO, development static administrator sessions and the
-  unapproved error-monitoring selection. Development-prefixed identity,
+  SMS, local MinIO, development static administrator sessions and
+  structured-log-only monitoring. Development-prefixed identity,
   administrator and metrics credentials and non-HTTPS production endpoints are
-  also rejected. This is an intentional launch block for OQ-002-PROD,
-  OQ-003-PROD, OQ-017, OQ-018 and OQ-022, not provider selection.
+  also rejected. ADR-0005 permits only Vandar, Kavenegar, private
+  Grafana/Loki/Prometheus, Arvan S3/CDN and PostgreSQL administrator sessions;
+  external certification remains a separate launch gate.
 - Payment/refund/SMS application ports expose provider-neutral strings and
   canonical results only. Fake simulation remains a separate local/test port;
   unsupported callback providers are rejected before verification or a
@@ -319,24 +321,30 @@ production callback protocol was introduced.
   and 429 limited outcomes under the HTTP abuse profile.
 - Media metadata accepts only bounded raster dimensions and immutable
   same-origin `/media/...` JPG/JPEG/PNG/WebP paths whose extension matches the
-  declared format. Remote URLs and SVG are rejected. No binary upload or
-  malware-scanning claim is made while OQ-018 is open.
+  declared format. Remote URLs and SVG are rejected. The approved private Arvan
+  S3 adapter confines signed operations to `quarantine/` and `media/`, caps URLs
+  at 15 minutes and never creates a public URL for quarantine objects. Binary
+  publication and malware-scanning certification remain blocked until the real
+  bucket/CDN pipeline is exercised.
 - Structured telemetry recursively redacts sensitive keys and recognizable
   bearer/cookie/credential/mobile text, bounds depth/entries/string length and
   emits only stable low-cardinality provider outcomes. Metrics authorization
   uses constant-time digest comparison; metrics are `no-store` and contain no
   customer or commercial identifiers.
 - Static administrator tokens are development/test fixtures, compare in
-  constant time and are rejected in production. OQ-022 blocks staging and
-  production until issuance, role provisioning, recovery and revocation are
-  explicitly approved and certified.
+  constant time and are rejected in production. The approved production path
+  uses pre-provisioned PostgreSQL principals, verifier-only OTP challenges,
+  opaque rotating sessions, SameSite=Strict cookies and double-submit CSRF.
+  Role or enabled-state changes revoke active sessions in the same PostgreSQL
+  transaction. Real Kavenegar-factor, initial provisioning and two-person
+  break-glass certification remain release blockers.
 - The production dependency graph overrides the affected transitive OpenAPI
   tooling path to `js-yaml@4.3.1`; the regenerated lockfile, inspected
   dependency path and production audit report no known vulnerability. A future
   lockfile update must preserve the no-unaccepted-High/Critical gate.
 
-Residual risks are the five open decisions above, provider-specific callback,
-inquiry and outage behavior, managed secret rotation, malware inspection,
-distributed edge limiting and the production monitoring data policy. They are
-release `NO-GO` items; none is represented as implemented by the local Fake or
-structured-log paths.
+Residual risks are real provider callback/inquiry/outage certification, managed
+secret rotation, malware inspection, distributed edge limiting, alert routing,
+administrator bootstrap/recovery, release-image scan and managed PostgreSQL
+PITR/RPO/RTO evidence. They are release `NO-GO` items; none is represented as
+closed by local mocks, contract tests or structured-log paths.

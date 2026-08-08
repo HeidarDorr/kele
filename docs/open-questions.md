@@ -1,9 +1,9 @@
 # Open questions and decision register
 
-Version: 1.2
+Version: 1.3
 Status: Active
 Owner: Product owner
-Last reviewed: 2026-08-05
+Last reviewed: 2026-08-08
 
 The employer-approved answers in
 `decisions/2026-07-24-employer-open-questions-v1.md` resolve the original
@@ -18,7 +18,9 @@ entire project.
 ## Product implementation readiness
 
 No unresolved product-behavior question currently blocks Milestones 1–5.
-Production-provider decisions and final design assets remain gated below.
+Production-provider decisions are resolved by ADR-0005. External provider,
+regional infrastructure and recovery certifications plus final design assets
+remain gated below.
 
 ## Recorded source conflicts
 
@@ -33,34 +35,42 @@ not silently choose older wording.
 | SRC-M7-001 | Draft CMS-006 and the draft Homepage workflow said Homepage saves publish immediately and draft mode was out of scope, while the approved Milestone 7 implementation brief explicitly requires Homepage draft/published isolation, protected preview and publication. | Resolved for Milestone 7: the explicit brief governs, and CMS-006 plus the supporting workflow now specify isolated save, protected preview and explicit publication. No Frozen document or accepted ADR changed. |
 | SRC-M8-001 | The seeded published Site Settings footer contains `/about` and `/contact`, while no version-1 route, workflow or approved content contract defines either destination. | Milestone 8 filters those two unapproved destinations from rendered navigation and retains only existing version-1 routes. Adding the pages or repointing customer-facing links requires an approved requirement/content decision. |
 
-## Blocking production-provider decisions
+## Resolved production-provider decisions
 
-Development may proceed with adapters. These items block staging/production
-integration, not domain or UI development.
+The Product Owner approved these choices in the Milestone 9 project thread on
+2026-08-07. ADR-0005 is authoritative; approval does not imply that an account,
+credential, paid plan or passing sandbox certification exists.
 
-| ID | Missing decision | Required before |
+| ID | Approved decision | Record |
 |---|---|---|
-| OQ-002-PROD | Iranian payment provider, refund API, verification and settlement behavior | Production payment integration |
-| OQ-003-PROD | SMS provider, sender identity, delivery reports, retention and commercial limits | Production OTP/notification integration |
+| OQ-002-PROD | Vandar IPG v3 and Refund v3 with server inquiry/verification, exact IRR comparison and operator-managed refund retry/token rotation | ADR-0005; `decisions/2026-08-07-m9-production-providers.md` |
+| OQ-003-PROD | Kavenegar REST v1 Verify Lookup with the approved `KeleOtp` template and 48-hour bounded delivery-status lookup | ADR-0005; `decisions/2026-08-07-m9-production-providers.md` |
+| OQ-017 | KELE-managed Grafana OSS 13, Loki 3.7 and Prometheus 3 in the approved Iran region | ADR-0005; `decisions/2026-08-07-m9-production-providers.md` |
+| OQ-018 | ArvanCloud Simin `ir-thr-at1` multi-zone private Object Storage and CDN | ADR-0005; `decisions/2026-08-07-m9-production-providers.md` |
+| OQ-022 | First-party PostgreSQL administrator principals, Kavenegar OTP and opaque revocable sessions | ADR-0005; `decisions/2026-08-07-m9-production-providers.md` |
 
 ### Milestone 9 scope verification
 
-Decision verification date: 2026-08-07 (`Asia/Tehran`).
+Decision verification date: 2026-08-08 (`Asia/Tehran`).
 
-No approved decision record supplies a provider or provider contract for
-`OQ-002-PROD` or `OQ-003-PROD`. Likewise, `OQ-017`, `OQ-018` and `OQ-022`
-below remain unanswered. Milestone 9 therefore treats production
-payment/refund, SMS, error monitoring, object-storage/CDN adapters and
-administration identity/session provisioning plus their certifications as five
-scoped blockers. Independent security, observability, performance,
-backup/restore and rollback hardening continues under
-`docs/milestone-9-plan.md`. This record does not select, purchase, configure or
-approve a provider, credential, region, retention policy or commercial tier.
-The complete non-secret decision and certification fields awaiting approval are
-in `docs/m9-production-approval-record.md`.
-The 2026-08-07 remediation run reconfirmed that no accepted ADR, frozen
-requirement or user-supplied decision closes any of these five records; they
-must therefore remain explicit launch blockers rather than inferred defaults.
+All five decision questions are closed by ADR-0005. The approved adapters and
+first-party administration-session path may therefore be implemented. Real
+Vandar/Kavenegar sandbox execution, private observability-cluster acceptance,
+Arvan bucket/CDN certification and managed PostgreSQL recovery remain explicit
+release blockers because this repository has no associated tenant credentials,
+remote CI identity or managed service. The exact non-secret evidence fields are
+tracked in `docs/m9-production-approval-record.md`; local mock/contract evidence
+must never be labelled provider certification.
+
+`CERT-M9-001` is an additional certification blocker, not a reopened provider
+selection: the published Vandar Refund v3 contract documents an asynchronous
+`notify_url` form payload but does not document a callback signature, shared
+secret, authenticated status-inquiry endpoint or another replay-authentication
+mechanism. KELE's external-callback rule requires authentication and replay
+safety. The refund request adapter therefore remains fail-closed at `pending`;
+no Refund webhook endpoint is exposed and no completed Refund is inferred until
+Vandar supplies a certifiable authentication/inquiry contract or an explicitly
+approved ADR addendum defines a safe alternative.
 
 ## M8-exit design waivers and launch blockers
 
@@ -90,12 +100,9 @@ Decision record:
 | ID | Question | Default |
 |---|---|---|
 | OQ-016 | Analytics provider | Define neutral events; select provider before production. |
-| OQ-017 | Error monitoring provider | Use an adapter and structured logging; decide during infrastructure phase. |
-| OQ-018 | Production S3-compatible provider/CDN | MinIO locally; provider selected before staging. |
 | OQ-019 | Exact search ranking and Persian normalization | PostgreSQL search with documented normalization; tune after collecting real queries. |
 | OQ-020 | Review verified-purchase time window | Any delivered order containing the catalog object. |
 | OQ-021 | The draft CMS workflow mentions an optional Parent Category, while the frozen domain model defines only flat Category metadata and relationships. | Keep version-1 catalog Categories flat; approve hierarchy and its cycle/deletion semantics before adding parent persistence or nested navigation. |
-| OQ-022 | Production administration identity, session issuance, role provisioning, recovery and revocation authority | The static role tokens remain local/test fixtures only and are rejected in production. Select and approve the production administration identity/session contract before staging; no provider or provisioning behavior is inferred. |
 
 ## Resolved during hardening
 
@@ -123,6 +130,11 @@ Decision record:
 | RQ-020 | Outfit reservations reserve all component SKUs atomically and fail as a whole. | INV-018 |
 | RQ-021 | Free-shipping eligibility uses Order Subtotal containing Products and Outfits only; shipping, discounts and taxes are excluded. | SHP-006, SHP-008 |
 | RQ-022 | Guest Cart merge adds missing lines, combines matching SKUs with inventory caps and notices, preserves unavailable lines, and never replaces Outfit Revisions automatically. | CRT-013–CRT-018 |
+| RQ-023 | Production payment and refund use Vandar IPG v3/Refund v3 behind the provider-neutral ports. | ADR-0005, OQ-002-PROD |
+| RQ-024 | Production OTP uses Kavenegar Verify Lookup and bounded delivery-status lookup. | ADR-0005, OQ-003-PROD |
+| RQ-025 | Production observability is KELE-managed Grafana/Loki/Prometheus inside Iran. | ADR-0005, OQ-017 |
+| RQ-026 | Production media storage uses private multi-zone Arvan Object Storage and CDN. | ADR-0005, OQ-018 |
+| RQ-027 | Production administrator access uses first-party PostgreSQL principals and opaque OTP sessions; static tokens remain local/test only. | ADR-0005, OQ-022 |
 
 ## Resolution protocol
 

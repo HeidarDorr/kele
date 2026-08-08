@@ -112,7 +112,13 @@ describe('Milestone 4 shipping and payment boundaries', () => {
       reconciliationReason: null,
     };
     const simulated = adapter.simulateCallback(attempt, 'success', now);
-    await expect(adapter.verifyCallback({ ...simulated, now })).resolves.toMatchObject({
+    await expect(
+      adapter.verifyCallback({
+        authenticator: simulated.signature,
+        payload: simulated.payload,
+        now,
+      }),
+    ).resolves.toMatchObject({
       provider: 'fake',
       amountRial: 12_000_000,
     });
@@ -122,12 +128,12 @@ describe('Milestone 4 shipping and payment boundaries', () => {
       amountRial: simulated.payload.amountRial + 1,
     };
     expect(() =>
-      adapter.verifyCallback({ signature: simulated.signature, payload: forged, now }),
+      adapter.verifyCallback({ authenticator: simulated.signature, payload: forged, now }),
     ).toThrow(expect.objectContaining({ code: 'PAYMENT_CALLBACK_UNVERIFIED' }));
 
     const stale = { ...simulated.payload, issuedAt: '2026-08-02T09:54:59.999Z' };
     expect(() =>
-      adapter.verifyCallback({ signature: adapter.signForTest(stale), payload: stale, now }),
+      adapter.verifyCallback({ authenticator: adapter.signForTest(stale), payload: stale, now }),
     ).toThrow(expect.objectContaining({ code: 'PAYMENT_CALLBACK_STALE' }));
   });
 });

@@ -125,13 +125,22 @@ by technical logs.
 
 ## Milestone 9 release gate and operator controls
 
-Production or staging is `NO-GO` while OQ-002-PROD, OQ-003-PROD, OQ-017,
-OQ-018 or OQ-022 is open. Do not work around a startup failure by selecting a
-Fake adapter, local MinIO, structured-log-only monitoring or static
-administrator token. Approval must record provider/session protocol,
-credentials, region/retention, timeouts, retry and inquiry behavior, redaction,
-commercial limits and an accountable owner; sandbox certification is then a
-separate required artifact.
+ADR-0005 closes OQ-002-PROD, OQ-003-PROD, OQ-017, OQ-018 and OQ-022. Production
+or staging nevertheless remains `NO-GO` until the selected Vandar, Kavenegar,
+private observability cluster, Arvan bucket/CDN and administrator-recovery
+certifications pass for the reviewed image. Do not work around a startup failure
+by selecting a Fake adapter, local MinIO, structured-log-only monitoring or a
+static administrator token. Approval and local contract tests are not sandbox
+certification.
+
+Apply the additive administrator migrations
+`20260807152000_milestone_9_administrator_identity` and
+`20260808100000_m9_administrator_session_revocation` before selecting
+`ADMIN_SESSION_PROVIDER=postgres_otp`. The second installs the database trigger
+that revokes active sessions in the same transaction as a role or enabled-state
+change. Do not reverse either migration after any administrator challenge,
+session or identity-audit fact exists; application rollback leaves both tables
+and triggers in place.
 
 Before starting an approved release, validate all Milestone 9 variables listed
 in `docs/engineering-foundation.md`, retrieve secrets through the approved
@@ -159,7 +168,7 @@ ticket or log. Initial engineering alerts are:
 | Failed/exhausted jobs         | any failed job for 5 minutes                       | SEV-2, API operations          | inspect type/age/attempt and correlation, repair dependency, then use idempotent retry procedure                                                 |
 | Reservation expiry lag        | over 60 seconds for 5 minutes                      | SEV-2, checkout/inventory      | check worker lease and DB load; confirm no negative/over-reserved inventory after recovery                                                       |
 | Refund failure                | any failure for 5 minutes                          | SEV-1, payments/returns        | do not claim refund success; preserve pending fact and retry only with a new reviewed key after provider truth                                   |
-| Storage/media failure         | any sustained error for 5 minutes after OQ-018     | SEV-2, platform/content        | stop new upload claims, retain existing immutable metadata, check approved bucket/CDN health                                                     |
+| Storage/media failure         | any sustained error for 5 minutes                  | SEV-2, platform/content        | stop new upload claims, retain existing immutable metadata, check approved bucket/CDN health                                                     |
 
 Diagnosis starts with `X-Correlation-Id`; search structured technical events,
 then immutable audit/business facts. Never request a mobile number, OTP,
@@ -238,9 +247,9 @@ later migration or a seed record needed for diagnosis.
   provider event identity, the one-live-Checkout index and reservation movement
   checks. They do not rewrite existing M3 customer/cart facts.
 - Local/test startup requires a 32+ character `FAKE_PAYMENT_SIGNING_SECRET`.
-  Never configure this fake adapter in production; production deployment stays
-  blocked by configuration validation and OQ-002-PROD until a provider-specific
-  ADR, verification flow, credentials and sandbox certification are approved.
+  Never configure this fake adapter in production. ADR-0005 selects Vandar, but
+  production deployment stays blocked until the merchant IPG/Refund account,
+  callback domain, credentials and sandbox certification pass.
 - The in-process scheduler polls every 15 seconds. Jobs lease for 60 seconds,
   use `FOR UPDATE SKIP LOCKED`, permit at most eight attempts and back off from
   one minute up to 15 minutes. Monitor pending jobs past `runAt`, expired leases,
@@ -299,8 +308,10 @@ pricing approval.
 - Never change an Order snapshot, ReturnRequest declaration, RefundAttempt,
   timeline/tracking fact, price fact or inventory movement to repair state.
   Recovery uses idempotent commands and the provider inquiry/retry path.
-- Production refund activation remains blocked by OQ-002-PROD. The Fake Refund
-  adapter proves orchestration only and must not be described as a real refund.
+- ADR-0005 selects Vandar Refund v3. Production refund activation remains
+  blocked until the merchant Refund capability, wallet/limits, credentials and
+  real success/failure/retry certification pass. The Fake Refund adapter proves
+  orchestration only and must not be described as a real refund.
 - Code rollback keeps the additive tables and migrations in place. Put every M6
   mutation route into read-only/disabled mode first, including staff operations,
   inventory/bulk endpoints and customer `POST /me/returns`. A rollback to the

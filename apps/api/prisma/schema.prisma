@@ -192,6 +192,14 @@ enum RefundSource {
   @@map("refund_source")
 }
 
+enum AdministratorRole {
+  SUPER_ADMIN
+  INVENTORY_ADMIN
+  INSTAGRAM_ADMIN
+
+  @@map("administrator_role")
+}
+
 enum BulkOperationKind {
   PRICE
   INVENTORY
@@ -293,6 +301,74 @@ model CustomerSession {
   @@index([idleExpiresAt])
   @@index([absoluteExpiresAt])
   @@map("customer_sessions")
+}
+
+model Administrator {
+  id           String                   @id @default(uuid()) @db.Uuid
+  mobile       String                   @unique @db.VarChar(15)
+  displayName  String                   @map("display_name") @db.VarChar(160)
+  role         AdministratorRole
+  enabled      Boolean                  @default(true)
+  version      Int                      @default(1)
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  challenges   AdministratorOtpChallenge[]
+  sessions     AdministratorSession[]
+  identityAudit AdministratorIdentityAudit[]
+
+  @@index([enabled, role])
+  @@map("administrators")
+}
+
+model AdministratorOtpChallenge {
+  id              String         @id @default(uuid()) @db.Uuid
+  administratorId String?        @map("administrator_id") @db.Uuid
+  mobileHash      String         @map("mobile_hash") @db.Char(64)
+  ipHash          String         @map("ip_hash") @db.Char(64)
+  codeSalt        String         @map("code_salt") @db.Char(32)
+  codeVerifier    String         @map("code_verifier") @db.Char(128)
+  failedAttempts  Int            @default(0) @map("failed_attempts")
+  expiresAt       DateTime       @map("expires_at") @db.Timestamptz(6)
+  consumedAt      DateTime?      @map("consumed_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  administrator   Administrator? @relation(fields: [administratorId], references: [id], onDelete: Restrict)
+
+  @@index([mobileHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([expiresAt])
+  @@map("administrator_otp_challenges")
+}
+
+model AdministratorSession {
+  id                String        @id @default(uuid()) @db.Uuid
+  administratorId   String        @map("administrator_id") @db.Uuid
+  tokenHash         String        @unique @map("token_hash") @db.Char(64)
+  csrfHash          String        @map("csrf_hash") @db.Char(64)
+  idleExpiresAt     DateTime      @map("idle_expires_at") @db.Timestamptz(6)
+  absoluteExpiresAt DateTime      @map("absolute_expires_at") @db.Timestamptz(6)
+  lastSeenAt        DateTime      @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  revokedAt         DateTime?     @map("revoked_at") @db.Timestamptz(6)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  administrator     Administrator @relation(fields: [administratorId], references: [id], onDelete: Restrict)
+
+  @@index([administratorId, revokedAt])
+  @@index([idleExpiresAt])
+  @@index([absoluteExpiresAt])
+  @@map("administrator_sessions")
+}
+
+model AdministratorIdentityAudit {
+  id                String         @id @default(uuid()) @db.Uuid
+  administratorId   String?        @map("administrator_id") @db.Uuid
+  action            String         @db.VarChar(64)
+  outcome           String         @db.VarChar(64)
+  correlationId     String         @map("correlation_id") @db.VarChar(128)
+  occurredAt        DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  administrator     Administrator? @relation(fields: [administratorId], references: [id], onDelete: Restrict)
+
+  @@index([administratorId, occurredAt])
+  @@index([action, occurredAt])
+  @@map("administrator_identity_audit")
 }
 
 model Address {
