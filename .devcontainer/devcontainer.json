@@ -1,0 +1,42 @@
+{
+  "name": "KELE functional demo",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24.18.0",
+      "nodeGypDependencies": true,
+      "pnpmVersion": "none"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [3000, 3001, 3002],
+  "portsAttributes": {
+    "3000": {
+      "label": "KELE Storefront",
+      "onAutoForward": "openBrowser",
+      "visibility": "private"
+    },
+    "3001": {
+      "label": "KELE API",
+      "onAutoForward": "silent",
+      "visibility": "private"
+    },
+    "3002": {
+      "label": "KELE Administration",
+      "onAutoForward": "notify",
+      "visibility": "private"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "remoteUser": "vscode"
+}

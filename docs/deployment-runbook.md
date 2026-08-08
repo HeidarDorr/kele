@@ -13,6 +13,12 @@ Status: Provider boundaries approved; external certification pending
 Staging and production must not share credentials, databases, buckets, callback
 URLs, or customer data.
 
+The optional GitHub Codespaces profile documented in `codespaces-demo.md` is a
+private, synthetic functional-UAT environment. It uses Fake providers, local
+MinIO and the guarded `kele_e2e` fixture and therefore is neither staging nor
+production evidence. Codespaces setup must not receive real customer or
+provider data and cannot close any ADR-0005 external certification.
+
 Production configuration MUST reject Fake Payment and Fake SMS adapters during
 startup. Production deployment remains blocked until both real providers pass
 sandbox/verification acceptance.
