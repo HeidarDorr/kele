@@ -22,12 +22,12 @@ staging, availability, backup, provider or release-image certification.
 
 The optional single-application Liara profile documented in
 `liara-uat-demo.md` is the equivalent persistent synthetic-UAT boundary for a
-small review group. Its `liara-uat-runtime` Docker target serves Storefront,
-Admin and API through one public HTTP port and a separate private managed
-PostgreSQL database. It deliberately permits Fake providers only when the
-explicit `KELE_DEPLOYMENT_TIER=uat` contract passes. It is not staging,
-production, provider certification, managed-recovery evidence or a substitute
-for the three release images.
+small review group. Its dedicated root Dockerfile serves Storefront, Admin and
+API through one public HTTP port and a separate private managed PostgreSQL
+database. It deliberately permits Fake providers only when the explicit
+`KELE_DEPLOYMENT_TIER=uat` contract passes. It is not staging, production,
+provider certification, managed-recovery evidence or a substitute for the
+three release images.
 
 Production configuration MUST reject Fake Payment and Fake SMS adapters during
 startup. Production deployment remains blocked until both real providers pass
@@ -39,10 +39,11 @@ Build immutable, versioned container images for API, storefront and admin.
 Record Git commit, image digest, schema migration version, and release time.
 Containers run as non-root and expose health endpoints.
 
-The root `Dockerfile` supplies `api-runtime`, `storefront-runtime`,
-`admin-runtime` and the synthetic-only `liara-uat-runtime` target. The build
-stage is pinned to the repository Node
-version and produces the OpenSSL 3 Prisma Client. Runtime targets use the pinned
+`Dockerfile.release` supplies the `api-runtime`, `storefront-runtime` and
+`admin-runtime` production targets. The root `Dockerfile` is reserved for the
+time-bounded synthetic Liara UAT build. Both build paths are pinned to the
+repository Node version and produce the OpenSSL 3 Prisma Client. Production
+runtime targets use the pinned
 distroless Debian 12 CC digest, copy that exact Node binary, run as
 `65532:65532`, contain no shell/package manager, carry OCI
 version/revision/build-time labels and use absolute Node entrypoints and
@@ -50,17 +51,26 @@ liveness checks. Build with the same non-secret public origins intended for the
 target environment:
 
 ```text
-docker build --target api-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> -t kele-api:<commit> .
-docker build --target storefront-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg NEXT_PUBLIC_API_BASE_URL=<https-api-url> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-storefront:<commit> .
-docker build --target admin-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-admin:<commit> .
+docker build --file Dockerfile.release --target api-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> -t kele-api:<commit> .
+docker build --file Dockerfile.release --target storefront-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg NEXT_PUBLIC_API_BASE_URL=<https-api-url> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-storefront:<commit> .
+docker build --file Dockerfile.release --target admin-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-admin:<commit> .
 ```
 
-The Liara target is the final Dockerfile stage so Liara's source builder selects
-it without a custom target. It runs as the same non-root user, exposes only port
+The root Liara Dockerfile is intentionally a short, single-image build so the
+source builder can meet its fixed deadline without the three production
+`pnpm deploy` passes. It runs as the non-root `node` user, exposes only port
 `3000`, builds Admin with `/admin` as a compile-time base path and caps the
-three Node heaps for the Earth UAT plan. Its automatic migration/seed is allowed
-only for the explicit single-replica synthetic UAT profile; it does not change
-the production one-shot migration rule below.
+three Node heaps for the Earth UAT plan. Keeping build dependencies in this
+temporary image is an explicit synthetic-UAT tradeoff; it is forbidden for the
+three production images. Automatic migration/seed remains allowed only for the
+explicit single-replica synthetic UAT profile and does not change the
+production one-shot migration rule below.
+
+The Liara-only dependency bundle is separately locked under `deploy/liara` and
+contains production/build dependencies only. Its reviewed frozen lockfile is
+trusted during the time-bounded source build, so pnpm still verifies tarball
+integrity hashes but does not query registry metadata again for every locked
+transitive dependency.
 
 The API image includes the locked Prisma CLI, schema, migrations and generated
 client so the reviewed image can execute the explicit one-shot migration step:

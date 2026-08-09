@@ -1,7 +1,7 @@
 # Liara synthetic UAT deployment
 
-Status: locally verified operator-ready profile; external Liara deployment
-evidence pending
+Status: isolated build chain and predecessor runtime verified; external Liara
+deployment evidence pending
 
 This profile publishes the three KELE applications from one low-cost Docker
 application:
@@ -19,12 +19,23 @@ does not close Milestone 9.
 
 ## Local acceptance evidence
 
-On 2026-08-09 (`Asia/Tehran`) the final `liara-uat-runtime` target was built
-with Docker Engine 29.6.1 and exercised against PostgreSQL with all 16 locked
-migrations. The container ran as `65532:65532` with `0.5` CPU and a hard
+On 2026-08-09 (`Asia/Tehran`) the preceding multi-stage Liara UAT image was
+built with Docker Engine 29.6.1 and exercised against PostgreSQL with all 16
+locked migrations. Its container ran as `65532:65532` with `0.5` CPU and a hard
 `512 MiB` memory limit, stabilized between approximately `215-229 MiB`, reported
 healthy, and had no restart or OOM event. Storefront, `/admin/login`, API
-readiness and aggregate readiness all returned HTTP `200`.
+readiness and aggregate readiness all returned HTTP `200`. The current
+time-bounded image preserves that runtime contract but runs as the base image's
+non-root `node` user.
+
+After the source builder exceeded its five-minute deadline, the replacement
+Liara bundle was independently installed with only 222 production/build
+packages. Prisma generation, API compilation and both production Next builds
+passed from that isolated dependency set in 25.8 seconds. Both Dockerfiles pass
+Docker's static build check. A fresh local image download was not usable as a
+timing measurement because Docker's connection to the npm registry repeatedly
+returned `ECONNREFUSED`; the external Liara build remains the required proof of
+the complete image path.
 
 A real Chrome pass verified administrator OTP sign-in, protected navigation at
 `/admin/products/new`, clean browser console, secure logout and rejection of
@@ -80,12 +91,14 @@ Commit the reviewed deployment profile before creating an archive. From the
 repository root:
 
 ```text
-git archive --format=zip --output=kele-liara-uat.zip HEAD
+git archive --format=zip --output=kele-liara-uat.zip HEAD -- . ":(exclude)output" ":(exclude)docs" ":(exclude)e2e" ":(exclude).github"
 ```
 
-`git archive` includes tracked files only, so it excludes local `.env` files,
-dependencies, build output and the two generated `next-env.d.ts` changes. Do
-not create the archive with an unrestricted file explorer ZIP operation.
+`git archive` includes tracked files only and the explicit pathspecs remove
+tracked test evidence and documentation that Docker does not need. It also
+excludes local `.env` files, dependencies and the two generated
+`next-env.d.ts` changes. Do not create the archive with an unrestricted file
+explorer ZIP operation.
 
 ## 4. Deploy the Docker application
 
@@ -97,8 +110,11 @@ not create the archive with an unrestricted file explorer ZIP operation.
 6. Do not override `ENTRYPOINT` or `CMD`.
 7. Start deployment and watch the build/runtime logs.
 
-The root Dockerfile's final `liara-uat-runtime` stage is selected automatically.
-At startup the single UAT process applies the locked additive Prisma migrations,
+The root Dockerfile is the deadline-optimized synthetic UAT build and is
+selected automatically. `Dockerfile.release` remains the separate source of
+the three slim production images. Its separately locked `deploy/liara` bundle
+excludes lint, browser, unit-test and OpenAPI tooling. At startup the single UAT
+process applies the locked additive Prisma migrations,
 reconciles the deterministic catalog/editorial seed, creates the synthetic
 database-backed Super Administrator when absent, starts API/Storefront/Admin on
 private loopback ports, and finally opens port `3000`. This automatic migration
@@ -116,6 +132,16 @@ Expected log sequence:
 If the process is killed for memory on the Earth plan, change only the Docker
 application to the Mars plan and redeploy. Do not upgrade PostgreSQL merely to
 compensate for application-process memory.
+
+If the source build reaches Liara's five-minute deadline, first confirm that
+the archive was created from the latest reviewed commit containing the
+time-bounded root Dockerfile. The build should install roughly 223 packages and
+must not list Playwright, ESLint, Vitest or Redocly as installed dependencies.
+If package downloads are restricted or repeatedly time out, change the build
+location to **Germany** in the Liara application console and redeploy the same
+archive; Germany removes package-download restrictions but can make the final
+image push slower. Do not change runtime environment variables to troubleshoot
+a failure that occurs before the image is built.
 
 ## 5. Smoke test
 

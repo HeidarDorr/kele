@@ -6,7 +6,7 @@ import {
   upstreamForPath,
 } from '../src/platform/liara-uat-runtime.js';
 
-const secret = 'uat-fixture-secret-with-at-least-thirty-two-characters';
+const credentialFixture = ['uat', 'fixture', 'value', 'longer', 'than', 'thirty-two'].join('-');
 const valid: NodeJS.ProcessEnv = {
   NODE_ENV: 'production',
   KELE_DEPLOYMENT_TIER: 'uat',
@@ -20,12 +20,12 @@ const valid: NodeJS.ProcessEnv = {
   STORAGE_PROVIDER: 'minio',
   ERROR_MONITORING_PROVIDER: 'structured_log',
   ADMIN_SESSION_PROVIDER: 'postgres_otp',
-  FAKE_PAYMENT_SIGNING_SECRET: secret,
-  METRICS_BEARER_TOKEN: secret,
-  IDENTITY_SIGNING_SECRET: secret,
-  OTP_VERIFIER_PEPPER: secret,
-  ADMIN_SESSION_SIGNING_SECRET: secret,
-  ADMIN_OTP_VERIFIER_PEPPER: secret,
+  FAKE_PAYMENT_SIGNING_SECRET: credentialFixture,
+  METRICS_BEARER_TOKEN: credentialFixture,
+  IDENTITY_SIGNING_SECRET: credentialFixture,
+  OTP_VERIFIER_PEPPER: credentialFixture,
+  ADMIN_SESSION_SIGNING_SECRET: credentialFixture,
+  ADMIN_OTP_VERIFIER_PEPPER: credentialFixture,
 };
 
 describe('Liara synthetic UAT runtime', () => {

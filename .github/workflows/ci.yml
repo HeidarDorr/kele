@@ -109,9 +109,9 @@ jobs:
             --build-arg "API_BASE_URL=https://api.ci.invalid/api/v1"
             --build-arg "STOREFRONT_ORIGIN=https://storefront.ci.invalid"
           )
-          docker build "${common_args[@]}" --target api-runtime --tag "kele-api:$GITHUB_SHA" .
-          docker build "${common_args[@]}" --target storefront-runtime --tag "kele-storefront:$GITHUB_SHA" .
-          docker build "${common_args[@]}" --target admin-runtime --tag "kele-admin:$GITHUB_SHA" .
+          docker build "${common_args[@]}" --file Dockerfile.release --target api-runtime --tag "kele-api:$GITHUB_SHA" .
+          docker build "${common_args[@]}" --file Dockerfile.release --target storefront-runtime --tag "kele-storefront:$GITHUB_SHA" .
+          docker build "${common_args[@]}" --file Dockerfile.release --target admin-runtime --tag "kele-admin:$GITHUB_SHA" .
           docker image inspect --format '{{.RepoTags}} {{.Id}} revision={{index .Config.Labels "org.opencontainers.image.revision"}}' \
             "kele-api:$GITHUB_SHA" "kele-storefront:$GITHUB_SHA" "kele-admin:$GITHUB_SHA" \
             > image-manifest.txt
