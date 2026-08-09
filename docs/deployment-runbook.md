@@ -26,6 +26,13 @@ public URLs have no Cloudflare Access policy and therefore must contain only
 synthetic data and be shared only with intended testers. Quick Tunnel is not a
 staging, availability, backup, provider or release-image certification.
 
+For a longer-lived public functional-UAT session, the optional Render Free
+profile documented in `render-free-demo.md` provisions four on-demand Free web
+services and one 30-day Free PostgreSQL database from `render.yaml`. It uses
+Fake providers, development-only administrator authorization and ephemeral
+MinIO storage. It is not staging, provides no database backup/PITR or object
+durability, and cannot close a Milestone 9 external certification gate.
+
 Production configuration MUST reject Fake Payment and Fake SMS adapters during
 startup. Production deployment remains blocked until both real providers pass
 sandbox/verification acceptance.

@@ -216,3 +216,14 @@ the older artifact is incompatible.
 
 Until these are closed, staging/production is `NO-GO` and Milestone 10 must not
 start. No deployment, push or merge occurred.
+
+## Optional Render functional-UAT profile
+
+`render.yaml`, `scripts/render-demo.mjs` and `docs/render-free-demo.md` define a
+separate public, synthetic Render Free environment for manual functional
+acceptance. The Blueprint is schema-valid and pins every service and database
+to the Free plan, but it has not been pushed or deployed from this workspace.
+Consequently it is not external evidence and closes none of the blockers above.
+Free PostgreSQL has no backup/PITR and expires after 30 days; free MinIO data is
+ephemeral. The profile must never be cited as staging, production readiness or
+M9 `GO` evidence.

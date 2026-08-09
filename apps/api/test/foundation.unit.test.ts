@@ -4,7 +4,10 @@ import { FakeSmsAdapter } from '../src/modules/foundation/infrastructure/fake-sm
 import { KavenegarSmsAdapter } from '../src/modules/foundation/infrastructure/kavenegar-sms.adapter.js';
 import { VandarPaymentAdapter } from '../src/modules/foundation/infrastructure/vandar-payment.adapter.js';
 import { VandarRefundAdapter } from '../src/modules/foundation/infrastructure/vandar-refund.adapter.js';
-import { ArvanObjectStorageAdapter } from '../src/modules/foundation/infrastructure/arvan-object-storage.adapter.js';
+import {
+  ArvanObjectStorageAdapter,
+  S3ObjectStorageAdapter,
+} from '../src/modules/foundation/infrastructure/arvan-object-storage.adapter.js';
 
 describe('foundation adapters', () => {
   const sandboxPaymentToken = ['sandbox', 'payment', 'reference', '1234'].join('-');
@@ -239,6 +242,27 @@ describe('foundation adapters', () => {
     );
     expect(() => adapter.createSignedRead('media/products/file.webp', 901)).toThrow(
       'between 30 and 900',
+    );
+  });
+
+  it('uses path-style addressing for a public MinIO demo endpoint', async () => {
+    const adapter = new S3ObjectStorageAdapter(
+      'minio',
+      'kele-render-demo',
+      'https://storage.onrender.com',
+      'us-east-1',
+      'demo-access-key',
+      'demo-secret-key',
+      'https://storage.onrender.com/kele-render-demo',
+    );
+    const upload = await adapter.createSignedUpload({
+      key: 'quarantine/00000000-0000-4000-8000-000000000001.webp',
+      contentType: 'image/webp',
+      expiresInSeconds: 300,
+    });
+    expect(new URL(upload).hostname).toBe('storage.onrender.com');
+    expect(new URL(upload).pathname).toBe(
+      '/kele-render-demo/quarantine/00000000-0000-4000-8000-000000000001.webp',
     );
   });
 });
