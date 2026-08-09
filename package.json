@@ -30,20 +30,10 @@
     "services:up": "docker compose up -d postgres minio",
     "services:down": "docker compose down",
     "seed": "dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api prisma:deploy && dotenv -e .env -- corepack pnpm@11.18.0 --filter @kele/api seed",
-    "demo:codespaces:configure": "node scripts/configure-codespaces-demo.mjs",
-    "demo:codespaces:urls": "node scripts/configure-codespaces-demo.mjs",
-    "demo:codespaces:infra": "docker compose --env-file .env.codespaces -f docker-compose.codespaces.yml up -d --wait postgres minio && docker compose --env-file .env.codespaces -f docker-compose.codespaces.yml run --rm minio-init",
-    "demo:codespaces:migrate": "dotenv -e .env.codespaces -- corepack pnpm@11.18.0 --filter @kele/api prisma:deploy",
-    "demo:codespaces:seed": "dotenv -e .env.codespaces -v NODE_ENV=test -v E2E_DATABASE_RESET=true -- corepack pnpm@11.18.0 --filter @kele/api seed",
-    "demo:codespaces:build": "dotenv -e .env.codespaces -v NODE_ENV=production -- corepack pnpm@11.18.0 -r --if-present build",
-    "demo:codespaces:start": "bash .devcontainer/start-apps.sh",
-    "demo:codespaces:stop": "bash .devcontainer/stop-apps.sh",
-    "demo:codespaces:reset": "bash .devcontainer/reset-demo.sh",
     "demo:quick-tunnel:start": "node scripts/quick-tunnel-demo.mjs start",
     "demo:quick-tunnel:verify": "node scripts/quick-tunnel-demo.mjs verify",
     "demo:quick-tunnel:urls": "node scripts/quick-tunnel-demo.mjs urls",
-    "demo:quick-tunnel:reset": "node scripts/quick-tunnel-demo.mjs reset",
-    "demo:render:smoke": "node scripts/render-demo.mjs smoke"
+    "demo:quick-tunnel:reset": "node scripts/quick-tunnel-demo.mjs reset"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

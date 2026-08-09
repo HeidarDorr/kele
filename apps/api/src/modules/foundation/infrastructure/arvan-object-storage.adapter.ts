@@ -37,7 +37,7 @@ export class S3ObjectStorageAdapter implements ObjectStorage {
       endpoint,
       region,
       credentials: { accessKeyId, secretAccessKey },
-      forcePathStyle: provider === 'minio',
+      forcePathStyle: false,
     });
   }
 
