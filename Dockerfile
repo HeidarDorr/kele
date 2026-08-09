@@ -32,14 +32,17 @@ COPY --chown=node:node . .
 RUN cd deploy/liara \
     && pnpm install --frozen-lockfile --prod \
     && cd /workspace \
-    && ln -s deploy/liara/node_modules node_modules \
+    && ln -s /workspace/deploy/liara/node_modules node_modules \
     && mkdir -p node_modules/@kele \
-    && ln -s ../../../packages/api-contract node_modules/@kele/api-contract \
-    && ln -s ../../../packages/config node_modules/@kele/config \
-    && ln -s ../../../packages/design-system node_modules/@kele/design-system \
-    && ln -s ../../node_modules apps/api/node_modules \
-    && ln -s ../../node_modules apps/storefront/node_modules \
-    && ln -s ../../node_modules apps/admin/node_modules \
+    && ln -s /workspace/packages/api-contract node_modules/@kele/api-contract \
+    && ln -s /workspace/packages/config node_modules/@kele/config \
+    && ln -s /workspace/packages/design-system node_modules/@kele/design-system \
+    && ln -s /workspace/node_modules apps/api/node_modules \
+    && ln -s /workspace/node_modules apps/storefront/node_modules \
+    && ln -s /workspace/node_modules apps/admin/node_modules \
+    && test -f node_modules/@kele/api-contract/package.json \
+    && test -f node_modules/@kele/config/package.json \
+    && test -f node_modules/@kele/design-system/package.json \
     && node_modules/.bin/prisma generate --schema=apps/api/prisma/schema.prisma \
     && node_modules/.bin/tsc -p packages/config/tsconfig.build.json \
     && node_modules/.bin/tsc -p packages/design-system/tsconfig.build.json \
