@@ -3515,6 +3515,7 @@ summary {
     min-block-size: 38rem;
     display: flex;
     align-items: end;
+    isolation: isolate;
     overflow: hidden;
     color: #fffaf0;
     text-decoration: none;
@@ -3553,6 +3554,7 @@ summary {
   }
 
   .occasion-card-copy strong {
+    color: #fff;
     font-family: var(--font-display), serif;
     font-size: clamp(2.1rem, 3.4vw, 4rem);
     font-weight: 400;

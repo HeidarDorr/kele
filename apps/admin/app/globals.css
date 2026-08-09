@@ -79,6 +79,7 @@ button:disabled {
   flex-direction: column;
   min-block-size: 100vh;
   block-size: 100vh;
+  overflow-y: auto;
   padding: 2.25rem 1.5rem;
   color: #f7f0e8;
   background: #28201b;
@@ -1197,6 +1198,7 @@ bdi,
     min-inline-size: 0;
     min-block-size: auto;
     block-size: auto;
+    overflow-y: visible;
     padding: 1.25rem;
   }
 
