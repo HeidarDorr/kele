@@ -1,4 +1,5 @@
 import { BrandWordmark } from '../../components/brand-wordmark';
+import { adminPath } from '../../lib/admin-path';
 import { beginAdministratorLogin, verifyAdministratorLogin } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -83,7 +84,7 @@ export default async function AdministratorLoginPage({
             <button className="admin-primary" type="submit">
               تأیید و ورود
             </button>
-            <a className="admin-login-restart" href="/login">
+            <a className="admin-login-restart" href={adminPath('/login')}>
               درخواست کد تازه
             </a>
           </form>

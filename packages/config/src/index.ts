@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
 const runtimeEnvironment = z.enum(['development', 'test', 'production']);
+const deploymentTier = z.enum(['uat', 'staging', 'production']);
 
 export const environmentSchema = z
   .object({
     NODE_ENV: runtimeEnvironment.default('development'),
+    KELE_DEPLOYMENT_TIER: deploymentTier.optional(),
     PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     DATABASE_URL: z.url(),
     E2E_DATABASE_URL: z.url().optional(),
@@ -96,6 +98,19 @@ export const environmentSchema = z
       .optional(),
   })
   .superRefine((value, context) => {
+    const effectiveDeploymentTier = value.KELE_DEPLOYMENT_TIER ?? value.NODE_ENV;
+    const productionConfiguration = effectiveDeploymentTier === 'production';
+    const productionShapedConfiguration =
+      effectiveDeploymentTier === 'staging' || productionConfiguration;
+
+    if (value.KELE_DEPLOYMENT_TIER !== undefined && value.NODE_ENV !== 'production') {
+      context.addIssue({
+        code: 'custom',
+        path: ['KELE_DEPLOYMENT_TIER'],
+        message: 'An explicit deployment tier requires NODE_ENV=production.',
+      });
+    }
+
     if (
       value.NODE_ENV !== 'test' &&
       (value.E2E_FIXED_TIME !== undefined || value.E2E_DETERMINISTIC_ID_SEED !== undefined)
@@ -107,7 +122,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.PAYMENT_PROVIDER === 'fake') {
+    if (productionShapedConfiguration && value.PAYMENT_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['PAYMENT_PROVIDER'],
@@ -115,7 +130,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.SMS_PROVIDER === 'fake') {
+    if (productionShapedConfiguration && value.SMS_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['SMS_PROVIDER'],
@@ -123,7 +138,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.REFUND_PROVIDER === 'fake') {
+    if (productionShapedConfiguration && value.REFUND_PROVIDER === 'fake') {
       context.addIssue({
         code: 'custom',
         path: ['REFUND_PROVIDER'],
@@ -131,7 +146,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.STORAGE_PROVIDER === 'minio') {
+    if (productionShapedConfiguration && value.STORAGE_PROVIDER === 'minio') {
       context.addIssue({
         code: 'custom',
         path: ['STORAGE_PROVIDER'],
@@ -139,7 +154,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.ERROR_MONITORING_PROVIDER === 'structured_log') {
+    if (productionShapedConfiguration && value.ERROR_MONITORING_PROVIDER === 'structured_log') {
       context.addIssue({
         code: 'custom',
         path: ['ERROR_MONITORING_PROVIDER'],
@@ -148,7 +163,7 @@ export const environmentSchema = z
     }
 
     if (
-      value.NODE_ENV === 'production' &&
+      productionShapedConfiguration &&
       value.ADMIN_SESSION_PROVIDER === 'development_static' &&
       [
         value.ADMIN_SUPER_SESSION_TOKEN,
@@ -163,7 +178,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.ADMIN_SESSION_PROVIDER === 'development_static') {
+    if (productionShapedConfiguration && value.ADMIN_SESSION_PROVIDER === 'development_static') {
       context.addIssue({
         code: 'custom',
         path: ['ADMIN_SESSION_PROVIDER'],
@@ -171,7 +186,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production' && value.METRICS_BEARER_TOKEN.startsWith('development-')) {
+    if (productionShapedConfiguration && value.METRICS_BEARER_TOKEN.startsWith('development-')) {
       context.addIssue({
         code: 'custom',
         path: ['METRICS_BEARER_TOKEN'],
@@ -180,7 +195,7 @@ export const environmentSchema = z
     }
 
     if (
-      value.NODE_ENV === 'production' &&
+      productionShapedConfiguration &&
       (value.IDENTITY_SIGNING_SECRET.startsWith('development-') ||
         value.OTP_VERIFIER_PEPPER.startsWith('development-'))
     ) {
@@ -257,7 +272,7 @@ export const environmentSchema = z
       });
     }
 
-    if (value.NODE_ENV === 'production') {
+    if (productionConfiguration) {
       for (const [key, raw] of [
         ['API_BASE_URL', value.API_BASE_URL],
         ['NEXT_PUBLIC_API_BASE_URL', value.NEXT_PUBLIC_API_BASE_URL],

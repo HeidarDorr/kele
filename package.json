@@ -33,7 +33,8 @@
     "demo:quick-tunnel:start": "node scripts/quick-tunnel-demo.mjs start",
     "demo:quick-tunnel:verify": "node scripts/quick-tunnel-demo.mjs verify",
     "demo:quick-tunnel:urls": "node scripts/quick-tunnel-demo.mjs urls",
-    "demo:quick-tunnel:reset": "node scripts/quick-tunnel-demo.mjs reset"
+    "demo:quick-tunnel:reset": "node scripts/quick-tunnel-demo.mjs reset",
+    "demo:liara:env": "node scripts/generate-liara-uat-env.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

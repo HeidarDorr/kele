@@ -19,6 +19,24 @@ mandatory and have not been represented as passing.
 No production credential, tenant, paid tier, deployment, push or merge was
 created by this verification.
 
+## Synthetic Liara UAT readiness (not M9 closure)
+
+On 2026-08-09 a separate low-cost functional-review profile was verified
+locally. Its single non-root Docker container serves Storefront, Admin and API
+through one port, uses a private PostgreSQL connection, permits only explicit
+synthetic UAT providers, and fails configuration closed for staging or
+production. Under `0.5` CPU and `512 MiB` memory it stabilized between
+approximately `215-229 MiB`; aggregate readiness and all three routed
+applications returned HTTP `200`. Chrome verified the administrator OTP,
+protected navigation, logout and session revocation path below `/admin` without
+console errors.
+
+This profile is documented in `docs/liara-uat-demo.md`. It allows product
+stakeholders to review current functional behavior with synthetic data, but it
+does not certify Liara itself, any real payment/SMS/storage/monitoring provider,
+managed PITR/RPO/RTO, production assets, or the three release images. The M9
+staging/production decision therefore remains `NO-GO`, and M10 remains blocked.
+
 An external-access preflight was repeated at
 2026-08-08T12:53:54+03:30 against reviewed commit `d066e5b`. Required
 Vandar/Kavenegar credentials were absent, Arvan exposed only an unauthenticated

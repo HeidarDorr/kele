@@ -73,37 +73,38 @@ still require the runbook's expand-and-contract review.
 All variables are required and validated by `@kele/config` before API startup.
 `.env.example` contains safe local values only.
 
-| Variable                                                                            | Purpose                                                                                                                   |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                                                                          | `development`, `test`, or `production`; production accepts only the ADR-0005 provider package and fails closed otherwise. |
-| `PORT`                                                                              | API listener port.                                                                                                        |
-| `DATABASE_URL`                                                                      | PostgreSQL connection string.                                                                                             |
-| `E2E_DATABASE_URL`                                                                  | Dedicated disposable PostgreSQL database; must be distinct and named exactly `kele_e2e`.                                  |
-| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                              | S3-compatible storage target; MinIO locally.                                                                              |
-| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`                                          | Storage credentials; secrets outside local development belong in secret management.                                       |
-| `PAYMENT_PROVIDER`, `REFUND_PROVIDER`, `SMS_PROVIDER`                               | `fake` locally; production requires `vandar`, `vandar` and `kavenegar` respectively.                                      |
-| `VANDAR_IPG_API_KEY`, `PAYMENT_CALLBACK_BASE_URL`                                   | Vandar intent/inquiry/verify credential and reviewed HTTPS callback base.                                                 |
-| `VANDAR_REFUND_ACCESS_TOKEN`, `VANDAR_REFUND_REFRESH_TOKEN`, `VANDAR_BUSINESS_NAME` | Vandar Refund credentials and business identifier; refresh is operator-managed.                                           |
-| `KAVENEGAR_API_KEY`, `KAVENEGAR_OTP_TEMPLATE`                                       | Kavenegar REST credential and approved `KeleOtp` Lookup template.                                                         |
-| `PROVIDER_CONNECT_TIMEOUT_MS`, `PROVIDER_REQUEST_TIMEOUT_MS`                        | Approved provider connect/total bounds; connect must be below total.                                                      |
-| `FAKE_SMS_OTP_CODE`                                                                 | Fixed six-digit local/test sign-in code; defaults to `111111` and is never allowed with Fake SMS in production.           |
-| `API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`                                          | API base URL for server/client transport configuration.                                                                   |
-| `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`                                                 | Exact credentialed CORS origins; wildcard origins are not supported.                                                      |
-| `STORAGE_PROVIDER`, `STORAGE_PUBLIC_BASE_URL`, `ARVAN_CDN_API_TOKEN`                | `minio` locally; production requires private `arvan_s3`, approved CDN hostname and operations token.                      |
-| `ERROR_MONITORING_PROVIDER`                                                         | `structured_log` locally; production requires the ADR-0005 `self_hosted_grafana` deployment.                              |
-| `LOKI_PUSH_URL`, `LOKI_TENANT_ID`, `LOKI_PUSH_TOKEN`                                | Private regional log-ingestion contract for the deployment collector; values are never logged.                            |
-| `GRAFANA_ADMIN_BOOTSTRAP_SECRET`                                                    | One-time deployment secret for Grafana bootstrap; it is not an application-session credential.                            |
-| `METRICS_BEARER_TOKEN`                                                              | 32+ character credential for `GET /api/v1/metrics`; keep it in secret management outside local development.               |
-| `ADMIN_SESSION_PROVIDER`                                                            | `development_static` locally; production requires `postgres_otp`.                                                         |
-| `ADMIN_SESSION_SIGNING_SECRET`, `ADMIN_OTP_VERIFIER_PEPPER`                         | Independent 32+ character production secrets for administrator privacy hashes and OTP verifiers.                          |
-| `ADMIN_BOOTSTRAP_TOKEN_HASH`                                                        | Optional one-time offline bootstrap authorization hash; never store or pass the plaintext token in repository config.     |
-| `API_JSON_BODY_LIMIT_BYTES`                                                         | JSON/form body bound, 16 KiB to 1 MiB; default 128 KiB.                                                                   |
-| `READINESS_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`                                        | Bounded dependency-read and total request timeouts.                                                                       |
-| `HEADERS_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS`                                       | Node HTTP header and keep-alive bounds; header timeout must be below request timeout.                                     |
-| `TRUST_PROXY_HOPS`                                                                  | Explicit trusted proxy hop count, zero to two; never inferred from arbitrary forwarding headers.                          |
-| `CALLBACK_RATE_LIMIT_PER_MINUTE`                                                    | Per-risk-key payment callback bound for one process.                                                                      |
-| `OTP_VERIFY_RATE_LIMIT_PER_MINUTE`                                                  | Per-risk-key OTP verification bound in addition to persisted challenge policy.                                            |
-| `RATE_LIMIT_MAX_KEYS`                                                               | Maximum in-process keyed windows; saturation fails closed.                                                                |
+| Variable                                                                            | Purpose                                                                                                                        |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `NODE_ENV`                                                                          | `development`, `test`, or `production`; production accepts only the ADR-0005 provider package and fails closed otherwise.      |
+| `KELE_DEPLOYMENT_TIER`                                                              | Explicit `uat`, `staging` or `production`; requires production Node mode. Only `uat` permits the documented synthetic profile. |
+| `PORT`                                                                              | API listener port.                                                                                                             |
+| `DATABASE_URL`                                                                      | PostgreSQL connection string.                                                                                                  |
+| `E2E_DATABASE_URL`                                                                  | Dedicated disposable PostgreSQL database; must be distinct and named exactly `kele_e2e`.                                       |
+| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                              | S3-compatible storage target; MinIO locally.                                                                                   |
+| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`                                          | Storage credentials; secrets outside local development belong in secret management.                                            |
+| `PAYMENT_PROVIDER`, `REFUND_PROVIDER`, `SMS_PROVIDER`                               | `fake` locally; production requires `vandar`, `vandar` and `kavenegar` respectively.                                           |
+| `VANDAR_IPG_API_KEY`, `PAYMENT_CALLBACK_BASE_URL`                                   | Vandar intent/inquiry/verify credential and reviewed HTTPS callback base.                                                      |
+| `VANDAR_REFUND_ACCESS_TOKEN`, `VANDAR_REFUND_REFRESH_TOKEN`, `VANDAR_BUSINESS_NAME` | Vandar Refund credentials and business identifier; refresh is operator-managed.                                                |
+| `KAVENEGAR_API_KEY`, `KAVENEGAR_OTP_TEMPLATE`                                       | Kavenegar REST credential and approved `KeleOtp` Lookup template.                                                              |
+| `PROVIDER_CONNECT_TIMEOUT_MS`, `PROVIDER_REQUEST_TIMEOUT_MS`                        | Approved provider connect/total bounds; connect must be below total.                                                           |
+| `FAKE_SMS_OTP_CODE`                                                                 | Fixed six-digit local/test sign-in code; defaults to `111111` and is never allowed with Fake SMS in production.                |
+| `API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`                                          | API base URL for server/client transport configuration.                                                                        |
+| `STOREFRONT_ORIGIN`, `ADMIN_ORIGIN`                                                 | Exact credentialed CORS origins; wildcard origins are not supported.                                                           |
+| `STORAGE_PROVIDER`, `STORAGE_PUBLIC_BASE_URL`, `ARVAN_CDN_API_TOKEN`                | `minio` locally; production requires private `arvan_s3`, approved CDN hostname and operations token.                           |
+| `ERROR_MONITORING_PROVIDER`                                                         | `structured_log` locally; production requires the ADR-0005 `self_hosted_grafana` deployment.                                   |
+| `LOKI_PUSH_URL`, `LOKI_TENANT_ID`, `LOKI_PUSH_TOKEN`                                | Private regional log-ingestion contract for the deployment collector; values are never logged.                                 |
+| `GRAFANA_ADMIN_BOOTSTRAP_SECRET`                                                    | One-time deployment secret for Grafana bootstrap; it is not an application-session credential.                                 |
+| `METRICS_BEARER_TOKEN`                                                              | 32+ character credential for `GET /api/v1/metrics`; keep it in secret management outside local development.                    |
+| `ADMIN_SESSION_PROVIDER`                                                            | `development_static` locally; production requires `postgres_otp`.                                                              |
+| `ADMIN_SESSION_SIGNING_SECRET`, `ADMIN_OTP_VERIFIER_PEPPER`                         | Independent 32+ character production secrets for administrator privacy hashes and OTP verifiers.                               |
+| `ADMIN_BOOTSTRAP_TOKEN_HASH`                                                        | Optional one-time offline bootstrap authorization hash; never store or pass the plaintext token in repository config.          |
+| `API_JSON_BODY_LIMIT_BYTES`                                                         | JSON/form body bound, 16 KiB to 1 MiB; default 128 KiB.                                                                        |
+| `READINESS_TIMEOUT_MS`, `REQUEST_TIMEOUT_MS`                                        | Bounded dependency-read and total request timeouts.                                                                            |
+| `HEADERS_TIMEOUT_MS`, `KEEP_ALIVE_TIMEOUT_MS`                                       | Node HTTP header and keep-alive bounds; header timeout must be below request timeout.                                          |
+| `TRUST_PROXY_HOPS`                                                                  | Explicit trusted proxy hop count, zero to two; never inferred from arbitrary forwarding headers.                               |
+| `CALLBACK_RATE_LIMIT_PER_MINUTE`                                                    | Per-risk-key payment callback bound for one process.                                                                           |
+| `OTP_VERIFY_RATE_LIMIT_PER_MINUTE`                                                  | Per-risk-key OTP verification bound in addition to persisted challenge policy.                                                 |
+| `RATE_LIMIT_MAX_KEYS`                                                               | Maximum in-process keyed windows; saturation fails closed.                                                                     |
 
 ## Boundaries and runtime behavior
 

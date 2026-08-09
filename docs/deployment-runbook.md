@@ -20,6 +20,15 @@ public URLs have no Cloudflare Access policy and therefore must contain only
 synthetic data and be shared only with intended testers. Quick Tunnel is not a
 staging, availability, backup, provider or release-image certification.
 
+The optional single-application Liara profile documented in
+`liara-uat-demo.md` is the equivalent persistent synthetic-UAT boundary for a
+small review group. Its `liara-uat-runtime` Docker target serves Storefront,
+Admin and API through one public HTTP port and a separate private managed
+PostgreSQL database. It deliberately permits Fake providers only when the
+explicit `KELE_DEPLOYMENT_TIER=uat` contract passes. It is not staging,
+production, provider certification, managed-recovery evidence or a substitute
+for the three release images.
+
 Production configuration MUST reject Fake Payment and Fake SMS adapters during
 startup. Production deployment remains blocked until both real providers pass
 sandbox/verification acceptance.
@@ -30,8 +39,9 @@ Build immutable, versioned container images for API, storefront and admin.
 Record Git commit, image digest, schema migration version, and release time.
 Containers run as non-root and expose health endpoints.
 
-The root `Dockerfile` supplies `api-runtime`, `storefront-runtime` and
-`admin-runtime` targets. The build stage is pinned to the repository Node
+The root `Dockerfile` supplies `api-runtime`, `storefront-runtime`,
+`admin-runtime` and the synthetic-only `liara-uat-runtime` target. The build
+stage is pinned to the repository Node
 version and produces the OpenSSL 3 Prisma Client. Runtime targets use the pinned
 distroless Debian 12 CC digest, copy that exact Node binary, run as
 `65532:65532`, contain no shell/package manager, carry OCI
@@ -44,6 +54,13 @@ docker build --target api-runtime --build-arg VCS_REF=<commit> --build-arg BUILD
 docker build --target storefront-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg NEXT_PUBLIC_API_BASE_URL=<https-api-url> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-storefront:<commit> .
 docker build --target admin-runtime --build-arg VCS_REF=<commit> --build-arg BUILD_DATE=<utc> --build-arg API_BASE_URL=<https-api-url> --build-arg STOREFRONT_ORIGIN=<https-storefront-origin> -t kele-admin:<commit> .
 ```
+
+The Liara target is the final Dockerfile stage so Liara's source builder selects
+it without a custom target. It runs as the same non-root user, exposes only port
+`3000`, builds Admin with `/admin` as a compile-time base path and caps the
+three Node heaps for the Earth UAT plan. Its automatic migration/seed is allowed
+only for the explicit single-replica synthetic UAT profile; it does not change
+the production one-shot migration rule below.
 
 The API image includes the locked Prisma CLI, schema, migrations and generated
 client so the reviewed image can execute the explicit one-shot migration step:

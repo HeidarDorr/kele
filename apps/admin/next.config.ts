@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 
 const storefrontOrigin = process.env.STOREFRONT_ORIGIN ?? 'http://127.0.0.1:3000';
 const apiOrigin = new URL(process.env.API_BASE_URL ?? 'http://127.0.0.1:3001/api/v1').origin;
+const adminBasePath = process.env.KELE_ADMIN_BASE_PATH ?? '';
 const production = process.env.NODE_ENV === 'production';
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -18,6 +19,7 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  basePath: adminBasePath,
   reactStrictMode: true,
   poweredByHeader: false,
   distDir: process.env.KELE_E2E_BUILD === 'true' ? '.next-e2e' : '.next',

@@ -56,6 +56,28 @@ describe('environment configuration', () => {
     );
   });
 
+  it('permits synthetic providers only in the explicit UAT tier', () => {
+    const uat = parseEnvironment({
+      ...valid,
+      NODE_ENV: 'production',
+      KELE_DEPLOYMENT_TIER: 'uat',
+      ADMIN_SESSION_PROVIDER: 'postgres_otp',
+      ADMIN_SESSION_SIGNING_SECRET: fixtureCredential('uat-admin-session'),
+      ADMIN_OTP_VERIFIER_PEPPER: fixtureCredential('uat-admin-otp'),
+    });
+    expect(uat).toMatchObject({
+      KELE_DEPLOYMENT_TIER: 'uat',
+      PAYMENT_PROVIDER: 'fake',
+      SMS_PROVIDER: 'fake',
+    });
+    expect(() =>
+      parseEnvironment({ ...valid, NODE_ENV: 'production', KELE_DEPLOYMENT_TIER: 'staging' }),
+    ).toThrow('The fake payment provider is forbidden in production.');
+    expect(() =>
+      parseEnvironment({ ...valid, NODE_ENV: 'test', KELE_DEPLOYMENT_TIER: 'uat' }),
+    ).toThrow('An explicit deployment tier requires NODE_ENV=production.');
+  });
+
   it('[OQ-002-PROD][OQ-003-PROD][OQ-017][OQ-018][OQ-022] accepts only the approved production package', () => {
     const production = parseEnvironment({
       ...valid,
