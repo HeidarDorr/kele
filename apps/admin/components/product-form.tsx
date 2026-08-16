@@ -1,9 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import type { AdminCategory, AdminProduct, MediaValue } from '../lib/admin-api';
 import type { ActionState } from '../app/actions';
+import {
+  validateProductMatrixMedia,
+  type ProductMatrixValidationError,
+} from './product-matrix-validation';
 
 type ProductAction = (previous: ActionState, formData: FormData) => Promise<ActionState>;
 
@@ -122,15 +126,34 @@ export function ProductForm({
 }) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const [variants, setVariants] = useState<EditableVariant[]>(() => initialVariants(product));
+  const [matrixError, setMatrixError] = useState<ProductMatrixValidationError | null>(null);
+
+  useEffect(() => {
+    if (matrixError === null) return;
+    document.getElementById(`variant-media-error-${String(matrixError.variantIndex)}`)?.focus();
+  }, [matrixError]);
 
   function updateVariant(key: string, update: (variant: EditableVariant) => EditableVariant) {
+    setMatrixError(null);
     setVariants((current) =>
       current.map((variant) => (variant.key === key ? update(variant) : variant)),
     );
   }
 
   return (
-    <form className="admin-form product-matrix-form" action={formAction}>
+    <form
+      className="admin-form product-matrix-form"
+      action={formAction}
+      onSubmit={(event) => {
+        const error = validateProductMatrixMedia(variants);
+        if (error === null) {
+          setMatrixError(null);
+          return;
+        }
+        event.preventDefault();
+        setMatrixError(error);
+      }}
+    >
       <input
         name="productModel"
         type="hidden"
@@ -213,6 +236,7 @@ export function ProductForm({
             className="admin-secondary"
             type="button"
             onClick={() => {
+              setMatrixError(null);
               setVariants((current) => [...current, emptyVariant()]);
             }}
           >
@@ -279,6 +303,7 @@ export function ProductForm({
                   type="button"
                   disabled={variants.length === 1}
                   onClick={() => {
+                    setMatrixError(null);
                     setVariants((current) => current.filter((item) => item.key !== variant.key));
                   }}
                 >
@@ -291,6 +316,16 @@ export function ProductForm({
                   <h3>تصاویر این رنگ</h3>
                   <p>تصویر شاخص را مشخص کنید؛ ترتیب انتخاب، ترتیب گالری محصول است.</p>
                 </div>
+                {matrixError?.variantIndex === variantIndex ? (
+                  <p
+                    className="form-error variant-media-error"
+                    id={`variant-media-error-${String(variantIndex)}`}
+                    role="alert"
+                    tabIndex={-1}
+                  >
+                    {matrixError.message}
+                  </p>
+                ) : null}
                 {media.length === 0 ? (
                   <p className="admin-empty-state">ابتدا از بخش رسانه‌ها تصویر بارگذاری کنید.</p>
                 ) : (

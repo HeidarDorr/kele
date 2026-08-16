@@ -1389,6 +1389,10 @@ bdi,
   font-size: 0.78rem;
 }
 
+.variant-media-error {
+  margin: 1rem 0 0;
+}
+
 .media-picker-grid {
   margin-block-start: 1rem;
   display: grid;

@@ -54,11 +54,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
                 : status === 403
                   ? 'FORBIDDEN'
                   : 'INTERNAL_ERROR';
+    const httpDetail = exception instanceof HttpException ? httpExceptionDetail(exception) : null;
     const detail =
       exception instanceof ApplicationError
         ? exception.message
         : exception instanceof HttpException
-          ? exception.message
+          ? httpDetail
           : transportStatus === 413
             ? 'Request payload exceeds the accepted limit.'
             : transportStatus === 400
@@ -68,6 +69,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       exception instanceof ApplicationError && exception.errors.length > 0
         ? exception.errors
         : undefined;
+    const title =
+      status >= 500
+        ? 'Internal server error'
+        : code === 'REQUEST_VALIDATION_FAILED'
+          ? 'Request validation failed'
+          : detail;
 
     if (exception instanceof ApplicationError && exception.retryAfterSeconds !== undefined) {
       response.setHeader('Retry-After', String(exception.retryAfterSeconds));
@@ -93,7 +100,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       .type('application/problem+json')
       .send({
         type: `https://kele.local/problems/${code.toLocaleLowerCase()}`,
-        title: status >= 500 ? 'Internal server error' : detail,
+        title,
         status,
         detail,
         code,
@@ -101,6 +108,21 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         ...(errors === undefined ? {} : { errors }),
       });
   }
+}
+
+function httpExceptionDetail(exception: HttpException): string {
+  const exceptionResponse = exception.getResponse();
+  if (typeof exceptionResponse === 'string') return exceptionResponse;
+
+  const message = (exceptionResponse as { message?: unknown }).message;
+  if (typeof message === 'string' && message.length > 0) return message;
+  if (Array.isArray(message)) {
+    const messages = message.filter(
+      (item): item is string => typeof item === 'string' && item.length > 0,
+    );
+    if (messages.length > 0) return messages.join(' ');
+  }
+  return exception.message;
 }
 
 function transportHttpStatus(exception: unknown): number | null {
