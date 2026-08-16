@@ -28,46 +28,52 @@ export function MediaUploadForm() {
         </div>
       ) : null}
       <div className="media-upload-layout">
-        <label className="media-drop-field">
+        <div className="media-drop-field">
           <span>فایل تصویر</span>
-          <input
-            name="file"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (preview !== null) URL.revokeObjectURL(preview);
-              setPreview(file ? URL.createObjectURL(file) : null);
-              setFileName(file?.name ?? '');
-              setDimensions('');
-            }}
-          />
-          {preview ? (
-            <span className="media-upload-preview">
-              <Image
-                src={preview}
-                alt="پیش‌نمایش فایل انتخاب‌شده"
-                fill
-                unoptimized
-                sizes="320px"
-                onLoad={(event) => {
-                  setDimensions(
-                    `${event.currentTarget.naturalWidth.toLocaleString('fa-IR')} × ${event.currentTarget.naturalHeight.toLocaleString('fa-IR')}`,
-                  );
-                }}
-              />
+          <label className="media-file-picker">
+            <input
+              aria-label="انتخاب فایل تصویر"
+              name="file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (preview !== null) URL.revokeObjectURL(preview);
+                setPreview(file ? URL.createObjectURL(file) : null);
+                setFileName(file?.name ?? '');
+                setDimensions('');
+              }}
+            />
+            {preview ? (
+              <span className="media-upload-preview">
+                <Image
+                  src={preview}
+                  alt="پیش‌نمایش فایل انتخاب‌شده"
+                  fill
+                  unoptimized
+                  sizes="320px"
+                  onLoad={(event) => {
+                    setDimensions(
+                      `${event.currentTarget.naturalWidth.toLocaleString('fa-IR')} × ${event.currentTarget.naturalHeight.toLocaleString('fa-IR')}`,
+                    );
+                  }}
+                />
+              </span>
+            ) : (
+              <span className="media-upload-placeholder">JPEG، PNG یا WebP تا ۱۰ مگابایت</span>
+            )}
+            <span className="media-file-picker-action" aria-hidden="true">
+              {preview ? 'تغییر تصویر' : 'انتخاب تصویر'}
             </span>
-          ) : (
-            <span className="media-upload-placeholder">JPEG، PNG یا WebP تا ۱۰ مگابایت</span>
-          )}
+          </label>
           {fileName ? (
             <small>
               <bdi dir="ltr">{fileName}</bdi>
               {dimensions ? ` · ${dimensions}` : ''}
             </small>
           ) : null}
-        </label>
+        </div>
         <div className="media-upload-fields">
           <label>
             متن جایگزین

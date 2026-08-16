@@ -132,14 +132,18 @@ export default async function ProductPage({
                 {product.availableColors.map((color) => (
                   <Link
                     key={color.variantId}
-                    href={`/products/${product.slug}?color=${color.variantId}`}
+                    href={`/products/${product.slug}?color=${encodeURIComponent(color.variantId)}`}
                     aria-current={
                       color.variantId === product.selectedVariant.id ? 'true' : undefined
                     }
                     className={color.available ? 'color-option' : 'color-option unavailable'}
                   >
-                    <span style={{ backgroundColor: color.hex ?? 'transparent' }} />
-                    <span>{color.name}</span>
+                    <span
+                      className="color-option-swatch"
+                      style={{ backgroundColor: color.hex ?? 'transparent' }}
+                      aria-hidden="true"
+                    />
+                    <span className="color-option-name">{color.name}</span>
                     {!color.available ? <small>ناموجود</small> : null}
                   </Link>
                 ))}

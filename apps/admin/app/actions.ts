@@ -8,6 +8,7 @@ import {
   type AdminProduct,
   type Inventory,
 } from '../lib/admin-api';
+import { ensureInternalColorCodes } from '../lib/product-variant-code';
 
 export interface ActionState {
   status: 'idle' | 'error';
@@ -27,7 +28,13 @@ function productPayload(formData: FormData) {
   const categoryIds = formData
     .getAll('categoryIds')
     .filter((value): value is string => typeof value === 'string');
-  const variants = JSON.parse(stringValue(formData, 'productModel')) as AdminProduct['variants'];
+  const variants = ensureInternalColorCodes(
+    JSON.parse(stringValue(formData, 'productModel')) as Array<
+      Omit<AdminProduct['variants'][number], 'normalizedColorCode'> & {
+        normalizedColorCode?: string;
+      }
+    >,
+  );
   return {
     name: stringValue(formData, 'name'),
     slug: stringValue(formData, 'slug'),

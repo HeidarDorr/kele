@@ -163,6 +163,20 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     });
   }
 
+  test('Media file picker opens from its full preview surface and renders the selection', async ({
+    page,
+  }) => {
+    await page.goto(`${e2eUrls.admin}/editorial/media`);
+    const chooserPromise = page.waitForEvent('filechooser');
+    await page.locator('.media-file-picker').click();
+    const chooser = await chooserPromise;
+    await chooser.setFiles(resolve('apps/storefront/public/media/catalog/linen-suit-front.webp'));
+
+    await expect(page.getByRole('img', { name: 'پیش‌نمایش فایل انتخاب‌شده' })).toBeVisible();
+    await expect(page.getByText('linen-suit-front.webp', { exact: false })).toBeVisible();
+    await expect(page.getByText('تغییر تصویر', { exact: true })).toBeVisible();
+  });
+
   test('Journal and Occasion routes publish SEO-ready safe projections', async ({ page }) => {
     await page.goto(`${e2eUrls.storefront}/journal`);
     await page.getByRole('link', { name: /هنر آرام دوخت برای کودک/ }).click();

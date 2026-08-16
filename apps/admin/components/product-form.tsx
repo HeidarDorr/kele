@@ -26,7 +26,7 @@ type EditableVariant = {
   key: string;
   id?: string;
   name: string;
-  normalizedColorCode: string;
+  normalizedColorCode?: string;
   hex: string;
   mediaIds: string[];
   featuredMediaId: string;
@@ -55,7 +55,6 @@ function emptyVariant(): EditableVariant {
   return {
     key: clientKey(),
     name: '',
-    normalizedColorCode: '',
     hex: '#d4c2a8',
     mediaIds: [],
     featuredMediaId: '',
@@ -95,7 +94,9 @@ function serializedVariants(variants: EditableVariant[]) {
   return variants.map((variant, displayOrder) => ({
     ...(variant.id ? { id: variant.id } : {}),
     name: variant.name.trim(),
-    normalizedColorCode: variant.normalizedColorCode.trim(),
+    ...(variant.normalizedColorCode
+      ? { normalizedColorCode: variant.normalizedColorCode.trim() }
+      : {}),
     hex: variant.hex || null,
     displayOrder,
     mediaIds: variant.mediaIds,
@@ -262,21 +263,6 @@ export function ProductForm({
                         updateVariant(variant.key, (current) => ({
                           ...current,
                           name: event.target.value,
-                        }));
-                      }}
-                    />
-                  </label>
-                  <label>
-                    کد نرمال رنگ
-                    <input
-                      required
-                      dir="ltr"
-                      pattern="[a-z0-9][a-z0-9_-]*"
-                      value={variant.normalizedColorCode}
-                      onChange={(event) => {
-                        updateVariant(variant.key, (current) => ({
-                          ...current,
-                          normalizedColorCode: event.target.value,
                         }));
                       }}
                     />
