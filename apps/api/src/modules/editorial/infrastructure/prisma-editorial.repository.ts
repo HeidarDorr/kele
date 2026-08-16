@@ -36,14 +36,12 @@ const defaultSettings: SiteSettingsConfiguration = {
   brandTagline: 'پوشاک معاصر پسرانه برای لحظه‌های ماندگار',
   contactEmail: null,
   primaryNavigation: [
-    { label: 'تازه‌ها', href: '/catalog' },
-    { label: 'کالکشن‌ها', href: '/outfits' },
+    { label: 'محصولات', href: '/catalog' },
     { label: 'مناسبت‌ها', href: '/occasions' },
     { label: 'ژورنال', href: '/journal' },
   ],
   footerNavigation: [
     { label: 'محصولات', href: '/catalog' },
-    { label: 'استایل‌ها', href: '/outfits' },
     { label: 'حساب من', href: '/account' },
   ],
   announcement: null,

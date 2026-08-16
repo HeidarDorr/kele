@@ -15,6 +15,11 @@
       "production": "./dist/money.js",
       "default": "./src/money.ts"
     },
+    "./mobile": {
+      "types": "./src/mobile.ts",
+      "production": "./dist/mobile.js",
+      "default": "./src/mobile.ts"
+    },
     "./typography": {
       "types": "./src/typography.ts",
       "production": "./dist/typography.js",

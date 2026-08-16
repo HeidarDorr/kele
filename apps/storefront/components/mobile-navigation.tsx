@@ -1,32 +1,33 @@
 'use client';
 
 import { BagIcon } from '@phosphor-icons/react/Bag';
+import { CaretDownIcon } from '@phosphor-icons/react/CaretDown';
 import { ListIcon } from '@phosphor-icons/react/List';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/MagnifyingGlass';
 import { UserIcon } from '@phosphor-icons/react/User';
 import { XIcon } from '@phosphor-icons/react/X';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Category } from '../lib/catalog-api';
-
-type NavigationItem = Readonly<{ label: string; href: string }>;
+import {
+  navigationItemIsActive,
+  productNavigation,
+  type NavigationItem,
+} from '../lib/store-navigation';
 
 const focusableSelector =
   'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function MobileNavigation({
-  navigation,
-  categories,
-}: {
-  navigation: NavigationItem[];
-  categories: Category[];
-}) {
+export function MobileNavigation({ navigation }: { navigation: NavigationItem[] }) {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => {
     setOpen(false);
+    setProductsOpen(false);
     window.requestAnimationFrame(() => trigger.current?.focus());
   }, []);
 
@@ -110,22 +111,76 @@ export function MobileNavigation({
               </button>
             </header>
             <nav className="mobile-primary-links" aria-label="فهرست اصلی موبایل">
-              {navigation.map((item) => (
-                <Link key={`${item.href}-${item.label}`} href={item.href} onClick={close}>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            {categories.length > 0 ? (
-              <nav className="mobile-category-links" aria-label="دسته‌های محصول">
-                <p>دسته‌ها</p>
-                {categories.map((category) => (
-                  <Link key={category.id} href={`/category/${category.slug}`} onClick={close}>
-                    {category.name}
+              <div className="mobile-products-entry">
+                <div>
+                  <Link
+                    href="/catalog"
+                    className={
+                      navigationItemIsActive(pathname, '/catalog') ? 'is-active' : undefined
+                    }
+                    aria-current={
+                      navigationItemIsActive(pathname, '/catalog')
+                        ? pathname === '/catalog'
+                          ? 'page'
+                          : 'location'
+                        : undefined
+                    }
+                    onClick={close}
+                  >
+                    محصولات
                   </Link>
-                ))}
-              </nav>
-            ) : null}
+                  <button
+                    type="button"
+                    aria-label={productsOpen ? 'بستن گروه‌های محصولات' : 'نمایش گروه‌های محصولات'}
+                    aria-expanded={productsOpen}
+                    aria-controls="mobile-product-links"
+                    onClick={() => {
+                      setProductsOpen((value) => !value);
+                    }}
+                  >
+                    <CaretDownIcon size={22} weight="light" aria-hidden="true" />
+                  </button>
+                </div>
+                {productsOpen ? (
+                  <div id="mobile-product-links" className="mobile-product-links">
+                    {productNavigation.map((item) => {
+                      const active = navigationItemIsActive(pathname, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          className={active ? 'is-active' : undefined}
+                          aria-current={
+                            active ? (pathname === item.href ? 'page' : 'location') : undefined
+                          }
+                          href={item.href}
+                          onClick={close}
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              {navigation
+                .filter((item) => item.href !== '/catalog')
+                .map((item) => {
+                  const active = navigationItemIsActive(pathname, item.href);
+                  return (
+                    <Link
+                      className={active ? 'is-active' : undefined}
+                      aria-current={
+                        active ? (pathname === item.href ? 'page' : 'location') : undefined
+                      }
+                      key={`${item.href}-${item.label}`}
+                      href={item.href}
+                      onClick={close}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+            </nav>
             <div className="mobile-customer-links">
               <Link href="/catalog" onClick={close}>
                 <MagnifyingGlassIcon size={20} weight="light" aria-hidden="true" />

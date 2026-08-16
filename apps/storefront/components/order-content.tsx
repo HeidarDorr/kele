@@ -178,7 +178,7 @@ export function OrderContent({
                   <span>{item.selection}</span>
                   {item.skuCode ? <bdi>{item.skuCode}</bdi> : null}
                   {item.kind === 'outfit' && item.outfitRevisionNumber ? (
-                    <section className="order-outfit-snapshot" aria-label="ترکیب ثبت‌شدهٔ استایل">
+                    <section className="order-outfit-snapshot" aria-label="ترکیب ثبت‌شدهٔ ست">
                       <span>
                         نسخه {item.outfitRevisionNumber.toLocaleString('fa-IR')}، سایز{' '}
                         {item.outfitSize}

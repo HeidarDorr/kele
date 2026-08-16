@@ -1,10 +1,14 @@
+import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import {
   createOtpVerifier,
   otpMatches,
 } from '../src/modules/identity/application/identity-crypto.js';
 import { planDeterministicMerge } from '../src/modules/cart/domain/cart-merge.js';
 import type { CartLineRecord } from '../src/modules/cart/domain/cart.types.js';
+import { OtpChallengeDto } from '../src/modules/identity/presentation/identity.dto.js';
 
 function productLine(input: {
   id: string;
@@ -33,6 +37,20 @@ function productLine(input: {
 }
 
 describe('Milestone 3 identity and cart domain', () => {
+  it.each(['+989121234567', '09121234567', '9121234567', '۰۹۱۲۱۲۳۴۵۶۷'])(
+    '[CUS-011] accepts %s and normalizes it before validation',
+    (mobile) => {
+      const input = plainToInstance(OtpChallengeDto, { mobile });
+      expect(validateSync(input)).toHaveLength(0);
+      expect(input.mobile).toBe('+989121234567');
+    },
+  );
+
+  it('[CUS-011] rejects a malformed mobile after normalization', () => {
+    const input = plainToInstance(OtpChallengeDto, { mobile: '0912123456' });
+    expect(validateSync(input)).not.toHaveLength(0);
+  });
+
   it('[CUS-010] stores and compares a salted OTP verifier without retaining the code', () => {
     const salt = '0123456789abcdef0123456789abcdef';
     const verifier = createOtpVerifier(
@@ -101,7 +119,7 @@ describe('Milestone 3 identity and cart domain', () => {
       outfitRevisionId: 'revision-1',
       outfitRevisionNumber: 1,
       outfitSize: 'M',
-      titleSnapshot: 'استایل آزمون',
+      titleSnapshot: 'ست آزمون',
       selectionSnapshot: 'M',
       skuCodeSnapshot: null,
       imageSnapshot: null,
@@ -136,7 +154,7 @@ describe('Milestone 3 identity and cart domain', () => {
       outfitRevisionId: 'revision-7',
       outfitRevisionNumber: 7,
       outfitSize: 'M',
-      titleSnapshot: 'استایل ثابت',
+      titleSnapshot: 'ست ثابت',
       selectionSnapshot: 'متوسط',
       skuCodeSnapshot: null,
       imageSnapshot: null,

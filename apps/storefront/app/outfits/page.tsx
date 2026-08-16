@@ -10,8 +10,8 @@ import OutfitsLoading from './loading';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'استایل‌های کامل',
-  description: 'استایل‌های مستقل و سنجیدهٔ KELE با قیمت و اندازهٔ یکپارچه.',
+  title: 'ست‌های کامل',
+  description: 'ست‌های مستقل و سنجیدهٔ KELE با قیمت و اندازهٔ یکپارچه.',
   alternates: { canonical: '/outfits' },
 };
 
@@ -38,18 +38,18 @@ export default async function OutfitsPage() {
           <p>ترکیب‌های سردبیری‌شده</p>
           <h1>یک انتخاب کامل، بدون حدس میان اندازه‌ها</h1>
           <span>
-            هر استایل هویت، قیمت و تصویر مستقل دارد؛ موجودی آن در همان لحظه از اجزای واقعی محاسبه
+            هر ست هویت، قیمت و تصویر مستقل دارد؛ موجودی آن در همان لحظه از اجزای واقعی محاسبه
             می‌شود.
           </span>
         </header>
         <section className="shell outfits-collection" aria-labelledby="outfits-title">
           <div className="outfits-section-heading">
-            <h2 id="outfits-title">استایل‌های KELE</h2>
+            <h2 id="outfits-title">ست‌های KELE</h2>
             <span>{outfits.length.toLocaleString('fa-IR')} انتخاب</span>
           </div>
           {result === null ? (
             <div className="state-panel state-error" role="alert">
-              <h2>دریافت استایل‌ها ممکن نشد</h2>
+              <h2>دریافت ست‌ها ممکن نشد</h2>
               <p>ارتباط را بررسی کنید؛ انتخاب‌های شما تغییری نکرده‌اند.</p>
               <Link className="button-secondary" href="/outfits">
                 تلاش دوباره
@@ -57,8 +57,8 @@ export default async function OutfitsPage() {
             </div>
           ) : outfits.length === 0 ? (
             <div className="state-panel" aria-live="polite">
-              <h2>استایل منتشرشده‌ای وجود ندارد</h2>
-              <p>پس از تأیید نگاشت همهٔ اندازه‌ها، استایل تازه در این صفحه دیده می‌شود.</p>
+              <h2>ست منتشرشده‌ای وجود ندارد</h2>
+              <p>پس از تأیید نگاشت همهٔ اندازه‌ها، ست تازه در این صفحه دیده می‌شود.</p>
               <Link className="button-secondary" href="/catalog">
                 دیدن محصولات مستقل
               </Link>

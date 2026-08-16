@@ -10,7 +10,7 @@ import { useCart } from './cart-provider';
 export const noticeLabels = {
   quantity_reduced_to_inventory: 'تعداد با موجودی فعلی هماهنگ شد.',
   sku_unavailable: 'یک انتخاب ناموجود است و ادامه خرید را متوقف می‌کند.',
-  outfit_revision_requires_review: 'نسخه این استایل باید پیش از ادامه بررسی شود.',
+  outfit_revision_requires_review: 'نسخه این ست باید پیش از ادامه بررسی شود.',
 } as const;
 
 export function CartLineItem({ line }: { line: CartLine }) {
@@ -68,7 +68,7 @@ export function CartLineItem({ line }: { line: CartLine }) {
           <p className="cart-line-alert" role="status">
             {line.status === 'unavailable'
               ? 'این انتخاب اکنون ناموجود است.'
-              : 'این نسخه از استایل نیاز به بررسی دارد.'}
+              : 'این نسخه از ست نیاز به بررسی دارد.'}
           </p>
         ) : null}
       </div>

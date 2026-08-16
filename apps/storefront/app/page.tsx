@@ -244,7 +244,7 @@ export default async function HomePage() {
                       <p>ترکیب‌های کامل</p>
                       <h2 id={`section-${section.id}`}>{section.content.title}</h2>
                     </div>
-                    <Link href="/outfits">همهٔ استایل‌ها</Link>
+                    <Link href="/outfits">همهٔ ست‌ها</Link>
                   </header>
                   {items.length > 0 ? (
                     <div className="outfit-grid">
@@ -254,7 +254,7 @@ export default async function HomePage() {
                     </div>
                   ) : (
                     <div className="state-panel">
-                      <h3>استایلی برای نمایش وجود ندارد</h3>
+                      <h3>ستی برای نمایش وجود ندارد</h3>
                       <p>ترکیب‌های منتشرشده پس از تأیید در این بخش دیده می‌شوند.</p>
                     </div>
                   )}

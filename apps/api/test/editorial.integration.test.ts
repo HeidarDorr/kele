@@ -111,7 +111,7 @@ describe('Milestone 7 editorial persistence', () => {
       const journalInput: JournalDraftInput = {
         slug,
         title: 'هنر انتخاب برای یک مناسبت',
-        excerpt: 'نگاهی به تناسب، پارچه و جزئیاتی که یک استایل را کامل می‌کنند.',
+        excerpt: 'نگاهی به تناسب، پارچه و جزئیاتی که یک ست را کامل می‌کنند.',
         coverMediaId: media.id,
         blocks: [
           { id: randomUUID(), type: 'heading', level: 2, text: 'تناسب از جزئیات آغاز می‌شود' },

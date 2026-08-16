@@ -1,7 +1,12 @@
 import { IsUUID, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { normalizeIranianMobile } from '@kele/design-system/mobile';
 
 export class AdministratorOtpChallengeDto {
-  @Matches(/^\+98[0-9]{10}$/)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? normalizeIranianMobile(value) : value,
+  )
+  @Matches(/^\+989[0-9]{9}$/)
   mobile!: string;
 }
 

@@ -1,14 +1,18 @@
+import { randomUUID } from 'node:crypto';
 import type { CatalogRepository } from './catalog.repository.js';
 import type {
   ActorContext,
   AdminCategoryInput,
   AdminMediaInput,
+  AdminMediaUploadInput,
   AdminProductInput,
   CatalogQuery,
   InventoryActionInput,
 } from '../domain/catalog.types.js';
 import { mediaReferenceIssues } from '../domain/media-reference.js';
+import { inspectRaster, MediaUploadValidationError } from '../domain/media-upload.js';
 import { CatalogError } from './catalog.error.js';
+import type { ObjectStorage } from '../../foundation/application/object-storage.port.js';
 
 const inventoryActionsByRole: Readonly<
   Record<ActorContext['role'], readonly InventoryActionInput['action'][]>
@@ -67,7 +71,11 @@ function validatedCategory(input: AdminCategoryInput): AdminCategoryInput {
 }
 
 export class CatalogService {
-  constructor(private readonly repository: CatalogRepository) {}
+  constructor(
+    private readonly repository: CatalogRepository,
+    private readonly storage: ObjectStorage | null = null,
+    private readonly mediaUploadsAllowed = true,
+  ) {}
 
   listPublicCategories() {
     return this.repository.listPublicCategories();
@@ -121,6 +129,87 @@ export class CatalogService {
       );
     }
     return this.repository.createMedia(input, actor);
+  }
+
+  async uploadMedia(input: AdminMediaUploadInput, actor: ActorContext) {
+    if (!this.mediaUploadsAllowed) {
+      throw new CatalogError(
+        'dependency',
+        'MEDIA_MALWARE_SCANNER_UNAVAILABLE',
+        'Production Media upload remains disabled until the approved malware scanner is available.',
+      );
+    }
+    if (this.storage === null) {
+      throw new CatalogError(
+        'dependency',
+        'MEDIA_STORAGE_UNAVAILABLE',
+        'Media storage is not configured.',
+      );
+    }
+    let inspected;
+    try {
+      inspected = inspectRaster(input.bytes, input.contentType);
+    } catch (error: unknown) {
+      if (error instanceof MediaUploadValidationError) {
+        throw new CatalogError('validation', 'MEDIA_UPLOAD_INVALID', error.message);
+      }
+      throw error;
+    }
+    const fileName = `${randomUUID()}.${inspected.extension}`;
+    const key = `media/uploads/${fileName}`;
+    const stored = await this.storage.putPrivate({
+      key,
+      bytes: input.bytes,
+      contentType: input.contentType,
+    });
+    try {
+      return await this.createMedia(
+        {
+          url: `/media/uploads/${fileName}`,
+          width: inspected.width,
+          height: inspected.height,
+          alt: input.alt,
+          format: inspected.format,
+          group: input.group,
+          colorHex: input.colorHex,
+          focalPoint: input.focalPoint,
+        },
+        actor,
+      );
+    } catch (error: unknown) {
+      try {
+        await this.storage.deletePrivate(stored.key, stored.versionId ?? undefined);
+      } catch {
+        throw new CatalogError(
+          'dependency',
+          'MEDIA_UPLOAD_ROLLBACK_FAILED',
+          'Media metadata failed and the uploaded object could not be rolled back.',
+        );
+      }
+      throw error;
+    }
+  }
+
+  async readUploadedMedia(fileName: string) {
+    if (
+      this.storage === null ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|png|webp)$/i.test(
+        fileName,
+      )
+    ) {
+      throw new CatalogError('not_found', 'MEDIA_NOT_FOUND', 'Media was not found.');
+    }
+    const extension = fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase();
+    const contentType =
+      extension === 'jpg'
+        ? 'image/jpeg'
+        : extension === 'png'
+          ? 'image/png'
+          : ('image/webp' as const);
+    return {
+      bytes: await this.storage.readPrivate(`media/uploads/${fileName}`),
+      contentType,
+    };
   }
 
   listAdminProducts(query: CatalogQuery) {

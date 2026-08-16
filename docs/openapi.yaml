@@ -267,6 +267,44 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /catalog/media/{fileName}:
+    get:
+      operationId: readCatalogMedia
+      tags: [Catalog]
+      security: []
+      summary: Read an uploaded catalog image through the application boundary.
+      parameters:
+        - name: fileName
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\.(jpg|png|webp)$'
+      responses:
+        '200':
+          description: Immutable image bytes.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /catalog/categories:
     get:
       operationId: listCatalogCategories
@@ -365,7 +403,7 @@ paths:
               required: [mobile]
               properties:
                 mobile:
-                  $ref: '#/components/schemas/Mobile'
+                  $ref: '#/components/schemas/MobileInput'
       responses:
         '202':
           description: Generic accepted response; does not reveal account state.
@@ -466,7 +504,7 @@ paths:
               required: [mobile]
               properties:
                 mobile:
-                  $ref: '#/components/schemas/Mobile'
+                  $ref: '#/components/schemas/MobileInput'
       responses:
         '202':
           description: Generic accepted response; an OTP is dispatched only for an enabled pre-provisioned administrator.
@@ -1231,6 +1269,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Media'
+        '422':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /admin/media/uploads:
+    post:
+      operationId: uploadAdminMedia
+      tags: [Admin Content]
+      summary: Upload, validate and register a reusable raster Media asset.
+      description: >-
+        Accepts one bounded raster image, verifies its MIME signature and header dimensions,
+        stores it under an immutable Object Storage key and creates reusable Media metadata.
+      security:
+        - SessionCookie: [catalog:write]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminMediaUploadInput'
+      responses:
+        '201':
+          description: Uploaded and registered reusable Media asset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+        '413':
+          $ref: '#/components/responses/Problem'
         '422':
           $ref: '#/components/responses/Problem'
         default:
@@ -2748,6 +2816,13 @@ components:
       description: Normalized Iranian mobile number in E.164 form.
       pattern: "^\\+98[0-9]{10}$"
 
+    MobileInput:
+      type: string
+      description: >-
+        Iranian mobile input accepted as E.164 (+989xxxxxxxxx), national (09xxxxxxxxx),
+        or local subscriber form (9xxxxxxxxx). The API normalizes accepted values to E.164.
+      pattern: "^(?:\\+989[0-9]{9}|09[0-9]{9}|9[0-9]{9})$"
+
     CategorySummary:
       type: object
       additionalProperties: false
@@ -2831,6 +2906,16 @@ components:
           minimum: 1
         alt:
           type: string
+        format:
+          type: string
+          enum: [jpg, png, webp]
+        group:
+          type: string
+          enum: [product_images, outfit_editorial, homepage, journal, shared_assets]
+        colorHex:
+          type: [string, 'null']
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Optional dominant or merchandising color attached to the asset.
         focalPoint:
           type: object
           required: [x, y]
@@ -2889,7 +2974,7 @@ components:
 
     ColorSwatch:
       type: object
-      required: [variantId, name, available]
+      required: [variantId, name, available, featuredMedia, secondaryMedia, price]
       properties:
         variantId:
           type: string
@@ -2901,6 +2986,14 @@ components:
           pattern: '^#[0-9A-Fa-f]{6}$'
         available:
           type: boolean
+        featuredMedia:
+          $ref: '#/components/schemas/Media'
+        secondaryMedia:
+          oneOf:
+            - $ref: '#/components/schemas/Media'
+            - type: 'null'
+        price:
+          $ref: '#/components/schemas/Money'
 
     ColorVariantSummary:
       type: object
@@ -3157,7 +3250,7 @@ components:
           minLength: 2
           maxLength: 160
         recipientMobile:
-          $ref: '#/components/schemas/Mobile'
+          $ref: '#/components/schemas/MobileInput'
         province:
           type: string
           minLength: 1
@@ -4380,6 +4473,9 @@ components:
         group:
           type: string
           enum: [product_images, outfit_editorial, homepage, journal, shared_assets]
+        colorHex:
+          type: [string, 'null']
+          pattern: '^#[0-9A-Fa-f]{6}$'
         focalPoint:
           type: object
           additionalProperties: false
@@ -4393,6 +4489,35 @@ components:
               type: number
               minimum: 0
               maximum: 1
+
+    AdminMediaUploadInput:
+      type: object
+      additionalProperties: false
+      required: [file, alt, group]
+      properties:
+        file:
+          type: string
+          format: binary
+        alt:
+          type: string
+          minLength: 1
+          maxLength: 500
+        group:
+          type: string
+          enum: [product_images, outfit_editorial, homepage, journal, shared_assets]
+        colorHex:
+          type: [string, 'null']
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        focalPointX:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+        focalPointY:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
 
     AdminSkuInput:
       type: object

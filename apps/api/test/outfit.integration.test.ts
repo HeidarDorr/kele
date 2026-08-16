@@ -75,7 +75,7 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
           url: `/media/outfits/integration-${suffix}.webp`,
           width: 1600,
           height: 2000,
-          altText: 'استایل کامل آزمون Outfit با دو جزء',
+          altText: 'ست کامل آزمون Outfit با دو جزء',
           format: 'WEBP',
           group: 'OUTFIT_EDITORIAL',
           focalPointX: 0.5,
@@ -84,7 +84,7 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
       });
       const category = await transaction.category.create({
         data: {
-          name: `استایل آزمون ${suffix}`,
+          name: `ست آزمون ${suffix}`,
           slug: `outfit-category-${suffix}`,
           status: PublicationStatus.PUBLISHED,
         },
@@ -106,13 +106,13 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
       }
       const itemIds = [randomUUID(), randomUUID()] as const;
       const input: OutfitDraftInput = {
-        name: 'استایل آرام کتان',
+        name: 'ست آرام کتان',
         slug: `calm-linen-${suffix}`,
         description: 'یک ترکیب مستقل با نگاشت صریح سایز مشتری به سایز متفاوت اجزا.',
         categoryIds: [category.id],
         mediaIds: [media.id],
         featuredMediaId: media.id,
-        seo: { title: 'استایل آرام کتان', description: 'ترکیب دو تکهٔ کتان برای آزمون' },
+        seo: { title: 'ست آرام کتان', description: 'ترکیب دو تکهٔ کتان برای آزمون' },
         items: [
           {
             id: itemIds[0],
@@ -219,7 +219,7 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
 
       const secondInput: OutfitDraftInput = {
         ...input,
-        name: 'استایل آرام کتان — ویرایش دوم',
+        name: 'ست آرام کتان — ویرایش دوم',
         sizes: input.sizes.map((size) => ({
           ...size,
           amountRial: size.amountRial + 2_000_000,

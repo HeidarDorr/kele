@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ProductCard } from '../../components/product-card';
 import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
 import { getCategories, getProducts } from '../../lib/catalog-api';
 import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 import CatalogLoading from './loading';
+import { productNavigation } from '../../lib/store-navigation';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'کاتالوگ',
-  description: 'جست‌وجو و مشاهدهٔ محصولات منتشرشدهٔ KELE.',
+  title: 'محصولات',
+  description: 'ست‌ها و محصولات منتشرشدهٔ KELE بر اساس گروه محصول.',
   alternates: { canonical: '/catalog' },
 };
 
@@ -47,9 +49,18 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
       <SiteHeader categories={categories.items} />
       <main id="main-content" className="shell catalog-page">
         <header className="catalog-heading">
-          <h1>کاتالوگ</h1>
+          <p className="eyebrow">فروشگاه KELE</p>
+          <h1>محصولات</h1>
           <p>محصولات منتشرشده را بر اساس نام، رنگ، اندازه یا دسته پیدا کنید.</p>
         </header>
+        <nav className="product-category-index" aria-label="گروه‌های محصولات">
+          {productNavigation.map((item, index) => (
+            <Link href={item.href} key={item.href}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <strong>{item.label}</strong>
+            </Link>
+          ))}
+        </nav>
         <form className="catalog-tools" role="search">
           <div>
             <label htmlFor="catalog-query">جست‌وجو</label>

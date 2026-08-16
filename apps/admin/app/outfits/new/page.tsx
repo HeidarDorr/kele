@@ -16,7 +16,7 @@ export default async function NewOutfitPage() {
       <header className="admin-heading">
         <div>
           <p>Outfit / Create</p>
-          <h1>استایل تازه</h1>
+          <h1>ست تازه</h1>
         </div>
       </header>
       <p className="admin-intro">

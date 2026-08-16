@@ -1,4 +1,5 @@
 import type { AdminJournalArticle, MediaValue } from '../lib/admin-api';
+import { MediaSelect } from './media-select';
 
 type JournalBlock = AdminJournalArticle['blocks'][number];
 
@@ -10,7 +11,7 @@ const blockLabels: Record<string, string> = {
   unordered_list: 'فهرست',
   image: 'تصویر',
   product_reference: 'ارجاع محصول',
-  outfit_reference: 'ارجاع استایل',
+  outfit_reference: 'ارجاع ست',
   external_link: 'پیوند بیرونی HTTPS',
   divider: 'جداکننده',
 };
@@ -55,17 +56,12 @@ export function JournalEditorForm({
               maxLength={500}
             />
           </label>
-          <label>
-            تصویر جلد
-            <select name="coverMediaId" defaultValue={article.coverMediaId ?? ''}>
-              <option value="">انتخاب نشده</option>
-              {media.map((item) => (
-                <option value={item.id} key={item.id}>
-                  {item.alt}
-                </option>
-              ))}
-            </select>
-          </label>
+          <MediaSelect
+            name="coverMediaId"
+            label="تصویر جلد"
+            media={media}
+            defaultValue={article.coverMediaId}
+          />
         </div>
       </fieldset>
       <fieldset>
@@ -151,16 +147,14 @@ function BlockEditor({
         </label>
       ) : null}
       {block.type === 'image' ? (
-        <label>
-          رسانه
-          <select name={`blockMediaId:${block.id}`} defaultValue={block.mediaId ?? ''} required>
-            {media.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.alt}
-              </option>
-            ))}
-          </select>
-        </label>
+        <MediaSelect
+          name={`blockMediaId:${block.id}`}
+          label="رسانه"
+          media={media}
+          defaultValue={block.mediaId}
+          required
+          allowEmpty={false}
+        />
       ) : null}
       {block.type === 'product_reference' || block.type === 'outfit_reference' ? (
         <div className="inline-fields">

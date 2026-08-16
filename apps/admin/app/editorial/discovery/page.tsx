@@ -1,5 +1,6 @@
 import { updateDiscoveryAction } from '../../actions';
 import { AdminShell } from '../../../components/admin-shell';
+import { MediaSelect } from '../../../components/media-select';
 import { listCategories, listMedia } from '../../../lib/admin-api';
 
 export const dynamic = 'force-dynamic';
@@ -65,17 +66,12 @@ export default async function DiscoveryAdminPage({
                   rows={4}
                 />
               </label>
-              <label>
-                تصویر قهرمان
-                <select name="heroMediaId" defaultValue={occasion.heroMediaId ?? ''}>
-                  <option value="">انتخاب نشده</option>
-                  {media.map((item) => (
-                    <option value={item.id} key={item.id}>
-                      {item.alt}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <MediaSelect
+                name="heroMediaId"
+                label="تصویر قهرمان"
+                media={media}
+                defaultValue={occasion.heroMediaId}
+              />
               <div className="inline-fields">
                 <label>
                   ترتیب

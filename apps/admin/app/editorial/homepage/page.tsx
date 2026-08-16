@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { publishHomepageAction, saveHomepageAction } from '../../actions';
 import { AdminShell } from '../../../components/admin-shell';
+import { MediaSelect } from '../../../components/media-select';
 import { getHomepageDraft, listMedia } from '../../../lib/admin-api';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ const labels: Record<string, string> = {
   hero: 'تصویر اصلی',
   editorial_banner: 'بنر تحریریه',
   featured_products: 'محصولات منتخب',
-  featured_outfits: 'استایل‌های منتخب',
+  featured_outfits: 'ست‌های منتخب',
   occasion_grid: 'موقعیت‌ها',
   journal_highlights: 'ژورنال',
   brand_story: 'روایت برند',
@@ -104,20 +105,14 @@ export default async function HomepageEditor({
                           rows={2}
                         />
                       </label>
-                      <label>
-                        رسانه
-                        <select
-                          name={`mediaId:${section.id}`}
-                          defaultValue={content.mediaId}
-                          required
-                        >
-                          {media.map((item) => (
-                            <option value={item.id} key={item.id}>
-                              {item.alt}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <MediaSelect
+                        name={`mediaId:${section.id}`}
+                        label="رسانه"
+                        media={media}
+                        defaultValue={content.mediaId}
+                        required
+                        allowEmpty={false}
+                      />
                       <div className="inline-fields">
                         <label>
                           متن اقدام

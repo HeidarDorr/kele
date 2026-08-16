@@ -3345,3 +3345,48 @@ is outside version 1.
 Reservation SHALL occur at SKU level. If any Product or Outfit component SKU
 cannot be reserved, the entire requested line reservation SHALL fail without
 leaving a partial reservation.
+
+## Customer mobile-input clarification
+
+## CUS-011
+
+Customer and administrator mobile inputs SHALL accept the Iranian mobile
+number in E.164 (`+989xxxxxxxxx`), national (`09xxxxxxxxx`) or subscriber
+(`9xxxxxxxxx`) form. Accepted input SHALL be normalized to E.164 before
+identity lookup, rate-limit hashing or persistence. Invalid length or a prefix
+other than mobile `9` SHALL remain rejected.
+
+## Product navigation and card clarification
+
+## CAT-007
+
+The Storefront primary Product navigation SHALL expose Product, Outfit and
+Category discovery through one `محصولات` parent link. Its version-1 child
+links SHALL be `ست`, `کت`, `شلوار`, `پیراهن`, `تیشرت`, `وست`, `شلوارک` and
+`کفش`. The parent SHALL remain a link to an index that lists the same groups.
+
+## CAT-008
+
+A Product card SHALL allow previewing each published ColorVariant without
+leaving the listing. Selecting a swatch SHALL update the featured image,
+availability and price for that color. Pointer hover over the image SHALL show
+the second assigned image of the same ColorVariant when it exists. Outfit cards
+SHALL use the same compact visual geometry and SHALL NOT expose color swatches.
+
+## Administration catalog clarification
+
+## CMS-019
+
+The centralized Media Library SHALL list reusable assets and accept bounded
+JPEG, PNG and WebP uploads in non-production environments. Each asset SHALL
+store verified dimensions, alternative text, logical group, focal point and an
+optional attached color. Production upload SHALL fail closed until the malware
+scanner required by ADR-0005 is selected, integrated and certified.
+
+## CMS-020
+
+The Product administration form SHALL author any number of ColorVariants and
+SKUs. Each ColorVariant SHALL select and preview its own ordered Media and
+featured image. Each color-size combination SHALL own a distinct SKU price;
+existing SKU codes and Inventory quantities SHALL continue to follow their
+immutable/action-led update rules.

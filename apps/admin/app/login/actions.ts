@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { isIranianMobile, normalizeIranianMobile } from '@kele/design-system/mobile';
 
 const apiBaseUrl = process.env.API_BASE_URL ?? 'http://localhost:3001/api/v1';
 const challengeIdPattern =
@@ -22,8 +23,9 @@ async function authenticationRequest(path: string, body: object): Promise<Respon
 }
 
 export async function beginAdministratorLogin(formData: FormData): Promise<void> {
-  const mobile = formValue(formData, 'mobile');
-  if (!/^\+98[0-9]{10}$/.test(mobile)) redirect('/login?error=mobile');
+  const input = formValue(formData, 'mobile');
+  if (!isIranianMobile(input)) redirect('/login?error=mobile');
+  const mobile = normalizeIranianMobile(input);
 
   const response = await authenticationRequest('/admin/auth/otp/challenges', { mobile });
   if (!response.ok) redirect('/login?error=challenge');

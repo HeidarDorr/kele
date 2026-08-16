@@ -203,7 +203,7 @@ beforeAll(async () => {
     data: {
       outfitId: unavailableOutfit.id,
       revisionNumber: 1,
-      name: 'استایل تاریخی آزمون سبد',
+      name: 'ست تاریخی آزمون سبد',
       description: 'نسخه‌ای واقعی که reader مرزی M3 آن را قابل خرید نمی‌داند.',
     },
   });
@@ -528,7 +528,7 @@ describe('Milestone 3 identity, ownership and cart on PostgreSQL', () => {
         kind: CartLineKind.OUTFIT,
         outfitRevisionId: unavailableOutfitRevisionId,
         outfitSize: 'M',
-        titleSnapshot: 'استایل تاریخی',
+        titleSnapshot: 'ست تاریخی',
         selectionSnapshot: 'M',
         quantity: 1,
         status: CartLineStatus.AVAILABLE,

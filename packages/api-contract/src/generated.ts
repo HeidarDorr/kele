@@ -177,6 +177,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/catalog/media/{fileName}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Read an uploaded catalog image through the application boundary. */
+    get: operations['readCatalogMedia'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/catalog/categories': {
     parameters: {
       query?: never;
@@ -665,6 +682,26 @@ export interface paths {
     put?: never;
     /** Register reusable media metadata. */
     post: operations['createAdminMedia'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/media/uploads': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload, validate and register a reusable raster Media asset.
+     * @description Accepts one bounded raster image, verifies its MIME signature and header dimensions, stores it under an immutable Object Storage key and creates reusable Media metadata.
+     */
+    post: operations['uploadAdminMedia'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1414,6 +1451,8 @@ export interface components {
     };
     /** @description Normalized Iranian mobile number in E.164 form. */
     Mobile: string;
+    /** @description Iranian mobile input accepted as E.164 (+989xxxxxxxxx), national (09xxxxxxxxx), or local subscriber form (9xxxxxxxxx). The API normalizes accepted values to E.164. */
+    MobileInput: string;
     CategorySummary: {
       /** Format: uuid */
       id: string;
@@ -1443,6 +1482,12 @@ export interface components {
       width: number;
       height: number;
       alt: string;
+      /** @enum {string} */
+      format?: 'jpg' | 'png' | 'webp';
+      /** @enum {string} */
+      group?: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+      /** @description Optional dominant or merchandising color attached to the asset. */
+      colorHex?: string | null;
       focalPoint: {
         x: number;
         y: number;
@@ -1472,6 +1517,9 @@ export interface components {
       name: string;
       hex?: string | null;
       available: boolean;
+      featuredMedia: components['schemas']['Media'];
+      secondaryMedia: components['schemas']['Media'] | null;
+      price: components['schemas']['Money'];
     };
     ColorVariantSummary: {
       /** Format: uuid */
@@ -1576,7 +1624,7 @@ export interface components {
     };
     AddressInput: {
       recipientName: string;
-      recipientMobile: components['schemas']['Mobile'];
+      recipientMobile: components['schemas']['MobileInput'];
       province: string;
       city: string;
       addressLine: string;
@@ -2077,10 +2125,23 @@ export interface components {
       format: 'jpg' | 'png' | 'webp';
       /** @enum {string} */
       group: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+      colorHex?: string | null;
       focalPoint?: {
         x: number;
         y: number;
       };
+    };
+    AdminMediaUploadInput: {
+      /** Format: binary */
+      file: string;
+      alt: string;
+      /** @enum {string} */
+      group: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+      colorHex?: string | null;
+      /** @default 0.5 */
+      focalPointX: number;
+      /** @default 0.5 */
+      focalPointY: number;
     };
     AdminSkuInput: {
       /** Format: uuid */
@@ -2713,6 +2774,33 @@ export interface operations {
       default: components['responses']['Problem'];
     };
   };
+  readCatalogMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        fileName: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Immutable image bytes. */
+      200: {
+        headers: {
+          'Cache-Control'?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          'image/jpeg': string;
+          'image/png': string;
+          'image/webp': string;
+        };
+      };
+      404: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
   listCatalogCategories: {
     parameters: {
       query?: never;
@@ -2821,7 +2909,7 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': {
-          mobile: components['schemas']['Mobile'];
+          mobile: components['schemas']['MobileInput'];
         };
       };
     };
@@ -2914,7 +3002,7 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': {
-          mobile: components['schemas']['Mobile'];
+          mobile: components['schemas']['MobileInput'];
         };
       };
     };
@@ -3755,6 +3843,33 @@ export interface operations {
           'application/json': components['schemas']['Media'];
         };
       };
+      422: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  uploadAdminMedia: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['AdminMediaUploadInput'];
+      };
+    };
+    responses: {
+      /** @description Uploaded and registered reusable Media asset. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Media'];
+        };
+      };
+      413: components['responses']['Problem'];
       422: components['responses']['Problem'];
       default: components['responses']['Problem'];
     };

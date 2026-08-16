@@ -59,7 +59,7 @@ const labels: Record<string, string> = {
   hero: 'تصویر اصلی',
   editorial_banner: 'بنر تحریریه',
   featured_products: 'محصولات منتخب',
-  featured_outfits: 'استایل‌های منتخب',
+  featured_outfits: 'ست‌های منتخب',
   occasion_grid: 'موقعیت‌ها',
   journal_highlights: 'ژورنال',
   brand_story: 'روایت برند',

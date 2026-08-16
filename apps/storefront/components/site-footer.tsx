@@ -6,7 +6,7 @@ export function SiteFooter({ settings }: { settings?: PublishedSiteSettings | nu
   const configuration = settings?.configuration;
   const defaultStoreLinks = [
     { label: 'همهٔ محصولات', href: '/catalog' },
-    { label: 'استایل‌ها', href: '/outfits' },
+    { label: 'ست‌ها', href: '/outfits' },
     { label: 'موقعیت‌ها', href: '/occasions' },
     { label: 'ژورنال', href: '/journal' },
   ];

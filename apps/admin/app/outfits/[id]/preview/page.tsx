@@ -47,7 +47,7 @@ export default async function OutfitPreviewPage({ params }: { params: Promise<{ 
                 <span>{size.price.display}</span>
                 <span>
                   {size.available
-                    ? `${size.availableQuantity.toLocaleString('fa-IR')} استایل`
+                    ? `${size.availableQuantity.toLocaleString('fa-IR')} ست`
                     : 'ناموجود'}
                 </span>
               </li>

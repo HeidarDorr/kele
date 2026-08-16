@@ -36,7 +36,7 @@ export async function generateMetadata({
       },
     };
   } catch {
-    return { title: 'استایل' };
+    return { title: 'ست' };
   }
 }
 
@@ -58,7 +58,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
         <nav className="breadcrumbs" aria-label="مسیر صفحه">
           <Link href="/">خانه</Link>
           <span aria-hidden="true">/</span>
-          <Link href="/outfits">استایل‌ها</Link>
+          <Link href="/outfits">ست‌ها</Link>
           <span aria-hidden="true">/</span>
           <span aria-current="page">{outfit.name}</span>
         </nav>
@@ -67,7 +67,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
           <ProductGallery media={outfit.gallery} />
           <div className="outfit-detail-copy">
             <p className="product-label">
-              استایل کامل، ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}
+              ست کامل، ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}
             </p>
             <h1 id="outfit-title">{outfit.name}</h1>
             <p className="outfit-starting-price">از {outfit.startingPrice.display}</p>
@@ -81,7 +81,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
 
         <section className="outfit-composition" aria-labelledby="composition-title">
           <div className="outfit-composition-intro">
-            <p>ساختار این استایل</p>
+            <p>ساختار این ست</p>
             <h2 id="composition-title">هر جزء، همچنان یک محصول مستقل</h2>
             <span>رنگ پیش‌فرض و تعداد هر جزء توسط همین ویرایش تثبیت شده است.</span>
           </div>

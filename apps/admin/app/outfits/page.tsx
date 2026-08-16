@@ -16,30 +16,30 @@ export default async function AdminOutfitsPage({
       <header className="admin-heading">
         <div>
           <p>Commerce / Outfit</p>
-          <h1>استایل‌ها</h1>
+          <h1>ست‌ها</h1>
           <span>ترکیب، نگاشت اندازه و تاریخچهٔ انتشار مستقل</span>
         </div>
         <Link className="admin-primary" href="/outfits/new">
-          استایل تازه
+          ست تازه
         </Link>
       </header>
       {query.notice ? (
         <div className="admin-success" role="status">
-          تغییر استایل با موفقیت ثبت شد.
+          تغییر ست با موفقیت ثبت شد.
         </div>
       ) : null}
       <section className="admin-section" aria-labelledby="outfits-admin-title">
         <h2 id="outfits-admin-title">فهرست Outfit</h2>
         {outfits.items.length === 0 ? (
           <div className="admin-empty-state">
-            هنوز استایلی تعریف نشده است. ابتدا اجزا و نگاشت همهٔ اندازه‌ها را آماده کنید.
+            هنوز ستی تعریف نشده است. ابتدا اجزا و نگاشت همهٔ اندازه‌ها را آماده کنید.
           </div>
         ) : (
           <div className="admin-table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>استایل</th>
+                  <th>ست</th>
                   <th>وضعیت</th>
                   <th>ویرایش</th>
                   <th>اندازه‌ها</th>

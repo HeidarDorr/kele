@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useActionState, useMemo, useState } from 'react';
 import type { ActionState } from '../app/actions';
 import type { AdminCategory, AdminOutfit, AdminProduct, MediaValue } from '../lib/admin-api';
@@ -35,6 +36,9 @@ export function OutfitForm({
   outfit?: AdminOutfit;
 }) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
+  const [selectedMediaIds, setSelectedMediaIds] = useState<string[]>(() => [
+    ...(outfit?.mediaIds ?? []),
+  ]);
   const [items, setItems] = useState<EditorItem[]>(
     () =>
       outfit?.items.map((item) => ({
@@ -118,6 +122,9 @@ export function OutfitForm({
   return (
     <form className="admin-form outfit-admin-form" action={formAction}>
       <input type="hidden" name="outfitModel" value={model} />
+      {selectedMediaIds.map((id) => (
+        <input key={id} type="hidden" name="mediaIds" value={id} />
+      ))}
       {state.status === 'error' ? (
         <div className="form-error" role="alert">
           {state.message}
@@ -125,10 +132,10 @@ export function OutfitForm({
       ) : null}
 
       <fieldset>
-        <legend>هویت تجاری استایل</legend>
+        <legend>هویت تجاری ست</legend>
         <div className="form-grid">
           <label>
-            نام استایل
+            نام ست
             <input name="name" required maxLength={180} defaultValue={outfit?.name} />
           </label>
           <label>
@@ -142,7 +149,7 @@ export function OutfitForm({
             />
           </label>
           <label className="full-field">
-            روایت استایل
+            روایت ست
             <textarea
               name="description"
               required
@@ -173,16 +180,39 @@ export function OutfitForm({
               ))}
             </select>
           </label>
-          <label>
-            تصاویر سردبیری؛ نخستین مورد تصویر شاخص است
-            <select name="mediaIds" multiple required defaultValue={outfit?.mediaIds}>
-              {orderedMedia.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.alt}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="full-field variant-media-section">
+            <h3>تصاویر ست</h3>
+            <p>نخستین تصویر انتخاب‌شده، تصویر شاخص است.</p>
+            <div className="media-picker-grid">
+              {orderedMedia.map((asset) => {
+                const selectedAsset = selectedMediaIds.includes(asset.id);
+                return (
+                  <article className={selectedAsset ? 'is-selected' : undefined} key={asset.id}>
+                    <label className="media-picker-select">
+                      <input
+                        type="checkbox"
+                        checked={selectedAsset}
+                        onChange={(event) => {
+                          setSelectedMediaIds((current) =>
+                            event.target.checked
+                              ? [...current, asset.id]
+                              : current.filter((id) => id !== asset.id),
+                          );
+                        }}
+                      />
+                      <span className="media-picker-image">
+                        <Image src={asset.url} alt={asset.alt} fill sizes="160px" />
+                      </span>
+                      <strong>{asset.alt}</strong>
+                    </label>
+                    {selectedMediaIds[0] === asset.id ? (
+                      <small className="media-featured-choice">تصویر شاخص</small>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </fieldset>
 
@@ -259,7 +289,7 @@ export function OutfitForm({
                     </select>
                   </label>
                   <label>
-                    تعداد در استایل
+                    تعداد در ست
                     <input
                       type="number"
                       min={1}
@@ -296,7 +326,7 @@ export function OutfitForm({
         <div className="outfit-fieldset-heading">
           <div>
             <legend>نگاشت دقیق اندازه به SKU</legend>
-            <p>برچسب اندازهٔ استایل لازم نیست با اندازهٔ هیچ جزء برابر باشد.</p>
+            <p>برچسب اندازهٔ ست لازم نیست با اندازهٔ هیچ جزء برابر باشد.</p>
           </div>
           <button
             className="admin-secondary"

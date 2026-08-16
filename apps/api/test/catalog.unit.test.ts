@@ -9,6 +9,10 @@ import {
 } from '../src/modules/catalog/domain/inventory.js';
 import { normalizePersianSearch } from '../src/modules/catalog/domain/persian-search.js';
 import { validateProductPublication } from '../src/modules/catalog/domain/publication.validator.js';
+import {
+  inspectRaster,
+  MediaUploadValidationError,
+} from '../src/modules/catalog/domain/media-upload.js';
 
 const superSession = 'test-super-admin-session-token-00000000001';
 const inventorySession = 'test-inventory-admin-session-token-0000001';
@@ -74,6 +78,9 @@ function validProduct(): ProductValue {
             width: 1024,
             height: 1536,
             alt: 'نمای روبه‌روی کت لینن بژ',
+            format: 'webp',
+            group: 'product_images',
+            colorHex: '#d4c2a8',
             focalPoint: { x: 0.5, y: 0.45 },
           },
         ],
@@ -192,5 +199,38 @@ describe('مجوزهای مدیریت کاتالوگ', () => {
     expect(
       new AdminSessionGuard(reflector).canActivate(guardContext(`kele_session=${superSession}`)),
     ).toBe(true);
+  });
+});
+
+describe('اعتبارسنجی باینری رسانه', () => {
+  function pngHeader(width: number, height: number): Uint8Array {
+    const bytes = new Uint8Array(24);
+    bytes.set([137, 80, 78, 71, 13, 10, 26, 10], 0);
+    bytes.set([0, 0, 0, 13, 73, 72, 68, 82], 8);
+    const view = new DataView(bytes.buffer);
+    view.setUint32(16, width);
+    view.setUint32(20, height);
+    return bytes;
+  }
+
+  it('ابعاد PNG را از امضای باینری می‌خواند', () => {
+    expect(inspectRaster(pngHeader(1200, 1600), 'image/png')).toEqual({
+      width: 1200,
+      height: 1600,
+      format: 'png',
+      extension: 'png',
+    });
+  });
+
+  it('عدم تطابق MIME و امضای فایل را رد می‌کند', () => {
+    expect(() => inspectRaster(pngHeader(1200, 1600), 'image/jpeg')).toThrow(
+      MediaUploadValidationError,
+    );
+  });
+
+  it('تصویر فراتر از سقف پیکسل را رد می‌کند', () => {
+    expect(() => inspectRaster(pngHeader(10_000, 10_000), 'image/png')).toThrow(
+      MediaUploadValidationError,
+    );
   });
 });

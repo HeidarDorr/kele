@@ -674,6 +674,7 @@ model MediaAsset {
   width                  Int
   height                 Int
   altText                String                    @map("alt_text") @db.VarChar(500)
+  colorHex               String?                   @map("color_hex") @db.VarChar(7)
   focalPointX            Float                     @default(0.5) @map("focal_point_x")
   focalPointY            Float                     @default(0.5) @map("focal_point_y")
   format                 MediaFormat

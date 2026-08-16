@@ -86,6 +86,20 @@ const toPrismaGroup: Record<AdminMediaInput['group'], PrismaMediaGroup> = {
   shared_assets: PrismaMediaGroup.SHARED_ASSETS,
 };
 
+const toDomainFormat: Record<PrismaMediaFormat, MediaValue['format']> = {
+  JPG: 'jpg',
+  PNG: 'png',
+  WEBP: 'webp',
+};
+
+const toDomainGroup: Record<PrismaMediaGroup, MediaValue['group']> = {
+  PRODUCT_IMAGES: 'product_images',
+  OUTFIT_EDITORIAL: 'outfit_editorial',
+  HOMEPAGE: 'homepage',
+  JOURNAL: 'journal',
+  SHARED_ASSETS: 'shared_assets',
+};
+
 const toPrismaInventoryAction: Record<InventoryActionInput['action'], PrismaInventoryAction> = {
   production: PrismaInventoryAction.PRODUCTION,
   sale: PrismaInventoryAction.SALE,
@@ -122,6 +136,9 @@ function mapMedia(media: {
   width: number;
   height: number;
   altText: string;
+  format: PrismaMediaFormat;
+  group: PrismaMediaGroup;
+  colorHex: string | null;
   focalPointX: number;
   focalPointY: number;
 }): MediaValue {
@@ -131,6 +148,9 @@ function mapMedia(media: {
     width: media.width,
     height: media.height,
     alt: media.altText,
+    format: toDomainFormat[media.format],
+    group: toDomainGroup[media.group],
+    colorHex: media.colorHex,
     focalPoint: { x: media.focalPointX, y: media.focalPointY },
   };
 }
@@ -154,6 +174,9 @@ function mapCategory(category: {
     width: number;
     height: number;
     altText: string;
+    format: PrismaMediaFormat;
+    group: PrismaMediaGroup;
+    colorHex: string | null;
     focalPointX: number;
     focalPointY: number;
   } | null;
@@ -310,6 +333,9 @@ function toProductCard(
       name: variant.name,
       hex: variant.hex,
       available: variant.skus.some((sku) => (sku.inventory?.availableQuantity ?? 0) > 0),
+      featuredMedia: featuredMedia(variant),
+      secondaryMedia: variant.gallery.find((media) => media.id !== variant.featuredMediaId) ?? null,
+      price: firstPricedSku(variant).price,
     })),
     price: selectedSku.price,
     available: selected.skus.some((sku) => (sku.inventory?.availableQuantity ?? 0) > 0),
@@ -655,14 +681,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       where: { archivedAt: null },
       orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
     });
-    return media.map((item) => ({
-      id: item.id,
-      url: item.url,
-      width: item.width,
-      height: item.height,
-      alt: item.altText,
-      focalPoint: { x: item.focalPointX, y: item.focalPointY },
-    }));
+    return media.map(mapMedia);
   }
 
   async createMedia(input: AdminMediaInput, actor: ActorContext): Promise<MediaValue> {
@@ -673,6 +692,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
           width: input.width,
           height: input.height,
           altText: input.alt,
+          colorHex: input.colorHex ?? null,
           focalPointX: input.focalPoint.x,
           focalPointY: input.focalPoint.y,
           format: toPrismaFormat[input.format],
@@ -691,14 +711,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       });
       return created;
     });
-    return {
-      id: media.id,
-      url: media.url,
-      width: media.width,
-      height: media.height,
-      alt: media.altText,
-      focalPoint: { x: media.focalPointX, y: media.focalPointY },
-    };
+    return mapMedia(media);
   }
 
   async listAdminProducts(query: CatalogQuery): Promise<ProductValue[]> {

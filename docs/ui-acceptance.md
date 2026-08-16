@@ -346,3 +346,22 @@ routes. Final CDN, final Media and real-user performance remain Milestone 9.
 DES-001 through DES-005 retain the provisional fallbacks and launch-blocker
 status recorded in `docs/open-questions.md`; M8 implementation does not imply
 asset, font, extrapolation or breakpoint approval.
+
+## Product navigation and responsive menu evidence
+
+The production Storefront build was reviewed at 390×844, 768×1024 and
+1440×900. The review confirmed `lang="fa-IR"`, RTL direction and zero
+horizontal overflow at every viewport. On desktop, hovering Product reveals
+the eight approved groups and the current Product route exposes an active
+state. On mobile, the overlay covers the exact viewport, uses the
+`mobile-menu-fade` animation and a computed `blur(24px)` backdrop, while the
+Product disclosure lists Set, Jacket, Trousers, Shirt, T-shirt, Vest, Shorts
+and Shoes without the former Category block. Reduced-motion removes the new
+animations.
+
+Data-backed card rendering and authenticated Admin Product/Media form replay
+were completed against the deterministic PostgreSQL seed. The Product creation
+journey selects Media through the new checkbox/featured-image controls, creates
+the SKU price and publishes the Product to the Storefront. Updated visual
+baselines and the WCAG critical/serious plus 44×44 target-size gate pass across
+the acceptance viewports.

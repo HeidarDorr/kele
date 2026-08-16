@@ -14,7 +14,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 const messages: Record<string, string> = {
-  created: 'پیش‌نویس استایل ساخته شد.',
+  created: 'پیش‌نویس ست ساخته شد.',
   updated: 'ویرایش در پیش‌نویس ذخیره شد؛ نسخهٔ منتشرشده تغییری نکرد.',
   published: 'ویرایش تازه منتشر و ویرایش قبلی تاریخی شد.',
 };

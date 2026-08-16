@@ -79,7 +79,7 @@ async function createOutfitRevision() {
     data: {
       outfitId: outfit.id,
       revisionNumber: 1,
-      name: 'استایل یکپارچهٔ پرداخت',
+      name: 'ست یکپارچهٔ پرداخت',
       description: 'ویرایش موقت آزمون Checkout',
     },
   });
@@ -107,7 +107,7 @@ function outfitPort(input: {
               revisionNumber: 1,
               size,
               sizeLabel: 'متوسط',
-              title: 'استایل یکپارچهٔ پرداخت',
+              title: 'ست یکپارچهٔ پرداخت',
               unitPriceRial: input.amountRial ?? 20_000_000,
               image: null,
               availableQuantity: Math.min(
@@ -261,7 +261,7 @@ async function createOutfitCustomerCart(input: { revisionId: string; productSkuI
       outfitRevisionId: input.revisionId,
       outfitRevisionNumber: 1,
       outfitSize: 'LOOK-M',
-      titleSnapshot: 'استایل یکپارچهٔ پرداخت',
+      titleSnapshot: 'ست یکپارچهٔ پرداخت',
       selectionSnapshot: 'متوسط',
       quantity: 1,
       status: CartLineStatus.AVAILABLE,

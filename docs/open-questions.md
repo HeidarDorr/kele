@@ -103,6 +103,7 @@ Decision record:
 | OQ-019 | Exact search ranking and Persian normalization | PostgreSQL search with documented normalization; tune after collecting real queries. |
 | OQ-020 | Review verified-purchase time window | Any delivered order containing the catalog object. |
 | OQ-021 | The draft CMS workflow mentions an optional Parent Category, while the frozen domain model defines only flat Category metadata and relationships. | Keep version-1 catalog Categories flat; approve hierarchy and its cycle/deletion semantics before adding parent persistence or nested navigation. |
+| OQ-023 | ADR-0005 requires malware scanning before raster Media becomes publishable, but no scanner/provider or operational certification procedure is approved. | Keep production Media upload fail-closed. Local/UAT may exercise signature, size, dimension and Object Storage flows; production activation requires an accepted scanner decision and certification evidence. |
 
 ## Resolved during hardening
 

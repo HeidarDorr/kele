@@ -23,14 +23,11 @@ function numberValue(formData: FormData, name: string): number {
   return Number(stringValue(formData, name));
 }
 
-function productPayload(formData: FormData, identifiers?: { variantId: string; skuId: string }) {
+function productPayload(formData: FormData) {
   const categoryIds = formData
     .getAll('categoryIds')
     .filter((value): value is string => typeof value === 'string');
-  const mediaIds = formData
-    .getAll('mediaIds')
-    .filter((value): value is string => typeof value === 'string');
-  const featuredMediaId = mediaIds[0] ?? '';
+  const variants = JSON.parse(stringValue(formData, 'productModel')) as AdminProduct['variants'];
   return {
     name: stringValue(formData, 'name'),
     slug: stringValue(formData, 'slug'),
@@ -44,27 +41,7 @@ function productPayload(formData: FormData, identifiers?: { variantId: string; s
       title: stringValue(formData, 'seoTitle') || null,
       description: stringValue(formData, 'seoDescription') || null,
     },
-    variants: [
-      {
-        ...(identifiers ? { id: identifiers.variantId } : {}),
-        name: stringValue(formData, 'variantName'),
-        normalizedColorCode: stringValue(formData, 'normalizedColorCode'),
-        hex: stringValue(formData, 'hex') || null,
-        displayOrder: 0,
-        mediaIds,
-        featuredMediaId,
-        skus: [
-          {
-            ...(identifiers ? { id: identifiers.skuId } : {}),
-            code: stringValue(formData, 'skuCode').toUpperCase(),
-            normalizedSize: stringValue(formData, 'normalizedSize'),
-            displaySize: stringValue(formData, 'displaySize'),
-            amountRial: numberValue(formData, 'amountRial'),
-            physicalQuantity: numberValue(formData, 'physicalQuantity'),
-          },
-        ],
-      },
-    ],
+    variants,
   };
 }
 
@@ -90,8 +67,6 @@ export async function createProductAction(
 export async function updateProductAction(
   id: string,
   version: number,
-  variantId: string,
-  skuId: string,
   _previous: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
@@ -99,7 +74,7 @@ export async function updateProductAction(
     await adminRequest<AdminProduct>(`/admin/products/${id}`, {
       method: 'PATCH',
       headers: { 'if-match': String(version) },
-      body: JSON.stringify(productPayload(formData, { variantId, skuId })),
+      body: JSON.stringify(productPayload(formData)),
     });
   } catch (error: unknown) {
     return {
@@ -118,7 +93,8 @@ export async function publishProductAction(id: string): Promise<void> {
   redirect(`/products/${id}/edit?notice=published`);
 }
 
-export async function applyInventoryAction(skuId: string, formData: FormData): Promise<void> {
+export async function applyInventoryAction(formData: FormData): Promise<void> {
+  const skuId = stringValue(formData, 'skuId');
   await adminRequest<Inventory>(`/admin/inventory/${skuId}/actions`, {
     method: 'POST',
     headers: { 'idempotency-key': randomUUID() },
@@ -155,6 +131,7 @@ export async function createMediaAction(formData: FormData): Promise<void> {
       alt: stringValue(formData, 'alt'),
       format: stringValue(formData, 'format'),
       group: 'product_images',
+      colorHex: stringValue(formData, 'colorHex') || null,
       focalPoint: {
         x: numberValue(formData, 'focalPointX'),
         y: numberValue(formData, 'focalPointY'),
@@ -162,6 +139,34 @@ export async function createMediaAction(formData: FormData): Promise<void> {
     }),
   });
   redirect('/?notice=media');
+}
+
+export async function uploadMediaAction(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size < 1) {
+    return { status: 'error', message: 'یک فایل تصویر انتخاب کنید.' };
+  }
+  const upload = new FormData();
+  upload.set('file', file, file.name);
+  upload.set('alt', stringValue(formData, 'alt'));
+  upload.set('group', stringValue(formData, 'group'));
+  if (formData.get('attachColor') === 'on') {
+    upload.set('colorHex', stringValue(formData, 'colorHex'));
+  }
+  upload.set('focalPointX', stringValue(formData, 'focalPointX') || '0.5');
+  upload.set('focalPointY', stringValue(formData, 'focalPointY') || '0.5');
+  try {
+    await adminRequest('/admin/media/uploads', { method: 'POST', body: upload });
+  } catch (error: unknown) {
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : 'بارگذاری رسانه ممکن نشد.',
+    };
+  }
+  redirect('/editorial/media?notice=uploaded');
 }
 
 function outfitPayload(formData: FormData) {
@@ -204,7 +209,7 @@ export async function createOutfitAction(
   } catch (error: unknown) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'ساخت پیش‌نویس استایل ممکن نشد.',
+      message: error instanceof Error ? error.message : 'ساخت پیش‌نویس ست ممکن نشد.',
     };
   }
   redirect(`/outfits/${outfit.id}/edit?notice=created`);
@@ -225,7 +230,7 @@ export async function updateOutfitAction(
   } catch (error: unknown) {
     return {
       status: 'error',
-      message: error instanceof Error ? error.message : 'ویرایش استایل ممکن نشد.',
+      message: error instanceof Error ? error.message : 'ویرایش ست ممکن نشد.',
     };
   }
   redirect(`/outfits/${id}/edit?notice=updated`);

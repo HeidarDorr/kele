@@ -2,16 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { type SyntheticEvent, useState } from 'react';
+import { normalizeIranianMobile } from '@kele/design-system/mobile';
 import { commerceApi, commerceErrorMessage } from '../lib/commerce-api';
-
-function normalizeMobile(value: string): string {
-  const latin = value
-    .replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
-    .replace(/[^+0-9]/g, '');
-  if (/^09[0-9]{9}$/.test(latin)) return `+98${latin.slice(1)}`;
-  return latin;
-}
 
 export function SignInForm({ fakeOtpCode }: { fakeOtpCode: string | undefined }) {
   const router = useRouter();
@@ -27,7 +19,7 @@ export function SignInForm({ fakeOtpCode }: { fakeOtpCode: string | undefined })
     setBusy(true);
     setError('');
     try {
-      const challenge = await commerceApi.createChallenge(normalizeMobile(mobile));
+      const challenge = await commerceApi.createChallenge(normalizeIranianMobile(mobile));
       setChallengeId(challenge.challengeId);
       setStatus('کد یک‌بارمصرف از طریق فراهم‌کنندهٔ آزمایشی ارسال شد.');
     } catch (requestError: unknown) {
@@ -82,11 +74,11 @@ export function SignInForm({ fakeOtpCode }: { fakeOtpCode: string | undefined })
             placeholder="09121234567"
             value={mobile}
             required
-            pattern="(?:\+989|09)[0-9]{9}"
             onChange={(event) => {
               setMobile(event.target.value);
             }}
           />
+          <small>با ‎+98‎، با ‎09‎ یا بدون صفر ابتدایی قابل ورود است.</small>
           <button className="button-primary" type="submit" disabled={busy}>
             {busy ? 'در حال ارسال…' : 'دریافت کد'}
           </button>

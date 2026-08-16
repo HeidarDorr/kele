@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Headers,
   HttpCode,
   HttpStatus,
@@ -10,13 +11,18 @@ import {
   Post,
   Query,
   Req,
+  StreamableFile,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { CatalogAdminRequest } from './admin-session.guard.js';
 import { actorFromRequest, AdminSessionGuard, RequireAdminRoles } from './admin-session.guard.js';
 import {
   AdminCategoryDto,
   AdminMediaDto,
+  AdminMediaUploadDto,
   AdminPriceDto,
   AdminProductDto,
   CatalogQueryDto,
@@ -25,6 +31,22 @@ import {
 import { CatalogService } from '../application/catalog.service.js';
 import { CatalogError } from '../application/catalog.error.js';
 import type { CategoryValue, ProductDetailValue, ProductValue } from '../domain/catalog.types.js';
+import type { RasterContentType } from '../domain/media-upload.js';
+
+type UploadedRaster = Readonly<{
+  buffer: Uint8Array;
+  mimetype: string;
+  size: number;
+}>;
+
+function rasterContentType(value: string): RasterContentType {
+  if (value === 'image/jpeg' || value === 'image/png' || value === 'image/webp') return value;
+  throw new CatalogError(
+    'validation',
+    'MEDIA_CONTENT_TYPE_INVALID',
+    'Only JPEG, PNG and WebP images are accepted.',
+  );
+}
 
 function requiredHeader(value: string | undefined, name: string): string {
   if (value === undefined || value.length < 1) {
@@ -145,6 +167,16 @@ export class PublicCatalogController {
   async getProduct(@Param('slug') slug: string, @Query('color') colorVariantId?: string) {
     return toPublicProductDetail(await this.catalog.getPublicProduct(slug, colorVariantId ?? null));
   }
+
+  @Get('media/:fileName')
+  @Header('Cache-Control', 'public, max-age=31536000, immutable')
+  async readUploadedMedia(@Param('fileName') fileName: string) {
+    const media = await this.catalog.readUploadedMedia(fileName);
+    return new StreamableFile(media.bytes, {
+      type: media.contentType,
+      length: media.bytes.byteLength,
+    });
+  }
 }
 
 @Controller('discovery')
@@ -200,6 +232,30 @@ export class AdminCatalogController {
   @RequireAdminRoles('super_admin')
   createMedia(@Body() body: AdminMediaDto, @Req() request: CatalogAdminRequest) {
     return this.catalog.createMedia(body.toDomain(), actorFromRequest(request));
+  }
+
+  @Post('media/uploads')
+  @RequireAdminRoles('super_admin')
+  @UseInterceptors(FileInterceptor('file', { limits: { files: 1, fileSize: 10 * 1024 * 1024 } }))
+  uploadMedia(
+    @UploadedFile() file: UploadedRaster | undefined,
+    @Body() body: AdminMediaUploadDto,
+    @Req() request: CatalogAdminRequest,
+  ) {
+    if (file === undefined || file.size < 1) {
+      throw new CatalogError('validation', 'MEDIA_FILE_REQUIRED', 'An image file is required.');
+    }
+    return this.catalog.uploadMedia(
+      {
+        bytes: file.buffer,
+        contentType: rasterContentType(file.mimetype),
+        alt: body.alt.trim(),
+        group: body.group,
+        colorHex: body.colorHex ?? null,
+        focalPoint: { x: body.focalPointX ?? 0.5, y: body.focalPointY ?? 0.5 },
+      },
+      actorFromRequest(request),
+    );
   }
 
   @Get('products')

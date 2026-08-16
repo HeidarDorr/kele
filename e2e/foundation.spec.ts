@@ -450,12 +450,12 @@ test('an administrator creates, validates, previews and publishes a product disc
     await page.getByLabel('دسته‌بندی').selectOption([storefrontCategory.id]);
     await page.getByLabel('نام رنگ').fill('بژ');
     await page.getByLabel('کد نرمال رنگ').fill(`beige-${suffix.slice(0, 10)}`);
-    await page.getByLabel('تصاویر، مورد نخست تصویر شاخص است').selectOption([media.id]);
+    await page.getByRole('checkbox', { name: /نمای روبه‌روی کت لینن بژ برای آزمون پذیرش/ }).check();
     await page.getByLabel('کد SKU').fill(sku);
-    await page.getByLabel('اندازهٔ نرمال').fill('6y');
-    await page.getByLabel('اندازهٔ نمایشی').fill('۶ سال');
-    await page.getByLabel('قیمت به ریال').fill('39800000');
-    await page.getByLabel('موجودی فیزیکی').fill('3');
+    await page.getByLabel('سایز نرمال').fill('6y');
+    await page.getByLabel('سایز نمایشی').fill('۶ سال');
+    await page.getByLabel('قیمت (ریال)').fill('39800000');
+    await page.getByLabel('موجودی اولیه').fill('3');
     await page.getByRole('button', { name: 'ساخت پیش‌نویس' }).click();
 
     await expect(page).toHaveURL(/\/products\/[^/]+\/edit\?notice=created/);
@@ -688,15 +688,15 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await expect(
       page.getByRole('heading', { name: 'یک انتخاب کامل، بدون حدس میان اندازه‌ها' }),
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: /مشاهدهٔ استایل استایل لینن آرام/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /مشاهدهٔ ست ست لینن آرام/ })).toBeVisible();
     await captureMilestoneFiveEvidence(page, 'outfits-index-laptop.png', {
       preserveFocus: true,
     });
 
     for (const state of [
-      { name: 'loading', label: 'در حال چیدن استایل‌ها…' },
-      { name: 'empty', label: 'استایل منتشرشده‌ای وجود ندارد' },
-      { name: 'error', label: 'دریافت استایل‌ها ممکن نشد' },
+      { name: 'loading', label: 'در حال چیدن ست‌ها…' },
+      { name: 'empty', label: 'ست منتشرشده‌ای وجود ندارد' },
+      { name: 'error', label: 'دریافت ست‌ها ممکن نشد' },
     ] as const) {
       await gotoAcceptancePresentationState(page, `${e2eUrls.storefront}/outfits`, state.name);
       await expect(page.getByText(state.label).first()).toBeVisible();
@@ -711,7 +711,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     ] as const) {
       await page.setViewportSize(viewport);
       await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
-      await expect(page.getByRole('heading', { name: 'استایل لینن آرام' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'ست لینن آرام' })).toBeVisible();
       await expect(
         page.getByRole('heading', { name: 'هر جزء، همچنان یک محصول مستقل' }),
       ).toBeVisible();
@@ -725,13 +725,11 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.getByRole('button', { name: '۵ سال' }).click();
-    await expect(page.getByText(/امکان آماده‌سازی ۴ استایل/)).toBeVisible();
-    await page.getByRole('button', { name: 'افزودن استایل کامل به سبد' }).click();
+    await expect(page.getByText(/امکان آماده‌سازی ۴ ست/)).toBeVisible();
+    await page.getByRole('button', { name: 'افزودن ست کامل به سبد' }).click();
     await expect(page.getByRole('dialog', { name: 'سبد خرید' })).toBeVisible();
     await expect(
-      page
-        .getByRole('dialog', { name: 'سبد خرید' })
-        .getByRole('heading', { name: 'استایل لینن آرام' }),
+      page.getByRole('dialog', { name: 'سبد خرید' }).getByRole('heading', { name: 'ست لینن آرام' }),
     ).toBeVisible();
     cartIds.push(await cartIdFromPage(page));
     await page.keyboard.press('Escape');
@@ -745,7 +743,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       await page.setViewportSize(viewport);
       await page.goto(`${e2eUrls.admin}/outfits`);
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-      await expect(page.getByRole('heading', { name: 'استایل‌ها' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'ست‌ها' })).toBeVisible();
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
@@ -763,7 +761,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       'KELE-LINEN-BEIGE-5Y',
     );
     await captureMilestoneFiveEvidence(page, 'admin-outfit-edit-laptop.png');
-    await page.getByLabel('نام استایل').fill('استایل لینن آرام — ویرایش دوم');
+    await page.getByLabel('نام ست').fill('ست لینن آرام — ویرایش دوم');
     await page.getByRole('button', { name: 'ذخیره در پیش‌نویس تازه' }).click();
     await expect(page).toHaveURL(/\/outfits\/[^/]+\/edit\?notice=updated/);
     await expect(page.getByRole('status')).toContainText('نسخهٔ منتشرشده تغییری نکرد');
@@ -771,7 +769,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.getByRole('link', { name: 'پیش‌نمایش' }).click();
     await expect(page.getByText(/پیش‌نمایش محافظت‌شدهٔ Outfit/)).toBeVisible();
     await expect(
-      page.getByRole('heading', { level: 1, name: 'استایل لینن آرام — ویرایش دوم' }),
+      page.getByRole('heading', { level: 1, name: 'ست لینن آرام — ویرایش دوم' }),
     ).toBeVisible();
     await captureMilestoneFiveEvidence(page, 'admin-outfit-preview-laptop.png');
     await page.getByRole('link', { name: 'بازگشت به ویرایش' }).click();
@@ -780,7 +778,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await expect(page.getByText(/ویرایش ۱/).last()).toBeVisible();
 
     await page.goto(`${e2eUrls.storefront}/cart`);
-    await expect(page.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
+    await expect(page.getByText('این نسخه از ست نیاز به بررسی دارد.')).toBeVisible();
     await expect(page.getByText(/ادامه خرید تا رفع/)).toBeVisible();
     const cartImage = page.locator<HTMLImageElement>('.cart-line-media img');
     await expect
@@ -805,10 +803,8 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       });
     await captureMilestoneFiveEvidence(page, 'cart-outfit-old-revision-review-laptop.png');
     await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
-    await expect(
-      page.getByRole('heading', { name: 'استایل لینن آرام — ویرایش دوم' }),
-    ).toBeVisible();
-    await expect(page.locator('main .product-label').first()).toHaveText('استایل کامل، ویرایش ۲');
+    await expect(page.getByRole('heading', { name: 'ست لینن آرام — ویرایش دوم' })).toBeVisible();
+    await expect(page.locator('main .product-label').first()).toHaveText('ست کامل، ویرایش ۲');
   } finally {
     try {
       await context.close();
@@ -1022,7 +1018,7 @@ test('cart UI exposes loading, empty, error, unavailable and Outfit review state
     cartIds.push(reviewCartId);
     await addE2EOutfitReviewLine(reviewCartId);
     await review.goto(`${e2eUrls.storefront}/cart`);
-    await expect(review.getByText('این نسخه از استایل نیاز به بررسی دارد.')).toBeVisible();
+    await expect(review.getByText('این نسخه از ست نیاز به بررسی دارد.')).toBeVisible();
     await captureMilestoneEvidence(
       review,
       milestoneThreeFixture,

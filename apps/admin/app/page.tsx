@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { createCategoryAction, createMediaAction } from './actions';
+import { createCategoryAction } from './actions';
 import { AdminShell } from '../components/admin-shell';
 import { listCategories, listMedia, listProducts } from '../lib/admin-api';
 
@@ -104,62 +104,14 @@ export default async function AdminHomePage({
         </section>
 
         <section className="admin-section" aria-labelledby="media-create-title">
-          <h2 id="media-create-title">ثبت Media</h2>
-          <form className="compact-form" action={createMediaAction}>
-            <label>
-              نشانی فایل
-              <input name="url" required dir="ltr" placeholder="/media/catalog/example.webp" />
-            </label>
-            <label>
-              متن جایگزین
-              <input name="alt" required maxLength={500} />
-            </label>
-            <div className="inline-fields">
-              <label>
-                عرض
-                <input name="width" type="number" min={1} required />
-              </label>
-              <label>
-                ارتفاع
-                <input name="height" type="number" min={1} required />
-              </label>
-            </div>
-            <div className="inline-fields">
-              <label>
-                نقطهٔ X
-                <input
-                  name="focalPointX"
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={0.5}
-                />
-              </label>
-              <label>
-                نقطهٔ Y
-                <input
-                  name="focalPointY"
-                  type="number"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={0.5}
-                />
-              </label>
-            </div>
-            <label>
-              فرمت
-              <select name="format" defaultValue="webp">
-                <option value="webp">WEBP</option>
-                <option value="jpg">JPG</option>
-                <option value="png">PNG</option>
-              </select>
-            </label>
-            <button className="admin-secondary" type="submit">
-              ثبت Media
-            </button>
-          </form>
+          <h2 id="media-create-title">کتابخانهٔ رسانه</h2>
+          <p className="admin-note">
+            فایل را در کتابخانه بارگذاری کنید؛ پیش‌نمایش، گروه، رنگ و نقطهٔ کانونی همان‌جا ثبت
+            می‌شوند و سپس در فرم محصول قابل انتخاب‌اند.
+          </p>
+          <Link className="admin-secondary" href="/editorial/media">
+            باز کردن رسانه‌ها
+          </Link>
           <p className="admin-note">
             {media.length.toLocaleString('fa-IR')} دارایی قابل استفاده وجود دارد.
           </p>

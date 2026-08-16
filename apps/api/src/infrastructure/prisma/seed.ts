@@ -12,7 +12,7 @@ import {
 } from '@prisma/client';
 import { assertE2EDatabaseResetEnvironment } from '@kele/config/e2e-database';
 
-const seedVersion = 'milestone-7-editorial-platform';
+const seedVersion = 'product-navigation-catalog-v1';
 const categoryId = '20000000-0000-4000-8000-000000000001';
 const productId = '20000000-0000-4000-8000-000000000010';
 const variantId = '20000000-0000-4000-8000-000000000020';
@@ -25,6 +25,9 @@ const outfitId = '50000000-0000-4000-8000-000000000001';
 const outfitRevisionId = '50000000-0000-4000-8000-000000000002';
 const outfitItemId = '50000000-0000-4000-8000-000000000003';
 const outfitEventId = '50000000-0000-4000-8000-000000000004';
+const correctedOutfitRevisionId = '50000000-0000-4000-8000-000000000005';
+const correctedOutfitItemId = '50000000-0000-4000-8000-000000000006';
+const correctedOutfitEventId = '50000000-0000-4000-8000-000000000007';
 const outfitMediaIds = [
   '50000000-0000-4000-8000-000000000031',
   '50000000-0000-4000-8000-000000000032',
@@ -43,7 +46,108 @@ const editorialMediaIds = {
   journalTailoring: '70000000-0000-4000-8000-000000000043',
 } as const;
 const publishedAt = new Date('2026-07-31T00:00:00.000Z');
+const correctedOutfitPublishedAt = new Date('2026-08-16T00:00:00.000Z');
 const mediaIds = [frontMediaId, backMediaId, detailMediaId];
+const productGroups = [
+  {
+    categoryId: '80000000-0000-4000-8000-000000000001',
+    productId: '81000000-0000-4000-8000-000000000001',
+    variantId: '82000000-0000-4000-8000-000000000001',
+    category: 'کت',
+    categorySlug: 'jackets',
+    name: 'کت مخمل زغالی',
+    slug: 'charcoal-velvet-jacket',
+    colorName: 'زغالی',
+    colorCode: 'charcoal',
+    colorHex: '#3D3A38',
+    skuPrefix: 'KELE-JACKET-CHARCOAL',
+    price: 24_800_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000002',
+    productId: '81000000-0000-4000-8000-000000000002',
+    variantId: '82000000-0000-4000-8000-000000000002',
+    category: 'شلوار',
+    categorySlug: 'trousers',
+    name: 'شلوار کتان فندقی',
+    slug: 'hazelnut-cotton-trousers',
+    colorName: 'فندقی',
+    colorCode: 'hazelnut',
+    colorHex: '#8A6547',
+    skuPrefix: 'KELE-TROUSER-HAZELNUT',
+    price: 16_900_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000003',
+    productId: '81000000-0000-4000-8000-000000000003',
+    variantId: '82000000-0000-4000-8000-000000000003',
+    category: 'پیراهن',
+    categorySlug: 'shirts',
+    name: 'پیراهن لینن شیری',
+    slug: 'ivory-linen-shirt',
+    colorName: 'شیری',
+    colorCode: 'ivory',
+    colorHex: '#E8DDC9',
+    skuPrefix: 'KELE-SHIRT-IVORY',
+    price: 14_600_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000004',
+    productId: '81000000-0000-4000-8000-000000000004',
+    variantId: '82000000-0000-4000-8000-000000000004',
+    category: 'تیشرت',
+    categorySlug: 't-shirts',
+    name: 'تیشرت پنبه‌ای خاکی',
+    slug: 'khaki-cotton-tshirt',
+    colorName: 'خاکی',
+    colorCode: 'khaki',
+    colorHex: '#B5A382',
+    skuPrefix: 'KELE-TSHIRT-KHAKI',
+    price: 9_800_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000005',
+    productId: '81000000-0000-4000-8000-000000000005',
+    variantId: '82000000-0000-4000-8000-000000000005',
+    category: 'وست',
+    categorySlug: 'vests',
+    name: 'وست پشمی شتری',
+    slug: 'camel-wool-vest',
+    colorName: 'شتری',
+    colorCode: 'camel',
+    colorHex: '#B8895D',
+    skuPrefix: 'KELE-VEST-CAMEL',
+    price: 18_400_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000006',
+    productId: '81000000-0000-4000-8000-000000000006',
+    variantId: '82000000-0000-4000-8000-000000000006',
+    category: 'شلوارک',
+    categorySlug: 'shorts',
+    name: 'شلوارک لینن زیتونی',
+    slug: 'olive-linen-shorts',
+    colorName: 'زیتونی',
+    colorCode: 'olive',
+    colorHex: '#7A7651',
+    skuPrefix: 'KELE-SHORTS-OLIVE',
+    price: 11_200_000n,
+  },
+  {
+    categoryId: '80000000-0000-4000-8000-000000000007',
+    productId: '81000000-0000-4000-8000-000000000007',
+    variantId: '82000000-0000-4000-8000-000000000007',
+    category: 'کفش',
+    categorySlug: 'shoes',
+    name: 'کفش چرمی عسلی',
+    slug: 'honey-leather-shoes',
+    colorName: 'عسلی',
+    colorCode: 'honey',
+    colorHex: '#A66C3F',
+    skuPrefix: 'KELE-SHOES-HONEY',
+    price: 22_500_000n,
+  },
+] as const;
 const prisma = new PrismaClient();
 
 const media = [
@@ -53,6 +157,7 @@ const media = [
     width: 1122,
     height: 1402,
     altText: 'نمای روبه‌روی کت‌وشلوار لینن بژ بچگانه',
+    colorHex: '#D4C2A8',
     focalPointX: 0.5,
     focalPointY: 0.48,
   },
@@ -62,6 +167,7 @@ const media = [
     width: 1122,
     height: 1402,
     altText: 'نمای پشت کت‌وشلوار لینن بژ بچگانه',
+    colorHex: '#D4C2A8',
     focalPointX: 0.5,
     focalPointY: 0.48,
   },
@@ -71,6 +177,7 @@ const media = [
     width: 1122,
     height: 1402,
     altText: 'جزئیات بافت لینن، یقه و جیب کت بژ',
+    colorHex: '#D4C2A8',
     focalPointX: 0.48,
     focalPointY: 0.42,
   },
@@ -148,6 +255,113 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
   await transaction.mediaAsset.deleteMany();
 }
 
+const seededOutfitCopy = {
+  name: 'ست لینن آرام',
+  description:
+    'یک انتخاب کامل و روشن برای موقعیت‌های رسمی؛ اندازهٔ ست مستقیماً به SKU واقعی کت‌وشلوار لینن متصل است.',
+  seoTitle: 'ست لینن آرام | KELE',
+  seoDescription: 'مشاهدهٔ اندازه، قیمت مستقل و موجودی لحظه‌ای ست لینن آرام KELE.',
+} as const;
+
+async function createSeedOutfitRevision(
+  transaction: Prisma.TransactionClient,
+  input: Readonly<{
+    revisionId: string;
+    itemId: string;
+    eventId: string;
+    revisionNumber: number;
+    sourceRevisionId: string | null;
+    publishedAt: Date;
+  }>,
+): Promise<void> {
+  await transaction.outfitRevision.create({
+    data: {
+      id: input.revisionId,
+      outfitId,
+      revisionNumber: input.revisionNumber,
+      sourceRevisionId: input.sourceRevisionId,
+      createdAt: input.publishedAt,
+      state: OutfitRevisionState.DRAFT,
+      ...seededOutfitCopy,
+    },
+  });
+  await transaction.outfitItem.create({
+    data: {
+      id: input.itemId,
+      outfitRevisionId: input.revisionId,
+      productId,
+      defaultColorVariantId: variantId,
+      quantity: 1,
+      displayOrder: 0,
+    },
+  });
+  for (const [displayOrder, mediaAssetId] of outfitMediaIds.entries()) {
+    await transaction.outfitRevisionMedia.create({
+      data: {
+        outfitRevisionId: input.revisionId,
+        mediaAssetId,
+        displayOrder,
+        featured: displayOrder === 0,
+      },
+    });
+  }
+  for (const [displayOrder, sku] of skuInputs.entries()) {
+    const size = await transaction.outfitSize.create({
+      data: {
+        outfitRevisionId: input.revisionId,
+        code: sku.normalizedSize.toUpperCase(),
+        label: sku.displaySize,
+        amountRial: sku.amountRial + 6_000_000n,
+        displayOrder,
+      },
+    });
+    await transaction.outfitSizeComponent.create({
+      data: {
+        outfitSizeId: size.id,
+        outfitItemId: input.itemId,
+        skuId: sku.id,
+        quantity: 1,
+        displayOrder: 0,
+      },
+    });
+  }
+  if (input.sourceRevisionId !== null) {
+    await transaction.outfitRevision.update({
+      where: { id: input.sourceRevisionId },
+      data: { state: OutfitRevisionState.HISTORICAL, supersededAt: input.publishedAt },
+    });
+  }
+  await transaction.outfitRevision.update({
+    where: { id: input.revisionId },
+    data: { state: OutfitRevisionState.PUBLISHED, publishedAt: input.publishedAt },
+  });
+  await transaction.outfit.update({
+    where: { id: outfitId },
+    data: {
+      status: PublicationStatus.PUBLISHED,
+      publishedAt,
+      archivedAt: null,
+      version: input.revisionNumber === 1 ? 2 : { increment: 1 },
+    },
+  });
+  await transaction.businessEvent.create({
+    data: {
+      id: input.eventId,
+      type: 'OutfitPublished',
+      actorId: 'seed',
+      entityType: 'Outfit',
+      entityId: outfitId,
+      correlationId,
+      payload: {
+        revisionId: input.revisionId,
+        sourceRevisionId: input.sourceRevisionId,
+        ruleIds: ['OTF-004', 'OTF-014', 'OTF-015', 'OTF-017'],
+        deterministic: true,
+      },
+    },
+  });
+}
+
 async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<void> {
   for (const [index, source] of media.entries()) {
     const outfitMediaId = outfitMediaIds[index];
@@ -161,16 +375,31 @@ async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<v
         height: source.height,
         altText:
           index === 0
-            ? 'نمای کامل استایل لینن آرام KELE'
+            ? 'نمای کامل ست لینن آرام KELE'
             : index === 1
-              ? 'نمای پشت استایل لینن آرام KELE'
-              : 'جزئیات بافت استایل لینن آرام KELE',
+              ? 'نمای پشت ست لینن آرام KELE'
+              : 'جزئیات بافت ست لینن آرام KELE',
         focalPointX: source.focalPointX,
         focalPointY: source.focalPointY,
         format: MediaFormat.WEBP,
         group: MediaGroup.OUTFIT_EDITORIAL,
       },
-      update: { archivedAt: null },
+      update: {
+        url: source.url,
+        width: source.width,
+        height: source.height,
+        altText:
+          index === 0
+            ? 'نمای کامل ست لینن آرام KELE'
+            : index === 1
+              ? 'نمای پشت ست لینن آرام KELE'
+              : 'جزئیات بافت ست لینن آرام KELE',
+        focalPointX: source.focalPointX,
+        focalPointY: source.focalPointY,
+        format: MediaFormat.WEBP,
+        group: MediaGroup.OUTFIT_EDITORIAL,
+        archivedAt: null,
+      },
     });
   }
   await transaction.outfit.upsert({
@@ -187,82 +416,36 @@ async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<v
     where: { id: outfitRevisionId },
   });
   if (existing === null) {
-    await transaction.outfitRevision.create({
-      data: {
-        id: outfitRevisionId,
-        outfitId,
-        revisionNumber: 1,
-        createdAt: publishedAt,
-        state: OutfitRevisionState.DRAFT,
-        name: 'استایل لینن آرام',
-        description:
-          'یک انتخاب کامل و روشن برای موقعیت‌های رسمی؛ اندازهٔ استایل مستقیماً به SKU واقعی کت‌وشلوار لینن متصل است.',
-        seoTitle: 'استایل لینن آرام | KELE',
-        seoDescription: 'مشاهدهٔ اندازه، قیمت مستقل و موجودی لحظه‌ای استایل لینن آرام KELE.',
-      },
+    await createSeedOutfitRevision(transaction, {
+      revisionId: outfitRevisionId,
+      itemId: outfitItemId,
+      eventId: outfitEventId,
+      revisionNumber: 1,
+      sourceRevisionId: null,
+      publishedAt,
     });
-    await transaction.outfitItem.create({
-      data: {
-        id: outfitItemId,
-        outfitRevisionId,
-        productId,
-        defaultColorVariantId: variantId,
-        quantity: 1,
-        displayOrder: 0,
-      },
-    });
-    for (const [displayOrder, mediaAssetId] of outfitMediaIds.entries()) {
-      await transaction.outfitRevisionMedia.create({
-        data: {
-          outfitRevisionId,
-          mediaAssetId,
-          displayOrder,
-          featured: displayOrder === 0,
-        },
-      });
-    }
-    for (const [displayOrder, sku] of skuInputs.entries()) {
-      const size = await transaction.outfitSize.create({
-        data: {
-          outfitRevisionId,
-          code: sku.normalizedSize.toUpperCase(),
-          label: sku.displaySize,
-          amountRial: sku.amountRial + 6_000_000n,
-          displayOrder,
-        },
-      });
-      await transaction.outfitSizeComponent.create({
-        data: {
-          outfitSizeId: size.id,
-          outfitItemId,
-          skuId: sku.id,
-          quantity: 1,
-          displayOrder: 0,
-        },
-      });
-    }
-    await transaction.outfitRevision.update({
-      where: { id: outfitRevisionId },
-      data: { state: OutfitRevisionState.PUBLISHED, publishedAt },
-    });
-    await transaction.outfit.update({
-      where: { id: outfitId },
-      data: { status: PublicationStatus.PUBLISHED, publishedAt, version: 2 },
-    });
-    await transaction.businessEvent.create({
-      data: {
-        id: outfitEventId,
-        type: 'OutfitPublished',
-        actorId: 'seed',
-        entityType: 'Outfit',
-        entityId: outfitId,
-        correlationId,
-        payload: {
-          revisionId: outfitRevisionId,
-          ruleIds: ['OTF-004', 'OTF-014', 'OTF-015', 'OTF-017'],
-          deterministic: true,
-        },
-      },
+    return;
+  }
+
+  const currentRevision = await transaction.outfitRevision.findFirst({
+    where: { outfitId, state: OutfitRevisionState.PUBLISHED },
+    orderBy: { revisionNumber: 'desc' },
+  });
+  const correction = await transaction.outfitRevision.findUnique({
+    where: { id: correctedOutfitRevisionId },
+  });
+  if (
+    currentRevision?.id === outfitRevisionId &&
+    currentRevision.name !== seededOutfitCopy.name &&
+    correction === null
+  ) {
+    await createSeedOutfitRevision(transaction, {
+      revisionId: correctedOutfitRevisionId,
+      itemId: correctedOutfitItemId,
+      eventId: correctedOutfitEventId,
+      revisionNumber: currentRevision.revisionNumber + 1,
+      sourceRevisionId: currentRevision.id,
+      publishedAt: correctedOutfitPublishedAt,
     });
   }
 }
@@ -349,6 +532,7 @@ async function reconcileSeed(transaction: Prisma.TransactionClient): Promise<voi
         width: item.width,
         height: item.height,
         altText: item.altText,
+        colorHex: item.colorHex,
         focalPointX: item.focalPointX,
         focalPointY: item.focalPointY,
         format: MediaFormat.WEBP,
@@ -525,6 +709,165 @@ async function reconcileSeed(transaction: Prisma.TransactionClient): Promise<voi
     create: { key: seedVersion },
     update: {},
   });
+}
+
+async function reconcileProductNavigationCategories(
+  transaction: Prisma.TransactionClient,
+): Promise<void> {
+  for (const [groupIndex, group] of productGroups.entries()) {
+    await transaction.category.upsert({
+      where: { id: group.categoryId },
+      create: {
+        id: group.categoryId,
+        name: group.category,
+        slug: group.categorySlug,
+        description: `انتخاب‌های ${group.category} کودک با رنگ و سایز مستقل.`,
+        displayOrder: groupIndex + 1,
+        status: PublicationStatus.PUBLISHED,
+      },
+      update: {
+        name: group.category,
+        slug: group.categorySlug,
+        description: `انتخاب‌های ${group.category} کودک با رنگ و سایز مستقل.`,
+        displayOrder: groupIndex + 1,
+        status: PublicationStatus.PUBLISHED,
+        archivedAt: null,
+      },
+    });
+  }
+}
+
+async function reconcileProductGroups(transaction: Prisma.TransactionClient): Promise<void> {
+  for (const [groupIndex, group] of productGroups.entries()) {
+    await transaction.product.upsert({
+      where: { id: group.productId },
+      create: {
+        id: group.productId,
+        name: group.name,
+        slug: group.slug,
+        description: `${group.name} با برش راحت، بافت سنجیده و جزئیات مناسب حرکت کودک.`,
+        details: ['دوخت تمیز', 'فرم راحت کودک', 'نگهداری آسان'],
+        seoTitle: `${group.name} کودک | KELE`,
+        seoDescription: `مشاهدهٔ رنگ، سایز و قیمت ${group.name} در فروشگاه KELE.`,
+        searchText: `${group.name} ${group.category} ${group.colorName} ${group.categorySlug}`,
+        status: PublicationStatus.PUBLISHED,
+        publishedAt,
+      },
+      update: {
+        name: group.name,
+        slug: group.slug,
+        status: PublicationStatus.PUBLISHED,
+        archivedAt: null,
+      },
+    });
+    await transaction.productCategory.upsert({
+      where: {
+        productId_categoryId: { productId: group.productId, categoryId: group.categoryId },
+      },
+      create: { productId: group.productId, categoryId: group.categoryId },
+      update: {},
+    });
+    await transaction.colorVariant.upsert({
+      where: { id: group.variantId },
+      create: {
+        id: group.variantId,
+        productId: group.productId,
+        name: group.colorName,
+        normalizedColorCode: group.colorCode,
+        displayHex: group.colorHex,
+        displayOrder: 0,
+        status: PublicationStatus.PUBLISHED,
+      },
+      update: {
+        productId: group.productId,
+        name: group.colorName,
+        normalizedColorCode: group.colorCode,
+        displayHex: group.colorHex,
+        displayOrder: 0,
+        status: PublicationStatus.PUBLISHED,
+        archivedAt: null,
+      },
+    });
+    for (const [displayOrder, mediaAssetId] of mediaIds.entries()) {
+      await transaction.mediaAssignment.upsert({
+        where: {
+          colorVariantId_mediaAssetId: { colorVariantId: group.variantId, mediaAssetId },
+        },
+        create: {
+          colorVariantId: group.variantId,
+          mediaAssetId,
+          displayOrder,
+          featured: displayOrder === 0,
+        },
+        update: { displayOrder, featured: displayOrder === 0 },
+      });
+    }
+    for (const [sizeIndex, size] of ['5y', '6y'].entries()) {
+      const sequence = String((groupIndex + 1) * 10 + sizeIndex + 1).padStart(12, '0');
+      const skuId = `83000000-0000-4000-8000-${sequence}`;
+      const priceRecordId = `84000000-0000-4000-8000-${sequence}`;
+      const code = `${group.skuPrefix}-${size.toUpperCase()}`;
+      const amountRial = group.price + BigInt(sizeIndex * 1_200_000);
+      const physicalQuantity = sizeIndex === 0 ? 5 : 3;
+      await transaction.sku.upsert({
+        where: { id: skuId },
+        create: {
+          id: skuId,
+          colorVariantId: group.variantId,
+          code,
+          normalizedSize: size,
+          displaySize: sizeIndex === 0 ? '۵ سال' : '۶ سال',
+          status: PublicationStatus.PUBLISHED,
+        },
+        update: {
+          colorVariantId: group.variantId,
+          normalizedSize: size,
+          displaySize: sizeIndex === 0 ? '۵ سال' : '۶ سال',
+          status: PublicationStatus.PUBLISHED,
+          archivedAt: null,
+        },
+      });
+      await transaction.priceRecord.upsert({
+        where: { id: priceRecordId },
+        create: {
+          id: priceRecordId,
+          skuId,
+          amountRial,
+          validFrom: publishedAt,
+          actorId: 'seed',
+          reason: 'دادهٔ نمایشی گروه‌های محصول',
+        },
+        update: {},
+      });
+      await transaction.currentSkuPrice.upsert({
+        where: { skuId },
+        create: { skuId, priceRecordId, amountRial },
+        update: { priceRecordId, amountRial },
+      });
+      await transaction.inventory.upsert({
+        where: { skuId },
+        create: { skuId, physicalQuantity, reservedQuantity: 0 },
+        update: { physicalQuantity, reservedQuantity: 0 },
+      });
+      await transaction.inventoryMovement.upsert({
+        where: { idempotencyKey: `seed-${code}` },
+        create: {
+          skuId,
+          action: InventoryAction.PRODUCTION,
+          quantityDelta: physicalQuantity,
+          beforePhysicalQuantity: 0,
+          afterPhysicalQuantity: physicalQuantity,
+          beforeReservedQuantity: 0,
+          afterReservedQuantity: 0,
+          actorId: 'seed',
+          reason: 'موجودی نمایشی گروه محصول',
+          correlationId,
+          idempotencyKey: `seed-${code}`,
+        },
+        update: {},
+      });
+    }
+  }
 }
 
 async function reconcileEditorial(transaction: Prisma.TransactionClient): Promise<void> {
@@ -733,13 +1076,12 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
     brandTagline: 'پوشش آرام برای کودکی آزاد',
     contactEmail: 'hello@kele.ir',
     primaryNavigation: [
-      { label: 'فروشگاه', href: '/catalog' },
-      { label: 'استایل‌ها', href: '/outfits' },
+      { label: 'محصولات', href: '/catalog' },
       { label: 'موقعیت‌ها', href: '/occasions' },
       { label: 'ژورنال', href: '/journal' },
     ],
     footerNavigation: [
-      { label: 'فروشگاه', href: '/catalog' },
+      { label: 'محصولات', href: '/catalog' },
       { label: 'موقعیت‌ها', href: '/occasions' },
       { label: 'ژورنال', href: '/journal' },
     ],
@@ -832,7 +1174,7 @@ async function assertExactE2EFixture(): Promise<void> {
     prisma.journalPublication.count(),
     prisma.siteSettingsVersion.count(),
   ]);
-  const expected = [1, 2, 1, 9, 3, 3, 3, 1, 1, 3, 2, 1, 1, 2];
+  const expected = [1, 9, 1, 9, 3, 3, 3, 1, 1, 3, 2, 1, 1, 2];
   if (counts.some((count, index) => count !== expected[index])) {
     throw new Error(
       `E2E fixture is not exclusive. Expected ${expected.join('/')} but found ${counts.join('/')}.`,
@@ -847,6 +1189,8 @@ async function seed(): Promise<void> {
   await prisma.$transaction(async (transaction) => {
     if (resetForE2E) await resetCatalogForE2E(transaction);
     await reconcileSeed(transaction);
+    await reconcileProductNavigationCategories(transaction);
+    if (!resetForE2E) await reconcileProductGroups(transaction);
     await reconcileOutfit(transaction);
     await reconcileEditorial(transaction);
     if (resetForE2E) await reconcileE2EShipping(transaction);

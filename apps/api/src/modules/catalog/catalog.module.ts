@@ -25,8 +25,13 @@ import {
   type OutfitCatalogPort,
 } from './application/outfit-catalog.contract.js';
 import { PrismaOutfitCatalogAdapter } from './infrastructure/prisma-outfit-catalog.adapter.js';
+import { FoundationModule } from '../foundation/foundation.module.js';
+import { OBJECT_STORAGE } from '../foundation/application/provider.tokens.js';
+import type { ObjectStorage } from '../foundation/application/object-storage.port.js';
+import { environment } from '../../platform/config/environment.js';
 
 @Module({
+  imports: [FoundationModule],
   controllers: [PublicCatalogController, PublicDiscoveryController, AdminCatalogController],
   providers: [
     AdminSessionGuard,
@@ -37,8 +42,13 @@ import { PrismaOutfitCatalogAdapter } from './infrastructure/prisma-outfit-catal
     },
     {
       provide: CatalogService,
-      useFactory: (repository: CatalogRepository): CatalogService => new CatalogService(repository),
-      inject: [CATALOG_REPOSITORY],
+      useFactory: (repository: CatalogRepository, storage: ObjectStorage): CatalogService =>
+        new CatalogService(
+          repository,
+          storage,
+          environment.NODE_ENV !== 'production' || environment.KELE_DEPLOYMENT_TIER === 'uat',
+        ),
+      inject: [CATALOG_REPOSITORY, OBJECT_STORAGE],
     },
     {
       provide: CART_CATALOG_READER,

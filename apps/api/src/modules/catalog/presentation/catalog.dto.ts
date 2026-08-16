@@ -180,6 +180,10 @@ export class AdminMediaDto {
   @IsIn(['product_images', 'outfit_editorial', 'homepage', 'journal', 'shared_assets'])
   group!: AdminMediaInput['group'];
 
+  @IsOptional()
+  @IsHexColor()
+  colorHex?: string | null;
+
   @ValidateNested()
   @Type(() => FocalPointDto)
   focalPoint!: FocalPointDto;
@@ -192,9 +196,38 @@ export class AdminMediaDto {
       alt: this.alt,
       format: this.format,
       group: this.group,
+      colorHex: this.colorHex ?? null,
       focalPoint: { x: this.focalPoint.x, y: this.focalPoint.y },
     };
   }
+}
+
+export class AdminMediaUploadDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(500)
+  alt!: string;
+
+  @IsIn(['product_images', 'outfit_editorial', 'homepage', 'journal', 'shared_assets'])
+  group!: AdminMediaInput['group'];
+
+  @IsOptional()
+  @IsHexColor()
+  colorHex?: string | null;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  focalPointX?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  focalPointY?: number;
 }
 
 class SeoDto {

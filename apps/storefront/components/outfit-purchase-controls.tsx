@@ -17,8 +17,8 @@ export function OutfitPurchaseControls({ outfit }: { outfit: OutfitDetail }) {
     const added = await addOutfit(outfit.revisionId, selected.code);
     setMessage(
       added
-        ? 'این استایل با نگاشت دقیق همین اندازه به سبد اضافه شد.'
-        : 'افزودن استایل انجام نشد؛ وضعیت موجودی را دوباره بررسی کنید.',
+        ? 'این ست با نگاشت دقیق همین اندازه به سبد اضافه شد.'
+        : 'افزودن ست انجام نشد؛ وضعیت موجودی را دوباره بررسی کنید.',
     );
     setSubmitting(false);
   }
@@ -26,7 +26,7 @@ export function OutfitPurchaseControls({ outfit }: { outfit: OutfitDetail }) {
   return (
     <div className="outfit-purchase-controls">
       <fieldset className="option-group size-options">
-        <legend>اندازهٔ استایل</legend>
+        <legend>اندازهٔ ست</legend>
         <div>
           {outfit.sizes.map((size) => (
             <button
@@ -45,7 +45,7 @@ export function OutfitPurchaseControls({ outfit }: { outfit: OutfitDetail }) {
         </div>
         <p aria-live="polite">
           {selected
-            ? `${selected.price.display}، امکان آماده‌سازی ${selected.availableQuantity.toLocaleString('fa-IR')} استایل`
+            ? `${selected.price.display}، امکان آماده‌سازی ${selected.availableQuantity.toLocaleString('fa-IR')} ست`
             : 'هر اندازه به SKUهای دقیق اجزای همین ویرایش متصل است.'}
         </p>
       </fieldset>
@@ -55,7 +55,7 @@ export function OutfitPurchaseControls({ outfit }: { outfit: OutfitDetail }) {
         disabled={selected === null || !selected.available || submitting || loading}
         onClick={() => void submit()}
       >
-        {submitting ? 'در حال افزودن…' : 'افزودن استایل کامل به سبد'}
+        {submitting ? 'در حال افزودن…' : 'افزودن ست کامل به سبد'}
       </button>
       <p className="purchase-message" aria-live="polite">
         {message}

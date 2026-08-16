@@ -71,7 +71,7 @@ export async function adminRequest<T>(path: string, init: RequestInit = {}): Pro
     headers.set('cookie', `kele_session=${encodeURIComponent(sessionToken)}`);
   }
   headers.set('x-correlation-id', randomUUID());
-  if (init.body !== undefined && !headers.has('content-type')) {
+  if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has('content-type')) {
     headers.set('content-type', 'application/json');
   }
   const response = await fetch(`${apiBaseUrl}${path}`, {

@@ -11,6 +11,9 @@ export interface MediaValue {
   width: number;
   height: number;
   alt: string;
+  format: 'jpg' | 'png' | 'webp';
+  group: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+  colorHex: string | null;
   focalPoint: { x: number; y: number };
 }
 
@@ -93,6 +96,9 @@ export interface ProductCardValue {
     name: string;
     hex: string | null;
     available: boolean;
+    featuredMedia: MediaValue;
+    secondaryMedia: MediaValue | null;
+    price: MoneyValue;
   }>;
   price: MoneyValue;
   available: boolean;
@@ -179,6 +185,16 @@ export interface AdminMediaInput {
   alt: string;
   format: 'jpg' | 'png' | 'webp';
   group: 'product_images' | 'outfit_editorial' | 'homepage' | 'journal' | 'shared_assets';
+  colorHex?: string | null;
+  focalPoint: { x: number; y: number };
+}
+
+export interface AdminMediaUploadInput {
+  bytes: Uint8Array;
+  contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+  alt: string;
+  group: AdminMediaInput['group'];
+  colorHex: string | null;
   focalPoint: { x: number; y: number };
 }
 

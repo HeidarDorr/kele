@@ -327,14 +327,16 @@ export function AccountContent() {
               <input
                 dir="ltr"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={address.recipientMobile}
                 required
-                pattern="\+989[0-9]{9}"
-                placeholder="+989121234567"
+                placeholder="09121234567"
                 onChange={(event) => {
                   setAddress({ ...address, recipientMobile: event.target.value });
                 }}
               />
+              <small>‎+98‎، ‎09‎ و شمارهٔ بدون صفر پذیرفته می‌شوند.</small>
             </label>
             <div className="form-row">
               <label>

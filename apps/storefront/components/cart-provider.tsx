@@ -129,7 +129,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           commerceApi.addOutfit(revisionId, size, quantity, current.version),
         );
         if (succeeded) {
-          setAnnouncement('استایل انتخاب‌شده با همین ویرایش به سبد اضافه شد.');
+          setAnnouncement('ست انتخاب‌شده با همین ویرایش به سبد اضافه شد.');
           setDrawerOpen(true);
         }
         return succeeded;

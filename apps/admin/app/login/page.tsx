@@ -8,7 +8,7 @@ const challengeIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const errors: Readonly<Record<string, string>> = {
-  mobile: 'شماره موبایل را با کد کشور و به‌شکل ‎+989121234567‎ وارد کنید.',
+  mobile: 'شماره موبایل را با ‎+98‎، با ‎09‎ یا بدون صفر ابتدایی وارد کنید.',
   challenge: 'درخواست کد ورود در حال حاضر ممکن نیست. یک دقیقه دیگر دوباره تلاش کنید.',
   verification: 'کد ورود معتبر نیست یا زمان آن به پایان رسیده است.',
   session: 'نشست امن ایجاد نشد. دوباره از ابتدا تلاش کنید.',
@@ -57,10 +57,10 @@ export default async function AdministratorLoginPage({
               dir="ltr"
               inputMode="tel"
               autoComplete="tel"
-              placeholder="+989121234567"
-              pattern="\+98[0-9]{10}"
+              placeholder="09121234567"
               required
             />
+            <small>نمونه‌های معتبر: ‎+989121234567‎، ‎09121234567‎، ‎9121234567‎</small>
             <button className="admin-primary" type="submit">
               دریافت کد ورود
             </button>

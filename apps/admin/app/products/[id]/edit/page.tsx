@@ -27,18 +27,10 @@ export default async function EditProductPage({
     listMedia(),
     validateProduct(id),
   ]);
-  const variant = product.variants[0];
-  const sku = variant?.skus[0];
-  if (!variant || !sku) {
-    throw new Error('Product aggregate does not contain an editable variant and SKU.');
-  }
-  const updateAction = updateProductAction.bind(
-    null,
-    product.id,
-    product.version,
-    variant.id ?? '',
-    sku.id ?? '',
+  const skus = product.variants.flatMap((variant) =>
+    variant.skus.map((sku) => ({ ...sku, colorName: variant.name })),
   );
+  const updateAction = updateProductAction.bind(null, product.id, product.version);
   const notice = query.notice ? noticeMessages[query.notice] : undefined;
 
   return (
@@ -96,11 +88,19 @@ export default async function EditProductPage({
 
       <section className="admin-section inventory-action" aria-labelledby="inventory-title">
         <h2 id="inventory-title">اقدام موجودی</h2>
-        <p>
-          SKU: <bdi dir="ltr">{sku.code}</bdi>
-        </p>
-        <form action={applyInventoryAction.bind(null, sku.id ?? '')}>
+        <p>افزایش یا کاهش موجودی SKUهای موجود فقط از این اقدام ثبت‌شونده انجام می‌شود.</p>
+        <form action={applyInventoryAction}>
           <input type="hidden" name="productId" value={product.id} />
+          <label>
+            رنگ و سایز
+            <select name="skuId" required>
+              {skus.map((sku) => (
+                <option key={sku.id} value={sku.id}>
+                  {sku.colorName} · {sku.displaySize} · {sku.code}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             اقدام
             <select name="action" defaultValue="production">

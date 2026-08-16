@@ -12,13 +12,17 @@ import {
   MinLength,
   ValidateIf,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { normalizeIranianMobile } from '@kele/design-system/mobile';
 import { ApplicationError } from '../../../shared/application-error.js';
 import type { AddressInput } from '../domain/identity.types.js';
 import type { CartLineInput } from '../../cart/domain/cart.types.js';
 
 export class OtpChallengeDto {
-  @Matches(/^\+98[0-9]{10}$/)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? normalizeIranianMobile(value) : value,
+  )
+  @Matches(/^\+989[0-9]{9}$/)
   mobile!: string;
 }
 
@@ -50,7 +54,10 @@ export class AddressDto {
   @MaxLength(160)
   recipientName!: string;
 
-  @Matches(/^\+98[0-9]{10}$/)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? normalizeIranianMobile(value) : value,
+  )
+  @Matches(/^\+989[0-9]{9}$/)
   recipientMobile!: string;
 
   @IsString()

@@ -2,22 +2,20 @@ import Link from 'next/link';
 import type { Category } from '../lib/catalog-api';
 import type { PublishedSiteSettings } from '../lib/editorial-api';
 import { BrandWordmark } from './brand-wordmark';
+import { DesktopNavigation } from './desktop-navigation';
 import { HeaderCommerceActions } from './header-commerce-actions';
 import { MobileNavigation } from './mobile-navigation';
+import { storefrontNavigation } from '../lib/store-navigation';
 
 export function SiteHeader({
-  categories,
+  categories: _categories,
   settings,
 }: {
   categories: Category[];
   settings?: PublishedSiteSettings | null;
 }) {
-  const navigation = settings?.configuration.primaryNavigation ?? [
-    { label: 'تازه‌ها', href: '/catalog' },
-    { label: 'استایل‌ها', href: '/outfits' },
-    { label: 'موقعیت‌ها', href: '/occasions' },
-    { label: 'ژورنال', href: '/journal' },
-  ];
+  void _categories;
+  const navigation = storefrontNavigation(settings?.configuration.primaryNavigation);
   return (
     <>
       <a className="skip-link" href="#main-content">
@@ -28,14 +26,8 @@ export function SiteHeader({
           <div className="announcement">{settings.configuration.announcement}</div>
         ) : null}
         <div className="shell header-row">
-          <MobileNavigation navigation={navigation} categories={categories} />
-          <nav className="desktop-nav" aria-label="فهرست اصلی">
-            {navigation.map((item) => (
-              <Link key={`${item.href}-${item.label}`} href={item.href}>
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <MobileNavigation navigation={navigation} />
+          <DesktopNavigation navigation={navigation} />
           <Link className="wordmark" href="/" aria-label="صفحهٔ اصلی KELE">
             <span className="visually-hidden">صفحهٔ اصلی</span>
             <BrandWordmark />
