@@ -28,6 +28,9 @@ const outfitEventId = '50000000-0000-4000-8000-000000000004';
 const correctedOutfitRevisionId = '50000000-0000-4000-8000-000000000005';
 const correctedOutfitItemId = '50000000-0000-4000-8000-000000000006';
 const correctedOutfitEventId = '50000000-0000-4000-8000-000000000007';
+const customerCopyOutfitRevisionId = '50000000-0000-4000-8000-000000000008';
+const customerCopyOutfitItemId = '50000000-0000-4000-8000-000000000009';
+const customerCopyOutfitEventId = '50000000-0000-4000-8000-000000000010';
 const outfitMediaIds = [
   '50000000-0000-4000-8000-000000000031',
   '50000000-0000-4000-8000-000000000032',
@@ -47,6 +50,7 @@ const editorialMediaIds = {
 } as const;
 const publishedAt = new Date('2026-07-31T00:00:00.000Z');
 const correctedOutfitPublishedAt = new Date('2026-08-16T00:00:00.000Z');
+const customerCopyOutfitPublishedAt = new Date('2026-08-18T00:00:00.000Z');
 const mediaIds = [frontMediaId, backMediaId, detailMediaId];
 const productGroups = [
   {
@@ -258,7 +262,7 @@ async function resetCatalogForE2E(transaction: Prisma.TransactionClient): Promis
 const seededOutfitCopy = {
   name: 'ست لینن آرام',
   description:
-    'یک انتخاب کامل و روشن برای موقعیت‌های رسمی؛ اندازهٔ ست مستقیماً به SKU واقعی کت‌وشلوار لینن متصل است.',
+    'یک انتخاب کامل و روشن برای موقعیت‌های رسمی؛ اندازهٔ ست مستقیماً به رنگ و اندازهٔ دقیق کت‌وشلوار لینن متصل است.',
   seoTitle: 'ست لینن آرام | KELE',
   seoDescription: 'مشاهدهٔ اندازه، قیمت مستقل و موجودی لحظه‌ای ست لینن آرام KELE.',
 } as const;
@@ -446,6 +450,25 @@ async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<v
       revisionNumber: currentRevision.revisionNumber + 1,
       sourceRevisionId: currentRevision.id,
       publishedAt: correctedOutfitPublishedAt,
+    });
+    return;
+  }
+
+  const customerCopyRevision = await transaction.outfitRevision.findUnique({
+    where: { id: customerCopyOutfitRevisionId },
+  });
+  if (
+    currentRevision?.id === correctedOutfitRevisionId &&
+    currentRevision.description !== seededOutfitCopy.description &&
+    customerCopyRevision === null
+  ) {
+    await createSeedOutfitRevision(transaction, {
+      revisionId: customerCopyOutfitRevisionId,
+      itemId: customerCopyOutfitItemId,
+      eventId: customerCopyOutfitEventId,
+      revisionNumber: currentRevision.revisionNumber + 1,
+      sourceRevisionId: currentRevision.id,
+      publishedAt: customerCopyOutfitPublishedAt,
     });
   }
 }

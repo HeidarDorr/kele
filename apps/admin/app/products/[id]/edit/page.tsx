@@ -88,7 +88,7 @@ export default async function EditProductPage({
 
       <section className="admin-section inventory-action" aria-labelledby="inventory-title">
         <h2 id="inventory-title">اقدام موجودی</h2>
-        <p>افزایش یا کاهش موجودی SKUهای موجود فقط از این اقدام ثبت‌شونده انجام می‌شود.</p>
+        <p>افزایش یا کاهش موجودی هر رنگ و اندازه فقط از این اقدام ثبت‌شونده انجام می‌شود.</p>
         <form action={applyInventoryAction}>
           <input type="hidden" name="productId" value={product.id} />
           <label>

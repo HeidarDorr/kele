@@ -8,6 +8,7 @@ import type {
 import { deriveOutfitAvailability, structuralOutfitErrors } from '../domain/outfit.js';
 import type {
   OutfitAdminView,
+  OutfitAdminSummaryView,
   OutfitCardView,
   OutfitCheckoutSelection,
   OutfitComponentResolution,
@@ -22,6 +23,13 @@ import type { OutfitActor, OutfitRepository } from './outfit.repository.js';
 
 function money(amountRial: number) {
   return { amountRial, currency: 'IRR' as const, display: formatIrrAsToman(amountRial) };
+}
+
+function checkedMoney(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative safe integer IRR amount.`);
+  }
+  return value;
 }
 
 function referenceQuery(record: OutfitRevisionRecord) {
@@ -54,6 +62,24 @@ function adminView(record: OutfitRevisionRecord): OutfitAdminView {
     seo: record.seo,
     items: record.items,
     sizes: record.sizes,
+  };
+}
+
+function adminSummaryView(record: OutfitRevisionRecord): OutfitAdminSummaryView {
+  return {
+    id: record.outfitId,
+    status: record.outfitStatus,
+    version: record.outfitVersion,
+    revisionId: record.revisionId,
+    revisionNumber: record.revisionNumber,
+    revisionState: record.revisionState,
+    publishedAt: record.publishedAt?.toISOString() ?? null,
+    name: record.name,
+    slug: record.slug,
+    itemCount: record.items.length,
+    sizeCount: record.sizes.length,
+    mediaCount: record.media.length,
+    hasFeaturedMedia: record.media.some((item) => item.featured),
   };
 }
 
@@ -99,9 +125,9 @@ export class OutfitService {
 
   async listAdmin(
     status: 'draft' | 'published' | 'archived' | null,
-  ): Promise<{ items: OutfitAdminView[]; page: { nextCursor: null; hasMore: false } }> {
+  ): Promise<{ items: OutfitAdminSummaryView[]; page: { nextCursor: null; hasMore: false } }> {
     return {
-      items: (await this.repository.listAdmin(status)).map(adminView),
+      items: (await this.repository.listAdmin(status)).map(adminSummaryView),
       page: { nextCursor: null, hasMore: false },
     };
   }
@@ -221,6 +247,32 @@ export class OutfitService {
         price: money(size.amountRial),
         available: (resolved?.availableQuantity ?? 0) > 0,
         availableQuantity: resolved?.availableQuantity ?? 0,
+        components:
+          resolved?.components.map((component) => {
+            const availableQuantity = Math.floor(
+              component.availableQuantity / component.quantityPerOutfit,
+            );
+            return {
+              outfitItemId: component.outfitItemId,
+              skuId: component.skuId,
+              name: component.productName,
+              colorName: component.colorName,
+              sizeLabel: component.sizeLabel,
+              quantity: component.quantityPerOutfit,
+              available: availableQuantity > 0,
+              availableQuantity,
+              skuAvailableQuantity: component.availableQuantity,
+              price:
+                component.unitPriceRial === null
+                  ? null
+                  : money(
+                      checkedMoney(
+                        component.unitPriceRial * component.quantityPerOutfit,
+                        'Outfit component total',
+                      ),
+                    ),
+            };
+          }) ?? [],
       };
     });
     const categories = record.categoryIds
@@ -313,6 +365,7 @@ export class OutfitService {
         colorName: variant.name,
         sizeLabel: sku.sizeLabel,
         quantityPerOutfit: component.quantity,
+        unitPriceRial: sku.unitPriceRial,
         availableQuantity: sku.availableQuantity,
         displayOrder: component.displayOrder,
       });
@@ -414,7 +467,7 @@ export class OutfitService {
           errors.push({
             path: `sizes.${String(sizeIndex)}.components.${String(componentIndex)}`,
             ruleId: 'OTF-014',
-            message: 'Component must map the item quantity to an exact valid SKU.',
+            message: 'برای این جزء، رنگ و اندازهٔ معتبر و متناسب با تعداد انتخاب کنید.',
           });
         }
       }

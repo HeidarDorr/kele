@@ -324,7 +324,7 @@ function requirePreviewTargets(count: number): void {
     throw new ApplicationError(
       'validation',
       'BULK_OPERATION_EMPTY',
-      'Bulk preview matched no SKUs.',
+      'هیچ رنگ و اندازه‌ای با انتخاب شما پیدا نشد.',
     );
   }
 }
@@ -1195,7 +1195,9 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     requirePreviewTargets(skus.length);
     const items = skus.map((sku) => {
-      if (sku.currentPrice === null) throw new Error('Price preview selected an unpriced SKU.');
+      if (sku.currentPrice === null) {
+        throw new Error('Price preview selected a product option without a price.');
+      }
       const before = safeInteger(sku.currentPrice.amountRial);
       const proposed =
         input.adjustment.type === 'fixed_amount'
@@ -1276,7 +1278,9 @@ export class PrismaOperationsRepository implements OperationsRepository {
     });
     requirePreviewTargets(skus.length);
     const items = skus.map((sku) => {
-      if (sku.inventory === null) throw new Error('Inventory preview selected an unstocked SKU.');
+      if (sku.inventory === null) {
+        throw new Error('Inventory preview selected a product option without inventory.');
+      }
       const delta =
         input.action === 'production'
           ? Math.abs(input.quantity)
@@ -1396,7 +1400,7 @@ export class PrismaOperationsRepository implements OperationsRepository {
     let succeeded = 0;
     let failed = 0;
     const inventoryOperation = operation.operation as { action?: string; quantity?: number };
-    // Inventory restoration uses the same SKU order. Keeping every multi-SKU
+    // Inventory restoration uses the same product-option order. Keeping every multi-option
     // mutation in this order prevents cancellation/return and bulk deadlocks.
     const mutationItems = [...operation.items].sort((left, right) =>
       left.skuId.localeCompare(right.skuId),

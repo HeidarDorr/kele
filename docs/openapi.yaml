@@ -886,6 +886,36 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /cart/product-lines:
+    post:
+      operationId: addProductCartLines
+      tags: [Cart]
+      summary: Atomically add one or more exact Product SKUs as independent Cart lines.
+      description: Used when a customer purchases only part of an Outfit presentation. No modified Outfit is created or persisted.
+      security:
+        - SessionCookie: []
+        - AnonymousCart: []
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCartLinesInput'
+      responses:
+        '200':
+          description: Updated cart containing independent Product lines. The command is atomic and does not reserve inventory.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /cart/lines/{lineId}:
     patch:
       operationId: updateCartLine
@@ -3139,7 +3169,7 @@ components:
     OutfitSizeOption:
       type: object
       additionalProperties: false
-      required: [code, label, price, available, availableQuantity]
+      required: [code, label, price, available, availableQuantity, components]
       properties:
         code:
           type: string
@@ -3156,6 +3186,54 @@ components:
         availableQuantity:
           type: integer
           minimum: 0
+        components:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OutfitSizeComponentOption'
+
+    OutfitSizeComponentOption:
+      type: object
+      additionalProperties: false
+      required:
+        - outfitItemId
+        - skuId
+        - name
+        - colorName
+        - sizeLabel
+        - quantity
+        - available
+        - availableQuantity
+        - skuAvailableQuantity
+        - price
+      properties:
+        outfitItemId:
+          type: string
+          format: uuid
+        skuId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        colorName:
+          type: string
+        sizeLabel:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        available:
+          type: boolean
+        availableQuantity:
+          type: integer
+          minimum: 0
+        skuAvailableQuantity:
+          type: integer
+          minimum: 0
+        price:
+          anyOf:
+            - $ref: '#/components/schemas/Money'
+            - type: 'null'
 
     OutfitItemView:
       type: object
@@ -3403,6 +3481,30 @@ components:
         kind:
           type: string
           const: product
+        skuId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 20
+
+    ProductCartLinesInput:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ProductCartLineSelection'
+
+    ProductCartLineSelection:
+      type: object
+      additionalProperties: false
+      required: [skuId, quantity]
+      properties:
         skuId:
           type: string
           format: uuid
@@ -4820,9 +4922,62 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/AdminOutfit'
+            $ref: '#/components/schemas/AdminOutfitSummary'
         page:
           $ref: '#/components/schemas/CursorPage'
+
+    AdminOutfitSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - version
+        - revisionId
+        - revisionNumber
+        - revisionState
+        - publishedAt
+        - name
+        - slug
+        - itemCount
+        - sizeCount
+        - mediaCount
+        - hasFeaturedMedia
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/PublicationStatus'
+        version:
+          type: integer
+          minimum: 1
+        revisionId:
+          type: string
+          format: uuid
+        revisionNumber:
+          type: integer
+          minimum: 1
+        revisionState:
+          $ref: '#/components/schemas/OutfitRevisionState'
+        publishedAt:
+          type: [string, 'null']
+          format: date-time
+        name:
+          type: string
+        slug:
+          type: string
+        itemCount:
+          type: integer
+          minimum: 0
+        sizeCount:
+          type: integer
+          minimum: 0
+        mediaCount:
+          type: integer
+          minimum: 0
+        hasFeaturedMedia:
+          type: boolean
 
     OutfitRevisionSummary:
       type: object

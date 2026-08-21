@@ -431,7 +431,7 @@ export class CheckoutService implements CartCheckoutLifecycle {
           throw new ApplicationError(
             'validation',
             'CART_LINE_INVALID',
-            'Product cart line is missing its SKU.',
+            'Product cart line is missing its selected option.',
           );
         }
         return [line.skuId];

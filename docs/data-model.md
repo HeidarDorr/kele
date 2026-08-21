@@ -1,6 +1,6 @@
 # Canonical data model
 
-Version: 0.1
+Version: 0.2
 Status: Baseline for implementation
 Authority: ADR-0002, ADR-0003, ADR-0004
 
@@ -154,6 +154,12 @@ An outfit order snapshot includes:
 - Unavailable SKU lines remain with `unavailable` status.
 - Outfit Revisions are never automatically replaced; a no-longer-purchasable
   revision enters `requires_review`.
+- A complete Outfit Cart line is identified only by the immutable
+  `(outfitRevisionId, outfitSize)` pair. It has no excluded-component or
+  customized-composition state.
+- If the Outfit detail UI omits any component, the remaining exact component
+  SKUs and quantities are inserted atomically as ordinary Product Cart lines;
+  no Outfit Cart, Checkout or Order identity is created for that selection.
 - Cart line status is `available`, `unavailable`, or `requires_review`. Only a
   Cart whose lines are all `available` may enter Checkout.
 - Cart prices are informational and not guaranteed.

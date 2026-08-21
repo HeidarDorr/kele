@@ -3260,6 +3260,25 @@ Published Outfit compositions SHALL be immutable.
 Changing a published Outfit composition SHALL create a new Outfit Revision.
 Historical Outfit Revisions SHALL never be modified.
 
+## OTF-019
+
+The Outfit Product Detail Page MAY allow a Customer to omit one or more
+displayed components only by leaving the Outfit purchase flow and purchasing
+the remaining exact component SKUs as independent Products.
+
+Omitting a component SHALL NOT modify an Outfit, create a customized Outfit or
+retain Outfit commercial identity for the remaining Products.
+
+## OTF-020
+
+When a Customer omits any Outfit component, all remaining exact component SKUs
+and quantities SHALL be added to the Cart atomically as independent Product
+lines at their current Product SKU prices.
+
+Cart, Checkout, Order and Return behavior SHALL preserve those lines as
+Products. A complete Outfit SHALL continue to use its independent Outfit
+revision-size price and identity.
+
 ## Guest cart clarification
 
 ## CRT-011

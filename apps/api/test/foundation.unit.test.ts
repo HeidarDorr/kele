@@ -4,7 +4,10 @@ import { FakeSmsAdapter } from '../src/modules/foundation/infrastructure/fake-sm
 import { KavenegarSmsAdapter } from '../src/modules/foundation/infrastructure/kavenegar-sms.adapter.js';
 import { VandarPaymentAdapter } from '../src/modules/foundation/infrastructure/vandar-payment.adapter.js';
 import { VandarRefundAdapter } from '../src/modules/foundation/infrastructure/vandar-refund.adapter.js';
-import { ArvanObjectStorageAdapter } from '../src/modules/foundation/infrastructure/arvan-object-storage.adapter.js';
+import {
+  ArvanObjectStorageAdapter,
+  S3ObjectStorageAdapter,
+} from '../src/modules/foundation/infrastructure/arvan-object-storage.adapter.js';
 
 describe('foundation adapters', () => {
   const sandboxPaymentToken = ['sandbox', 'payment', 'reference', '1234'].join('-');
@@ -233,12 +236,42 @@ describe('foundation adapters', () => {
     });
     expect(upload).toContain('X-Amz-Expires=300');
     expect(upload).toContain('X-Amz-Signature=');
+    expect(new URL(upload).searchParams.get('X-Amz-SignedHeaders')).toContain(
+      'x-amz-server-side-encryption',
+    );
     expect(() => adapter.publicUrl('quarantine/file.webp')).toThrow('no public URL');
     expect(adapter.publicUrl('media/products/file.webp')).toBe(
       'https://media.kele.invalid/media/products/file.webp',
     );
     expect(() => adapter.createSignedRead('media/products/file.webp', 901)).toThrow(
       'between 30 and 900',
+    );
+  });
+
+  it('[CMS-019] uses path-style bucket addressing for local MinIO', async () => {
+    const adapter = new S3ObjectStorageAdapter(
+      'minio',
+      'kele-development',
+      'http://localhost:9100',
+      'us-east-1',
+      'local-access-key',
+      'local-secret-key',
+      'http://localhost:9100/kele-development',
+    );
+
+    const upload = await adapter.createSignedUpload({
+      key: 'media/uploads/00000000-0000-4000-8000-000000000001.webp',
+      contentType: 'image/webp',
+      expiresInSeconds: 300,
+    });
+    const uploadUrl = new URL(upload);
+
+    expect(uploadUrl.host).toBe('localhost:9100');
+    expect(uploadUrl.pathname).toBe(
+      '/kele-development/media/uploads/00000000-0000-4000-8000-000000000001.webp',
+    );
+    expect(uploadUrl.searchParams.get('X-Amz-SignedHeaders')).not.toContain(
+      'x-amz-server-side-encryption',
     );
   });
 });

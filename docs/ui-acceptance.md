@@ -2,7 +2,7 @@
 
 Version: 0.1
 Status: Provisional
-Last reviewed: 2026-08-05
+Last reviewed: 2026-08-18
 
 ## Reference inventory
 
@@ -74,6 +74,35 @@ Missing states that implementation must design:
 - authentication requirement;
 - mobile product-detail layout.
 
+### Product and Outfit purchase-panel amendment (2026-08-18)
+
+- A Product or Outfit detail page displays exactly one prominent live price.
+  Selecting a Product SKU or Outfit size updates that same price node in place;
+  it must not append a secondary price below the options.
+- An Outfit has no Outfit-level color selector. Product color and exact SKU
+  attributes may appear only as component facts after an Outfit size is
+  selected.
+- The Outfit composition section renders only real component products. One or
+  two components must not create reserved empty grid tracks or placeholder
+  surfaces, and every rendered component remains independently linked to its
+  Product detail page.
+- Unavailable sizes remain perceivable without relying on color alone, retain
+  keyboard semantics, and cannot result in an invalid Add-to-Cart command.
+- A complete Outfit is added as one Outfit Cart line at its independent
+  revision-size price. If the customer removes any component, the selection is
+  no longer sold or labelled as an Outfit: the prominent price becomes the sum
+  of the remaining exact SKU prices and those SKUs are added atomically as
+  independent Product Cart lines.
+- Cart, Checkout, Order and return surfaces continue to show a partial
+  selection as independent Products. They must never synthesize a modified
+  Outfit, an exclusion label, or an Outfit-derived price for that selection.
+
+Failure cases include duplicate prices after a selection, an empty color group
+on an Outfit page, a visible blank composition tile, stale availability after
+an underlying SKU change, and an enabled purchase action without a valid exact
+SKU mapping. Partial insertion of only some remaining Products and representing
+a partial selection as an Outfit are also failures.
+
 ## Acceptance viewports
 
 Capture deterministic screenshots at:
@@ -131,7 +160,8 @@ Every page includes:
 
 ## Assets still required
 
-- logo SVG variants and favicon;
+- final, production-approved primary/monochrome SVG variants and favicon; the
+  supplied signature PNG is only a temporary in-product review placeholder;
 - licensed web fonts;
 - final product/editorial imagery;
 - icon source or approved icon family;

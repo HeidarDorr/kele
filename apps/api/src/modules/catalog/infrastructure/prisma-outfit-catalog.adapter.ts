@@ -6,6 +6,12 @@ import type {
   OutfitCatalogReferences,
 } from '../application/outfit-catalog.contract.js';
 
+function safeInteger(value: bigint): number {
+  const result = Number(value);
+  if (!Number.isSafeInteger(result)) throw new Error('Outfit component price exceeds safe range.');
+  return result;
+}
+
 function mapMedia(media: {
   id: string;
   url: string;
@@ -55,7 +61,7 @@ export class PrismaOutfitCatalogAdapter implements OutfitCatalogPort {
       }),
       client.sku.findMany({
         where: { id: { in: skuIds } },
-        include: { inventory: true },
+        include: { currentPrice: true, inventory: true },
       }),
     ]);
     return {
@@ -114,6 +120,8 @@ export class PrismaOutfitCatalogAdapter implements OutfitCatalogPort {
             sizeLabel: sku.displaySize,
             published: sku.status === PublicationStatus.PUBLISHED,
             hasInventory: sku.inventory !== null,
+            unitPriceRial:
+              sku.currentPrice === null ? null : safeInteger(sku.currentPrice.amountRial),
             availableQuantity: Math.max(
               0,
               (sku.inventory?.physicalQuantity ?? 0) - (sku.inventory?.reservedQuantity ?? 0),

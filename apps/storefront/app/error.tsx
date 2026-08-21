@@ -10,7 +10,7 @@ export default function StorefrontError({
 }) {
   return (
     <main className="shell standalone-state" role="alert">
-      <BrandWordmark className="wordmark" />
+      <BrandWordmark className="wordmark" alt="KELE" priority />
       <h1>نمایش صفحه ممکن نشد</h1>
       <p>اتصال کاتالوگ را بررسی کنید و دوباره تلاش کنید.</p>
       <button className="button-primary" type="button" onClick={reset}>

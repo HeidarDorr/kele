@@ -497,6 +497,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/cart/product-lines': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Atomically add one or more exact Product SKUs as independent Cart lines.
+     * @description Used when a customer purchases only part of an Outfit presentation. No modified Outfit is created or persisted.
+     */
+    post: operations['addProductCartLines'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/cart/lines/{lineId}': {
     parameters: {
       query?: never;
@@ -1582,6 +1602,21 @@ export interface components {
       price: components['schemas']['Money'];
       available: boolean;
       availableQuantity: number;
+      components: components['schemas']['OutfitSizeComponentOption'][];
+    };
+    OutfitSizeComponentOption: {
+      /** Format: uuid */
+      outfitItemId: string;
+      /** Format: uuid */
+      skuId: string;
+      name: string;
+      colorName: string;
+      sizeLabel: string;
+      quantity: number;
+      available: boolean;
+      availableQuantity: number;
+      skuAvailableQuantity: number;
+      price: components['schemas']['Money'] | null;
     };
     OutfitItemView: {
       /** Format: uuid */
@@ -1685,6 +1720,14 @@ export interface components {
        * @enum {string}
        */
       kind: 'ProductCartLineInput';
+      /** Format: uuid */
+      skuId: string;
+      quantity: number;
+    };
+    ProductCartLinesInput: {
+      items: components['schemas']['ProductCartLineSelection'][];
+    };
+    ProductCartLineSelection: {
       /** Format: uuid */
       skuId: string;
       quantity: number;
@@ -2243,8 +2286,26 @@ export interface components {
       publishedAt: string | null;
     };
     AdminOutfitPage: {
-      items: components['schemas']['AdminOutfit'][];
+      items: components['schemas']['AdminOutfitSummary'][];
       page: components['schemas']['CursorPage'];
+    };
+    AdminOutfitSummary: {
+      /** Format: uuid */
+      id: string;
+      status: components['schemas']['PublicationStatus'];
+      version: number;
+      /** Format: uuid */
+      revisionId: string;
+      revisionNumber: number;
+      revisionState: components['schemas']['OutfitRevisionState'];
+      /** Format: date-time */
+      publishedAt: string | null;
+      name: string;
+      slug: string;
+      itemCount: number;
+      sizeCount: number;
+      mediaCount: number;
+      hasFeaturedMedia: boolean;
     };
     OutfitRevisionSummary: {
       /** Format: uuid */
@@ -3424,6 +3485,37 @@ export interface operations {
     };
     responses: {
       /** @description Updated cart. Adding a line does not reserve inventory. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Cart'];
+        };
+      };
+      409: components['responses']['Problem'];
+      default: components['responses']['Problem'];
+    };
+  };
+  addProductCartLines: {
+    parameters: {
+      query?: never;
+      header: {
+        /** @description Optimistic resource version. */
+        'If-Match': components['parameters']['IfMatch'];
+        /** @description Double-submit token matching the signed anti-CSRF cookie. */
+        'X-CSRF-Token': components['parameters']['CsrfToken'];
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ProductCartLinesInput'];
+      };
+    };
+    responses: {
+      /** @description Updated cart containing independent Product lines. The command is atomic and does not reserve inventory. */
       200: {
         headers: {
           [name: string]: unknown;

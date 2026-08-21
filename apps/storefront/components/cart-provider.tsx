@@ -23,6 +23,7 @@ type CartContextValue = Readonly<{
   closeDrawer(): void;
   refresh(): Promise<void>;
   addProduct(skuId: string, quantity?: number): Promise<boolean>;
+  addProducts(items: ReadonlyArray<{ skuId: string; quantity: number }>): Promise<boolean>;
   addOutfit(revisionId: string, size: string, quantity?: number): Promise<boolean>;
   updateLine(lineId: string, quantity: number): Promise<void>;
   removeLine(lineId: string): Promise<void>;
@@ -120,6 +121,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         return succeeded;
       },
+      addProducts: async (items) => {
+        if (cart === null) {
+          await refresh();
+          return false;
+        }
+        const succeeded = await runMutation('product-selection', (current) =>
+          commerceApi.addProducts(items, current.version),
+        );
+        if (succeeded) {
+          setAnnouncement('محصولات انتخاب‌شده جداگانه به سبد اضافه شدند.');
+          setDrawerOpen(true);
+        }
+        return succeeded;
+      },
       addOutfit: async (revisionId, size, quantity = 1) => {
         if (cart === null) {
           await refresh();
@@ -129,7 +144,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           commerceApi.addOutfit(revisionId, size, quantity, current.version),
         );
         if (succeeded) {
-          setAnnouncement('ست انتخاب‌شده با همین ویرایش به سبد اضافه شد.');
+          setAnnouncement('ست کامل به سبد اضافه شد.');
           setDrawerOpen(true);
         }
         return succeeded;

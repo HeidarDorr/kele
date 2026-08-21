@@ -62,7 +62,9 @@ export function planDeterministicMerge(
       return { kind: 'combine_outfit', customerLineId: current.id, ...common };
     }
 
-    if (guestLine.skuId === null) throw new Error('Product cart line requires a SKU ID.');
+    if (guestLine.skuId === null) {
+      throw new Error('Product cart line requires a product option ID.');
+    }
     const customerLine = customerProducts.get(guestLine.skuId);
     const requestedQuantity = guestLine.quantity + (customerLine?.quantity ?? 0);
     const merchandise = state.productAvailability.get(guestLine.skuId);

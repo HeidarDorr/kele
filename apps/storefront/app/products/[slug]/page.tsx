@@ -123,34 +123,36 @@ export default async function ProductPage({
           <section className="purchase-panel" aria-labelledby="product-title">
             <p className="product-label">منتخب تازه</p>
             <h1 id="product-title">{product.name}</h1>
-            <p className="product-price">{product.price.display}</p>
-            <p className="product-description">{product.description}</p>
 
-            <div className="option-group">
-              <h2>رنگ</h2>
-              <div className="color-options">
-                {product.availableColors.map((color) => (
-                  <Link
-                    key={color.variantId}
-                    href={`/products/${product.slug}?color=${encodeURIComponent(color.variantId)}`}
-                    aria-current={
-                      color.variantId === product.selectedVariant.id ? 'true' : undefined
-                    }
-                    className={color.available ? 'color-option' : 'color-option unavailable'}
-                  >
-                    <span
-                      className="color-option-swatch"
-                      style={{ backgroundColor: color.hex ?? 'transparent' }}
-                      aria-hidden="true"
-                    />
-                    <span className="color-option-name">{color.name}</span>
-                    {!color.available ? <small>ناموجود</small> : null}
-                  </Link>
-                ))}
+            <PurchaseControls
+              skus={selected.skus}
+              initialPrice={product.price}
+              description={product.description}
+            >
+              <div className="option-group">
+                <h2>رنگ</h2>
+                <div className="color-options">
+                  {product.availableColors.map((color) => (
+                    <Link
+                      key={color.variantId}
+                      href={`/products/${product.slug}?color=${encodeURIComponent(color.variantId)}`}
+                      aria-current={
+                        color.variantId === product.selectedVariant.id ? 'true' : undefined
+                      }
+                      className={color.available ? 'color-option' : 'color-option unavailable'}
+                    >
+                      <span
+                        className="color-option-swatch"
+                        style={{ backgroundColor: color.hex ?? 'transparent' }}
+                        aria-hidden="true"
+                      />
+                      <span className="color-option-name">{color.name}</span>
+                      {!color.available ? <small>ناموجود</small> : null}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <PurchaseControls skus={selected.skus} />
+            </PurchaseControls>
 
             <div className={product.available ? 'stock-note' : 'stock-note unavailable'}>
               {product.available

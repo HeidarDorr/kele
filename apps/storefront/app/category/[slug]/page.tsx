@@ -102,7 +102,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         ) : (
           <section className="state-panel">
             <h2>این دسته هنوز محصولی ندارد</h2>
-            <p>محصولات پس از انتشار و تکمیل تنوع رنگ و SKU در اینجا دیده می‌شوند.</p>
+            <p>محصولات پس از انتشار و تکمیل رنگ‌ها و اندازه‌ها در اینجا دیده می‌شوند.</p>
           </section>
         )}
       </main>

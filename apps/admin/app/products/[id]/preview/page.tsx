@@ -39,7 +39,7 @@ export default async function ProductPreviewPage({ params }: { params: Promise<{
           <h2>{product.name}</h2>
           <p className="preview-price">{product.price.display}</p>
           <p>{product.description}</p>
-          <h3>SKUها</h3>
+          <h3>اندازه‌ها و کدهای داخلی</h3>
           <ul>
             {product.variants[0]?.skus.map((sku) => (
               <li key={sku.id}>

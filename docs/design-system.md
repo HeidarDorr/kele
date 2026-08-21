@@ -5,8 +5,10 @@ Status: Provisional, derived from supplied visual references
 Scope: Storefront. Administration UI uses the same tokens with denser layouts.
 
 This document converts the visual references into implementable constraints.
-Version 1 is Persian (`fa-IR`) and Right-to-Left. Exact fonts and logo assets
-remain open design inputs.
+Version 1 is Persian (`fa-IR`) and Right-to-Left. Exact fonts and
+production-ready vector/favicon logo variants remain open design inputs. The
+customer-supplied signature raster is only the implemented review placeholder;
+it is not the final or production-approved logo.
 
 ## Creative direction
 
@@ -42,11 +44,10 @@ Typography remains an open design input. Two reviewable storefront display
 variants are available without changing layout, spacing, body type or business
 behavior:
 
-- `KELE_TYPOGRAPHY=elize` is the default. Elize renders display headings and
-  the temporary Latin `KELE` wordmark.
+- `KELE_TYPOGRAPHY=elize` is the default. Elize renders display headings.
 - `KELE_TYPOGRAPHY=markazi` uses Markazi Text for Persian display headings.
-  Peyda remains the body/control face, while the temporary wordmark becomes
-  Persian `کله` but deliberately continues to render in Elize.
+  Peyda remains the body/control face. Typography selection does not alter the
+  image-based wordmark.
 
 Only the Arabic variable WOFF2 subset of Markazi Text is bundled, together with
 its SIL Open Font License. Because `next/font` creates build assets, change the
@@ -79,7 +80,10 @@ intended background.
 - Display: an approved Persian-capable editorial display face with licensed web
   files; Latin display text may use a paired high-contrast serif.
 - UI/body: a legible Persian sans-serif with correct shaping and numerals.
-- Logo is an asset, not typed text.
+- The current logo placeholder is the supplied signature asset, not typed text.
+  Its visible crop and stroke geometry must remain unchanged; presentation may
+  invert it for dark surfaces. This placeholder grants no approval of the final
+  logo system.
 - Display headings use controlled line lengths and intentional breaks.
 - Body copy targets roughly 45–75 characters per line.
 - Uppercase and letter-spacing are for short Latin labels only, never Persian.

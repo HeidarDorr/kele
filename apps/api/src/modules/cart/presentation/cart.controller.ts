@@ -18,6 +18,7 @@ import { ApplicationError } from '../../../shared/application-error.js';
 import { CartService } from '../application/cart.service.js';
 import { CartAccessResolver } from './cart-access.js';
 import { CartLineDto, CartQuantityDto } from '../../identity/presentation/identity.dto.js';
+import { ProductCartSelectionDto } from './cart.dto.js';
 
 function parseVersion(value: string | undefined): number {
   if (value === undefined || !/^"[0-9]+"$/.test(value)) {
@@ -51,6 +52,18 @@ export class CartController {
   ) {
     const access = await this.access.resolve(request, response, true);
     return this.carts.addLine(access.cartId, parseVersion(ifMatch), body.toDomain());
+  }
+
+  @Post('product-lines')
+  @HttpCode(HttpStatus.OK)
+  async addProductLines(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Headers('if-match') ifMatch: string | undefined,
+    @Body() body: ProductCartSelectionDto,
+  ) {
+    const access = await this.access.resolve(request, response, true);
+    return this.carts.addProductSelection(access.cartId, parseVersion(ifMatch), body.toDomain());
   }
 
   @Patch('lines/:lineId')

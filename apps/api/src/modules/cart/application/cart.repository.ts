@@ -15,6 +15,11 @@ export interface CartRepository {
     product: CartCatalogProduct,
     quantity: number,
   ): Promise<CartRecord>;
+  addProducts(
+    cartId: string,
+    expectedVersion: number,
+    selections: ReadonlyArray<{ product: CartCatalogProduct; quantity: number }>,
+  ): Promise<CartRecord>;
   addOutfit(
     cartId: string,
     expectedVersion: number,

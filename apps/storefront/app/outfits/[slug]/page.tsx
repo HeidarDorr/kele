@@ -66,16 +66,9 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
         <section className="outfit-detail-hero" aria-labelledby="outfit-title">
           <ProductGallery media={outfit.gallery} />
           <div className="outfit-detail-copy">
-            <p className="product-label">
-              ست کامل، ویرایش {outfit.revisionNumber.toLocaleString('fa-IR')}
-            </p>
+            <p className="product-label">ست کامل</p>
             <h1 id="outfit-title">{outfit.name}</h1>
-            <p className="outfit-starting-price">از {outfit.startingPrice.display}</p>
-            <p className="product-description">{outfit.description}</p>
-            <OutfitPurchaseControls outfit={outfit} />
-            <p className="outfit-integrity-note">
-              ترکیب انتخاب‌شده ثابت می‌ماند؛ هیچ جزء یا ویرایش دیگری خودکار جایگزین آن نمی‌شود.
-            </p>
+            <OutfitPurchaseControls outfit={outfit} description={outfit.description} />
           </div>
         </section>
 
@@ -83,7 +76,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
           <div className="outfit-composition-intro">
             <p>ساختار این ست</p>
             <h2 id="composition-title">هر جزء، همچنان یک محصول مستقل</h2>
-            <span>رنگ پیش‌فرض و تعداد هر جزء توسط همین ویرایش تثبیت شده است.</span>
+            <span>رنگ و تعداد هر جزء برای این ست مشخص شده است.</span>
           </div>
           <ol>
             {outfit.items.map((item) => (

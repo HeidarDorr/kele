@@ -26,6 +26,6 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
     OperationalTelemetryService,
     { provide: OPERATIONAL_TELEMETRY, useExisting: OperationalTelemetryService },
   ],
-  exports: [JsonLogger, MetricsService, OPERATIONAL_TELEMETRY],
+  exports: [JsonLogger, MetricsService, OperationalTelemetryService, OPERATIONAL_TELEMETRY],
 })
 export class ObservabilityModule {}

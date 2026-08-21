@@ -132,7 +132,11 @@ export function OutfitForm({
       ) : null}
 
       <fieldset>
-        <legend>هویت تجاری ست</legend>
+        <legend>معرفی ترکیب</legend>
+        <p className="outfit-entity-note">
+          ست از محصولات موجود ساخته می‌شود و رنگ یا موجودی مستقل ندارد؛ فقط تصویر، روایت و قیمت
+          تجاری این ترکیب را تعریف کنید.
+        </p>
         <div className="form-grid">
           <label>
             نام ست
@@ -219,8 +223,11 @@ export function OutfitForm({
       <fieldset>
         <div className="outfit-fieldset-heading">
           <div>
-            <legend>اجزای ثابت و رنگ پیش‌فرض</legend>
-            <p>هر محصول یک‌بار تعریف می‌شود؛ اندازهٔ دقیق SKU در جدول بعدی انتخاب می‌شود.</p>
+            <legend>محصولات موجود در ست</legend>
+            <p>
+              رنگ اینجا متعلق به همان محصول است، نه خود ست؛ اندازهٔ دقیق هر محصول در جدول بعدی
+              انتخاب می‌شود.
+            </p>
           </div>
           <button className="admin-secondary" type="button" onClick={addItem}>
             افزودن جزء
@@ -325,7 +332,7 @@ export function OutfitForm({
       <fieldset>
         <div className="outfit-fieldset-heading">
           <div>
-            <legend>نگاشت دقیق اندازه به SKU</legend>
+            <legend>تطبیق اندازهٔ ست با اندازهٔ اجزا</legend>
             <p>برچسب اندازهٔ ست لازم نیست با اندازهٔ هیچ جزء برابر باشد.</p>
           </div>
           <button
@@ -350,7 +357,7 @@ export function OutfitForm({
         </div>
         {sizes.length === 0 ? (
           <div className="admin-empty-state">
-            هنوز اندازهٔ قابل فروش و نگاشت SKU تعریف نشده است.
+            هنوز اندازهٔ قابل فروش و اندازهٔ دقیق اجزا تعریف نشده است.
           </div>
         ) : (
           <div className="outfit-size-editor">
@@ -452,7 +459,7 @@ export function OutfitForm({
                             );
                           }}
                         >
-                          <option value="">انتخاب SKU دقیق</option>
+                          <option value="">انتخاب رنگ و اندازهٔ دقیق</option>
                           {variant?.skus.map((sku) => (
                             <option key={sku.id} value={sku.id}>
                               {sku.displaySize} · {sku.code} ({sku.status})
@@ -477,7 +484,9 @@ export function OutfitForm({
         >
           {pending ? 'در حال ذخیره…' : outfit ? 'ذخیره در پیش‌نویس تازه' : 'ساخت پیش‌نویس'}
         </button>
-        <span aria-live="polite">{pending ? 'نگاشت‌ها در حال اعتبارسنجی هستند.' : ''}</span>
+        <span aria-live="polite">
+          {pending ? 'انتخاب رنگ و اندازهٔ اجزا در حال بررسی است.' : ''}
+        </span>
       </div>
     </form>
   );

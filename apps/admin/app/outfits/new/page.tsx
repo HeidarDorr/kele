@@ -20,8 +20,8 @@ export default async function NewOutfitPage() {
         </div>
       </header>
       <p className="admin-intro">
-        اندازهٔ مشتری را تعریف کنید و برای هر جزء، SKU دقیق همان اندازه را انتخاب کنید. نام
-        اندازه‌ها لازم نیست یکسان باشد.
+        اندازه‌ای را که مشتری می‌بیند تعریف کنید و برای هر جزء، رنگ و اندازهٔ دقیق همان محصول را
+        انتخاب کنید. نام اندازه‌ها لازم نیست یکسان باشد.
       </p>
       <OutfitForm
         action={createOutfitAction}

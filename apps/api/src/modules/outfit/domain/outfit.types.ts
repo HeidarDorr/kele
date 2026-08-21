@@ -82,6 +82,7 @@ export type OutfitComponentResolution = Readonly<{
   colorName: string;
   sizeLabel: string;
   quantityPerOutfit: number;
+  unitPriceRial: number | null;
   availableQuantity: number;
   displayOrder: number;
 }>;
@@ -120,6 +121,18 @@ export type OutfitDetailView = OutfitCardView &
       price: OutfitMoney;
       available: boolean;
       availableQuantity: number;
+      components: ReadonlyArray<{
+        outfitItemId: string;
+        skuId: string;
+        name: string;
+        colorName: string;
+        sizeLabel: string;
+        quantity: number;
+        available: boolean;
+        availableQuantity: number;
+        skuAvailableQuantity: number;
+        price: OutfitMoney | null;
+      }>;
     }>;
     items: ReadonlyArray<{
       id: string;
@@ -152,6 +165,22 @@ export type OutfitAdminView = Readonly<{
   publishedAt: string | null;
 }> &
   OutfitDraftInput;
+
+export type OutfitAdminSummaryView = Readonly<{
+  id: string;
+  status: 'draft' | 'published' | 'archived';
+  version: number;
+  revisionId: string;
+  revisionNumber: number;
+  revisionState: 'draft' | 'published' | 'historical';
+  publishedAt: string | null;
+  name: string;
+  slug: string;
+  itemCount: number;
+  sizeCount: number;
+  mediaCount: number;
+  hasFeaturedMedia: boolean;
+}>;
 
 export type OutfitRevisionSummary = Readonly<{
   id: string;

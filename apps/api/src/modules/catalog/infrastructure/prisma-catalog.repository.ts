@@ -286,7 +286,7 @@ function firstPricedSku(variant: ColorVariantValue): SkuValue & { price: MoneyVa
     throw new CatalogError(
       'validation',
       'CATALOG_PRICE_MISSING',
-      'Published SKU price is missing.',
+      'Published product option price is missing.',
     );
   }
   return first;
@@ -784,7 +784,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       this.mapPrismaConflict(
         error,
         'CATALOG_UNIQUENESS_CONFLICT',
-        'A product slug, color, size, or SKU code is already in use.',
+        'A product slug, color, size, or internal code is already in use.',
       );
     }
   }
@@ -869,7 +869,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       this.mapPrismaConflict(
         error,
         'CATALOG_UNIQUENESS_CONFLICT',
-        'A product slug, color, size, or SKU code is already in use.',
+        'A product slug, color, size, or internal code is already in use.',
       );
     }
   }
@@ -1023,7 +1023,11 @@ export class PrismaCatalogRepository implements CatalogRepository {
     await this.prisma.$transaction(async (transaction) => {
       const sku = await transaction.sku.findUnique({ where: { id: skuId } });
       if (sku === null) {
-        throw new CatalogError('not_found', 'SKU_NOT_FOUND', 'SKU was not found.');
+        throw new CatalogError(
+          'not_found',
+          'SKU_NOT_FOUND',
+          'The selected product option was not found.',
+        );
       }
       await this.appendPrice(transaction, skuId, amountRial, reason, actor);
     });
@@ -1311,14 +1315,14 @@ export class PrismaCatalogRepository implements CatalogRepository {
         throw new CatalogError(
           'validation',
           'SKU_REFERENCE_INVALID',
-          'SKU does not belong to this color variant.',
+          'The selected size does not belong to this color.',
         );
       }
       if (currentSku.code !== skuInput.code) {
         throw new CatalogError(
           'validation',
           'SKU_CODE_IMMUTABLE',
-          'SKU code is immutable after creation.',
+          'The internal code cannot change after creation.',
         );
       }
       if (
@@ -1378,7 +1382,7 @@ export class PrismaCatalogRepository implements CatalogRepository {
       throw new CatalogError(
         'validation',
         'SKU_COMMERCIAL_VALUE_INVALID',
-        'SKU price and inventory values are invalid.',
+        'The product option price or inventory value is invalid.',
       );
     }
     const sku = await transaction.sku.create({

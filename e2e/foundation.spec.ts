@@ -559,14 +559,15 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
       'font-family',
       typographyVariant === 'markazi' ? /markazi/i : /elize/i,
     );
-    await expect(page.locator('.wordmark').first()).toHaveCSS('font-family', /elize/i);
-    if (typographyVariant === 'markazi') {
-      await expect(page.locator('.wordmark .brand-wordmark-fa').first()).toBeVisible();
-      await expect(page.locator('.wordmark .brand-wordmark-latin').first()).toBeHidden();
-    } else {
-      await expect(page.locator('.wordmark .brand-wordmark-fa').first()).toBeHidden();
-      await expect(page.locator('.wordmark .brand-wordmark-latin').first()).toBeVisible();
-    }
+    const storefrontLogo = page.locator('.wordmark .brand-wordmark-image').first();
+    await expect(storefrontLogo).toBeVisible();
+    await expect
+      .poll(() =>
+        storefrontLogo.evaluateAll((images) =>
+          images.every((image) => image.complete && image.naturalWidth > 0),
+        ),
+      )
+      .toBe(true);
     await expect
       .poll(() =>
         page
@@ -629,19 +630,16 @@ test('administration is responsive and exposes validation and inventory states',
     await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { name: 'محصولات' })).toBeVisible();
     await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
-    await expect(page.locator('.admin-brand')).toHaveCSS('font-family', /elize/i);
-    if (typographyVariant === 'markazi') {
-      await expect(page.locator('.admin-brand .brand-wordmark-fa')).toBeVisible();
-      await expect(page.locator('.admin-brand .brand-wordmark-latin')).toBeHidden();
-    } else {
-      await expect(page.locator('.admin-brand .brand-wordmark-fa')).toBeHidden();
-      await expect(page.locator('.admin-brand .brand-wordmark-latin')).toBeVisible();
-    }
-    const visibleWordmark = page.locator(
-      typographyVariant === 'markazi'
-        ? '.admin-brand .brand-wordmark-fa'
-        : '.admin-brand .brand-wordmark-latin',
-    );
+    const visibleWordmark = page.locator('.admin-brand .brand-wordmark');
+    const adminLogoImage = visibleWordmark.locator('.brand-wordmark-image');
+    await expect(adminLogoImage).toBeVisible();
+    await expect
+      .poll(() =>
+        adminLogoImage.evaluateAll((images) =>
+          images.every((image) => image.complete && image.naturalWidth > 0),
+        ),
+      )
+      .toBe(true);
     expect(
       await visibleWordmark.evaluate((wordmark) => {
         const bounds = wordmark.getBoundingClientRect();

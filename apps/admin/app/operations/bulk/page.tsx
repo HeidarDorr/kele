@@ -37,7 +37,7 @@ export default async function BulkPage({
               </select>
             </label>
             <label>
-              شناسه SKUها
+              شناسهٔ رنگ‌ها و اندازه‌ها
               <textarea name="skuIds" required placeholder="UUIDها با فاصله یا ویرگول" />
             </label>
             <label>
@@ -84,7 +84,7 @@ export default async function BulkPage({
             <table>
               <thead>
                 <tr>
-                  <th>SKU</th>
+                  <th>کد داخلی محصول</th>
                   <th>قبل</th>
                   <th>پیشنهاد</th>
                   <th>نتیجه</th>

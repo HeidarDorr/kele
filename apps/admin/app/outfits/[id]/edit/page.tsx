@@ -79,7 +79,7 @@ export default async function EditOutfitPage({
         aria-labelledby="outfit-validation-title"
       >
         <h2 id="outfit-validation-title">
-          {validation.valid ? 'همهٔ نگاشت‌ها آمادهٔ انتشارند' : 'موانع انتشار'}
+          {validation.valid ? 'رنگ و اندازهٔ همهٔ محصولات مشخص است' : 'موانع انتشار'}
         </h2>
         {validation.errors.length ? (
           <ul>
@@ -91,7 +91,7 @@ export default async function EditOutfitPage({
             ))}
           </ul>
         ) : (
-          <p>دسته، تصویر، اجزا، موجودی و تمام نگاشت‌های SKU معتبرند.</p>
+          <p>دسته، تصویر، اجزا، موجودی و انتخاب اندازهٔ همهٔ محصولات معتبرند.</p>
         )}
       </section>
 

@@ -230,7 +230,7 @@ export function ProductForm({
       <section className="variant-matrix" aria-labelledby="variant-matrix-title">
         <header>
           <div>
-            <p>ColorVariant → Media → SKU</p>
+            <p>محصول ← رنگ ← تصویر ← اندازه و قیمت</p>
             <h2 id="variant-matrix-title">رنگ، سایز و قیمت</h2>
           </div>
           <button
@@ -397,7 +397,7 @@ export function ProductForm({
                 <header>
                   <div>
                     <h3>سایزها و قیمت‌های این رنگ</h3>
-                    <p>هر ردیف یک SKU مستقل و یک قیمت ریالی مستقل دارد.</p>
+                    <p>هر ردیف یک اندازهٔ قابل فروش با قیمت مستقل است.</p>
                   </div>
                   <button
                     className="admin-secondary"
@@ -419,7 +419,7 @@ export function ProductForm({
                         {(skuIndex + 1).toLocaleString('fa-IR')}
                       </span>
                       <label>
-                        کد SKU
+                        کد داخلی
                         <input
                           required
                           dir="ltr"

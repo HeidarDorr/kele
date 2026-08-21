@@ -10,6 +10,7 @@ export type PublicationValidation = components['schemas']['PublicationValidation
 export type ProductPreview = components['schemas']['AdminProductPreview'];
 export type Inventory = components['schemas']['Inventory'];
 export type AdminOutfit = components['schemas']['AdminOutfit'];
+export type AdminOutfitSummary = components['schemas']['AdminOutfitSummary'];
 export type AdminOutfitPage = components['schemas']['AdminOutfitPage'];
 export type OutfitPreview = components['schemas']['AdminOutfitPreview'];
 export type OutfitRevision = components['schemas']['OutfitRevisionSummary'];

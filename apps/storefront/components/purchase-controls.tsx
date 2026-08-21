@@ -1,12 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import type { ProductDetail } from '../lib/catalog-api';
 import { useCart } from './cart-provider';
 
 type Sku = ProductDetail['variants'][number]['skus'][number];
 
-export function PurchaseControls({ skus }: { skus: Sku[] }) {
+export function PurchaseControls({
+  skus,
+  initialPrice,
+  description,
+  children,
+}: {
+  skus: Sku[];
+  initialPrice: ProductDetail['price'];
+  description: string;
+  children: ReactNode;
+}) {
   const { addProduct, loading } = useCart();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,6 +34,11 @@ export function PurchaseControls({ skus }: { skus: Sku[] }) {
 
   return (
     <div className="purchase-controls">
+      <p className="product-price" aria-live="polite">
+        {selected?.price.display ?? initialPrice.display}
+      </p>
+      <p className="product-description">{description}</p>
+      {children}
       <fieldset className="option-group size-options">
         <legend>اندازه</legend>
         <div>
@@ -38,17 +54,11 @@ export function PurchaseControls({ skus }: { skus: Sku[] }) {
               }}
             >
               {sku.size}
-              <bdi className="visually-hidden" dir="ltr">
-                {sku.code}
-              </bdi>
             </button>
           ))}
         </div>
         <p>اندازه‌های کم‌رنگ در حال حاضر موجود نیستند.</p>
       </fieldset>
-      {selected ? (
-        <p className="selected-price">قیمت این اندازه: {selected.price.display}</p>
-      ) : null}
       <button
         type="button"
         className="button-primary add-to-cart"

@@ -38,11 +38,6 @@ export function CartLineItem({ line }: { line: CartLine }) {
         <div>
           <h3>{line.title}</h3>
           <p>{line.selection}</p>
-          {line.skuCode ? (
-            <bdi className="cart-sku" dir="ltr">
-              {line.skuCode}
-            </bdi>
-          ) : null}
         </div>
         <p className="cart-line-price">{line.unitPrice.display}</p>
         <div className="cart-line-actions">

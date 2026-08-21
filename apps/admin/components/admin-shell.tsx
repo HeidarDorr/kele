@@ -10,8 +10,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         رفتن به محتوای اصلی
       </a>
       <aside className="admin-sidebar">
-        <Link className="admin-brand" href="/">
-          <BrandWordmark />
+        <Link className="admin-brand" href="/" aria-label="صفحهٔ اصلی مدیریت KELE">
+          <BrandWordmark priority />
           <small>مدیریت عملیات</small>
         </Link>
         <AdminNavigation />

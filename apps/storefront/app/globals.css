@@ -89,12 +89,6 @@ button:disabled {
   color: var(--kele-inverse-text);
 }
 
-.selected-price {
-  margin-block: 1.2rem 0;
-  color: var(--kele-ink-muted);
-  font-size: 0.85rem;
-}
-
 .add-to-cart {
   inline-size: 100%;
   margin-block-start: 1rem;
@@ -239,8 +233,7 @@ button:disabled {
   font-size: 0.95rem;
 }
 
-.cart-line-copy > div:first-child p,
-.cart-sku {
+.cart-line-copy > div:first-child p {
   display: block;
   margin-block-start: 0.35rem;
   color: var(--kele-ink-muted);
@@ -1265,27 +1258,30 @@ h2 {
   font-weight: 400;
 }
 
-.wordmark,
-.footer-wordmark {
-  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
-  font-weight: 400;
+.brand-wordmark {
+  position: relative;
+  display: inline-block;
+  inline-size: 7rem;
+  aspect-ratio: 1022 / 548;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-.brand-wordmark-fa {
-  display: none;
+.brand-wordmark-image {
+  position: absolute;
+  inset-block-start: -43.6%;
+  inset-inline-start: auto;
+  left: -49%;
+  inline-size: 180%;
+  max-inline-size: none;
+  block-size: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
 }
 
-body[data-typography='markazi'] .brand-wordmark-latin {
-  display: none;
-}
-
-body[data-typography='markazi'] .brand-wordmark-fa {
-  display: inline;
-}
-
-body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
-  direction: rtl;
-  letter-spacing: 0;
+.site-footer .brand-wordmark-image {
+  filter: invert(1);
+  mix-blend-mode: screen;
 }
 
 .shell {
@@ -1374,8 +1370,6 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
 .wordmark {
   direction: ltr;
   unicode-bidi: isolate;
-  font-size: clamp(2rem, 3vw, 3rem);
-  letter-spacing: 0.16em;
   line-height: 1;
 }
 
@@ -1694,8 +1688,7 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
 .footer-wordmark {
   direction: ltr;
   unicode-bidi: isolate;
-  font-size: 2.8rem;
-  letter-spacing: 0.15em;
+  inline-size: 10rem;
 }
 
 .footer-grid h2 {
@@ -2227,13 +2220,103 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
 
 .outfit-starting-price {
   margin-block: 1.5rem 0;
-  font-size: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .outfit-purchase-controls {
-  margin-block-start: 2.5rem;
-  padding-block-start: 2rem;
+  margin-block-start: 0;
+}
+
+.outfit-size-options button.is-unavailable:not([aria-pressed='true']) {
+  color: var(--kele-ink-muted);
+  background: var(--kele-surface-muted);
+  opacity: 0.58;
+}
+
+.outfit-component-selector-intro {
+  max-inline-size: 48ch;
+  margin-block: 0 1rem;
+  color: var(--kele-ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+
+.outfit-component-options {
   border-block-start: 1px solid var(--kele-line);
+}
+
+.outfit-component-options label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  min-block-size: 4.5rem;
+  padding-block: 0.8rem;
+  border-block-end: 1px solid var(--kele-line);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.outfit-component-options label:focus-within {
+  outline: 2px solid var(--kele-accent);
+  outline-offset: 3px;
+}
+
+.outfit-component-options label.is-excluded {
+  color: var(--kele-ink-muted);
+  opacity: 0.58;
+}
+
+.outfit-component-options input {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin: 0;
+  accent-color: var(--kele-ink);
+}
+
+.outfit-component-option-copy,
+.outfit-component-option-meta {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.outfit-component-option-copy strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.outfit-component-option-copy small,
+.outfit-component-option-meta small {
+  color: var(--kele-ink-muted);
+  font-size: 0.72rem;
+}
+
+.outfit-component-option-meta {
+  justify-items: end;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.outfit-component-option-meta small.is-unavailable {
+  color: var(--kele-danger);
+}
+
+.outfit-availability-note {
+  margin-block-start: 1.25rem;
+  padding-inline-start: 0.85rem;
+  border-inline-start: 2px solid var(--kele-success);
+  color: var(--kele-success);
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+
+.outfit-availability-note.unavailable {
+  border-color: var(--kele-danger);
+  color: var(--kele-danger);
 }
 
 .outfit-integrity-note {
@@ -2271,12 +2354,15 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
 
 .outfit-composition ol {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 24rem));
   gap: 1px;
+  justify-content: start;
+  inline-size: fit-content;
+  max-inline-size: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--kele-line);
+  background: transparent;
 }
 
 .outfit-composition li {
@@ -2562,6 +2648,10 @@ body[data-typography='markazi'] :is(.wordmark, .footer-wordmark) {
     grid-template-columns: 1fr;
   }
 
+  .outfit-composition ol {
+    inline-size: 100%;
+  }
+
   .outfit-card:nth-child(even) {
     margin-block-start: 0;
   }
@@ -2677,7 +2767,6 @@ summary {
   display: inline-flex;
   align-items: center;
   min-block-size: var(--kele-control);
-  font-size: clamp(1.65rem, 2.3vw, 2.35rem);
 }
 
 .header-search input {
@@ -3175,8 +3264,7 @@ summary {
 
 .standalone-wordmark {
   direction: ltr;
-  font-size: 2rem;
-  letter-spacing: 0.14em;
+  inline-size: 10rem;
 }
 
 @media (max-width: 1023px) {

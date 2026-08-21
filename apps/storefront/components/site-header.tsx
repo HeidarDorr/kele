@@ -30,7 +30,7 @@ export function SiteHeader({
           <DesktopNavigation navigation={navigation} />
           <Link className="wordmark" href="/" aria-label="صفحهٔ اصلی KELE">
             <span className="visually-hidden">صفحهٔ اصلی</span>
-            <BrandWordmark />
+            <BrandWordmark priority />
           </Link>
           <div className="header-end">
             <form className="header-search" action="/catalog" role="search">

@@ -17,7 +17,7 @@ export default async function AdminOutfitsPage({
         <div>
           <p>Commerce / Outfit</p>
           <h1>ست‌ها</h1>
-          <span>ترکیب، نگاشت اندازه و تاریخچهٔ انتشار مستقل</span>
+          <span>ترکیب محصولات، اندازه‌ها و تاریخچهٔ انتشار</span>
         </div>
         <Link className="admin-primary" href="/outfits/new">
           ست تازه
@@ -32,7 +32,7 @@ export default async function AdminOutfitsPage({
         <h2 id="outfits-admin-title">فهرست Outfit</h2>
         {outfits.items.length === 0 ? (
           <div className="admin-empty-state">
-            هنوز ستی تعریف نشده است. ابتدا اجزا و نگاشت همهٔ اندازه‌ها را آماده کنید.
+            هنوز ستی تعریف نشده است. ابتدا محصولات و رنگ و اندازهٔ دقیق هرکدام را مشخص کنید.
           </div>
         ) : (
           <div className="admin-table-wrap">
@@ -57,10 +57,14 @@ export default async function AdminOutfitsPage({
                     <td>
                       {outfit.revisionNumber.toLocaleString('fa-IR')} · {outfit.revisionState}
                     </td>
-                    <td>{outfit.sizes.length.toLocaleString('fa-IR')}</td>
+                    <td>{outfit.sizeCount.toLocaleString('fa-IR')}</td>
                     <td>{outfit.version.toLocaleString('fa-IR')}</td>
                     <td>
-                      <Link href={`/outfits/${outfit.id}/edit`}>بازکردن</Link>
+                      {outfit.hasFeaturedMedia ? (
+                        <Link href={`/outfits/${outfit.id}/edit`}>بازکردن</Link>
+                      ) : (
+                        <span className="admin-note">نیازمند تکمیل داده</span>
+                      )}
                     </td>
                   </tr>
                 ))}

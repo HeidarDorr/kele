@@ -31,7 +31,7 @@ export default async function AdministratorLoginPage({
     <main className="admin-login">
       <section className="admin-login-intro" aria-labelledby="login-title">
         <div className="admin-login-wordmark">
-          <BrandWordmark />
+          <BrandWordmark alt="KELE" priority />
         </div>
         <p>هویت مدیریت / دسترسی کنترل‌شده</p>
         <h1 id="login-title">ورود به مدیریت KELE</h1>

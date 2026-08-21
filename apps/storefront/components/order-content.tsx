@@ -176,7 +176,6 @@ export function OrderContent({
                 <div>
                   <strong>{item.title}</strong>
                   <span>{item.selection}</span>
-                  {item.skuCode ? <bdi>{item.skuCode}</bdi> : null}
                   {item.kind === 'outfit' && item.outfitRevisionNumber ? (
                     <section className="order-outfit-snapshot" aria-label="ترکیب ثبت‌شدهٔ ست">
                       <span>
@@ -189,7 +188,6 @@ export function OrderContent({
                             <span>
                               {component.productName}، {component.colorName}، {component.sizeLabel}
                             </span>
-                            <bdi>{component.skuCode}</bdi>
                             <span>{component.totalQuantity.toLocaleString('fa-IR')} عدد</span>
                           </li>
                         ))}

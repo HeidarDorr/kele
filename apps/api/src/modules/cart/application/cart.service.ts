@@ -49,6 +49,49 @@ export class CartService {
     });
   }
 
+  addProductSelection(
+    cartId: string,
+    expectedVersion: number,
+    items: ReadonlyArray<{ skuId: string; quantity: number }>,
+  ): Promise<CartView> {
+    return this.unitOfWork.run(async () => {
+      if (items.length === 0) {
+        throw new ApplicationError(
+          'validation',
+          'CART_PRODUCT_SELECTION_EMPTY',
+          'A product selection must contain at least one product option.',
+        );
+      }
+      if (
+        items.some(
+          (item) => !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20,
+        )
+      ) {
+        throw new ApplicationError(
+          'validation',
+          'CART_QUANTITY_INVALID',
+          'Product selection quantities must be integers between 1 and 20.',
+        );
+      }
+      const skuIds = items.map((item) => item.skuId);
+      if (new Set(skuIds).size !== skuIds.length) {
+        throw new ApplicationError(
+          'validation',
+          'CART_PRODUCT_SELECTION_DUPLICATE_SKU',
+          'A product selection must contain each product option at most once.',
+        );
+      }
+      await this.cancelCheckoutForMutation(cartId);
+      const selections = await Promise.all(
+        items.map(async (item) => ({
+          product: await this.requireProduct(item.skuId),
+          quantity: item.quantity,
+        })),
+      );
+      return this.toView(await this.repository.addProducts(cartId, expectedVersion, selections));
+    });
+  }
+
   updateLine(
     cartId: string,
     lineId: string,
@@ -228,7 +271,11 @@ export class CartService {
   private async requireProduct(skuId: string): Promise<CartCatalogProduct> {
     const product = await this.catalog.getProductForCart(skuId);
     if (product === null) {
-      throw new ApplicationError('not_found', 'SKU_NOT_FOUND', 'SKU was not found.');
+      throw new ApplicationError(
+        'not_found',
+        'SKU_NOT_FOUND',
+        'The selected product option was not found.',
+      );
     }
     return product;
   }

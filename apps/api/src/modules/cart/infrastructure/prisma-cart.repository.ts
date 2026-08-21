@@ -13,7 +13,10 @@ import type {
   CartCatalogProduct,
 } from '../../catalog/application/cart-catalog.contract.js';
 import { ApplicationError } from '../../../shared/application-error.js';
-import { PrismaTransactionContext } from '../../../infrastructure/prisma/prisma-transaction.context.js';
+import {
+  PrismaTransactionContext,
+  type DatabaseClient,
+} from '../../../infrastructure/prisma/prisma-transaction.context.js';
 import type { CartRepository } from '../application/cart.repository.js';
 import type { OutfitCartSelection } from '../application/outfit-cart.contract.js';
 import type {
@@ -170,6 +173,40 @@ export class PrismaCartRepository implements CartRepository {
   ): Promise<CartRecord> {
     const client = this.transactions.client();
     await this.lockCart(cartId, expectedVersion);
+    await this.upsertProductLine(client, cartId, product, quantity);
+    await this.incrementVersion(cartId, expectedVersion);
+    return this.getActiveCart(cartId);
+  }
+
+  async addProducts(
+    cartId: string,
+    expectedVersion: number,
+    selections: ReadonlyArray<{ product: CartCatalogProduct; quantity: number }>,
+  ): Promise<CartRecord> {
+    if (selections.length === 0) {
+      throw new ApplicationError(
+        'validation',
+        'CART_PRODUCT_SELECTION_EMPTY',
+        'A product selection must contain at least one product option.',
+      );
+    }
+    const client = this.transactions.client();
+    await this.lockCart(cartId, expectedVersion);
+    for (const selection of selections.toSorted((left, right) =>
+      left.product.skuId.localeCompare(right.product.skuId),
+    )) {
+      await this.upsertProductLine(client, cartId, selection.product, selection.quantity);
+    }
+    await this.incrementVersion(cartId, expectedVersion);
+    return this.getActiveCart(cartId);
+  }
+
+  private async upsertProductLine(
+    client: DatabaseClient,
+    cartId: string,
+    product: CartCatalogProduct,
+    quantity: number,
+  ): Promise<void> {
     const existing = await client.cartLine.findFirst({
       where: { cartId, kind: CartLineKind.PRODUCT, skuId: product.skuId },
     });
@@ -221,8 +258,6 @@ export class PrismaCartRepository implements CartRepository {
         },
       });
     }
-    await this.incrementVersion(cartId, expectedVersion);
-    return this.getActiveCart(cartId);
   }
 
   async addOutfit(

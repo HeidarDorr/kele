@@ -1,8 +1,9 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Optional } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApplicationError } from '../../shared/application-error.js';
 import {
   OPERATIONAL_TELEMETRY,
+  noOperationalTelemetry,
   type OperationalTelemetry,
 } from '../../shared/operational-telemetry.js';
 import { environment } from '../config/environment.js';
@@ -16,7 +17,9 @@ abstract class RateLimitGuard implements CanActivate {
 
   protected constructor(
     private readonly limiter: FixedWindowRateLimiter,
-    @Inject(OPERATIONAL_TELEMETRY) private readonly telemetry: OperationalTelemetry,
+    @Optional()
+    @Inject(OPERATIONAL_TELEMETRY)
+    private readonly telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -52,8 +55,11 @@ export class OtpVerificationRateLimitGuard extends RateLimitGuard {
   readonly limit = environment.OTP_VERIFY_RATE_LIMIT_PER_MINUTE;
 
   constructor(
+    @Inject(FixedWindowRateLimiter)
     limiter: FixedWindowRateLimiter,
-    @Inject(OPERATIONAL_TELEMETRY) telemetry: OperationalTelemetry,
+    @Optional()
+    @Inject(OPERATIONAL_TELEMETRY)
+    telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {
     super(limiter, telemetry);
   }
@@ -65,8 +71,11 @@ export class PaymentCallbackRateLimitGuard extends RateLimitGuard {
   readonly limit = environment.CALLBACK_RATE_LIMIT_PER_MINUTE;
 
   constructor(
+    @Inject(FixedWindowRateLimiter)
     limiter: FixedWindowRateLimiter,
-    @Inject(OPERATIONAL_TELEMETRY) telemetry: OperationalTelemetry,
+    @Optional()
+    @Inject(OPERATIONAL_TELEMETRY)
+    telemetry: OperationalTelemetry = noOperationalTelemetry,
   ) {
     super(limiter, telemetry);
   }

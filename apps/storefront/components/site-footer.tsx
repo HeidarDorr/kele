@@ -19,7 +19,7 @@ export function SiteFooter({ settings }: { settings?: PublishedSiteSettings | nu
     <footer className="site-footer">
       <div className="shell footer-grid">
         <div>
-          <BrandWordmark className="footer-wordmark" />
+          <BrandWordmark className="footer-wordmark" alt="KELE" />
           <p>{configuration?.brandTagline ?? 'پوشش کودک با نگاهی آرام به فرم و جزئیات.'}</p>
           {configuration?.contactEmail ? (
             <a href={`mailto:${configuration.contactEmail}`} dir="ltr">

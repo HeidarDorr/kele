@@ -14,8 +14,10 @@ export class CheckoutJobScheduler implements OnModuleInit, OnModuleDestroy {
   private readonly workerId = `api-${randomUUID()}`;
 
   constructor(
+    @Inject(CheckoutJobService)
     private readonly jobs: CheckoutJobService,
     @Inject(OPERATIONAL_TELEMETRY) private readonly telemetry: OperationalTelemetry,
+    @Inject(JsonLogger)
     private readonly logger: JsonLogger,
   ) {}
 

@@ -58,7 +58,7 @@ export default async function OutfitsPage() {
           ) : outfits.length === 0 ? (
             <div className="state-panel" aria-live="polite">
               <h2>ست منتشرشده‌ای وجود ندارد</h2>
-              <p>پس از تأیید نگاشت همهٔ اندازه‌ها، ست تازه در این صفحه دیده می‌شود.</p>
+              <p>پس از تعیین رنگ و اندازهٔ همهٔ اجزا، ست تازه در این صفحه دیده می‌شود.</p>
               <Link className="button-secondary" href="/catalog">
                 دیدن محصولات مستقل
               </Link>

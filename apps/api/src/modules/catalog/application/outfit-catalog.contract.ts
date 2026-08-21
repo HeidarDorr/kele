@@ -38,6 +38,7 @@ export type OutfitCatalogReferences = Readonly<{
       sizeLabel: string;
       published: boolean;
       hasInventory: boolean;
+      unitPriceRial: number | null;
       availableQuantity: number;
     }>
   >;

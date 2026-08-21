@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { OutfitService } from '../src/modules/outfit/application/outfit.service.js';
 import {
   deriveOutfitAvailability,
   structuralOutfitErrors,
 } from '../src/modules/outfit/domain/outfit.js';
+import type { OutfitCatalogPort } from '../src/modules/catalog/application/outfit-catalog.contract.js';
+import type { OutfitRepository } from '../src/modules/outfit/application/outfit.repository.js';
+import type { OutfitRevisionRecord } from '../src/modules/outfit/domain/outfit.types.js';
+import type { UnitOfWork } from '../src/shared/unit-of-work.js';
 
 describe('Milestone 5 Outfit domain', () => {
   it('[OTF-007][OTF-015] derives quantity from exact weighted SKU demand without synthetic stock', () => {
@@ -22,6 +27,54 @@ describe('Milestone 5 Outfit domain', () => {
       ]),
     ).toBe(1);
     expect(deriveOutfitAvailability([])).toBe(0);
+  });
+
+  it('[OTF-001] keeps an incomplete draft in the admin list without requiring featured media', async () => {
+    const incompleteDraft: OutfitRevisionRecord = {
+      outfitId: 'outfit-draft',
+      slug: 'draft-outfit',
+      outfitStatus: 'draft',
+      outfitVersion: 1,
+      revisionId: 'revision-draft',
+      revisionNumber: 1,
+      revisionState: 'draft',
+      revisionVersion: 1,
+      name: 'Draft outfit',
+      description: '',
+      categoryIds: [],
+      media: [],
+      seo: { title: null, description: null },
+      items: [],
+      sizes: [],
+      publishedAt: null,
+      createdAt: new Date('2026-08-21T00:00:00.000Z'),
+      updatedAt: new Date('2026-08-21T00:00:00.000Z'),
+    };
+    const repository = {
+      listAdmin: async () => [incompleteDraft],
+    } as unknown as OutfitRepository;
+    const service = new OutfitService(repository, {} as OutfitCatalogPort, {} as UnitOfWork);
+
+    await expect(service.listAdmin(null)).resolves.toEqual({
+      items: [
+        {
+          id: 'outfit-draft',
+          status: 'draft',
+          version: 1,
+          revisionId: 'revision-draft',
+          revisionNumber: 1,
+          revisionState: 'draft',
+          publishedAt: null,
+          name: 'Draft outfit',
+          slug: 'draft-outfit',
+          itemCount: 0,
+          sizeCount: 0,
+          mediaCount: 0,
+          hasFeaturedMedia: false,
+        },
+      ],
+      page: { nextCursor: null, hasMore: false },
+    });
   });
 
   it('[OTF-001][OTF-004][OTF-014][PUB-009] rejects incomplete mappings before publication', () => {

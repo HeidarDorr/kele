@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { OperationalEvent, OperationalTelemetry } from '../../shared/operational-telemetry.js';
 import { correlationId } from './correlation-context.js';
 import { JsonLogger } from './json.logger.js';
@@ -10,7 +10,9 @@ const safeProvider = /^[a-z][a-z0-9_-]{0,39}$/;
 @Injectable()
 export class OperationalTelemetryService implements OperationalTelemetry {
   constructor(
+    @Inject(MetricsService)
     private readonly metrics: MetricsService,
+    @Inject(JsonLogger)
     private readonly logger: JsonLogger,
   ) {}
 

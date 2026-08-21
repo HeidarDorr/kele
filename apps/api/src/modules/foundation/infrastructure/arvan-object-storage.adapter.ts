@@ -37,7 +37,7 @@ export class S3ObjectStorageAdapter implements ObjectStorage {
       endpoint,
       region,
       credentials: { accessKeyId, secretAccessKey },
-      forcePathStyle: false,
+      forcePathStyle: provider === 'minio',
     });
   }
 
@@ -57,7 +57,7 @@ export class S3ObjectStorageAdapter implements ObjectStorage {
         CacheControl: input.key.startsWith('media/')
           ? 'public, max-age=31536000, immutable'
           : 'private, no-store',
-        ServerSideEncryption: 'AES256',
+        ServerSideEncryption: this.provider === 'minio' ? undefined : 'AES256',
       }),
     );
     return {
@@ -94,7 +94,7 @@ export class S3ObjectStorageAdapter implements ObjectStorage {
         Bucket: this.bucket,
         Key: input.key,
         ContentType: input.contentType,
-        ServerSideEncryption: 'AES256',
+        ServerSideEncryption: this.provider === 'minio' ? undefined : 'AES256',
       }),
       { expiresIn: input.expiresInSeconds },
     );

@@ -111,6 +111,7 @@ const customerIds = new Set<string>();
 let productId = '';
 let variantId = '';
 let skuId = '';
+let secondSkuId = '';
 let mediaId = '';
 let unavailableOutfitId = '';
 let unavailableOutfitRevisionId = '';
@@ -195,6 +196,28 @@ beforeAll(async () => {
   await prisma.currentSkuPrice.create({
     data: { skuId, priceRecordId: price.id, amountRial: 12_000_000 },
   });
+  const secondSku = await prisma.sku.create({
+    data: {
+      colorVariantId: variantId,
+      code: `M3-SECOND-${runId.slice(0, 12)}`,
+      normalizedSize: 'l',
+      displaySize: 'L',
+      status: PublicationStatus.PUBLISHED,
+      inventory: { create: { physicalQuantity: 5 } },
+    },
+  });
+  secondSkuId = secondSku.id;
+  const secondPrice = await prisma.priceRecord.create({
+    data: {
+      skuId: secondSkuId,
+      amountRial: 8_000_000,
+      actorId: 'm3-integration',
+      reason: 'قیمت SKU دوم برای آزمون افزودن اتمیک',
+    },
+  });
+  await prisma.currentSkuPrice.create({
+    data: { skuId: secondSkuId, priceRecordId: secondPrice.id, amountRial: 8_000_000 },
+  });
   const unavailableOutfit = await prisma.outfit.create({
     data: { slug: `m3-unavailable-outfit-${runId}` },
   });
@@ -236,11 +259,12 @@ afterAll(async () => {
     if (unavailableOutfitId !== '') {
       await prisma.outfit.deleteMany({ where: { id: unavailableOutfitId } });
     }
-    if (skuId !== '') {
-      await prisma.currentSkuPrice.deleteMany({ where: { skuId } });
-      await prisma.priceRecord.deleteMany({ where: { skuId } });
-      await prisma.inventory.deleteMany({ where: { skuId } });
-      await prisma.sku.deleteMany({ where: { id: skuId } });
+    const skuIds = [skuId, secondSkuId].filter((id) => id !== '');
+    if (skuIds.length > 0) {
+      await prisma.currentSkuPrice.deleteMany({ where: { skuId: { in: skuIds } } });
+      await prisma.priceRecord.deleteMany({ where: { skuId: { in: skuIds } } });
+      await prisma.inventory.deleteMany({ where: { skuId: { in: skuIds } } });
+      await prisma.sku.deleteMany({ where: { id: { in: skuIds } } });
     }
     if (variantId !== '') {
       await prisma.mediaAssignment.deleteMany({ where: { colorVariantId: variantId } });
@@ -450,6 +474,38 @@ describe('Milestone 3 identity, ownership and cart on PostgreSQL', () => {
     });
     expect(revalidated.checkoutBlocked).toBe(true);
     await prisma.inventory.update({ where: { skuId }, data: { physicalQuantity: 5 } });
+  });
+
+  it('[OTF-019][OTF-020][CRT-003] atomically adds an omitted-Outfit remainder as independent Product lines', async () => {
+    const cart = await cartService.createAnonymousCart();
+    cartIds.add(cart.id);
+
+    await expect(
+      cartService.addProductSelection(cart.id, cart.version, [
+        { skuId, quantity: 1 },
+        { skuId: randomUUID(), quantity: 1 },
+      ]),
+    ).rejects.toMatchObject({ code: 'SKU_NOT_FOUND' });
+    expect(await cartService.getCart(cart.id)).toMatchObject({
+      version: cart.version,
+      lines: [],
+    });
+
+    const added = await cartService.addProductSelection(cart.id, cart.version, [
+      { skuId, quantity: 1 },
+      { skuId: secondSkuId, quantity: 2 },
+    ]);
+
+    expect(added.version).toBe(cart.version + 1);
+    expect(added.lines).toHaveLength(2);
+    expect(added.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'product', skuCode: expect.stringContaining('M3-') }),
+        expect.objectContaining({ kind: 'product', quantity: 2, selection: expect.any(String) }),
+      ]),
+    );
+    expect(added.lines.every((line) => line.outfitRevisionId === null)).toBe(true);
+    expect(added.informationalTotal.amountRial).toBe(29_500_000);
   });
 
   it('[CRT-003][CRT-010] serializes concurrent cart updates and rejects one stale writer', async () => {

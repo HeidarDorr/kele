@@ -90,28 +90,30 @@ button:disabled {
   flex-direction: column;
   gap: 0.25rem;
   margin-block-end: 3.5rem;
-  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
-  font-size: 2rem;
   line-height: 1;
-  letter-spacing: 0.16em;
   text-decoration: none;
 }
 
-.brand-wordmark-fa {
-  display: none;
+.brand-wordmark {
+  position: relative;
+  display: inline-block;
+  inline-size: 8rem;
+  aspect-ratio: 1022 / 548;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-body[data-typography='markazi'] .brand-wordmark-latin {
-  display: none;
-}
-
-body[data-typography='markazi'] .brand-wordmark-fa {
-  display: inline;
-}
-
-body[data-typography='markazi'] .admin-brand {
-  direction: rtl;
-  letter-spacing: 0;
+.brand-wordmark-image {
+  position: absolute;
+  inset-block-start: -43.6%;
+  inset-inline-start: auto;
+  left: -49%;
+  inline-size: 180%;
+  max-inline-size: none;
+  block-size: auto;
+  object-fit: contain;
+  filter: invert(1);
+  mix-blend-mode: screen;
 }
 
 .admin-brand small {
@@ -183,9 +185,10 @@ body[data-typography='markazi'] .admin-brand {
 
 .admin-login-wordmark {
   margin-block-end: clamp(4rem, 11vh, 8rem);
-  font-family: var(--font-elize), var(--font-peyda), Georgia, serif;
-  font-size: clamp(2rem, 5vw, 5rem);
-  letter-spacing: 0.16em;
+}
+
+.admin-login-wordmark .brand-wordmark {
+  inline-size: clamp(12rem, 22vw, 18rem);
 }
 
 .admin-login-intro > p:first-of-type {
@@ -629,6 +632,14 @@ label small,
 .outfit-admin-form {
   margin-block-start: 2rem;
   border-block-start: 1px solid #cfc2b5;
+}
+
+.outfit-entity-note {
+  max-inline-size: 62ch;
+  margin-block: 0.65rem 1.5rem;
+  color: var(--kele-ink-muted);
+  font-size: 0.82rem;
+  line-height: 1.9;
 }
 
 .outfit-fieldset-heading {
