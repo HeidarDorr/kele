@@ -163,11 +163,52 @@ Every page includes:
 - final, production-approved primary/monochrome SVG variants and favicon; the
   supplied signature PNG is only a temporary in-product review placeholder;
 - licensed web fonts;
-- final product/editorial imagery;
+- final product/editorial imagery, including the fifteen Homepage images
+  specified in `apps/storefront/lib/art-direction.ts` (DES-007);
 - icon source or approved icon family;
 - complete UI flows for listing, search, cart, checkout, account, Journal and
   administration;
-- legal and operational copy.
+- legal and operational copy, including the Homepage brand copy under DES-006.
+
+## Homepage redesign acceptance
+
+The Homepage composition, section order and slot behavior are specified in
+`docs/design-system.md`. This section records what has to hold before the page
+is accepted.
+
+Structure:
+
+- exactly one `h1`, supplied by the hero;
+- every section labelled by its own heading through `aria-labelledby`;
+- published CMS sections render in their published order, and the brand-owned
+  sections appear at their anchored positions;
+- when the published Homepage is unreadable the brand-owned sections still
+  render, the page says the published narrative is unavailable, and the
+  catalogue stays reachable.
+
+Layout, verified at 390×844, 768×1024, 1280×800 and 1440×900 under `dir="rtl"`:
+
+- no horizontal overflow at any acceptance viewport;
+- the hero is edge to edge at every viewport, and its copy never sits on
+  unprotected photography;
+- curated rails scroll inline without trapping page scroll, and read correctly
+  with a single item;
+- the closing band's solid action stays visible on the inverse surface.
+
+Content states, each required before the page is complete:
+
+- missing artwork reserves its exact geometry and states its brief outside
+  production, or the unavailable state inside production;
+- an empty curation states that nothing is published rather than rendering an
+  empty rail;
+- a single occasion and a single journal article each compose deliberately
+  instead of leaving empty grid tracks;
+- reduced-motion mode removes the image reveals and the loading sweep.
+
+The redesign supersedes the previous Homepage baselines. Route baselines under
+`e2e/milestone-8.spec.ts-snapshots/` must be regenerated and re-approved before
+the page can be treated as a stable visual contract; until then DES-004 covers
+them.
 
 ## Milestone 7 editorial acceptance
 

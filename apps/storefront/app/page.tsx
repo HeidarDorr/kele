@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { getCategories, getOutfits, getProducts } from '../lib/catalog-api';
 import {
@@ -9,10 +9,18 @@ import {
   getSiteSettings,
   type PublishedHomepage,
 } from '../lib/editorial-api';
-import { ProductCard } from '../components/product-card';
-import { OutfitCard } from '../components/outfit-card';
 import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
+import { BrandPromise } from '../components/home/brand-promise';
+import { BrandStory } from '../components/home/brand-story';
+import { CategoryRail } from '../components/home/category-rail';
+import { ClosingBand } from '../components/home/closing-band';
+import { CraftTriptych } from '../components/home/craft-triptych';
+import { HomeHero } from '../components/home/home-hero';
+import { JournalHighlights } from '../components/home/journal-highlights';
+import { OccasionShowcase } from '../components/home/occasion-showcase';
+import { OutfitShowcase } from '../components/home/outfit-showcase';
+import { ProductRail } from '../components/home/product-rail';
 import { getAcceptancePresentationState } from '../lib/acceptance-presentation-state.server';
 
 export const dynamic = 'force-dynamic';
@@ -30,8 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type Section = PublishedHomepage['sections'][number];
-
-function isMediaSection(section: Section): section is Section & {
+type MediaSection = Section & {
   content: {
     title: string;
     subtitle?: string | null;
@@ -39,7 +46,9 @@ function isMediaSection(section: Section): section is Section & {
     ctaLabel?: string | null;
     href?: string | null;
   };
-} {
+};
+
+function isMediaSection(section: Section): section is MediaSection {
   return 'mediaId' in section.content;
 }
 
@@ -74,285 +83,164 @@ export default async function HomePage() {
   const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
   const media = new Map(homepage?.media.map((item) => [item.id, item]) ?? []);
 
+  function heroMediaOf(section: MediaSection) {
+    const asset = media.get(section.content.mediaId);
+    return asset ? { url: asset.url, alt: asset.alt, focalPoint: asset.focalPoint } : null;
+  }
+
+  function renderSection(section: Section): ReactNode {
+    const titleId = `section-${section.id}`;
+
+    if (section.type === 'hero' && isMediaSection(section)) {
+      return (
+        <HomeHero
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          subtitle={section.content.subtitle}
+          ctaLabel={section.content.ctaLabel}
+          href={section.content.href}
+          media={heroMediaOf(section)}
+        />
+      );
+    }
+
+    if (section.type === 'occasion_grid' && 'referenceIds' in section.content) {
+      const referenceIds = section.content.referenceIds;
+      return (
+        <OccasionShowcase
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          items={occasions.filter((item) => referenceIds.includes(item.id))}
+        />
+      );
+    }
+
+    if (section.type === 'featured_products' && 'referenceIds' in section.content) {
+      const referenceIds = section.content.referenceIds;
+      return (
+        <ProductRail
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          items={products.filter((item) => referenceIds.includes(item.productId))}
+        />
+      );
+    }
+
+    if (section.type === 'featured_outfits' && 'referenceIds' in section.content) {
+      const referenceIds = section.content.referenceIds;
+      return (
+        <OutfitShowcase
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          items={outfits.filter((item) => referenceIds.includes(item.id))}
+        />
+      );
+    }
+
+    if (section.type === 'journal_highlights' && 'referenceIds' in section.content) {
+      const referenceIds = section.content.referenceIds;
+      return (
+        <JournalHighlights
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          items={journal.filter((item) => referenceIds.includes(item.id))}
+        />
+      );
+    }
+
+    if (
+      (section.type === 'brand_story' || section.type === 'editorial_banner') &&
+      isMediaSection(section)
+    ) {
+      return (
+        <BrandStory
+          key={section.id}
+          titleId={titleId}
+          title={section.content.title}
+          subtitle={section.content.subtitle}
+          ctaLabel={section.content.ctaLabel}
+          href={section.content.href}
+          media={heroMediaOf(section)}
+        />
+      );
+    }
+
+    return null;
+  }
+
+  /**
+   * Brand-owned sections that carry no published business content. They are
+   * anchored to the section they follow so the page keeps a deliberate rhythm
+   * whichever sections an editor has published.
+   */
+  function connectiveTissue(section: Section): ReactNode {
+    if (section.type === 'hero') {
+      return (
+        <>
+          <BrandPromise />
+          <CategoryRail />
+        </>
+      );
+    }
+    if (section.type === 'featured_products') {
+      return <CraftTriptych />;
+    }
+    return null;
+  }
+
+  const published = homepage?.sections ?? [];
+  // The craft triptych normally follows the curated product row. Without that
+  // anchor it still belongs on the page, just before the closing band.
+  const craftNeedsFallbackSlot = !published.some((section) => section.type === 'featured_products');
+
   return (
     <>
       <SiteHeader categories={categories} settings={settings} />
-      <main id="main-content" className="editorial-home">
+      <main id="main-content" className="home">
         {state === 'loading' ? (
-          <section
-            className="shell editorial-unavailable editorial-loading-state"
-            role="status"
-            aria-busy="true"
-          >
-            <p className="eyebrow">صفحهٔ اصلی</p>
+          <section className="shell home-notice" role="status" aria-busy="true">
+            <p className="home-eyebrow">صفحهٔ اصلی</p>
             <h1>در حال دریافت روایت تازهٔ KELE</h1>
-            <div className="editorial-loading-line" aria-hidden="true" />
+            <div className="home-notice-line" aria-hidden="true" />
             <p>چیدمان منتشرشده و رسانه‌های آن در حال آماده‌سازی‌اند.</p>
           </section>
-        ) : !homepage ? (
-          <section className="shell editorial-unavailable" role="status">
-            <p className="eyebrow">صفحهٔ اصلی</p>
-            <h1>روایت تازهٔ KELE در دسترس نیست</h1>
-            <p>کاتالوگ همچنان در دسترس است و محتوای منتشرشده با بازیابی ارتباط بازمی‌گردد.</p>
-            <Link className="button-primary" href="/catalog">
-              رفتن به فروشگاه
-            </Link>
-          </section>
         ) : (
-          homepage.sections.map((section) => {
-            if (section.type === 'hero' && isMediaSection(section)) {
-              const asset = media.get(section.content.mediaId);
-              return (
-                <section
-                  className="shell editorial-hero"
-                  aria-labelledby={`section-${section.id}`}
-                  key={section.id}
-                >
-                  <div className="editorial-hero-media">
-                    {asset ? (
-                      <Image
-                        src={asset.url}
-                        alt={asset.alt}
-                        fill
-                        priority
-                        sizes="(max-width: 767px) 100vw, 58vw"
-                        style={{
-                          objectPosition: `${String(asset.focalPoint.x * 100)}% ${String(asset.focalPoint.y * 100)}%`,
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="image-fallback"
-                        role="img"
-                        aria-label="تصویر روایت در دسترس نیست"
-                      >
-                        <span>تصویر در دسترس نیست</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="editorial-hero-copy">
-                    <p className="editorial-kicker">روایت فصل KELE</p>
-                    <h1 id={`section-${section.id}`}>{section.content.title}</h1>
-                    {section.content.subtitle ? <p>{section.content.subtitle}</p> : null}
-                    {section.content.ctaLabel && section.content.href ? (
-                      <Link className="editorial-cta" href={section.content.href}>
-                        {section.content.ctaLabel}
-                      </Link>
-                    ) : null}
-                  </div>
+          <>
+            {homepage ? (
+              published.map((section) => (
+                <Fragment key={section.id}>
+                  {renderSection(section)}
+                  {connectiveTissue(section)}
+                </Fragment>
+              ))
+            ) : (
+              <>
+                <section className="shell home-notice" role="status">
+                  <p className="home-eyebrow">صفحهٔ اصلی</p>
+                  <h1>روایت تازهٔ KELE در دسترس نیست</h1>
+                  <p>
+                    کاتالوگ و مجموعه همچنان در دسترس‌اند و محتوای منتشرشده با بازیابی ارتباط
+                    بازمی‌گردد.
+                  </p>
+                  <Link className="home-button" href="/catalog">
+                    رفتن به فروشگاه
+                  </Link>
                 </section>
-              );
-            }
-
-            if (section.type === 'occasion_grid' && 'referenceIds' in section.content) {
-              const referenceIds = section.content.referenceIds;
-              const items = occasions.filter((item) => referenceIds.includes(item.id));
-              return (
-                <section
-                  className="shell editorial-occasions"
-                  aria-labelledby={`section-${section.id}`}
-                  key={section.id}
-                >
-                  <header className="editorial-section-heading">
-                    <p>بر اساس لحظه</p>
-                    <h2 id={`section-${section.id}`}>{section.content.title}</h2>
-                    <Link href="/occasions">همهٔ موقعیت‌ها</Link>
-                  </header>
-                  {items.length > 0 ? (
-                    <div className="occasion-editorial-grid">
-                      {items.map((occasion, index) => (
-                        <Link
-                          className="occasion-editorial-card"
-                          href={`/occasion/${occasion.slug}`}
-                          key={occasion.id}
-                        >
-                          {occasion.heroMedia ? (
-                            <Image
-                              src={occasion.heroMedia.url}
-                              alt={occasion.heroMedia.alt}
-                              fill
-                              priority={index === 0}
-                              sizes="(max-width: 767px) 100vw, 52vw"
-                              style={{
-                                objectPosition: `${String(occasion.heroMedia.focalPoint.x * 100)}% ${String(occasion.heroMedia.focalPoint.y * 100)}%`,
-                              }}
-                            />
-                          ) : null}
-                          <span className="occasion-card-copy">
-                            <strong>{occasion.editorialTitle ?? occasion.name}</strong>
-                            <small>{occasion.editorialDescription ?? occasion.description}</small>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="state-panel">
-                      <h3>موقعیتی منتشر نشده است</h3>
-                      <p>این بخش پس از انتشار نخستین روایت موقعیتی تکمیل می‌شود.</p>
-                    </div>
-                  )}
-                </section>
-              );
-            }
-
-            if (section.type === 'featured_products' && 'referenceIds' in section.content) {
-              const referenceIds = section.content.referenceIds;
-              const items = products.filter((item) => referenceIds.includes(item.productId));
-              return (
-                <section
-                  className="shell editorial-products"
-                  aria-labelledby={`section-${section.id}`}
-                  key={section.id}
-                >
-                  <header className="editorial-section-heading editorial-heading-split">
-                    <div>
-                      <p>انتخاب تحریریه</p>
-                      <h2 id={`section-${section.id}`}>{section.content.title}</h2>
-                    </div>
-                    <Link href="/catalog">مشاهدهٔ فروشگاه</Link>
-                  </header>
-                  {items.length > 0 ? (
-                    <div className="product-grid">
-                      {items.map((product) => (
-                        <ProductCard
-                          key={`${product.productId}-${product.selectedVariant.id}`}
-                          product={product}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="state-panel">
-                      <h3>انتخابی برای نمایش وجود ندارد</h3>
-                      <p>محصولات پیش‌نویس تا زمان انتشار در این بخش دیده نمی‌شوند.</p>
-                    </div>
-                  )}
-                </section>
-              );
-            }
-
-            if (section.type === 'featured_outfits' && 'referenceIds' in section.content) {
-              const referenceIds = section.content.referenceIds;
-              const items = outfits.filter((item) => referenceIds.includes(item.id));
-              return (
-                <section
-                  className="shell editorial-outfits"
-                  aria-labelledby={`section-${section.id}`}
-                  key={section.id}
-                >
-                  <header className="editorial-section-heading editorial-heading-split">
-                    <div>
-                      <p>ترکیب‌های کامل</p>
-                      <h2 id={`section-${section.id}`}>{section.content.title}</h2>
-                    </div>
-                    <Link href="/outfits">همهٔ ست‌ها</Link>
-                  </header>
-                  {items.length > 0 ? (
-                    <div className="outfit-grid">
-                      {items.map((outfit) => (
-                        <OutfitCard key={outfit.id} outfit={outfit} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="state-panel">
-                      <h3>ستی برای نمایش وجود ندارد</h3>
-                      <p>ترکیب‌های منتشرشده پس از تأیید در این بخش دیده می‌شوند.</p>
-                    </div>
-                  )}
-                </section>
-              );
-            }
-
-            if (section.type === 'journal_highlights' && 'referenceIds' in section.content) {
-              const referenceIds = section.content.referenceIds;
-              const items = journal.filter((item) => referenceIds.includes(item.id));
-              return (
-                <JournalHighlights
-                  key={section.id}
-                  title={section.content.title}
-                  items={items}
-                  sectionId={section.id}
-                />
-              );
-            }
-
-            if (
-              (section.type === 'brand_story' || section.type === 'editorial_banner') &&
-              isMediaSection(section)
-            ) {
-              const asset = media.get(section.content.mediaId);
-              return (
-                <section
-                  className="editorial-story"
-                  aria-labelledby={`section-${section.id}`}
-                  key={section.id}
-                >
-                  <div className="editorial-story-media">
-                    {asset ? (
-                      <Image
-                        src={asset.url}
-                        alt={asset.alt}
-                        fill
-                        sizes="(max-width: 767px) 100vw, 50vw"
-                        style={{
-                          objectPosition: `${String(asset.focalPoint.x * 100)}% ${String(asset.focalPoint.y * 100)}%`,
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                  <div className="editorial-story-copy">
-                    <p>دربارهٔ نگاه ما</p>
-                    <h2 id={`section-${section.id}`}>{section.content.title}</h2>
-                    {section.content.subtitle ? <p>{section.content.subtitle}</p> : null}
-                    {section.content.ctaLabel && section.content.href ? (
-                      <Link className="text-link" href={section.content.href}>
-                        {section.content.ctaLabel}
-                      </Link>
-                    ) : null}
-                  </div>
-                </section>
-              );
-            }
-            return null;
-          })
+                <BrandPromise />
+                <CategoryRail />
+              </>
+            )}
+            {craftNeedsFallbackSlot ? <CraftTriptych /> : null}
+            <ClosingBand />
+          </>
         )}
       </main>
       <SiteFooter settings={settings} />
     </>
-  );
-}
-
-function JournalHighlights({
-  title,
-  items,
-  sectionId,
-}: {
-  title: string;
-  items: Awaited<ReturnType<typeof getJournal>>['items'];
-  sectionId: string;
-}) {
-  return (
-    <section className="shell editorial-journal" aria-labelledby={`section-${sectionId}`}>
-      <header className="editorial-section-heading">
-        <p>از ژورنال</p>
-        <h2 id={`section-${sectionId}`}>{title}</h2>
-        <Link href="/journal">همهٔ مقاله‌ها</Link>
-      </header>
-      <div className="journal-card-grid">
-        {items.map((item) => (
-          <Link href={`/journal/${item.slug}`} key={item.id}>
-            <span className="journal-card-media">
-              <Image
-                src={item.coverMedia.url}
-                alt={item.coverMedia.alt}
-                fill
-                sizes="(max-width: 767px) 100vw, 33vw"
-              />
-            </span>
-            <strong>{item.title}</strong>
-            <small>{item.excerpt}</small>
-          </Link>
-        ))}
-      </div>
-    </section>
   );
 }

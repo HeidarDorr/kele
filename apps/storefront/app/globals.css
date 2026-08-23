@@ -2861,49 +2861,8 @@ summary {
   display: grid;
 }
 
-.editorial-home {
-  overflow: clip;
-}
-
-.editorial-hero {
-  direction: ltr;
-  min-block-size: min(47rem, calc(100svh - var(--header-block)));
-  margin-block-start: clamp(1rem, 2vw, 2rem);
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 0.85fr);
-  align-items: stretch;
-  overflow: visible;
-  background: transparent;
-  color: var(--kele-ink);
-}
-
-.editorial-hero-media {
-  position: relative;
-  grid-column: 1;
-  min-block-size: 41rem;
-  overflow: hidden;
-  background: var(--kele-surface-muted);
-}
-
-.editorial-hero-media > img {
-  object-fit: cover;
-}
-
-.editorial-hero-copy {
-  direction: rtl;
-  grid-column: 2;
-  grid-row: 1;
-  padding: clamp(3rem, 7vw, 7rem) clamp(1.5rem, 5vw, 5.5rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.editorial-kicker,
 .editorial-section-heading > p,
-.editorial-section-heading > div > p,
-.editorial-story-copy > p:first-child {
+.editorial-section-heading > div > p {
   margin: 0 0 1.1rem;
   color: var(--kele-accent-strong);
   font-size: 0.72rem;
@@ -2911,39 +2870,6 @@ summary {
   letter-spacing: 0;
 }
 
-.editorial-hero h1 {
-  max-inline-size: 9ch;
-  color: var(--kele-ink);
-  font-size: clamp(3.6rem, 6.1vw, 7rem);
-  line-height: 0.98;
-}
-
-.editorial-hero-copy > p:not(.editorial-kicker) {
-  max-inline-size: 32rem;
-  margin: 1.5rem 0 0;
-  color: var(--kele-ink-muted);
-  font-size: clamp(0.95rem, 1.15vw, 1.1rem);
-  line-height: 1.95;
-}
-
-.editorial-cta {
-  min-block-size: var(--kele-control);
-  margin-block-start: 2rem;
-  padding-inline: 1.5rem;
-  border-color: var(--kele-inverse);
-  background: var(--kele-inverse);
-  color: var(--kele-inverse-text);
-}
-
-.editorial-cta:hover {
-  background: var(--kele-accent-strong);
-  color: var(--kele-inverse-text);
-}
-
-.editorial-occasions,
-.editorial-products,
-.editorial-outfits,
-.editorial-journal,
 .occasion-products {
   padding-block: var(--kele-section-space);
 }
@@ -2961,33 +2887,9 @@ summary {
   line-height: 1.05;
 }
 
-.occasion-editorial-grid {
-  grid-template-columns: minmax(0, 1.2fr) minmax(18rem, 0.8fr);
-  gap: clamp(1rem, 2vw, 1.5rem);
-}
-
-.occasion-editorial-card {
-  min-block-size: clamp(33rem, 55vw, 49rem);
-}
-
-.occasion-editorial-card::after,
 .occasion-detail-shade,
 .occasion-detail-hero .occasion-detail-shade {
   background: rgb(20 17 14 / 42%);
-}
-
-.occasion-card-copy strong {
-  font-size: clamp(2.2rem, 3.4vw, 3.8rem);
-}
-
-.editorial-story {
-  background: var(--kele-surface-muted);
-}
-
-.editorial-products,
-.editorial-outfits,
-.editorial-journal {
-  border-block-start: 1px solid var(--kele-line);
 }
 
 .outfit-card:nth-child(even) {
@@ -3012,23 +2914,18 @@ summary {
 .product-card-image,
 .outfit-card-media,
 .journal-index-media,
-.journal-card-media,
 .occasion-index-media,
-.editorial-story-media,
-.editorial-hero-media,
 .gallery-primary {
   isolation: isolate;
 }
 
 .product-card-image img,
-.outfit-card-media img,
-.occasion-editorial-card > img {
+.outfit-card-media img {
   transition: transform 260ms ease;
 }
 
 .product-card-image:hover img,
-.outfit-card a:hover .outfit-card-media img,
-.occasion-editorial-card:hover > img {
+.outfit-card a:hover .outfit-card-media img {
   transform: scale(1.012);
 }
 
@@ -3288,15 +3185,6 @@ summary {
     display: none;
   }
 
-  .editorial-hero {
-    min-block-size: 42rem;
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.82fr);
-  }
-
-  .editorial-hero-media {
-    min-block-size: 38rem;
-  }
-
   .product-detail-grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
     gap: 2rem;
@@ -3352,50 +3240,13 @@ summary {
     font-size: 1.65rem;
   }
 
-  .editorial-hero {
-    direction: rtl;
-    min-block-size: auto;
-    margin-block-start: 0;
-    grid-template-columns: 1fr;
-  }
-
-  .editorial-hero-media,
-  .editorial-hero-copy {
-    grid-column: 1;
-  }
-
-  .editorial-hero-media {
-    grid-row: 1;
-    min-block-size: 23rem;
-  }
-
-  .editorial-hero-copy {
-    grid-row: 2;
-    padding: 2.25rem 0.25rem 1rem;
-  }
-
-  .editorial-hero h1 {
-    max-inline-size: 11ch;
-    font-size: clamp(2.8rem, 12.5vw, 3.6rem);
-  }
-
-  .editorial-hero-copy > p:not(.editorial-kicker) {
-    font-size: 0.95rem;
-  }
-
   .editorial-section-heading,
   .editorial-heading-split {
     grid-template-columns: 1fr;
   }
 
-  .occasion-editorial-grid,
-  .editorial-story,
   .outfit-grid {
     grid-template-columns: 1fr;
-  }
-
-  .occasion-editorial-card {
-    min-block-size: 32rem;
   }
 
   .product-grid,
@@ -3464,25 +3315,6 @@ summary {
 @layer milestone-7-legacy {
   /* Milestone 7: the editorial storefront uses the existing KELE tokens with a
    sparse image-led rhythm. Published content never supplies CSS or markup. */
-  .editorial-home {
-    overflow: clip;
-  }
-
-  .editorial-hero {
-    position: relative;
-    min-block-size: clamp(39rem, calc(100svh - 5rem), 58rem);
-    display: grid;
-    align-items: end;
-    isolation: isolate;
-    overflow: hidden;
-    background: var(--kele-surface-muted);
-    color: #fffaf0;
-  }
-
-  .editorial-hero > img,
-  .occasion-editorial-card > img,
-  .editorial-story-media > img,
-  .journal-card-media > img,
   .journal-index-media > img,
   .occasion-index-media > img,
   .occasion-detail-hero > img {
@@ -3490,7 +3322,6 @@ summary {
     z-index: -2;
   }
 
-  .editorial-hero-shade,
   .occasion-detail-shade {
     position: absolute;
     inset: 0;
@@ -3503,15 +3334,8 @@ summary {
     );
   }
 
-  .editorial-hero-copy {
-    inline-size: 100%;
-    padding-block: clamp(5rem, 11vw, 9rem);
-  }
-
-  .editorial-index,
   .editorial-section-heading > p,
   .editorial-section-heading > div > p,
-  .editorial-story-copy > p:first-child,
   .journal-index-heading > p:first-child,
   .occasion-index > header > p,
   .occasion-detail-hero .shell > p:first-child,
@@ -3523,60 +3347,6 @@ summary {
     letter-spacing: 0.08em;
   }
 
-  .editorial-hero .editorial-index {
-    color: #efe0c6;
-  }
-
-  .editorial-hero h1 {
-    max-inline-size: 10ch;
-    margin: 0;
-    font-family: var(--font-display), serif;
-    font-size: clamp(3.1rem, 6.8vw, 7.8rem);
-    font-weight: 400;
-    line-height: 0.97;
-  }
-
-  .editorial-hero-copy > p:not(.editorial-index) {
-    max-inline-size: 34rem;
-    margin: 1.7rem 0 0;
-    color: rgb(255 250 240 / 82%);
-    font-size: clamp(1rem, 1.35vw, 1.3rem);
-    line-height: 1.9;
-  }
-
-  .editorial-cta {
-    inline-size: fit-content;
-    min-block-size: 3.2rem;
-    margin-block-start: 2rem;
-    padding-inline: 1.4rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 2.4rem;
-    border: 1px solid rgb(255 250 240 / 72%);
-    color: inherit;
-    text-decoration: none;
-    transition:
-      background 180ms ease,
-      color 180ms ease;
-  }
-
-  .editorial-cta:hover {
-    background: #fffaf0;
-    color: var(--kele-ink);
-  }
-
-  .editorial-scroll {
-    position: absolute;
-    inset-block-end: 2rem;
-    inset-inline-start: max(1.25rem, calc((100vw - 82rem) / 2));
-    writing-mode: vertical-rl;
-    color: rgb(255 250 240 / 65%);
-    font-size: 0.65rem;
-  }
-
-  .editorial-occasions,
-  .editorial-products,
-  .editorial-journal,
   .occasion-products {
     padding-block: clamp(6rem, 11vw, 11rem);
   }
@@ -3612,127 +3382,8 @@ summary {
     text-underline-offset: 0.45rem;
   }
 
-  .occasion-editorial-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
-    gap: 1rem;
-  }
-
-  .occasion-editorial-card {
-    position: relative;
-    min-block-size: 38rem;
-    display: flex;
-    align-items: end;
-    isolation: isolate;
-    overflow: hidden;
-    color: #fffaf0;
-    text-decoration: none;
-    background: var(--kele-surface-muted);
-  }
-
-  .occasion-editorial-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(0deg, rgb(20 17 14 / 76%), transparent 58%);
-  }
-
-  .occasion-editorial-card > img {
-    transition: transform 700ms cubic-bezier(0.2, 0.75, 0.2, 1);
-  }
-
-  .occasion-editorial-card:hover > img {
-    transform: scale(1.025);
-  }
-
-  .occasion-card-number {
-    position: absolute;
-    inset-block-start: 1.4rem;
-    inset-inline-start: 1.4rem;
-    z-index: 1;
-    font-size: 0.72rem;
-  }
-
-  .occasion-card-copy {
-    position: relative;
-    z-index: 1;
-    padding: clamp(1.5rem, 4vw, 3rem);
-    display: grid;
-    gap: 0.8rem;
-  }
-
-  .occasion-card-copy strong {
-    color: #fff;
-    font-family: var(--font-display), serif;
-    font-size: clamp(2.1rem, 3.4vw, 4rem);
-    font-weight: 400;
-  }
-
-  .occasion-card-copy small {
-    max-inline-size: 31rem;
-    color: rgb(255 250 240 / 78%);
-    font-size: 0.9rem;
-    line-height: 1.8;
-  }
-
-  .editorial-products {
-    border-block-start: 1px solid var(--kele-line);
-  }
-
   .editorial-heading-split > div {
     grid-column: 1;
-  }
-
-  .editorial-story {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: #e8e0d2;
-  }
-
-  .editorial-story-media {
-    position: relative;
-    min-block-size: clamp(30rem, 58vw, 49rem);
-  }
-
-  .editorial-story-copy {
-    padding: clamp(3rem, 9vw, 9rem);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-  }
-
-  .editorial-story-copy h2 {
-    max-inline-size: 9ch;
-    margin: 0;
-    font-family: var(--font-display), serif;
-    font-size: clamp(3rem, 5vw, 6rem);
-    font-weight: 400;
-    line-height: 1.02;
-  }
-
-  .editorial-story-copy > p:not(:first-child) {
-    max-inline-size: 31rem;
-    margin-block: 2rem;
-    color: var(--kele-ink-muted);
-    line-height: 2;
-  }
-
-  .editorial-unavailable {
-    min-block-size: 62vh;
-    padding-block: 9rem;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  .editorial-unavailable h1 {
-    max-inline-size: 12ch;
-    margin: 0;
-    font-family: var(--font-display), serif;
-    font-size: clamp(3rem, 6vw, 6rem);
-    font-weight: 400;
   }
 
   .editorial-loading-state .editorial-loading-line,
@@ -4028,27 +3679,6 @@ summary {
   }
 
   @media (max-width: 767px) {
-    .editorial-hero {
-      min-block-size: 43rem;
-    }
-
-    .editorial-hero-shade {
-      background: linear-gradient(0deg, rgb(21 18 15 / 82%), transparent 72%);
-    }
-
-    .editorial-hero-copy {
-      padding-block-end: 5rem;
-    }
-
-    .editorial-hero h1 {
-      max-inline-size: 9ch;
-      font-size: clamp(3rem, 14vw, 4.5rem);
-    }
-
-    .editorial-scroll {
-      display: none;
-    }
-
     .editorial-section-heading,
     .editorial-heading-split {
       grid-template-columns: 1fr;
@@ -4059,21 +3689,11 @@ summary {
       grid-column: auto;
     }
 
-    .occasion-editorial-grid,
-    .editorial-story,
     .journal-index-grid,
     .journal-featured > a,
     .occasion-index-list article > a,
     .occasion-index-list article:nth-child(even) > a {
       grid-template-columns: 1fr;
-    }
-
-    .occasion-editorial-card {
-      min-block-size: 32rem;
-    }
-
-    .editorial-story-media {
-      min-block-size: 29rem;
     }
 
     .journal-featured,
@@ -4106,7 +3726,6 @@ summary {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .occasion-editorial-card > img,
     .editorial-loading-line,
     .editorial-loading-grid span {
       transition: none;
@@ -4434,6 +4053,1029 @@ summary {
   .mobile-navigation-overlay,
   .mobile-navigation-panel,
   .mobile-product-links {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Home page. One warm, image-led editorial system; supersedes the retired
+   .editorial-* home rules from milestones 7 and 8.
+   ========================================================================== */
+
+.home {
+  --home-gutter: clamp(1rem, 3vw, 3rem);
+  --home-rail-inset: max(var(--home-gutter), calc((100vw - var(--kele-content-wide)) / 2));
+  overflow: clip;
+}
+
+/* --- Shared home typography and controls --- */
+
+.home-eyebrow {
+  margin: 0 0 1rem;
+  color: var(--kele-accent-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.home-heading {
+  margin-block-end: clamp(2.25rem, 4.5vw, 4rem);
+}
+
+.home-heading h2 {
+  max-inline-size: 16ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.4rem, 4.6vw, 4.6rem);
+  font-weight: 400;
+  line-height: 1.06;
+}
+
+.home-heading-lede {
+  max-inline-size: 46ch;
+  margin: 1.5rem 0 0;
+  color: var(--kele-ink-muted);
+  font-size: clamp(0.95rem, 1.1vw, 1.08rem);
+  line-height: 1.95;
+}
+
+.home-heading-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  column-gap: 2rem;
+}
+
+.home-heading-link {
+  padding-block-end: 0.35rem;
+  color: var(--kele-ink);
+  font-size: 0.85rem;
+  text-underline-offset: 0.45rem;
+}
+
+.home-button {
+  min-block-size: var(--kele-control);
+  padding-inline: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--kele-inverse);
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition:
+    background var(--kele-duration-micro) var(--kele-ease),
+    border-color var(--kele-duration-micro) var(--kele-ease);
+}
+
+.home-button:hover {
+  border-color: var(--kele-accent-strong);
+  background: var(--kele-accent-strong);
+  color: var(--kele-inverse-text);
+}
+
+.home-text-link {
+  min-block-size: var(--kele-control);
+  display: inline-flex;
+  align-items: center;
+  color: var(--kele-ink);
+  font-size: 0.88rem;
+  text-decoration: underline;
+  text-underline-offset: 0.45rem;
+  text-decoration-thickness: 1px;
+}
+
+.home-text-link:hover {
+  color: var(--kele-accent-strong);
+}
+
+.home-text-link-inverse {
+  color: var(--kele-inverse-text);
+}
+
+.home-text-link-inverse:hover {
+  color: #fff;
+}
+
+/* --- Hero --- */
+
+.home-hero {
+  position: relative;
+  min-block-size: min(50rem, calc(100svh - var(--header-block)));
+  display: grid;
+  align-items: center;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.home-hero-media img {
+  object-fit: cover;
+}
+
+/* Warm scrim pulled from the inline start, so Persian copy sits on canvas while
+   the photograph stays edge to edge. */
+.home-hero-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to left,
+    var(--kele-canvas) 0%,
+    color-mix(in srgb, var(--kele-canvas) 92%, transparent) 30%,
+    color-mix(in srgb, var(--kele-canvas) 45%, transparent) 52%,
+    transparent 76%
+  );
+}
+
+.home-hero-copy {
+  position: relative;
+  z-index: 2;
+  inline-size: min(calc(100% - clamp(2rem, 6vw, 6rem)), var(--kele-content-wide));
+  margin-inline: auto;
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+
+.home-hero h1 {
+  max-inline-size: 13ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3rem, 5.2vw, 5.6rem);
+  font-weight: 400;
+  line-height: 1.04;
+}
+
+.home-hero-lede {
+  max-inline-size: 34ch;
+  margin: 1.75rem 0 0;
+  color: var(--kele-ink-muted);
+  font-size: clamp(1rem, 1.2vw, 1.15rem);
+  line-height: 1.95;
+}
+
+.home-hero-actions {
+  margin-block-start: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.75rem;
+}
+
+/* --- Brand promise --- */
+
+.home-promise {
+  padding-block: clamp(3.5rem, 6vw, 5.5rem);
+  border-block-end: 1px solid var(--kele-line);
+  background: var(--kele-surface);
+}
+
+.home-promise-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+.home-promise-grid > li {
+  padding-block-start: 1.25rem;
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.home-promise-index {
+  color: var(--kele-accent-strong);
+  font-size: 0.72rem;
+}
+
+.home-promise-grid h3 {
+  margin: 0.75rem 0 0.6rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.3rem, 1.7vw, 1.65rem);
+  font-weight: 400;
+}
+
+.home-promise-grid p {
+  margin: 0;
+  color: var(--kele-ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.9;
+}
+
+/* --- Category grid --- */
+
+.home-categories {
+  padding-block: var(--kele-section-space);
+}
+
+.home-category-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.75rem);
+}
+
+.home-category-tile {
+  display: grid;
+  gap: 0.9rem;
+  color: var(--kele-ink);
+  text-decoration: none;
+}
+
+.home-category-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-category-media img {
+  object-fit: cover;
+  transition: transform var(--kele-duration-reveal) var(--kele-ease);
+}
+
+.home-category-tile:hover .home-category-media img {
+  transform: scale(1.03);
+}
+
+.home-category-label {
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+}
+
+/* --- Occasions --- */
+
+.home-occasions {
+  padding-block: var(--kele-section-space);
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.home-occasion-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.home-occasion-layout.is-solo {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.85fr);
+  align-items: center;
+}
+
+.home-occasion-rest {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-content: start;
+}
+
+.home-occasion-aside {
+  padding-inline-start: clamp(1rem, 3vw, 3rem);
+  padding-block-end: clamp(1rem, 3vw, 3rem);
+}
+
+.home-occasion-aside p {
+  margin: 0 0 1.5rem;
+  color: var(--kele-ink-muted);
+  font-size: 1rem;
+  line-height: 2;
+}
+
+.home-occasion-tile {
+  position: relative;
+  min-block-size: 26rem;
+  display: flex;
+  align-items: end;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+  color: #fff;
+  text-decoration: none;
+}
+
+.home-occasion-tile.is-featured {
+  min-block-size: clamp(30rem, 48vw, 44rem);
+}
+
+.home-occasion-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.home-occasion-media img {
+  object-fit: cover;
+  transition: transform var(--kele-duration-reveal) var(--kele-ease);
+}
+
+.home-occasion-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(0deg, rgb(20 17 14 / 78%), rgb(20 17 14 / 12%) 55%, transparent 78%);
+}
+
+.home-occasion-tile:hover .home-occasion-media img {
+  transform: scale(1.025);
+}
+
+.home-occasion-copy {
+  position: relative;
+  z-index: 2;
+  padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  display: grid;
+  gap: 0.7rem;
+}
+
+.home-occasion-copy strong {
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.8rem, 3vw, 3.2rem);
+  font-weight: 400;
+}
+
+.home-occasion-tile:not(.is-featured) .home-occasion-copy strong {
+  font-size: clamp(1.5rem, 2.2vw, 2.1rem);
+}
+
+.home-occasion-copy small {
+  max-inline-size: 34ch;
+  color: rgb(255 250 240 / 82%);
+  font-size: 0.88rem;
+  line-height: 1.85;
+}
+
+/* --- Product and outfit rails --- */
+
+.home-products,
+.home-outfits {
+  padding-block: var(--kele-section-space);
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.home-product-rail {
+  margin: 0;
+  padding: 0.5rem var(--home-rail-inset) 1rem;
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(14rem, 19rem);
+  gap: clamp(1rem, 2vw, 1.75rem);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--home-rail-inset);
+  scrollbar-width: thin;
+}
+
+.home-product-rail > li {
+  scroll-snap-align: start;
+}
+
+.home-product-rail-end a {
+  block-size: 100%;
+  min-block-size: 20rem;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border: 1px solid var(--kele-line);
+  color: var(--kele-ink);
+  text-decoration: none;
+  transition: background var(--kele-duration-micro) var(--kele-ease);
+}
+
+.home-product-rail-end a:hover {
+  background: var(--kele-surface);
+}
+
+.home-product-rail-end span {
+  margin-block-end: auto;
+  color: var(--kele-accent-strong);
+  font-size: 1.5rem;
+}
+
+.home-product-rail-end strong {
+  font-family: var(--font-display), serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.home-product-rail-end small {
+  color: var(--kele-ink-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Outfit intro --- */
+
+.home-outfits-intro {
+  margin-block-end: clamp(2.5rem, 5vw, 4rem);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4.5rem);
+}
+
+.home-outfits-copy h2 {
+  max-inline-size: 14ch;
+  margin: 0 0 1.5rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.4rem, 4.4vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1.06;
+}
+
+.home-outfits-copy p {
+  max-inline-size: 44ch;
+  margin: 0 0 1.75rem;
+  color: var(--kele-ink-muted);
+  line-height: 2;
+}
+
+.home-outfits-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-outfits-media img {
+  object-fit: cover;
+}
+
+/* --- Craft triptych --- */
+
+.home-craft {
+  padding-block: var(--kele-section-space);
+  background: var(--kele-surface-muted);
+}
+
+.home-craft-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2.5vw, 2.25rem);
+  align-items: start;
+}
+
+.home-craft-grid figure {
+  margin: 0;
+}
+
+/* Editorial offset: the middle frame drops so the row reads as composed rather
+   than tabulated. */
+.home-craft-grid figure:nth-child(2) {
+  margin-block-start: clamp(2rem, 5vw, 5rem);
+}
+
+.home-craft-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-canvas);
+}
+
+.home-craft-media img {
+  object-fit: cover;
+}
+
+.home-craft-grid figcaption {
+  padding-block-start: 1.25rem;
+}
+
+.home-craft-grid h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.35rem, 1.9vw, 1.8rem);
+  font-weight: 400;
+}
+
+.home-craft-grid figcaption p {
+  max-inline-size: 34ch;
+  margin: 0;
+  color: var(--kele-ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.9;
+}
+
+.home-craft .home-text-link {
+  margin-block-start: clamp(2rem, 4vw, 3.5rem);
+}
+
+/* --- Brand story --- */
+
+.home-story {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--kele-surface);
+}
+
+.home-story-media {
+  position: relative;
+  min-block-size: clamp(28rem, 52vw, 44rem);
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-story-media img {
+  object-fit: cover;
+}
+
+.home-story-copy {
+  padding: clamp(3rem, 8vw, 8rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.home-story-copy h2 {
+  max-inline-size: 11ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.4rem, 4.4vw, 4.6rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.home-story-copy p {
+  max-inline-size: 42ch;
+  margin: 1.75rem 0 2rem;
+  color: var(--kele-ink-muted);
+  line-height: 2;
+}
+
+/* --- Journal --- */
+
+.home-journal {
+  padding-block: var(--kele-section-space);
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.home-journal-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+/* A lone article becomes a wide editorial card instead of one narrow column
+   stranded beside two empty tracks. */
+.home-journal-grid.is-solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-journal-grid.is-solo a {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: center;
+  column-gap: clamp(2rem, 5vw, 4rem);
+}
+
+.home-journal-grid.is-solo .home-journal-media {
+  grid-row: 1 / span 2;
+}
+
+.home-journal-grid.is-solo strong {
+  align-self: end;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.home-journal-grid.is-solo small {
+  align-self: start;
+  max-inline-size: 46ch;
+}
+
+.home-journal-grid a {
+  display: grid;
+  gap: 1rem;
+  color: var(--kele-ink);
+  text-decoration: none;
+}
+
+.home-journal-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 2;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-journal-media img {
+  object-fit: cover;
+  transition: transform var(--kele-duration-reveal) var(--kele-ease);
+}
+
+.home-journal-grid a:hover .home-journal-media img {
+  transform: scale(1.025);
+}
+
+.home-journal-grid strong {
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.35rem, 1.9vw, 1.85rem);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.home-journal-grid small {
+  color: var(--kele-ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.9;
+}
+
+/* --- Closing band --- */
+
+.home-closing {
+  position: relative;
+  min-block-size: clamp(26rem, 42vw, 36rem);
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+  text-align: center;
+}
+
+.home-closing-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.home-closing-media img {
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.home-closing::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(28 21 16 / 62%);
+}
+
+.home-closing-copy {
+  position: relative;
+  z-index: 2;
+  inline-size: min(calc(100% - 2.5rem), 42rem);
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.home-closing-copy .home-eyebrow {
+  color: var(--kele-accent-soft);
+}
+
+.home-closing-copy h2 {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.4rem, 4.6vw, 4.4rem);
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.home-closing-copy p {
+  margin: 1.5rem auto 2.25rem;
+  max-inline-size: 40ch;
+  color: var(--kele-inverse-text-muted);
+  line-height: 2;
+}
+
+.home-closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.75rem;
+}
+
+/* The default solid button is espresso on canvas; on the inverse band it has to
+   flip to stay visible. */
+.home-closing .home-button {
+  border-color: var(--kele-inverse-text);
+  background: var(--kele-inverse-text);
+  color: var(--kele-ink);
+}
+
+.home-closing .home-button:hover {
+  border-color: #fff;
+  background: #fff;
+  color: var(--kele-ink);
+}
+
+/* --- Loading and unavailable notices --- */
+
+.home-notice {
+  min-block-size: 52vh;
+  padding-block: clamp(4rem, 10vw, 8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.home-notice h1 {
+  max-inline-size: 14ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.home-notice p {
+  max-inline-size: 46ch;
+  margin: 1.5rem 0 0;
+  color: var(--kele-ink-muted);
+  line-height: 2;
+}
+
+.home-notice .home-button {
+  margin-block-start: 2rem;
+}
+
+.home-notice-line {
+  inline-size: min(28rem, 82vw);
+  block-size: 0.35rem;
+  margin-block: 1.5rem 0;
+  background: linear-gradient(
+    90deg,
+    var(--kele-line) 0%,
+    var(--kele-accent) 50%,
+    var(--kele-line) 100%
+  );
+  background-size: 220% 100%;
+  animation: home-notice-sweep 1600ms linear infinite;
+}
+
+@keyframes home-notice-sweep {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+/* --- Art direction slots --- */
+
+.art-slot {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  border: 1px dashed var(--kele-accent);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--kele-surface) 0 12px,
+    var(--kele-surface-muted) 12px 24px
+  );
+  color: var(--kele-ink);
+}
+
+.art-slot-inner {
+  inline-size: min(100%, 34rem);
+  display: grid;
+  gap: 0.6rem;
+  text-align: start;
+}
+
+.art-slot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.art-slot-label {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+.art-slot-size {
+  margin: 0;
+  color: var(--kele-accent-strong);
+  font-size: 0.78rem;
+}
+
+.art-slot-path {
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--kele-line);
+  background: var(--kele-canvas);
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.art-slot-body {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.art-slot-body > summary {
+  margin-block-end: 0.5rem;
+  color: var(--kele-accent-strong);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.art-slot-note {
+  margin: 0;
+  color: var(--kele-ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+
+.art-slot-prompt {
+  max-block-size: 11rem;
+  overflow: auto;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--kele-line);
+  background: var(--kele-canvas);
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.72rem;
+  line-height: 1.7;
+}
+
+.art-slot-copy {
+  justify-self: start;
+  min-block-size: var(--kele-control);
+  padding-inline: 1.1rem;
+  border: 1px solid var(--kele-inverse);
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.art-slot-copy:hover {
+  background: var(--kele-accent-strong);
+  border-color: var(--kele-accent-strong);
+}
+
+/* Compact slots hide the finer print rather than overflow their frame. */
+@container (max-height: 22rem) {
+  .art-slot-body {
+    display: none;
+  }
+}
+
+@container (max-width: 20rem) {
+  .art-slot-label {
+    font-size: 0.95rem;
+  }
+
+  .art-slot-path {
+    font-size: 0.62rem;
+  }
+}
+
+/* A slot sitting behind headline copy must not compete with it: no stripes, no
+   frame, and the brief folded into one corner card. */
+.art-slot.is-backdrop {
+  place-items: start end;
+  border: 0;
+  background: transparent;
+}
+
+.art-slot.is-backdrop .art-slot-inner {
+  inline-size: min(100%, 30rem);
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--kele-accent);
+  background: var(--kele-canvas);
+  box-shadow: 0 8px 24px rgb(43 31 24 / 18%);
+}
+
+.art-slot.is-backdrop .art-slot-body {
+  display: grid;
+}
+
+/* Scrims exist to protect copy over a photograph. With no photograph they only
+   obscure the brief, so they stand down until the artwork arrives. */
+.home-hero:has(.art-slot) .home-hero-veil,
+.home-closing:has(.art-slot)::after {
+  display: none;
+}
+
+/* --- Home responsive --- */
+
+@media (max-width: 1023px) {
+  .home-promise-grid,
+  .home-category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-occasion-layout,
+  .home-occasion-layout.is-solo,
+  .home-outfits-intro {
+    grid-template-columns: 1fr;
+  }
+
+  .home-occasion-aside {
+    padding-inline-start: 0;
+    padding-block-end: 0;
+  }
+
+  .home-craft-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .home-journal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-hero {
+    min-block-size: 0;
+    display: grid;
+    grid-template-rows: auto auto;
+    background: var(--kele-canvas);
+  }
+
+  .home-hero-media {
+    position: relative;
+    inset: auto;
+    aspect-ratio: 4 / 5;
+  }
+
+  .home-hero-veil {
+    display: none;
+  }
+
+  .home-hero-copy {
+    padding-block: 2.25rem 1rem;
+  }
+
+  .home-hero h1 {
+    max-inline-size: none;
+    font-size: clamp(2.1rem, 9vw, 2.8rem);
+  }
+
+  .home-promise-grid,
+  .home-category-grid,
+  .home-craft-grid,
+  .home-journal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-craft-grid figure:nth-child(2) {
+    margin-block-start: 0;
+  }
+
+  .home-craft-grid figure:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .home-story {
+    grid-template-columns: 1fr;
+  }
+
+  .home-story-media {
+    min-block-size: 0;
+    aspect-ratio: 4 / 3;
+  }
+
+  .home-product-rail {
+    grid-auto-columns: minmax(12.5rem, 15rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-category-media img,
+  .home-occasion-media img,
+  .home-journal-media img {
+    transition: none;
+  }
+
+  .home-category-tile:hover .home-category-media img,
+  .home-occasion-tile:hover .home-occasion-media img,
+  .home-journal-grid a:hover .home-journal-media img {
+    transform: none;
+  }
+
+  .home-notice-line {
     animation: none;
   }
 }

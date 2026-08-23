@@ -897,13 +897,13 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
   const editorialMedia = [
     {
       id: editorialMediaIds.homepageHero,
-      url: '/media/editorial/homepage-hero.webp',
-      width: 1536,
-      height: 1024,
-      altText: 'پسربچه با کت‌وشلوار لینن روشن در فضای سنگی آرام',
+      url: '/media/editorial/home-hero-wide.webp',
+      width: 3200,
+      height: 1400,
+      altText: 'پسربچه با کت‌وشلوار لینن روشن در حیاط سنگی آفتاب‌گیر',
       group: MediaGroup.HOMEPAGE,
-      focalPointX: 0.32,
-      focalPointY: 0.48,
+      focalPointX: 0.28,
+      focalPointY: 0.5,
     },
     {
       id: editorialMediaIds.occasionFormal,
@@ -994,10 +994,17 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
       content: { title: 'انتخاب‌های تازه', referenceIds: [productId] },
     },
     {
+      id: '71000000-0000-4000-8000-000000000005',
+      type: 'featured_outfits',
+      enabled: true,
+      order: 4,
+      content: { title: 'ست‌های کامل فصل', referenceIds: [outfitId] },
+    },
+    {
       id: '71000000-0000-4000-8000-000000000004',
       type: 'brand_story',
       enabled: true,
-      order: 4,
+      order: 5,
       content: {
         title: 'آرام، ماندگار، برای کودک',
         subtitle: 'KELE لباس کودک را با احترام به حرکت، لمس و خاطره طراحی می‌کند.',
@@ -1005,6 +1012,13 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
         ctaLabel: 'خواندن ژورنال',
         href: '/journal',
       },
+    },
+    {
+      id: '71000000-0000-4000-8000-000000000006',
+      type: 'journal_highlights',
+      enabled: true,
+      order: 6,
+      content: { title: 'خواندنی‌های KELE', referenceIds: [journalArticleId] },
     },
   ];
   await transaction.homepageRevision.upsert({
@@ -1029,6 +1043,15 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
       actorId: 'seed',
     },
     update: {},
+  });
+  // The seed owns this fixture, so re-running it re-applies the composition to a
+  // development database whose revisions have already moved on. Superseded
+  // revisions stay untouched: published history is immutable.
+  await transaction.homepageRevision.updateMany({
+    where: {
+      state: { in: [EditorialRevisionState.PUBLISHED, EditorialRevisionState.DRAFT] },
+    },
+    data: { sections: homepageSections },
   });
 
   const journalBlocks: Prisma.InputJsonValue = [

@@ -65,10 +65,28 @@ pairing is a frozen brand decision.
   --kele-line: #ded3c7;
   --kele-accent: #c86f2c;
   --kele-accent-strong: #a8541d;
+  --kele-accent-soft: #f2ddc9;
   --kele-inverse: #2b1f18;
   --kele-inverse-text: #f8f1e9;
+  --kele-inverse-text-muted: #d3c4b4;
   --kele-danger: #9d302b;
   --kele-success: #426348;
+}
+```
+
+`--kele-accent-soft` is a tinted ground for selected and highlighted surfaces
+and for short labels on the inverse surface. `--kele-inverse-text-muted` is
+secondary copy on the inverse surface. Neither is a body-text color on the warm
+canvas.
+
+Motion is tokenised so timing stays consistent across surfaces:
+
+```css
+:root {
+  --kele-ease: cubic-bezier(0.22, 0.7, 0.24, 1);
+  --kele-duration-micro: 160ms;
+  --kele-duration-panel: 280ms;
+  --kele-duration-reveal: 640ms;
 }
 ```
 
@@ -189,6 +207,29 @@ accordions expose description, details, size/fit, and shipping/returns.
 Photography with controlled dark overlay, serif label and restrained accent
 arrow. Never place unreadable text over a busy focal area.
 
+### Art-direction slot
+
+Missing editorial artwork is not a blank box. Each image the storefront expects
+is registered in `apps/storefront/lib/art-direction.ts` with its destination
+path, aspect ratio, pixel dimensions, composition constraint and generation
+prompt. `EditorialMedia` renders the real file when it exists on disk and the
+brief when it does not, at exactly the geometry the photograph will occupy, so
+delivering the file cannot move the layout.
+
+Two slot variants exist because the failure modes differ:
+
+- `panel` owns its frame and shows the whole brief with the prompt expanded.
+- `backdrop` sits behind headline copy. It drops the striped ground, folds the
+  prompt into a `details` element and moves the card to a corner. Section
+  scrims stand down while a backdrop slot is present, because a scrim only
+  exists to protect copy over a photograph.
+
+Briefs are a design and review affordance. They render outside production, or
+wherever `KELE_ART_DIRECTION_BRIEFS=on` is set. In production the same missing
+image degrades to the reserved unavailable state. Delivering artwork is content
+work, not a code change: drop the file at the recorded path and the brief
+retires itself.
+
 ### Footer
 
 Dark espresso inverse surface with semantic navigation groups, social links
@@ -251,3 +292,49 @@ The stable visual contract is
 `e2e/milestone-8.spec.ts-snapshots/` and review captures live in
 `output/playwright/milestone-8/`. DES-001 through DES-005 remain explicit launch
 inputs in `docs/open-questions.md`.
+
+## Homepage composition
+
+The Homepage is the one page that has to argue for the brand before it sells
+anything, so it alternates published commerce with brand-owned connective
+tissue rather than stacking CMS sections in a single rhythm.
+
+Published sections render in their CMS order. Brand-owned sections are anchored
+to the section they follow, so the page keeps its rhythm whichever sections an
+editor publishes:
+
+| Position | Section | Source |
+|---|---|---|
+| 1 | Full-bleed hero | CMS `hero` |
+| 2 | Brand promise, four statements | Brand-owned, follows the hero |
+| 3 | Category grid | Brand-owned, follows the hero, uses CAT-007 navigation |
+| 4 | Occasions | CMS `occasion_grid` |
+| 5 | Curated products | CMS `featured_products` |
+| 6 | Craft triptych | Brand-owned, follows the curated products |
+| 7 | Styling and outfits | CMS `featured_outfits` |
+| 8 | Brand story | CMS `brand_story` or `editorial_banner` |
+| 9 | Journal | CMS `journal_highlights` |
+| 10 | Closing band | Brand-owned, always last |
+
+Composition rules:
+
+- The hero is edge to edge at every viewport. On desktop a warm scrim is pulled
+  from the inline start so Persian copy sits on canvas while the photograph
+  keeps the full width. Below 768 px the hero stacks: photograph first at 4:5,
+  copy beneath on canvas, no scrim. Hero photography must reserve its inline-end
+  third as quiet negative space.
+- Curated rows are scrolling rails with a fixed card measure, not grids. A
+  curation of one then reads the same as a curation of eight instead of
+  stranding a single card in a wide grid. Each rail closes with a card linking
+  to the full listing.
+- Sections that can receive one item compose for that case explicitly: a lone
+  occasion pairs with an editorial aside, and a lone journal article becomes a
+  wide two-column card.
+- The craft triptych drops its middle frame so the row reads as composed rather
+  than tabulated. On mobile it becomes two columns with the third frame spanning
+  both.
+- The closing band is the only inverse surface in the page body. The solid
+  button inverts there so it stays visible.
+- When the published Homepage cannot be read, the brand-owned sections still
+  render. The page states plainly that the published narrative is unavailable
+  and keeps the catalogue reachable, rather than collapsing to a bare notice.

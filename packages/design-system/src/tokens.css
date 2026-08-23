@@ -7,8 +7,12 @@
   --kele-line: #ded3c7;
   --kele-accent: #c86f2c;
   --kele-accent-strong: #914515;
+  /* Tinted accent ground for selected and highlighted surfaces. */
+  --kele-accent-soft: #f2ddc9;
   --kele-inverse: #2b1f18;
   --kele-inverse-text: #f8f1e9;
+  /* Muted copy on the inverse surface; verified at 4.5:1 against --kele-inverse. */
+  --kele-inverse-text-muted: #d3c4b4;
   --kele-danger: #9d302b;
   --kele-success: #426348;
   --kele-space-1: 0.25rem;
@@ -21,4 +25,10 @@
   --kele-space-16: 4rem;
   --kele-space-24: 6rem;
   --kele-radius: 0.25rem;
+  /* Motion. Micro-feedback stays under 180ms; panels and drawers under 320ms.
+     The curve eases out without overshoot, which keeps the storefront calm. */
+  --kele-ease: cubic-bezier(0.22, 0.7, 0.24, 1);
+  --kele-duration-micro: 160ms;
+  --kele-duration-panel: 280ms;
+  --kele-duration-reveal: 640ms;
 }
