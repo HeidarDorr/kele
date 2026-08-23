@@ -163,7 +163,7 @@ Every page includes:
 - final, production-approved primary/monochrome SVG variants and favicon; the
   supplied signature PNG is only a temporary in-product review placeholder;
 - licensed web fonts;
-- final product/editorial imagery, including the fifteen Homepage images
+- final product/editorial imagery, including the fourteen Homepage images
   specified in `apps/storefront/lib/art-direction.ts` (DES-007);
 - icon source or approved icon family;
 - complete UI flows for listing, search, cart, checkout, account, Journal and
