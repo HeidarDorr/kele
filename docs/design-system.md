@@ -64,7 +64,7 @@ pairing is a frozen brand decision.
   --kele-ink-muted: #776b61;
   --kele-line: #ded3c7;
   --kele-accent: #c86f2c;
-  --kele-accent-strong: #a8541d;
+  --kele-accent-strong: #b04600;
   --kele-accent-soft: #f2ddc9;
   --kele-inverse: #2b1f18;
   --kele-inverse-text: #f8f1e9;
@@ -181,13 +181,39 @@ Motion is restrained and functional:
 - no scroll hijacking;
 - honor `prefers-reduced-motion`.
 
+Textual actions keep their resting foreground, border and fill colors on hover.
+Their micro-feedback is a one-pixel `currentColor` rule that reveals from right
+to left, extends slightly beyond the text and retracts through the same short
+motion. The absolutely positioned rule remains centered and never changes the
+button's content padding or label alignment. Icon-only header actions use only a
+compact softly scaling circular ground inside the unchanged 44 px target, use
+120 ms micro-feedback and never recolor the icon.
+
 ## Core components
 
 ### Header
 
-Desktop: announcement bar, balanced RTL navigation, centered or
-compositionally anchored logo, search/account/bag actions. Mobile: menu,
-centered logo, search and bag; preserve 44 px minimum interactive targets.
+The storefront header is fixed at every viewport. It uses a warm translucent
+canvas, restrained backdrop blur and an equal-height layout spacer so page
+content and fragment targets are never obscured. Desktop keeps the balanced RTL
+navigation and centered wordmark; search, account and bag actions are compact,
+icon-only controls with accessible names. Mobile keeps the menu and bag, uses a
+92 px wordmark, and preserves 44 px minimum interactive targets. Text links do
+not translate on interaction: links without a resting underline reveal a
+`currentColor` line from right to left and retract with the reverse motion. The
+line uses one optical gap within each chrome context and extends slightly beyond
+the word on its physical left. Links with a resting line match the word width at
+rest, then expose the same short left overhang on hover. Route-active header
+items keep their text color and show the completed word-width line. The Products
+line remains visible and expands while its disclosure is open. The desktop Products disclosure
+uses the same numbered, thin-divider language as the Catalog index in a four by
+two grid. The header search action deep-links to the Catalog tools, scrolls them
+to a lower reading position in the upper two-thirds of the viewport and focuses
+the labelled search field. The same focus behavior is available from the mobile
+menu. Below the 1024 px desktop boundary, Mobile navigation and Cart remain
+mounted through their short opaque fade-out so closing is as deliberate as
+opening; directional Cart motion is reserved for desktop. Mobile drawer links
+do not use decorative underlines, including for their route-active state.
 
 ### Product card
 
@@ -197,8 +223,11 @@ and shadows. All card states must preserve layout.
 
 ### Product detail
 
-Desktop uses thumbnail rail + primary gallery + purchase panel. Mobile stacks
-gallery and purchase controls with a clearly reachable purchase action. Color
+Desktop places the restrained thumbnail rail and primary gallery on the left and
+the RTL purchase panel on the right; the full grid is capped so Product imagery
+does not dominate a laptop viewport. Mobile stacks gallery and purchase controls
+with a clearly reachable purchase action. Outfit detail uses the same capped
+desktop grid, physical left thumbnail rail and RTL purchase composition. Color
 selection updates gallery; size selection updates price/availability. Tabs or
 accordions expose description, details, size/fit, and shipping/returns.
 
@@ -234,7 +263,8 @@ retires itself.
 
 Dark espresso inverse surface with semantic navigation groups, social links
 and legal links. Newsletter collection is absent in version 1. Mobile groups
-may collapse but remain keyboard accessible.
+may collapse but remain keyboard accessible. A labelled 44 px circular control
+at the footer tail returns the page to the top and honors reduced motion.
 
 ### Forms
 
@@ -262,8 +292,9 @@ system without changing commerce behavior or server contracts.
   motion is limited to functional menu, drawer and selection feedback.
 - `--kele-canvas`, `--kele-surface`, `--kele-surface-muted`, `--kele-ink`,
   `--kele-ink-muted`, `--kele-line`, `--kele-accent-strong` and the inverse
-  footer palette are the only storefront foundation colors. Muted ink and the
-  strong accent were darkened to meet WCAG AA on the warm muted surface.
+  footer palette are the only storefront foundation colors. The strong accent
+  uses a vivid approved orange while retaining a 4.52:1 contrast ratio on
+  the warm muted surface; muted ink also remains WCAG AA compliant.
 - Display headings use the provisional local display family and body, labels
   and controls use the provisional local text family. Long desktop headings
   are constrained by readable measures rather than arbitrary narrow columns.
@@ -275,7 +306,9 @@ system without changing commerce behavior or server contracts.
   or an explicit control label.
 - The header, mobile navigation, cart drawer and footer are shared across the
   complete version-1 graph. Both modal surfaces trap focus, close with Escape,
-  prevent background scroll and return focus to their opener.
+  prevent background scroll and return focus to their opener. Narrow navigation
+  and cart panels use the same opaque canvas and simple fade; the desktop cart
+  enters from the physical left edge toward the right.
 - The provisional responsive boundaries are below 768 px for the narrow
   single-column composition, 768–1023 px for tablet composition and 1024 px or
   wider for the desktop/laptop composition. Acceptance viewports are 390×844,

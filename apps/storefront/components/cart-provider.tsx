@@ -40,8 +40,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const drawerOpener = useRef<HTMLElement | null>(null);
+  const focusTimer = useRef<number | null>(null);
 
   const openDrawer = useCallback(() => {
+    if (focusTimer.current !== null) window.clearTimeout(focusTimer.current);
+    focusTimer.current = null;
     drawerOpener.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setDrawerOpen(true);
@@ -49,8 +52,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false);
-    window.requestAnimationFrame(() => drawerOpener.current?.focus());
+    if (focusTimer.current !== null) window.clearTimeout(focusTimer.current);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    focusTimer.current = window.setTimeout(
+      () => {
+        drawerOpener.current?.focus();
+        focusTimer.current = null;
+      },
+      reducedMotion ? 0 : 180,
+    );
   }, []);
+
+  useEffect(
+    () => () => {
+      if (focusTimer.current !== null) window.clearTimeout(focusTimer.current);
+    },
+    [],
+  );
 
   const refresh = useCallback(async () => {
     setLoading(true);

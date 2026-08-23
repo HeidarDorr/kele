@@ -117,7 +117,7 @@ button:disabled {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--kele-canvas);
-  box-shadow: -12px 0 32px color-mix(in srgb, var(--kele-inverse) 18%, transparent);
+  box-shadow: 12px 0 32px color-mix(in srgb, var(--kele-inverse) 18%, transparent);
   animation: cart-drawer-in 240ms ease both;
 }
 
@@ -151,7 +151,6 @@ button:disabled {
 .icon-button {
   inline-size: 2.75rem;
   block-size: 2.75rem;
-  border: 1px solid var(--kele-line);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -1132,7 +1131,7 @@ button:disabled {
 
 @keyframes cart-drawer-in {
   from {
-    transform: translateX(2rem);
+    transform: translateX(-2rem);
     opacity: 0;
   }
 }
@@ -1695,6 +1694,7 @@ h2 {
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
+  margin-bottom: 0.3rem;
 }
 
 .footer-grid p,
@@ -3761,7 +3761,8 @@ summary {
   position: absolute;
   inset-block-start: calc(100% - 0.15rem);
   inset-inline-start: -1.25rem;
-  min-inline-size: 13rem;
+  inline-size: clamp(43rem, 56vw, 52rem);
+  max-inline-size: calc(100vw - 2rem);
   padding-block-start: 0.75rem;
   opacity: 0;
   visibility: hidden;
@@ -3774,26 +3775,47 @@ summary {
 
 .desktop-products-menu > ul {
   margin: 0;
-  padding: 0.85rem;
+  padding: 0;
   display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   background: color-mix(in srgb, var(--kele-canvas) 94%, transparent);
-  border: 1px solid color-mix(in srgb, var(--kele-line) 88%, transparent);
+  border-block-start: 1px solid var(--kele-line);
+  border-inline-start: 1px solid var(--kele-line);
   box-shadow: 0 1.2rem 3rem rgb(43 31 24 / 10%);
   backdrop-filter: blur(18px);
   list-style: none;
 }
 
 .desktop-products-menu a {
-  min-block-size: 2.65rem;
-  padding-inline: 0.65rem;
+  min-block-size: 7rem;
+  padding: 1rem 1.2rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  border-inline-end: 1px solid var(--kele-line);
+  border-block-end: 1px solid var(--kele-line);
+  color: var(--kele-ink);
   text-decoration: none;
+  transition: none;
 }
 
 .desktop-products-menu a:hover,
 .desktop-products-menu a.is-active {
   background: var(--kele-surface-muted);
+}
+
+.desktop-products-menu span {
+  direction: ltr;
+  color: var(--kele-ink-muted);
+  font-size: 0.68rem;
+}
+
+.desktop-products-menu strong {
+  align-self: flex-start;
+  font-family: var(--font-display), var(--font-peyda), serif;
+  font-size: 1.4rem;
+  font-weight: 500;
 }
 
 .desktop-products-item:hover .desktop-products-menu,
@@ -4461,8 +4483,10 @@ summary {
 
 .home-product-rail-end span {
   margin-block-end: auto;
+  margin-left: auto;
   color: var(--kele-accent-strong);
   font-size: 1.5rem;
+  transform: rotate(180deg);
 }
 
 .home-product-rail-end strong {
@@ -4723,6 +4747,17 @@ summary {
   opacity: 0.5;
 }
 
+.home-closing::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 1;
+  block-size: clamp(4rem, 9vw, 7rem);
+  background: linear-gradient(to bottom, transparent, var(--kele-inverse));
+  pointer-events: none;
+}
+
 .home-closing::after {
   content: '';
   position: absolute;
@@ -4777,6 +4812,14 @@ summary {
   border-color: #fff;
   background: #fff;
   color: var(--kele-ink);
+}
+
+/* The closing photograph and footer form one deliberate dark coda on Home.
+   The fade resolves the image before the content grid changes, while the
+   hairline keeps the two semantic regions legible without an empty canvas gap. */
+.home + .site-footer {
+  margin-block-start: 0;
+  border-block-start: 1px solid color-mix(in srgb, var(--kele-inverse-text) 16%, transparent);
 }
 
 /* --- Loading and unavailable notices --- */
@@ -4973,6 +5016,7 @@ summary {
 /* Scrims exist to protect copy over a photograph. With no photograph they only
    obscure the brief, so they stand down until the artwork arrives. */
 .home-hero:has(.art-slot) .home-hero-veil,
+.home-closing:has(.art-slot)::before,
 .home-closing:has(.art-slot)::after {
   display: none;
 }
@@ -5076,6 +5120,661 @@ summary {
   }
 
   .home-notice-line {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Persistent storefront chrome and shared link motion.
+   ========================================================================== */
+
+html {
+  scroll-padding-block-start: calc(var(--header-block) + 3rem);
+}
+
+#main-content {
+  scroll-margin-block-start: calc(var(--header-block) + 3rem);
+}
+
+.skip-link {
+  z-index: 140;
+}
+
+.site-header {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 80;
+  background: color-mix(in srgb, var(--kele-canvas) 84%, transparent);
+  border-block-end-color: color-mix(in srgb, var(--kele-line) 72%, transparent);
+  box-shadow: 0 0.5rem 2rem rgb(43 31 24 / 4%);
+  -webkit-backdrop-filter: blur(16px) saturate(112%);
+  backdrop-filter: blur(16px) saturate(112%);
+}
+
+.site-header-spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.site-header-row-spacer {
+  min-block-size: var(--header-block);
+}
+
+.header-end {
+  gap: 0.125rem;
+}
+
+.header-search,
+.header-account-link,
+.header-cart-button {
+  position: relative;
+  inline-size: var(--kele-control);
+  min-inline-size: var(--kele-control);
+  block-size: var(--kele-control);
+  min-block-size: var(--kele-control);
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--kele-ink);
+}
+
+.header-commerce {
+  gap: 0.125rem;
+}
+
+.header-cart-count {
+  position: absolute;
+  inset-block-start: 0.1rem;
+  inset-inline-end: -0.05rem;
+  min-inline-size: 1rem;
+  block-size: 1rem;
+  padding-inline: 0.18rem;
+  border-color: color-mix(in srgb, var(--kele-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--kele-canvas) 92%, transparent);
+  font-size: 0.58rem;
+  line-height: 1;
+  transform: none;
+}
+
+.header-icon-button {
+  border-radius: 50%;
+  transition: background-color var(--kele-duration-micro) var(--kele-ease);
+}
+
+.header-commerce .header-cart-button {
+  display: inline-grid;
+  place-items: center;
+  justify-content: center;
+}
+
+a:any-link {
+  transition: none;
+  translate: none;
+}
+
+a:any-link:active {
+  opacity: 1;
+}
+
+/* Textual links share one optical underline contract. The rule begins on the
+   physical right, reaches a little beyond the word on the left and inherits
+   the exact text color in every surface. */
+.desktop-nav > ul > li > a,
+.text-link,
+.home-heading-link,
+.home-text-link,
+.breadcrumbs a,
+.site-footer nav a,
+.product-card h3 a,
+.section-heading a,
+.mobile-primary-links > a,
+.mobile-products-entry > div:first-child > a,
+.mobile-product-links a,
+.mobile-customer-links a,
+.product-category-index strong,
+.desktop-products-menu strong,
+.category-links span,
+.home-category-label,
+.home-journal-grid strong,
+.home-product-rail-end strong {
+  --kele-link-rule-offset: 0.66em;
+  position: relative;
+  text-decoration: none;
+  transition: none;
+}
+
+.desktop-nav > ul > li > a::after,
+.text-link::after,
+.home-heading-link::after,
+.home-text-link::after,
+.breadcrumbs a::after,
+.site-footer nav a::after,
+.product-card h3 a::after,
+.section-heading a::after,
+.mobile-primary-links > a::after,
+.mobile-products-entry > div:first-child > a::after,
+.mobile-product-links a::after,
+.mobile-customer-links a::after,
+.product-category-index strong::after,
+.desktop-products-menu strong::after,
+.category-links span::after,
+.home-category-label::after,
+.home-journal-grid strong::after,
+.home-product-rail-end strong::after {
+  content: '';
+  position: absolute;
+  inset-block-start: auto;
+  inset-block-end: calc(50% - var(--kele-link-rule-offset));
+  inset-inline-start: 0;
+  display: block;
+  inline-size: calc(100% + 0.45rem);
+  block-size: 1px;
+  background: currentColor;
+  clip-path: inset(0);
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition:
+    transform var(--kele-duration-micro) var(--kele-ease),
+    clip-path var(--kele-duration-micro) var(--kele-ease);
+}
+
+.desktop-nav > ul > li > a,
+.home-text-link,
+.site-footer nav a,
+.mobile-primary-links > a,
+.mobile-products-entry > div:first-child > a,
+.mobile-product-links a,
+.mobile-customer-links a {
+  --kele-link-rule-offset: 0.8em;
+}
+
+.site-footer nav a,
+.mobile-primary-links > a,
+.mobile-products-entry > div:first-child > a,
+.mobile-product-links a,
+.mobile-customer-links a,
+.product-category-index strong,
+.desktop-products-menu strong,
+.category-links span,
+.home-category-label,
+.home-journal-grid strong,
+.home-product-rail-end strong {
+  inline-size: fit-content;
+}
+
+.desktop-nav a.is-active,
+.desktop-products-menu a.is-active {
+  color: inherit;
+}
+
+.mobile-product-links a.is-active {
+  color: var(--kele-ink-muted);
+}
+
+.desktop-nav > ul > li > a.is-active,
+.mobile-primary-links > a.is-active,
+.mobile-products-entry > div:first-child > a.is-active {
+  color: inherit;
+}
+
+.desktop-nav > ul > li > a.is-active::after,
+.mobile-primary-links > a.is-active::after,
+.mobile-products-entry > div:first-child > a.is-active::after,
+.mobile-product-links a.is-active::after,
+.desktop-products-menu a.is-active strong::after,
+.home-text-link::after,
+.breadcrumbs a::after {
+  clip-path: inset(0 0 0 0.45rem);
+  transform: scaleX(1);
+}
+
+.home-text-link,
+.breadcrumbs a {
+  color: inherit;
+}
+
+.home-text-link:hover,
+.home-text-link:focus-visible,
+.breadcrumbs a:hover,
+.breadcrumbs a:focus-visible {
+  color: inherit;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header {
+    background: color-mix(in srgb, var(--kele-canvas) 97%, transparent);
+  }
+}
+
+@media (hover: hover) {
+  .header-icon-button:hover {
+    background: color-mix(in srgb, var(--kele-accent-strong) 9%, transparent);
+    color: inherit;
+    opacity: 1;
+  }
+
+  .desktop-nav > ul > li > a:hover::after,
+  .desktop-nav > ul > li > a:focus-visible::after,
+  .desktop-products-item:hover > a::after,
+  .desktop-products-item:focus-within > a::after,
+  .text-link:hover::after,
+  .text-link:focus-visible::after,
+  .home-heading-link:hover::after,
+  .home-heading-link:focus-visible::after,
+  .home-text-link:hover::after,
+  .home-text-link:focus-visible::after,
+  .site-footer nav a:hover::after,
+  .site-footer nav a:focus-visible::after,
+  .product-card h3 a:hover::after,
+  .product-card h3 a:focus-visible::after,
+  .section-heading a:hover::after,
+  .section-heading a:focus-visible::after,
+  .mobile-primary-links > a:hover::after,
+  .mobile-primary-links > a:focus-visible::after,
+  .mobile-products-entry > div:first-child > a:hover::after,
+  .mobile-products-entry > div:first-child > a:focus-visible::after,
+  .mobile-product-links a:hover::after,
+  .mobile-product-links a:focus-visible::after,
+  .mobile-customer-links a:hover::after,
+  .mobile-customer-links a:focus-visible::after,
+  .product-category-index a:hover strong::after,
+  .product-category-index a:focus-visible strong::after,
+  .desktop-products-menu a:hover strong::after,
+  .desktop-products-menu a:focus-visible strong::after,
+  .category-links a:hover span::after,
+  .category-links a:focus-visible span::after,
+  .home-category-tile:hover .home-category-label::after,
+  .home-category-tile:focus-visible .home-category-label::after,
+  .home-journal-grid a:hover strong::after,
+  .home-journal-grid a:focus-visible strong::after,
+  .home-product-rail-end a:hover strong::after,
+  .home-product-rail-end a:focus-visible strong::after,
+  .journal-index-grid a:hover .text-link::after,
+  .journal-index-grid a:focus-visible .text-link::after,
+  .occasion-index-list a:hover .text-link::after,
+  .occasion-index-list a:focus-visible .text-link::after {
+    clip-path: inset(0);
+    transform: scaleX(1);
+  }
+}
+
+/* Solid and outlined textual controls keep their resting colors. Their only
+   hover cue is the same right-origin hairline used by links. */
+.button-primary,
+.button-secondary,
+.home-button,
+.art-slot-copy {
+  --kele-button-rule-inline-gutter: 3rem;
+  --kele-button-rule-max: 8rem;
+  position: relative;
+  transition: none;
+}
+
+.button-primary::after,
+.button-secondary::after,
+.home-button::after,
+.art-slot-copy::after {
+  content: '';
+  position: absolute;
+  inset-block-end: 0.62rem;
+  inset-inline-start: 50%;
+  inline-size: min(
+    calc(100% - var(--kele-button-rule-inline-gutter) + 0.45rem),
+    calc(var(--kele-button-rule-max) + 0.45rem)
+  );
+  block-size: 1px;
+  background: currentColor;
+  pointer-events: none;
+  transform: translateX(50%) scaleX(0);
+  transform-origin: right center;
+  transition: transform var(--kele-duration-micro) var(--kele-ease);
+}
+
+.home-button::after {
+  --kele-button-rule-inline-gutter: 3.5rem;
+}
+
+.art-slot-copy::after {
+  --kele-button-rule-inline-gutter: 2.2rem;
+}
+
+.button-primary:not(:disabled):hover::after,
+.button-primary:not(:disabled):focus-visible::after,
+.button-secondary:not(:disabled):hover::after,
+.button-secondary:not(:disabled):focus-visible::after,
+.home-button:hover::after,
+.home-button:focus-visible::after,
+.art-slot-copy:not(:disabled):hover::after,
+.art-slot-copy:not(:disabled):focus-visible::after {
+  transform: translateX(50%) scaleX(1);
+}
+
+.button-primary:hover {
+  border-color: var(--kele-inverse);
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+}
+
+.button-secondary:hover {
+  border-color: var(--kele-inverse);
+  background: transparent;
+  color: var(--kele-ink);
+}
+
+.home-button:hover {
+  border-color: var(--kele-inverse);
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+}
+
+.home-closing .home-button:hover {
+  border-color: var(--kele-inverse-text);
+  background: var(--kele-inverse-text);
+  color: var(--kele-ink);
+}
+
+.art-slot-copy:hover {
+  border-color: var(--kele-inverse);
+  background: var(--kele-inverse);
+  color: var(--kele-inverse-text);
+}
+
+@media (min-width: 1024px) {
+  .header-search,
+  .header-account-link,
+  .header-cart-button {
+    isolation: isolate;
+  }
+
+  .header-search::before,
+  .header-account-link::before,
+  .header-cart-button::before {
+    content: '';
+    position: absolute;
+    inset: 0.2rem;
+    z-index: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--kele-accent-strong) 9%, transparent);
+    opacity: 0;
+    transform: scale(0.92);
+    transition:
+      opacity 120ms var(--kele-ease),
+      transform 120ms var(--kele-ease);
+  }
+
+  .header-search > svg,
+  .header-account-link > svg,
+  .header-cart-button > svg,
+  .header-cart-count {
+    z-index: 1;
+  }
+
+  .header-search:hover,
+  .header-account-link:hover,
+  .header-cart-button:hover {
+    background: transparent;
+    color: var(--kele-ink);
+  }
+
+  .header-search:hover::before,
+  .header-search:focus-visible::before,
+  .header-account-link:hover::before,
+  .header-account-link:focus-visible::before,
+  .header-cart-button:hover::before,
+  .header-cart-button:focus-visible::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 1023px) {
+  .header-search {
+    display: none;
+  }
+
+  .mobile-navigation-overlay {
+    background: rgb(43 31 24 / 42%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .mobile-navigation-panel {
+    background: var(--kele-canvas);
+  }
+
+  .mobile-primary-links > a::after,
+  .mobile-products-entry > div:first-child > a::after,
+  .mobile-product-links a::after,
+  .mobile-customer-links a::after {
+    display: none;
+  }
+
+  .mobile-navigation-overlay.is-open,
+  .mobile-navigation-panel.is-open {
+    animation: kele-panel-fade-in 180ms ease-out both;
+  }
+
+  .mobile-navigation-overlay.is-closing,
+  .mobile-navigation-panel.is-closing {
+    animation: kele-panel-fade-out 160ms ease-in both;
+  }
+
+  .cart-overlay.is-open,
+  .cart-drawer.is-open {
+    animation: kele-panel-fade-in 180ms ease-out both;
+  }
+
+  .cart-overlay.is-closing,
+  .cart-drawer.is-closing {
+    animation: kele-panel-fade-out 160ms ease-in both;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-promise-grid > li:nth-child(-n + 2) {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+
+  .occasion-index-list article > a,
+  .occasion-index-list article:nth-child(even) > a {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .occasion-index-list article:nth-child(even) .occasion-index-media,
+  .occasion-index-list article:nth-child(even) .occasion-index-copy {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .occasion-index-media {
+    inline-size: 100%;
+    aspect-ratio: 4 / 5;
+  }
+
+  .header-account-link {
+    display: none;
+  }
+
+  .wordmark .brand-wordmark {
+    inline-size: 5.75rem;
+  }
+
+  .cart-drawer-header {
+    position: relative;
+    padding: 1.25rem;
+  }
+
+  .cart-drawer-close {
+    position: absolute;
+    inset-block-start: calc(1.25rem + (3.25rem - var(--kele-control)) / 2);
+    inset-inline-end: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-detail-grid,
+  .outfit-detail-hero {
+    max-inline-size: 70rem;
+    margin-inline: auto;
+    direction: ltr;
+    grid-template-columns: minmax(0, 1.15fr) minmax(21rem, 0.85fr);
+    gap: clamp(2.5rem, 4.5vw, 4.5rem);
+  }
+
+  .product-detail-grid > *,
+  .outfit-detail-hero > * {
+    direction: rtl;
+  }
+
+  .product-detail-grid > .product-gallery,
+  .outfit-detail-hero > .product-gallery {
+    direction: ltr;
+  }
+
+  .gallery-thumbnails,
+  .gallery-primary,
+  .gallery-position {
+    direction: rtl;
+  }
+
+  .outfit-detail-copy {
+    inset-block-start: 1.5rem;
+    padding-block-start: 0.5rem;
+  }
+
+  .outfit-detail-copy h1 {
+    max-inline-size: none;
+    font-size: clamp(2.2rem, 4vw, 3.6rem);
+    line-height: 1.18;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cart-overlay.is-open {
+    animation: cart-overlay-in 180ms ease both;
+  }
+
+  .cart-drawer.is-open {
+    animation: cart-drawer-in 240ms ease both;
+  }
+
+  .cart-overlay.is-closing {
+    animation: cart-overlay-out 160ms ease-in both;
+  }
+
+  .cart-drawer.is-closing {
+    animation: cart-drawer-out 180ms ease-in both;
+  }
+}
+
+.catalog-tools {
+  scroll-margin-block-start: calc(var(--header-block) + 2rem);
+}
+
+.footer-tail {
+  margin-block-start: clamp(2rem, 4vw, 3.5rem);
+  padding-block-start: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  border-block-start: 1px solid color-mix(in srgb, var(--kele-inverse-text) 16%, transparent);
+  padding-left: 0;
+}
+
+@media (min-width: 767px) {
+  .footer-tail {
+    margin-bottom: -2rem;
+  }
+}
+
+.back-to-top {
+  inline-size: var(--kele-control);
+  block-size: var(--kele-control);
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--kele-inverse-text) 34%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--kele-inverse-text);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .back-to-top:hover {
+    background: color-mix(in srgb, var(--kele-inverse-text) 9%, transparent);
+  }
+}
+
+@keyframes kele-panel-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes kele-panel-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cart-overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cart-drawer-out {
+  to {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desktop-nav > ul > li > a::after,
+  .text-link::after,
+  .home-heading-link::after,
+  .home-text-link::after,
+  .breadcrumbs a::after,
+  .site-footer nav a::after,
+  .product-card h3 a::after,
+  .section-heading a::after,
+  .mobile-primary-links > a::after,
+  .mobile-products-entry > div:first-child > a::after,
+  .mobile-product-links a::after,
+  .mobile-customer-links a::after,
+  .product-category-index strong::after,
+  .desktop-products-menu strong::after,
+  .category-links span::after,
+  .home-category-label::after,
+  .home-journal-grid strong::after,
+  .home-product-rail-end strong::after,
+  .button-primary::after,
+  .button-secondary::after,
+  .home-button::after,
+  .art-slot-copy::after {
+    transition: none;
+  }
+
+  .mobile-navigation-overlay,
+  .mobile-navigation-panel,
+  .cart-overlay,
+  .cart-drawer {
     animation: none;
   }
 }

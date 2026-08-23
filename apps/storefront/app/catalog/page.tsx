@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type SearchParameters = Promise<{
   q?: string;
   sort?: 'newest' | 'price_asc' | 'price_desc';
+  focus?: 'search';
 }>;
 
 export default async function CatalogPage({ searchParams }: { searchParams: SearchParameters }) {
@@ -61,13 +62,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
             </Link>
           ))}
         </nav>
-        <form className="catalog-tools" role="search">
+        <form id="catalog-search" className="catalog-tools" role="search">
           <div>
             <label htmlFor="catalog-query">جست‌وجو</label>
             <input
               id="catalog-query"
               name="q"
               type="search"
+              autoFocus={parameters.focus === 'search'}
               defaultValue={parameters.q}
               placeholder="برای نمونه: لینن یا بژ"
               maxLength={120}

@@ -11,8 +11,7 @@ export function HeaderCommerceActions() {
   return (
     <div className="header-commerce">
       <Link className="header-account-link" href="/account" aria-label="حساب مشتری">
-        <UserIcon size={21} weight="light" aria-hidden="true" />
-        <span>حساب</span>
+        <UserIcon size={20} weight="light" aria-hidden="true" />
       </Link>
       <button
         className="header-cart-button"
@@ -20,8 +19,7 @@ export function HeaderCommerceActions() {
         onClick={openDrawer}
         aria-label={`سبد خرید، ${String(quantity)} کالا`}
       >
-        <BagIcon size={21} weight="light" aria-hidden="true" />
-        <span>سبد</span>
+        <BagIcon size={20} weight="light" aria-hidden="true" />
         <bdi className="header-cart-count" dir="ltr">
           {quantity.toLocaleString('fa-IR')}
         </bdi>

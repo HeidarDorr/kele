@@ -12,16 +12,47 @@ const adminHeaders = { cookie: `kele_session=${superSession}` };
 
 async function settleEditorialImages(page: Page): Promise<void> {
   await page.evaluate(async () => {
+    const images = Array.from(document.images);
+    images.forEach((image) => {
+      image.loading = 'eager';
+    });
     window.scrollTo(0, document.body.scrollHeight);
     await new Promise<void>((resolveFrame) => {
       window.setTimeout(resolveFrame, 100);
     });
     window.scrollTo(0, 0);
-  });
-  await page.waitForFunction(() =>
-    Array.from(document.images).every((image) => image.complete && image.naturalWidth > 0),
-  );
-  await page.evaluate(async () => {
+    await Promise.all(
+      images.map(
+        (image) =>
+          new Promise<void>((resolveImage, rejectImage) => {
+            const assertDecodedImage = () => {
+              if (image.naturalWidth > 0) {
+                resolveImage();
+                return;
+              }
+              rejectImage(
+                new Error(`Editorial image failed to decode: ${String(image.currentSrc)}`),
+              );
+            };
+
+            if (image.complete) {
+              assertDecodedImage();
+              return;
+            }
+
+            image.addEventListener('load', assertDecodedImage, { once: true });
+            image.addEventListener(
+              'error',
+              () => {
+                rejectImage(
+                  new Error(`Editorial image failed to load: ${String(image.currentSrc)}`),
+                );
+              },
+              { once: true },
+            );
+          }),
+      ),
+    );
     await document.fonts.ready;
   });
 }
@@ -72,6 +103,44 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
+      const header = page.locator('.site-header');
+      await expect(header).toHaveCSS('position', 'fixed');
+      await expect(page.locator('.header-search')).toHaveAttribute(
+        'aria-label',
+        'جست‌وجوی محصولات',
+      );
+      await expect(page.locator('.header-account-link')).toHaveAttribute(
+        'aria-label',
+        'حساب مشتری',
+      );
+      await expect(page.locator('.header-cart-button')).toHaveAccessibleName(/سبد خرید/);
+      await expect(page.locator('.header-account-link')).toHaveText('');
+      const { headerHeight, headerSpacerHeight } = await page.evaluate(() => ({
+        headerHeight: document.querySelector('.site-header')?.clientHeight ?? 0,
+        headerSpacerHeight: document.querySelector('.site-header-spacer')?.clientHeight ?? 0,
+      }));
+      expect(headerHeight).toBeGreaterThan(0);
+      expect(Math.abs(headerHeight - headerSpacerHeight)).toBeLessThanOrEqual(1);
+      if (viewport.label === 'mobile') {
+        const wordmarkBox = await page.locator('.wordmark .brand-wordmark').boundingBox();
+        if (!wordmarkBox) throw new Error('Mobile wordmark is missing');
+        expect(wordmarkBox.width).toBeLessThanOrEqual(93);
+      }
+      if (viewport.label === 'desktop') {
+        await expect(page.locator('.desktop-products-menu li')).toHaveCount(8);
+        const menuGrid = await page.locator('.desktop-products-menu > ul').evaluate((element) => {
+          const styles = window.getComputedStyle(element);
+          return {
+            columns: styles.gridTemplateColumns.split(' ').length,
+            rows: styles.gridTemplateRows.split(' ').length,
+          };
+        });
+        expect(menuGrid).toEqual({ columns: 4, rows: 2 });
+      }
+      const closingBox = await page.locator('.home-closing').boundingBox();
+      const footerBox = await page.locator('.site-footer').boundingBox();
+      if (!closingBox || !footerBox) throw new Error('Homepage closing band or footer is missing');
+      expect(Math.abs(footerBox.y - (closingBox.y + closingBox.height))).toBeLessThanOrEqual(1);
       await settleEditorialImages(page);
       expect(errors).toEqual([]);
       await page.screenshot({
@@ -81,6 +150,343 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       await context.close();
     });
   }
+
+  test('desktop header links keep their text color and route-active underline', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${e2eUrls.storefront}/catalog`);
+    const productsLink = page
+      .locator('.desktop-nav > ul > li > a.is-active')
+      .filter({ visible: true });
+    await expect(productsLink).toHaveAttribute('aria-current', 'page');
+    await expect(productsLink).toHaveCSS('color', 'rgb(48, 37, 30)');
+    await expect(productsLink).toHaveCSS('transition', 'none');
+    const headerRuleOffset = await productsLink.evaluate((element) =>
+      String(window.getComputedStyle(element).getPropertyValue('--kele-link-rule-offset')).trim(),
+    );
+    const activeRule = await productsLink.evaluate((element) => {
+      const style = window.getComputedStyle(element, '::after');
+      return {
+        color: style.backgroundColor,
+        clipPath: style.clipPath,
+        offset: Number.parseFloat(style.insetBlockEnd),
+        transform: style.transform,
+      };
+    });
+    expect(activeRule.color).toBe('rgb(48, 37, 30)');
+    expect(activeRule.clipPath).not.toBe('inset(0px)');
+    expect(activeRule.offset).toBeGreaterThan(8);
+    expect(activeRule.transform).toBe('matrix(1, 0, 0, 1, 0, 0)');
+
+    const productsItem = page.locator('.desktop-products-item').filter({ visible: true });
+    await productsItem.hover();
+    await expect(page.locator('.desktop-products-menu').filter({ visible: true })).toBeVisible();
+    await expect
+      .poll(() =>
+        productsLink.evaluate((element) =>
+          String(window.getComputedStyle(element, '::after').clipPath),
+        ),
+      )
+      .toBe('inset(0px)');
+
+    await page.locator('.wordmark').hover();
+    await expect
+      .poll(() =>
+        productsLink.evaluate((element) =>
+          String(window.getComputedStyle(element, '::after').clipPath),
+        ),
+      )
+      .not.toBe('inset(0px)');
+
+    const cartButton = page.locator('.header-cart-button').filter({ visible: true });
+    const restingColor = await cartButton.evaluate((button) =>
+      String(window.getComputedStyle(button).color),
+    );
+    await cartButton.hover();
+    await expect(cartButton).toHaveCSS('color', restingColor);
+    await expect
+      .poll(() =>
+        cartButton.evaluate((button) =>
+          Number(window.getComputedStyle(button, '::before').opacity),
+        ),
+      )
+      .toBeGreaterThan(0.9);
+    const iconState = await cartButton.evaluate((button) => {
+      const icon = button.querySelector('svg');
+      if (!icon) throw new Error('Cart icon is missing');
+      const buttonBox = button.getBoundingClientRect();
+      const iconBox = icon.getBoundingClientRect();
+      const hoverDisc = window.getComputedStyle(button, '::before');
+      return {
+        x: Math.abs(
+          Number(iconBox.left) +
+            Number(iconBox.width) / 2 -
+            (Number(buttonBox.left) + Number(buttonBox.width) / 2),
+        ),
+        y: Math.abs(
+          Number(iconBox.top) +
+            Number(iconBox.height) / 2 -
+            (Number(buttonBox.top) + Number(buttonBox.height) / 2),
+        ),
+        discTransform: hoverDisc.transform,
+      };
+    });
+    expect(iconState.x).toBeLessThanOrEqual(1);
+    expect(iconState.y).toBeLessThanOrEqual(1);
+    expect(iconState.discTransform).not.toBe('none');
+    const compactDisc = await cartButton.evaluate((button) => {
+      const style = window.getComputedStyle(button, '::before');
+      return {
+        inset: Number.parseFloat(style.insetBlockStart),
+        scale: new DOMMatrix(style.transform).a,
+        transitionDuration: style.transitionDuration,
+      };
+    });
+    expect(compactDisc.inset).toBeGreaterThan(0);
+    expect(compactDisc.scale).toBeLessThanOrEqual(1.001);
+    expect(compactDisc.transitionDuration).toContain('0.12s');
+
+    await page.goto(e2eUrls.storefront);
+    const homeTextLink = page.locator('.home-text-link').filter({ visible: true }).first();
+    await expect(homeTextLink).toBeVisible();
+    const homeRuleOffset = await homeTextLink.evaluate((element) =>
+      String(window.getComputedStyle(element).getPropertyValue('--kele-link-rule-offset')).trim(),
+    );
+    expect(homeRuleOffset).toBe(headerRuleOffset);
+    const restingHomeRule = await homeTextLink.evaluate((element) =>
+      String(window.getComputedStyle(element, '::after').clipPath),
+    );
+    expect(restingHomeRule).not.toBe('inset(0px)');
+    await homeTextLink.hover();
+    await expect
+      .poll(() =>
+        homeTextLink.evaluate((element) =>
+          String(window.getComputedStyle(element, '::after').clipPath),
+        ),
+      )
+      .toBe('inset(0px)');
+    await page.locator('.wordmark').hover();
+    await expect
+      .poll(() =>
+        homeTextLink.evaluate((element) =>
+          String(window.getComputedStyle(element, '::after').clipPath),
+        ),
+      )
+      .toBe(restingHomeRule);
+  });
+
+  test('mobile editorial grids preserve spacing and image hierarchy', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(e2eUrls.storefront);
+
+    const promises = page.locator('.home-promise-grid > li');
+    await expect(promises).toHaveCount(4);
+    for (const index of [0, 1]) {
+      const firstRowStyle = await promises.nth(index).evaluate((item) => {
+        const style = window.getComputedStyle(item);
+        return {
+          border: style.borderBlockStartWidth,
+          padding: style.paddingBlockStart,
+        };
+      });
+      expect(firstRowStyle.border).toBe('0px');
+      expect(firstRowStyle.padding).toBe('0px');
+    }
+    await expect(promises.nth(2)).toHaveCSS('border-block-start-width', '1px');
+    await page.screenshot({
+      path: resolve(evidenceDirectory, 'states', 'homepage-mobile-refinements.png'),
+      fullPage: true,
+      animations: 'disabled',
+    });
+
+    await page.goto(`${e2eUrls.storefront}/occasions`);
+    const occasionLink = page.locator('.occasion-index-list article > a').first();
+    const occasionMedia = occasionLink.locator('.occasion-index-media');
+    await expect(occasionMedia).toBeVisible();
+    const linkBox = await occasionLink.boundingBox();
+    const mediaBox = await occasionMedia.boundingBox();
+    if (!linkBox || !mediaBox) throw new Error('Mobile Occasion card is incomplete');
+    expect(mediaBox.width).toBeGreaterThanOrEqual(linkBox.width * 0.98);
+    expect(mediaBox.width).toBeGreaterThan(300);
+    await page.screenshot({
+      path: resolve(evidenceDirectory, 'states', 'occasion-index-mobile-refinements.png'),
+      fullPage: true,
+      animations: 'disabled',
+    });
+  });
+
+  test('header search focuses Catalog search and the footer control returns to top', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(e2eUrls.storefront);
+    await page.locator('.header-search').click();
+    await expect(page).toHaveURL(/\/catalog\?focus=search#catalog-search$/);
+    await expect(page.locator('#catalog-query')).toBeFocused();
+    await expect
+      .poll(() =>
+        page.locator('#catalog-search').evaluate((form) => {
+          const box = form.getBoundingClientRect();
+          return (Number(box.top) + Number(box.height) / 2) / Number(window.innerHeight);
+        }),
+      )
+      .toBeGreaterThan(0.57);
+
+    const applyButton = page.getByRole('button', { name: 'اعمال' });
+    const restingButtonColors = await applyButton.evaluate((button) => {
+      const style = window.getComputedStyle(button);
+      const range = document.createRange();
+      range.selectNodeContents(button);
+      const buttonBox = button.getBoundingClientRect();
+      const textBox = range.getBoundingClientRect();
+      const ruleStyle = window.getComputedStyle(button, '::after');
+      return {
+        background: style.backgroundColor,
+        color: style.color,
+        centerDelta: Math.abs(
+          Number(textBox.left) +
+            Number(textBox.width) / 2 -
+            (Number(buttonBox.left) + Number(buttonBox.width) / 2),
+        ),
+        ruleWidth: Number.parseFloat(ruleStyle.inlineSize),
+        textWidth: Number(textBox.width),
+      };
+    });
+    expect(restingButtonColors.centerDelta).toBeLessThanOrEqual(1);
+    expect(restingButtonColors.ruleWidth).toBeGreaterThan(restingButtonColors.textWidth);
+    expect(restingButtonColors.ruleWidth - restingButtonColors.textWidth).toBeLessThan(12);
+    await applyButton.hover();
+    await expect(applyButton).toHaveCSS('background-color', restingButtonColors.background);
+    await expect(applyButton).toHaveCSS('color', restingButtonColors.color);
+    await expect
+      .poll(() =>
+        applyButton.evaluate((button) =>
+          Number(new DOMMatrix(window.getComputedStyle(button, '::after').transform).a),
+        ),
+      )
+      .toBeGreaterThan(0.9);
+
+    await page.locator('.back-to-top').click();
+    await page.waitForFunction(() => window.scrollY < 2);
+    await expect(page.locator('.back-to-top')).toHaveAccessibleName('بازگشت به بالای صفحه');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(e2eUrls.storefront);
+    await page.locator('.mobile-menu-trigger').click();
+    await page.getByRole('link', { name: 'جست‌وجوی محصولات' }).click();
+    await expect(page).toHaveURL(/\/catalog\?focus=search#catalog-search$/);
+    await expect(page.locator('#catalog-query')).toBeFocused();
+  });
+
+  test('responsive menu and cart reserve directional motion for desktop', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(e2eUrls.storefront);
+    await page.locator('.mobile-menu-trigger').click();
+    const menuOverlay = page.locator('.mobile-navigation-overlay');
+    const menuPanel = page.locator('.mobile-navigation-panel');
+    await expect(menuPanel).toHaveCSS('background-color', 'rgb(245, 239, 231)');
+    await expect(menuPanel).toHaveCSS('animation-name', 'kele-panel-fade-in');
+    await expect
+      .poll(() =>
+        page
+          .locator('.mobile-primary-links a')
+          .first()
+          .evaluate((link) => ({
+            display: window.getComputedStyle(link, '::after').display,
+            content: window.getComputedStyle(link, '::after').content,
+          })),
+      )
+      .toMatchObject({ display: 'none' });
+    const menuClose = page.locator('.mobile-navigation-panel .header-icon-button');
+    const menuCloseBox = await menuClose.boundingBox();
+    if (!menuCloseBox) throw new Error('Mobile menu close control is missing');
+    await menuClose.click();
+    await expect(menuOverlay).toHaveClass(/is-closing/);
+    await expect(menuPanel).toHaveCSS('animation-name', 'kele-panel-fade-out');
+    await expect(menuOverlay).toBeHidden();
+
+    await page.locator('.header-cart-button').click();
+    const cartOverlay = page.locator('.cart-overlay');
+    const cartDrawer = page.locator('.cart-drawer');
+    await expect(cartDrawer).toHaveCSS('animation-name', 'kele-panel-fade-in');
+    const cartCloseBox = await page.locator('.cart-drawer-close').boundingBox();
+    if (!cartCloseBox) throw new Error('Cart close control is missing');
+    expect(Math.abs(cartCloseBox.x - menuCloseBox.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(cartCloseBox.y - menuCloseBox.y)).toBeLessThanOrEqual(1);
+    await page.locator('.cart-drawer-close').click();
+    await expect(cartOverlay).toHaveClass(/is-closing/);
+    await expect(cartDrawer).toHaveCSS('animation-name', 'kele-panel-fade-out');
+    await expect(cartOverlay).toBeHidden();
+
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.locator('.header-cart-button').click();
+    await expect(cartDrawer).toHaveCSS('animation-name', 'kele-panel-fade-in');
+    await page.locator('.cart-drawer-close').click();
+    await expect(cartDrawer).toHaveCSS('animation-name', 'kele-panel-fade-out');
+    await expect(cartOverlay).toBeHidden();
+
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await page.locator('.header-cart-button').click();
+    await expect(cartDrawer).toHaveCSS('animation-name', 'cart-drawer-in');
+    await page.locator('.cart-drawer-close').click();
+    await expect(cartDrawer).toHaveCSS('animation-name', 'cart-drawer-out');
+    await expect(cartOverlay).toBeHidden();
+  });
+
+  test('desktop Product detail keeps the restrained gallery on the left', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    const galleryBox = await page
+      .locator('.product-gallery')
+      .filter({ visible: true })
+      .boundingBox();
+    const purchaseBox = await page
+      .locator('.purchase-panel')
+      .filter({ visible: true })
+      .boundingBox();
+    const primaryBox = await page
+      .locator('.gallery-primary')
+      .filter({ visible: true })
+      .boundingBox();
+    const thumbnailsBox = await page
+      .locator('.gallery-thumbnails')
+      .filter({ visible: true })
+      .boundingBox();
+    if (!galleryBox || !purchaseBox || !primaryBox || !thumbnailsBox) {
+      throw new Error('Product detail layout is incomplete');
+    }
+    expect(galleryBox.x).toBeLessThan(purchaseBox.x);
+    expect(thumbnailsBox.x).toBeLessThan(primaryBox.x);
+    expect(galleryBox.width).toBeLessThan(650);
+    expect(primaryBox.width).toBeLessThan(550);
+
+    await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
+    const outfitGallery = await page
+      .locator('.outfit-detail-hero .product-gallery')
+      .filter({ visible: true })
+      .boundingBox();
+    const outfitCopy = await page
+      .locator('.outfit-detail-copy')
+      .filter({ visible: true })
+      .boundingBox();
+    const outfitPrimary = await page
+      .locator('.outfit-detail-hero .gallery-primary')
+      .filter({ visible: true })
+      .boundingBox();
+    const outfitThumbnails = await page
+      .locator('.outfit-detail-hero .gallery-thumbnails')
+      .filter({ visible: true })
+      .boundingBox();
+    if (!outfitGallery || !outfitCopy || !outfitPrimary || !outfitThumbnails) {
+      throw new Error('Outfit detail layout is incomplete');
+    }
+    expect(outfitGallery.x).toBeLessThan(outfitCopy.x);
+    expect(outfitThumbnails.x).toBeLessThan(outfitPrimary.x);
+    expect(outfitGallery.width).toBeLessThan(650);
+  });
 
   for (const viewport of [
     { label: 'mobile', width: 360, height: 800 },

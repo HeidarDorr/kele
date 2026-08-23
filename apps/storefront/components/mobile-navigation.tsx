@@ -9,6 +9,7 @@ import { XIcon } from '@phosphor-icons/react/X';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { catalogSearchHref, focusCatalogSearch } from '../lib/focus-catalog-search';
 import {
   navigationItemIsActive,
   productNavigation,
@@ -17,25 +18,53 @@ import {
 
 const focusableSelector =
   'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const panelExitDuration = 160;
 
 export function MobileNavigation({ navigation }: { navigation: NavigationItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | null>(null);
+  const searchTimer = useRef<number | null>(null);
 
   const close = useCallback(() => {
     setOpen(false);
     setProductsOpen(false);
-    window.requestAnimationFrame(() => trigger.current?.focus());
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    closeTimer.current = window.setTimeout(
+      () => {
+        setMounted(false);
+        trigger.current?.focus();
+        closeTimer.current = null;
+      },
+      reducedMotion ? 0 : panelExitDuration,
+    );
   }, []);
 
+  const openNavigation = useCallback(() => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    setMounted(true);
+    setOpen(true);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+      if (searchTimer.current !== null) window.clearTimeout(searchTimer.current);
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (!open) return;
+    if (!mounted) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    panel.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
+    if (open) panel.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -63,7 +92,7 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [close, open]);
+  }, [close, mounted, open]);
 
   return (
     <div className="mobile-navigation">
@@ -74,15 +103,13 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
         aria-label="باز کردن فهرست"
         aria-expanded={open}
         aria-controls="mobile-navigation-panel"
-        onClick={() => {
-          setOpen(true);
-        }}
+        onClick={openNavigation}
       >
         <ListIcon size={23} weight="light" aria-hidden="true" />
       </button>
-      {open ? (
+      {mounted ? (
         <div
-          className="mobile-navigation-overlay"
+          className={`mobile-navigation-overlay ${open ? 'is-open' : 'is-closing'}`}
           role="presentation"
           onMouseDown={() => {
             close();
@@ -91,7 +118,7 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
           <div
             ref={panel}
             id="mobile-navigation-panel"
-            className="mobile-navigation-panel"
+            className={`mobile-navigation-panel ${open ? 'is-open' : 'is-closing'}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="mobile-navigation-title"
@@ -182,7 +209,20 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
                 })}
             </nav>
             <div className="mobile-customer-links">
-              <Link href="/catalog" onClick={close}>
+              <Link
+                href={catalogSearchHref}
+                onClick={(event) => {
+                  close();
+                  if (pathname !== '/catalog') return;
+                  event.preventDefault();
+                  window.history.replaceState(null, '', catalogSearchHref);
+                  if (searchTimer.current !== null) window.clearTimeout(searchTimer.current);
+                  searchTimer.current = window.setTimeout(() => {
+                    focusCatalogSearch();
+                    searchTimer.current = null;
+                  }, panelExitDuration + 20);
+                }}
+              >
                 <MagnifyingGlassIcon size={20} weight="light" aria-hidden="true" />
                 جست‌وجوی محصولات
               </Link>

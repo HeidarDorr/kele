@@ -28,7 +28,7 @@ export function DesktopNavigation({ navigation }: { navigation: readonly Navigat
                 </Link>
                 <div className="desktop-products-menu">
                   <ul aria-label="گروه‌های محصولات">
-                    {productNavigation.map((productItem) => {
+                    {productNavigation.map((productItem, index) => {
                       const childActive = navigationItemIsActive(pathname, productItem.href);
                       return (
                         <li key={productItem.href}>
@@ -43,7 +43,8 @@ export function DesktopNavigation({ navigation }: { navigation: readonly Navigat
                                 : undefined
                             }
                           >
-                            {productItem.label}
+                            <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                            <strong>{productItem.label}</strong>
                           </Link>
                         </li>
                       );

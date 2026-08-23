@@ -18,7 +18,7 @@ export function BrandWordmark({
         width={1839}
         height={1009}
         priority={priority}
-        sizes="(max-width: 767px) 112px, 160px"
+        sizes="(max-width: 767px) 92px, 160px"
       />
     </span>
   );

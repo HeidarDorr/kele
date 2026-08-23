@@ -3,7 +3,7 @@
 import { XIcon } from '@phosphor-icons/react/X';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CartLine } from '../lib/commerce-api';
 import { useCart } from './cart-provider';
 
@@ -12,6 +12,8 @@ export const noticeLabels = {
   sku_unavailable: 'یک انتخاب ناموجود است و ادامه خرید را متوقف می‌کند.',
   outfit_revision_requires_review: 'نسخه این ست باید پیش از ادامه بررسی شود.',
 } as const;
+
+const drawerExitDuration = 180;
 
 export function CartLineItem({ line }: { line: CartLine }) {
   const { updateLine, removeLine, busyLineId } = useCart();
@@ -73,13 +75,46 @@ export function CartLineItem({ line }: { line: CartLine }) {
 
 export function CartDrawer() {
   const { cart, loading, error, drawerOpen, closeDrawer, clear } = useCart();
+  const [mounted, setMounted] = useState(drawerOpen);
+  const [visible, setVisible] = useState(drawerOpen);
   const closeButton = useRef<HTMLButtonElement>(null);
   const drawer = useRef<HTMLElement>(null);
+  const exitTimer = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (exitTimer.current !== null) window.clearTimeout(exitTimer.current);
+    exitTimer.current = null;
+
+    if (drawerOpen) {
+      setMounted(true);
+      setVisible(true);
+      return;
+    }
+    if (!mounted) return;
+
+    setVisible(false);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    exitTimer.current = window.setTimeout(
+      () => {
+        setMounted(false);
+        exitTimer.current = null;
+      },
+      reducedMotion ? 0 : drawerExitDuration,
+    );
+  }, [drawerOpen, mounted]);
+
+  useEffect(
+    () => () => {
+      if (exitTimer.current !== null) window.clearTimeout(exitTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!mounted) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    closeButton.current?.focus();
+    if (visible) closeButton.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -108,14 +143,18 @@ export function CartDrawer() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [closeDrawer, drawerOpen]);
-  if (!drawerOpen) return null;
+  }, [closeDrawer, mounted, visible]);
+  if (!mounted) return null;
 
   return (
-    <div className="cart-overlay" role="presentation" onMouseDown={closeDrawer}>
+    <div
+      className={`cart-overlay ${visible ? 'is-open' : 'is-closing'}`}
+      role="presentation"
+      onMouseDown={closeDrawer}
+    >
       <aside
         ref={drawer}
-        className="cart-drawer"
+        className={`cart-drawer ${visible ? 'is-open' : 'is-closing'}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
@@ -128,9 +167,14 @@ export function CartDrawer() {
             <p>انتخاب‌های شما</p>
             <h2 id="cart-drawer-title">سبد خرید</h2>
           </div>
-          <button ref={closeButton} type="button" className="icon-button" onClick={closeDrawer}>
+          <button
+            ref={closeButton}
+            type="button"
+            className="header-icon-button cart-drawer-close"
+            aria-label="بستن سبد"
+            onClick={closeDrawer}
+          >
             <XIcon size={22} weight="light" aria-hidden="true" />
-            <span className="visually-hidden">بستن سبد</span>
           </button>
         </header>
         <div className="cart-drawer-body">

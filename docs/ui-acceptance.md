@@ -424,11 +424,15 @@ The production Storefront build was reviewed at 390×844, 768×1024 and
 1440×900. The review confirmed `lang="fa-IR"`, RTL direction and zero
 horizontal overflow at every viewport. On desktop, hovering Product reveals
 the eight approved groups and the current Product route exposes an active
-state. On mobile, the overlay covers the exact viewport, uses the
-`mobile-menu-fade` animation and a computed `blur(24px)` backdrop, while the
+state. Below the 1024 px desktop boundary, the opaque overlay covers the exact
+viewport and both its entry and exit use the paired `kele-panel-fade-in` /
+`kele-panel-fade-out` animations without backdrop blur or directional motion,
+while the
 Product disclosure lists Set, Jacket, Trousers, Shirt, T-shirt, Vest, Shorts
-and Shoes without the former Category block. Reduced-motion removes the new
-animations.
+and Shoes without the former Category block. Drawer links remain underline-free.
+At 390 px the first row of the four-item Homepage promise grid starts without a
+top divider or top padding, and each Occasion index image occupies the complete
+single-column article width. Reduced-motion removes the new animations.
 
 Data-backed card rendering and authenticated Admin Product/Media form replay
 were completed against the deterministic PostgreSQL seed. The Product creation

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BackToTopButton } from './back-to-top-button';
 import { BrandWordmark } from './brand-wordmark';
 import type { PublishedSiteSettings } from '../lib/editorial-api';
 
@@ -21,11 +22,6 @@ export function SiteFooter({ settings }: { settings?: PublishedSiteSettings | nu
         <div>
           <BrandWordmark className="footer-wordmark" alt="KELE" />
           <p>{configuration?.brandTagline ?? 'پوشش کودک با نگاهی آرام به فرم و جزئیات.'}</p>
-          {configuration?.contactEmail ? (
-            <a href={`mailto:${configuration.contactEmail}`} dir="ltr">
-              {configuration.contactEmail}
-            </a>
-          ) : null}
         </div>
         <nav aria-label="راهنمای فروشگاه">
           <h2>فروشگاه</h2>
@@ -41,6 +37,9 @@ export function SiteFooter({ settings }: { settings?: PublishedSiteSettings | nu
           <Link href="/orders">سفارش‌ها و مرجوعی</Link>
           <Link href="/cart">سبد خرید</Link>
         </nav>
+      </div>
+      <div className="shell footer-tail">
+        <BackToTopButton />
       </div>
     </footer>
   );
