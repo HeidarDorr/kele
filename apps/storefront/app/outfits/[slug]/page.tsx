@@ -7,6 +7,7 @@ import { ProductImage } from '../../../components/product-image';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getOutfit } from '../../../lib/catalog-api';
+import { standaloneGalleryItems } from '../../../lib/product-gallery-model';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,10 +65,12 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
         </nav>
 
         <section className="outfit-detail-hero" aria-labelledby="outfit-title">
-          <ProductGallery media={outfit.gallery} />
-          <div className="outfit-detail-copy">
-            <p className="product-label">ست کامل</p>
-            <h1 id="outfit-title">{outfit.name}</h1>
+          <ProductGallery items={standaloneGalleryItems(outfit.gallery)} />
+          <div className="outfit-detail-copy detail-purchase-panel">
+            <header className="detail-purchase-header">
+              <p className="product-label">ست کامل</p>
+              <h1 id="outfit-title">{outfit.name}</h1>
+            </header>
             <OutfitPurchaseControls outfit={outfit} description={outfit.description} />
           </div>
         </section>
@@ -93,7 +96,7 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
                       {item.quantity.toLocaleString('fa-IR')} عدد، {item.colorName}
                     </span>
                     <h3>{item.name}</h3>
-                    <p>مشاهده و خرید مستقل</p>
+                    <p className="text-link">مشاهده و خرید مستقل</p>
                   </div>
                 </Link>
               </li>

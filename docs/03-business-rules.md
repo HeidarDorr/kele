@@ -3392,6 +3392,17 @@ availability and price for that color. Pointer hover over the image SHALL show
 the second assigned image of the same ColorVariant when it exists. Outfit cards
 SHALL use the same compact visual geometry and SHALL NOT expose color swatches.
 
+## CAT-009
+
+A Product detail gallery SHALL expose the ordered Media assignments of every
+published, complete ColorVariant in ColorVariant order and then assignment
+order. Selecting a Product color SHALL update the purchasable ColorVariant and
+move the gallery to that color's featured Media without removing Media assigned
+to the other published colors. On mobile, a horizontal touch gesture over the
+primary image SHALL move to the previous or next gallery item using RTL
+directional semantics without preventing vertical page scrolling. Thumbnail and
+keyboard navigation SHALL remain available.
+
 ## Administration catalog clarification
 
 ## CMS-019

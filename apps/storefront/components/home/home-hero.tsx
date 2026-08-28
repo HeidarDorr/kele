@@ -28,7 +28,7 @@ export function HomeHero({
         <EditorialMedia
           src={media?.url}
           alt={media?.alt ?? 'روایت فصل KELE'}
-          sizes="100vw"
+          sizes="(max-width: 767px) 240vw, 100vw"
           focalPoint={media?.focalPoint}
           priority
           slotVariant="backdrop"

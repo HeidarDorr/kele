@@ -160,9 +160,6 @@ export async function uploadMediaAction(
   upload.set('file', file, file.name);
   upload.set('alt', stringValue(formData, 'alt'));
   upload.set('group', stringValue(formData, 'group'));
-  if (formData.get('attachColor') === 'on') {
-    upload.set('colorHex', stringValue(formData, 'colorHex'));
-  }
   upload.set('focalPointX', stringValue(formData, 'focalPointX') || '0.5');
   upload.set('focalPointY', stringValue(formData, 'focalPointY') || '0.5');
   try {
@@ -405,8 +402,10 @@ export async function saveHomepageAction(version: number, formData: FormData): P
           }
         : {
             title: stringValue(formData, `title:${id}`),
-            referenceIds: stringValue(formData, `referenceIds:${id}`)
-              .split(/[\s,]+/u)
+            referenceIds: formData
+              .getAll(`referenceIds:${id}`)
+              .filter((value): value is string => typeof value === 'string')
+              .flatMap((value) => value.split(/[\s,]+/u))
               .map((value) => value.trim())
               .filter(Boolean),
           },

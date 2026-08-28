@@ -1573,6 +1573,13 @@ The Media Library SHALL act as a centralized asset repository.
 
 ---
 
+Standalone Media Library uploads do not require or attach color metadata. A
+Product image receives its merchandising color only inside the Product →
+ColorVariant authoring flow, so uploading a reusable asset cannot silently
+change Product color behavior.
+
+---
+
 ## Alternative Flows
 
 ### A1. Replace Asset

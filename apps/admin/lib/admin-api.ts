@@ -95,6 +95,10 @@ export async function adminRequest<T>(path: string, init: RequestInit = {}): Pro
 }
 
 export const listProducts = () => adminRequest<AdminProductPage>('/admin/products?limit=100');
+export async function listPublishedProducts(): Promise<AdminProductPage> {
+  const page = await listProducts();
+  return { ...page, items: page.items.filter((product) => product.status === 'published') };
+}
 export const getProduct = (id: string) => adminRequest<AdminProduct>(`/admin/products/${id}`);
 export const listCategories = () => adminRequest<AdminCategory[]>('/admin/categories');
 export const listMedia = () => adminRequest<MediaValue[]>('/admin/media');
@@ -103,6 +107,10 @@ export const validateProduct = (id: string) =>
 export const previewProduct = (id: string) =>
   adminRequest<ProductPreview>(`/admin/products/${id}/preview`);
 export const listOutfits = () => adminRequest<AdminOutfitPage>('/admin/outfits');
+export async function listPublishedOutfits(): Promise<AdminOutfitPage> {
+  const page = await listOutfits();
+  return { ...page, items: page.items.filter((outfit) => outfit.status === 'published') };
+}
 export const getOutfit = (id: string) => adminRequest<AdminOutfit>(`/admin/outfits/${id}`);
 export const validateOutfit = (id: string) =>
   adminRequest<PublicationValidation>(`/admin/outfits/${id}/validation`);

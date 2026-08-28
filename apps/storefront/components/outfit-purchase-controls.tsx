@@ -3,6 +3,7 @@
 import { formatIrrAsToman } from '@kele/design-system/money';
 import { useMemo, useState } from 'react';
 import type { OutfitDetail } from '../lib/catalog-api';
+import { firstOutfitSizeCode } from '../lib/default-size-selection';
 import { useCart } from './cart-provider';
 
 type OutfitSize = OutfitDetail['sizes'][number];
@@ -44,7 +45,9 @@ export function OutfitPurchaseControls({
   description: string;
 }) {
   const { addOutfit, addProducts, loading } = useCart();
-  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [selectedCode, setSelectedCode] = useState<string | null>(() =>
+    firstOutfitSizeCode(outfit.sizes),
+  );
   const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
@@ -111,9 +114,12 @@ export function OutfitPurchaseControls({
 
   return (
     <div className="outfit-purchase-controls">
-      <p className="outfit-starting-price" aria-live="polite">
-        {displayedPrice}
-      </p>
+      <div className="purchase-price-row">
+        <span>{buyingProducts ? 'جمع قیمت‌های تکی' : 'قیمت این انتخاب'}</span>
+        <p className="outfit-starting-price" aria-live="polite">
+          {displayedPrice}
+        </p>
+      </div>
       <p className="product-description">{description}</p>
 
       <fieldset className="option-group size-options outfit-size-options">
@@ -147,8 +153,8 @@ export function OutfitPurchaseControls({
           <legend>اجزای این انتخاب</legend>
           <p className="outfit-component-selector-intro">
             {selected.components.length > 1
-              ? 'جزءهایی را که نمی‌خواهید بردارید. با نخستین حذف، انتخاب دیگر ست محسوب نمی‌شود؛ قیمت از مجموع محصولات باقی‌مانده محاسبه می‌شود و هر محصول جداگانه به سبد می‌رود.'
-              : 'این ست یک جزء دارد؛ برای خرید مستقل همین محصول از بخش ساختار ست استفاده کنید.'}
+              ? 'برای خرید بخشی از ست، تیک اجزایی را که نمی‌خواهید بردارید. اجزای باقی‌مانده جداگانه و با قیمت تکی به سبد اضافه می‌شوند.'
+              : 'برای خرید مستقل این محصول، از بخش ساختار ست وارد شوید.'}
           </p>
           <div className="outfit-component-options">
             {selected.components.map((component) => {
@@ -176,6 +182,7 @@ export function OutfitPurchaseControls({
                     </small>
                   </span>
                   <span className="outfit-component-option-meta">
+                    <small className="outfit-component-price-label">قیمت تکی</small>
                     <bdi>{component.price?.display ?? 'قیمت نامشخص'}</bdi>
                     <small className={component.available ? undefined : 'is-unavailable'}>
                       {component.price === null

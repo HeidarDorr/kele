@@ -488,6 +488,56 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     expect(outfitGallery.width).toBeLessThan(650);
   });
 
+  test('Product detail keeps every color image reachable and supports RTL mobile swipe', async ({
+    page,
+    request,
+  }) => {
+    const productResponse = await request.get(`${e2eUrls.api}/catalog/products/beige-linen-suit`);
+    expect(productResponse.ok()).toBe(true);
+    const product = (await productResponse.json()) as {
+      variants: Array<{ id: string; gallery: Array<{ id: string }> }>;
+    };
+    const expectedImageCount = product.variants.reduce(
+      (count, variant) => count + variant.gallery.length,
+      0,
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+
+    const thumbnails = page.locator('.gallery-thumbnails button');
+    await expect(thumbnails).toHaveCount(expectedImageCount);
+    for (const variant of product.variants) {
+      await expect(page.locator(`[data-gallery-group="${variant.id}"]`)).toHaveCount(
+        variant.gallery.length,
+      );
+    }
+
+    const primary = page.locator('.gallery-primary');
+    const primaryBoxBeforeSwipe = await primary.boundingBox();
+    if (!primaryBoxBeforeSwipe) throw new Error('Product gallery primary image is not visible');
+    await expect(primary).toHaveCSS('touch-action', 'pan-y pinch-zoom');
+    await expect(thumbnails.nth(0)).toHaveAttribute('aria-pressed', 'true');
+    await primary.dispatchEvent('touchstart', {
+      touches: [{ identifier: 1, clientX: 80, clientY: 220 }],
+    });
+    await primary.dispatchEvent('touchend', {
+      changedTouches: [{ identifier: 1, clientX: 240, clientY: 224 }],
+      touches: [],
+    });
+    await expect(thumbnails.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    expect((await primary.boundingBox())?.y).toBe(primaryBoxBeforeSwipe.y);
+
+    await primary.dispatchEvent('touchstart', {
+      touches: [{ identifier: 2, clientX: 180, clientY: 180 }],
+    });
+    await primary.dispatchEvent('touchend', {
+      changedTouches: [{ identifier: 2, clientX: 188, clientY: 300 }],
+      touches: [],
+    });
+    await expect(thumbnails.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  });
+
   for (const viewport of [
     { label: 'mobile', width: 360, height: 800 },
     { label: 'tablet', width: 768, height: 1024 },

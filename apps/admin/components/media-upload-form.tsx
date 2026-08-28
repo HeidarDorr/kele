@@ -11,7 +11,6 @@ export function MediaUploadForm() {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const [dimensions, setDimensions] = useState('');
-  const [attachColor, setAttachColor] = useState(true);
 
   useEffect(
     () => () => {
@@ -88,21 +87,6 @@ export function MediaUploadForm() {
               <option value="journal">ژورنال</option>
               <option value="shared_assets">دارایی مشترک</option>
             </select>
-          </label>
-          <label className="media-color-toggle">
-            <input
-              name="attachColor"
-              type="checkbox"
-              checked={attachColor}
-              onChange={(event) => {
-                setAttachColor(event.target.checked);
-              }}
-            />
-            رنگ به تصویر متصل شود
-          </label>
-          <label>
-            رنگ تصویر
-            <input name="colorHex" type="color" defaultValue="#d4c2a8" disabled={!attachColor} />
           </label>
           <div className="inline-fields">
             <label>

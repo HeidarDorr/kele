@@ -1605,14 +1605,6 @@ bdi,
   gap: 1rem;
 }
 
-.media-color-toggle {
-  min-block-size: 2.75rem;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.6rem;
-}
-
 .admin-media-meta {
   display: flex;
   align-items: center;
@@ -1701,5 +1693,122 @@ bdi,
   .media-upload-preview,
   .media-upload-placeholder {
     min-block-size: 15rem;
+  }
+}
+
+.editorial-reference-select {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.editorial-reference-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.editorial-reference-add {
+  min-block-size: 2.75rem;
+  padding-inline: 1.25rem;
+}
+
+.editorial-reference-selection {
+  border-block: 1px solid var(--kele-line);
+}
+
+.editorial-reference-selection > div:first-child {
+  min-block-size: 2.75rem;
+  padding-inline: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--kele-surface-muted) 58%, transparent);
+}
+
+.editorial-reference-selection > div:first-child span,
+.editorial-reference-help,
+.editorial-reference-selection > p {
+  color: var(--kele-ink-muted);
+  font-size: 0.76rem;
+  line-height: 1.8;
+}
+
+.editorial-reference-selection > p {
+  margin: 0;
+  padding: 1rem 0.75rem;
+}
+
+.editorial-reference-selection ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.editorial-reference-selection li {
+  min-block-size: 4rem;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.editorial-reference-selection li > span {
+  min-inline-size: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.editorial-reference-selection li small {
+  max-inline-size: 34rem;
+  overflow: hidden;
+  color: var(--kele-ink-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editorial-reference-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.editorial-reference-actions button {
+  min-block-size: 2.75rem;
+  padding-inline: 0.8rem;
+  border: 1px solid var(--kele-line);
+  background: transparent;
+  color: var(--kele-ink);
+  cursor: pointer;
+}
+
+.editorial-reference-actions button:last-child {
+  color: var(--kele-danger);
+}
+
+.editorial-reference-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (max-width: 48rem) {
+  .editorial-reference-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial-reference-add {
+    inline-size: 100%;
+  }
+
+  .editorial-reference-selection li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .editorial-reference-actions button {
+    flex: 1 1 5rem;
   }
 }

@@ -88,6 +88,7 @@ Missing states that implementation must design:
   Product detail page.
 - Unavailable sizes remain perceivable without relying on color alone, retain
   keyboard semantics, and cannot result in an invalid Add-to-Cart command.
+
 - A complete Outfit is added as one Outfit Cart line at its independent
   revision-size price. If the customer removes any component, the selection is
   no longer sold or labelled as an Outfit: the prominent price becomes the sum
@@ -102,6 +103,17 @@ on an Outfit page, a visible blank composition tile, stale availability after
 an underlying SKU change, and an enabled purchase action without a valid exact
 SKU mapping. Partial insertion of only some remaining Products and representing
 a partial selection as an Outfit are also failures.
+
+### Product gallery amendment (2026-08-28)
+
+- Product detail exposes every image assigned to every published ColorVariant,
+  preserving ColorVariant order and gallery assignment order.
+- Selecting a color changes the purchasable variant and opens that color's
+  featured image, but images from the other colors remain reachable in the same
+  gallery.
+- On mobile, a horizontal touch gesture over the primary image moves to the
+  previous or next image with RTL semantics. A vertical gesture continues to
+  scroll the page, and thumbnails remain available to touch and keyboard users.
 
 ## Acceptance viewports
 

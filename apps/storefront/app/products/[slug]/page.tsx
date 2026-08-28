@@ -4,9 +4,14 @@ import { notFound } from 'next/navigation';
 import { ProductGallery } from '../../../components/product-gallery';
 import { ProductCard } from '../../../components/product-card';
 import { PurchaseControls } from '../../../components/purchase-controls';
+import { PdpDisclosures } from '../../../components/pdp-disclosures';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getProduct, getProducts } from '../../../lib/catalog-api';
+import {
+  initialProductGalleryItemKey,
+  productGalleryItems,
+} from '../../../lib/product-gallery-model';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +66,12 @@ export default async function ProductPage({
     product.variants.find((variant) => variant.id === product.selectedVariant.id) ??
     product.variants[0];
   if (!selected) notFound();
+  const galleryItems = productGalleryItems(product.variants);
+  const initialGalleryItemKey = initialProductGalleryItemKey(
+    galleryItems,
+    selected.id,
+    product.selectedVariant.featuredMedia.id,
+  );
   const relatedProducts = (
     await getProducts({
       ...(product.categories[0] ? { category: product.categories[0].slug } : {}),
@@ -75,7 +86,7 @@ export default async function ProductPage({
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: selected.gallery.map((media) => media.url),
+    image: [...new Set(galleryItems.map((item) => item.media.url))],
     sku: selected.skus[0]?.code,
     color: selected.name,
     offers: selected.skus.map((sku) => ({
@@ -119,10 +130,18 @@ export default async function ProductPage({
           <span aria-current="page">{product.name}</span>
         </nav>
         <div className="product-detail-grid">
-          <ProductGallery media={selected.gallery} />
-          <section className="purchase-panel" aria-labelledby="product-title">
-            <p className="product-label">منتخب تازه</p>
-            <h1 id="product-title">{product.name}</h1>
+          <ProductGallery
+            key={selected.id}
+            items={galleryItems}
+            {...(initialGalleryItemKey === undefined
+              ? {}
+              : { initialItemKey: initialGalleryItemKey })}
+          />
+          <section className="purchase-panel detail-purchase-panel" aria-labelledby="product-title">
+            <header className="detail-purchase-header">
+              <p className="product-label">منتخب تازه</p>
+              <h1 id="product-title">{product.name}</h1>
+            </header>
 
             <PurchaseControls
               skus={selected.skus}
@@ -159,21 +178,20 @@ export default async function ProductPage({
                 ? 'حداقل یک اندازه برای این رنگ موجود است.'
                 : 'این رنگ در حال حاضر موجود نیست.'}
             </div>
-            <div className="pdp-disclosures">
-              <details>
-                <summary>ارسال و دریافت</summary>
-                <p>
-                  روش‌ها و مبالغ قابل انتخاب پس از ثبت نشانی در تسویه از فروشگاه دریافت می‌شوند.
-                </p>
-              </details>
-              <details>
-                <summary>راهنمای مرجوعی</summary>
-                <p>
-                  وضعیت امکان ثبت درخواست پس از تحویل تأییدشده، در جزئیات همان سفارش نمایش داده
-                  می‌شود.
-                </p>
-              </details>
-            </div>
+            <PdpDisclosures
+              items={[
+                {
+                  title: 'ارسال و دریافت',
+                  content:
+                    'روش‌ها و مبالغ قابل انتخاب پس از ثبت نشانی در تسویه از فروشگاه دریافت می‌شوند.',
+                },
+                {
+                  title: 'راهنمای مرجوعی',
+                  content:
+                    'وضعیت امکان ثبت درخواست پس از تحویل تأییدشده، در جزئیات همان سفارش نمایش داده می‌شود.',
+                },
+              ]}
+            />
           </section>
         </div>
 

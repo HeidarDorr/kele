@@ -3,7 +3,7 @@
 Version: 0.2
 Status: Coverage ownership assigned; Milestone 6 operations evidence linked
 
-All 174 identified rules in `03-business-rules.md` are assigned to a module,
+All 175 identified rules in `03-business-rules.md` are assigned to a module,
 contract area and automated test suite below. When code exists, replace
 `Pending` with links to handlers/endpoints and tests for each rule. A rule must
 not be marked Implemented without automated evidence unless explicitly noted as
@@ -197,5 +197,6 @@ merged into the business specification:
 | CUS-011 | shared Persian/Arabic digit normalization for customer OTP, administrator OTP and recipient mobile DTOs; E.164 persistence boundary | `packages/design-system/src/mobile.test.ts`, API DTO validation and TypeScript contract | Implemented |
 | CAT-007 | active Product parent navigation, desktop hover menu, full-screen mobile disclosure and Product group index | navigation units, production build and 390×844, 768×1024 and 1440×900 browser review | Implemented |
 | CAT-008 | enriched ColorVariant card projection, compact active-state swatches, same-color secondary-image hover and compact Outfit cards | OpenAPI contract, catalog units, strict type-check, Storefront production build and PostgreSQL-seeded Playwright replay at 390×844, 768×1024 and 1440×900 | Implemented |
-| CMS-019 | centralized full-surface file picker, upload/selection previews across Product, Outfit, Homepage, Journal and Occasion forms, MIME-signature/dimension limits, Object Storage write, same-origin private-object read and Media color metadata | upload parser units, file-chooser Playwright acceptance, OpenAPI validation and Admin production build | Implemented for local/UAT; production remains fail-closed under OQ-023 |
+| CAT-009 | all-published-color Product-detail gallery, selected-color initial focus and RTL-aware mobile touch navigation with vertical-scroll preservation | `product-gallery-model.unit.test.ts`, Storefront strict type-check/build and Product-detail browser review at 390×844 and 1440×900 | Implemented |
+| CMS-019 | centralized full-surface file picker, upload/selection previews across Product, Outfit, Homepage, Journal and Occasion forms, MIME-signature/dimension limits, Object Storage write and same-origin private-object read; standalone library uploads are color-neutral while Product color remains owned by ColorVariant authoring | upload parser units, file-chooser Playwright acceptance, OpenAPI validation and Admin production build | Implemented for local/UAT; production remains fail-closed under OQ-023 |
 | CMS-020, ADR-0002, PRC-001, PRC-009–PRC-012 | dynamic ColorVariant/Media/SKU editor with server-generated internal color codes, per-color-size IRR price and immutable existing SKU/Inventory boundaries | API contract, internal color-code units, strict type-check, Admin production build, deterministic seed replay and 51-test PostgreSQL integration suite | Implemented and persistence-reverified on PostgreSQL 16 |

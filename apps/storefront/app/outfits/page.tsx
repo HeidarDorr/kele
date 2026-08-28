@@ -35,12 +35,22 @@ export default async function OutfitsPage() {
       <SiteHeader categories={categories.items} />
       <main id="main-content" className="outfits-index">
         <header className="shell outfits-masthead">
-          <p>ترکیب‌های سردبیری‌شده</p>
-          <h1>یک انتخاب کامل، بدون حدس میان اندازه‌ها</h1>
-          <span>
-            هر ست هویت، قیمت و تصویر مستقل دارد؛ موجودی آن در همان لحظه از اجزای واقعی محاسبه
-            می‌شود.
-          </span>
+          <div className="outfits-masthead-meta">
+            <p>ست‌های KELE</p>
+            <span>{outfits.length.toLocaleString('fa-IR')} انتخاب</span>
+          </div>
+          <div className="outfits-masthead-layout">
+            <h1>هماهنگی، از اولین انتخاب.</h1>
+            <div className="outfits-masthead-copy">
+              <p>
+                هر ست با رنگ، اندازه و قیمت مستقل تعریف شده است؛ موجودی آن از اجزای واقعی همان
+                انتخاب به‌روز می‌شود.
+              </p>
+              <a className="home-text-link" href="#outfits-title">
+                دیدن ست‌ها
+              </a>
+            </div>
+          </div>
         </header>
         <section className="shell outfits-collection" aria-labelledby="outfits-title">
           <div className="outfits-section-heading">

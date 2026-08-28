@@ -228,8 +228,12 @@ the RTL purchase panel on the right; the full grid is capped so Product imagery
 does not dominate a laptop viewport. Mobile stacks gallery and purchase controls
 with a clearly reachable purchase action. Outfit detail uses the same capped
 desktop grid, physical left thumbnail rail and RTL purchase composition. Color
-selection updates gallery; size selection updates price/availability. Tabs or
-accordions expose description, details, size/fit, and shipping/returns.
+selection moves the gallery to that color's featured image but does not filter
+out imagery assigned to the Product's other published colors; size selection
+updates price/availability. Mobile supports horizontal RTL-aware touch swipes
+between the previous and next image while retaining the reachable thumbnail
+rail and vertical page scrolling. Tabs or accordions expose description,
+details, size/fit, and shipping/returns.
 
 ### Editorial occasion tile
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ProductDetail } from '../lib/catalog-api';
+import { firstSkuId } from '../lib/default-size-selection';
 import { useCart } from './cart-provider';
 
 type Sku = ProductDetail['variants'][number]['skus'][number];
@@ -19,13 +20,13 @@ export function PurchaseControls({
   children: ReactNode;
 }) {
   const { addProduct, loading } = useCart();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => firstSkuId(skus));
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const selected = skus.find((sku) => sku.id === selectedId) ?? null;
 
   async function addSelected() {
-    if (selected === null) return;
+    if (selected === null || !selected.available) return;
     setSubmitting(true);
     const added = await addProduct(selected.id);
     setMessage(added ? 'به سبد اضافه شد.' : 'افزودن به سبد انجام نشد.');
@@ -34,9 +35,12 @@ export function PurchaseControls({
 
   return (
     <div className="purchase-controls">
-      <p className="product-price" aria-live="polite">
-        {selected?.price.display ?? initialPrice.display}
-      </p>
+      <div className="purchase-price-row">
+        <span>{selected ? 'قیمت این اندازه' : 'شروع قیمت'}</span>
+        <p className="product-price" aria-live="polite">
+          {selected?.price.display ?? initialPrice.display}
+        </p>
+      </div>
       <p className="product-description">{description}</p>
       {children}
       <fieldset className="option-group size-options">
@@ -62,7 +66,7 @@ export function PurchaseControls({
       <button
         type="button"
         className="button-primary add-to-cart"
-        disabled={selected === null || submitting || loading}
+        disabled={selected === null || !selected.available || submitting || loading}
         onClick={() => {
           void addSelected();
         }}

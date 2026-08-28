@@ -1,8 +1,14 @@
 import Link from 'next/link';
 import { publishHomepageAction, saveHomepageAction } from '../../actions';
 import { AdminShell } from '../../../components/admin-shell';
+import { EditorialReferenceSelect } from '../../../components/editorial-reference-select';
 import { MediaSelect } from '../../../components/media-select';
-import { getHomepageDraft, listMedia } from '../../../lib/admin-api';
+import {
+  getHomepageDraft,
+  listMedia,
+  listPublishedOutfits,
+  listPublishedProducts,
+} from '../../../lib/admin-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,9 +27,11 @@ export default async function HomepageEditor({
 }: {
   searchParams: Promise<{ notice?: string }>;
 }) {
-  const [draft, media, parameters] = await Promise.all([
+  const [draft, media, products, outfits, parameters] = await Promise.all([
     getHomepageDraft(),
     listMedia(),
+    listPublishedProducts(),
+    listPublishedOutfits(),
     searchParams,
   ]);
   return (
@@ -132,6 +140,30 @@ export default async function HomepageEditor({
                         </label>
                       </div>
                     </>
+                  ) : section.type === 'featured_products' ? (
+                    <EditorialReferenceSelect
+                      name={`referenceIds:${section.id}`}
+                      label="انتخاب محصول"
+                      searchLabel="جست‌وجوی محصول"
+                      options={products.items.map((product) => ({
+                        id: product.id,
+                        label: product.name,
+                        meta: product.slug,
+                      }))}
+                      defaultValues={content.referenceIds}
+                    />
+                  ) : section.type === 'featured_outfits' ? (
+                    <EditorialReferenceSelect
+                      name={`referenceIds:${section.id}`}
+                      label="انتخاب ست"
+                      searchLabel="جست‌وجوی ست"
+                      options={outfits.items.map((outfit) => ({
+                        id: outfit.id,
+                        label: outfit.name,
+                        meta: outfit.slug,
+                      }))}
+                      defaultValues={content.referenceIds}
+                    />
                   ) : (
                     <label>
                       شناسه‌های ارجاع‌شده
