@@ -6,6 +6,7 @@ import { ListIcon } from '@phosphor-icons/react/List';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/MagnifyingGlass';
 import { UserIcon } from '@phosphor-icons/react/User';
 import { XIcon } from '@phosphor-icons/react/X';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -182,6 +183,16 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
                           href={item.href}
                           onClick={close}
                         >
+                          <Image
+                            src={item.iconSrc}
+                            alt=""
+                            aria-hidden="true"
+                            width={512}
+                            height={512}
+                            loading="eager"
+                            unoptimized
+                          />
+                          <span aria-hidden="true" className="mobile-product-divider" />
                           {item.label}
                         </Link>
                       );

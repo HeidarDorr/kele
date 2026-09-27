@@ -1,0 +1,17 @@
+/* Font roles are shared by the storefront and administration app. */
+body {
+  --font-body: var(--font-vazirmatn);
+  --font-display: var(--font-estedad);
+  --font-display-fallback: sans-serif;
+}
+
+body[data-typography='elize'],
+body[data-typography='markazi'] {
+  --font-body: var(--font-peyda);
+  --font-display: var(--font-elize);
+  --font-display-fallback: serif;
+}
+
+body[data-typography='markazi'] {
+  --font-display: var(--font-markazi);
+}

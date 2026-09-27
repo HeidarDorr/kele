@@ -22,7 +22,7 @@ Use:
 - dark espresso typography and actions;
 - restrained burnt-orange accents;
 - high-quality product and editorial photography;
-- serif display typography paired with quiet sans-serif utility text;
+- restrained Persian display typography paired with quiet sans-serif utility text;
 - thin dividers and near-flat surfaces.
 
 Avoid:
@@ -40,20 +40,39 @@ Final values must be sampled/approved with source design files.
 
 ## Provisional typography review variants
 
-Typography remains an open design input. Two reviewable storefront display
-variants are available without changing layout, spacing, body type or business
-behavior:
+Typography remains an open design input. The temporary pairing requested on
+2026-09-05 is the default for both Storefront and Administration:
 
-- `KELE_TYPOGRAPHY=elize` is the default. Elize renders display headings.
-- `KELE_TYPOGRAPHY=markazi` uses Markazi Text for Persian display headings.
-  Peyda remains the body/control face. Typography selection does not alter the
-  image-based wordmark.
+- `KELE_TYPOGRAPHY=estedad-vazirmatn` uses Estedad for display-heading roles
+  while preserving each component's existing hierarchy (mostly weight 400, with
+  selected headings at 500). Vazirmatn covers body text at weight 400 and uses
+  weights 500–600 where navigation, controls, labels or prices need emphasis.
+- `KELE_TYPOGRAPHY=elize` retains Elize headings with Peyda body/control text as
+  an explicit legacy review and rollback choice.
+- `KELE_TYPOGRAPHY=markazi` retains the Markazi Text storefront display variant
+  with Peyda body/control text as another explicit legacy review choice.
 
-Only the Arabic variable WOFF2 subset of Markazi Text is bundled, together with
-its SIL Open Font License. Because `next/font` creates build assets, change the
-setting before building or running development and restart both Next
-applications after changing it. Neither variant, spelling treatment nor font
-pairing is a frozen brand decision.
+The default pair is self-hosted as variable WOFF2 files from the official
+upstream projects. Source provenance, the font manifest and their SIL Open Font
+Licenses are bundled in `packages/design-system/assets/fonts/open-source/`.
+The legacy Markazi Text Arabic variable subset retains its bundled OFL.
+Typography selection preserves the existing signature-image wordmark and other
+artwork. It does not approve a final brand pairing or any customer-facing claim;
+DES-002 remains open for final brand sign-off.
+
+Because `next/font` creates build assets, change the setting before building or
+running development and restart both Next applications after changing it.
+Rollback consists of selecting an explicit legacy value and rebuilding or
+restarting the applications; no data migration is required.
+
+Acceptance requires loaded Estedad heading faces and loaded Vazirmatn body,
+control, label and price faces, verified in the browser rather than inferred
+from CSS declarations. At widths 390, 768, 1280 and 1440 pixels, Persian titles
+and mixed-direction identifiers must remain readable without clipping or
+horizontal overflow. Missing font files, silent fallback rendering, the display
+face leaking into prices or controls, clipped lines, and changed artwork are
+failure cases. Adjust heading weight and line height for the new family while
+preserving the page hierarchy, RTL behavior and existing business states.
 
 ```css
 :root {
@@ -122,7 +141,22 @@ Provisional scale:
 | UI | 14/20 | 14/20 | Controls |
 | Caption | 12/18 | 12/18 | Metadata |
 
-Use fluid `clamp()` between approved endpoints where it improves wrapping.
+The shared heading-size variables implement the three display roles and keep
+the endpoints reviewable across both applications:
+
+```css
+:root {
+  --kele-type-display-xl: clamp(2.5rem, calc(1.75rem + 2.5vw), 4rem);
+  --kele-type-display-l: clamp(2rem, calc(1.6rem + 1.6vw), 2.75rem);
+  --kele-type-heading-m: clamp(1.5rem, calc(1.35rem + 0.55vw), 1.75rem);
+}
+```
+
+Use these roles instead of page-specific oversized heading clamps. Body,
+control and metadata text retain the table values so reducing display sizes
+does not make purchasing or account content harder to read. Browser review at
+390, 768, 1280 and 1440 pixels must confirm the computed role, wrapping and
+line height rather than checking only the declared CSS.
 
 ## Spacing and layout
 
@@ -177,9 +211,20 @@ Motion is restrained and functional:
 - 120–180 ms for micro-feedback;
 - 200–320 ms for drawers/menus;
 - ease curves without bounce for premium calm;
-- image crossfade/slide only when selection changes;
+- image crossfade/slide only when selection changes; mobile uses mirrored entry
+  motion for previous and next navigation, while tablet and desktop use a short
+  opacity-only fade;
 - no scroll hijacking;
 - honor `prefers-reduced-motion`.
+
+Route transitions use layout-shaped skeletons built from the same canvas,
+surface, line and spacing tokens as the destination page. Every file-backed
+Storefront page resolves to either its nearest segment `loading.tsx` or the root
+fallback, including Homepage and Occasion routes. A loading surface exposes one
+named `role="status"` region with `aria-busy="true"`; its visual blocks are
+decorative. Text-only loaders and unrelated spinner treatments are not part of
+the storefront language. Reduced-motion mode removes the skeleton sweep while
+leaving its reserved geometry visible.
 
 Textual actions keep their resting foreground, border and fill colors on hover.
 Their micro-feedback is a one-pixel `currentColor` rule that reveals from right
@@ -227,17 +272,30 @@ Desktop places the restrained thumbnail rail and primary gallery on the left and
 the RTL purchase panel on the right; the full grid is capped so Product imagery
 does not dominate a laptop viewport. Mobile stacks gallery and purchase controls
 with a clearly reachable purchase action. Outfit detail uses the same capped
-desktop grid, physical left thumbnail rail and RTL purchase composition. Color
-selection moves the gallery to that color's featured image but does not filter
-out imagery assigned to the Product's other published colors; size selection
-updates price/availability. Mobile supports horizontal RTL-aware touch swipes
-between the previous and next image while retaining the reachable thumbnail
-rail and vertical page scrolling. Tabs or accordions expose description,
-details, size/fit, and shipping/returns.
+desktop grid, physical left thumbnail rail and RTL purchase composition. Its
+component-option group pairs each inclusion control with the component image,
+Product name, selected-color facts and an independently focusable link to that
+exact Product/ColorVariant. The control and Product link remain separate targets
+so following a Product never changes the pending Outfit selection. The page
+does not repeat the same composition in a lower grid; its lower discovery band
+uses the Product-detail related-products structure and excludes the Outfit's
+constituent Products.
+
+Color selection on a Product moves the gallery to that color's featured image
+but does not filter out imagery assigned to the Product's other published
+colors; size selection updates price/availability. Mobile supports horizontal
+RTL-aware touch swipes between the previous and next image while retaining the
+reachable thumbnail rail and vertical page scrolling. Tabs or accordions expose
+description, details, size/fit, and shipping/returns. The lower Product
+information band is an editorial atelier note rather than a card: numbered
+section headings, one short accent rule and divided detail rows create hierarchy
+without adding new product claims. On mobile the description and detail list
+use a deliberate offset, while an absent detail list collapses without
+reserving an empty panel.
 
 ### Editorial occasion tile
 
-Photography with controlled dark overlay, serif label and restrained accent
+Photography with controlled dark overlay, display label and restrained accent
 arrow. Never place unreadable text over a busy focal area.
 
 ### Art-direction slot

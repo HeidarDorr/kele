@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { OutfitPurchaseControls } from '../../../components/outfit-purchase-controls';
+import { ProductCard } from '../../../components/product-card';
 import { ProductGallery } from '../../../components/product-gallery';
-import { ProductImage } from '../../../components/product-image';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
-import { CatalogApiError, getCategories, getOutfit } from '../../../lib/catalog-api';
+import { CatalogApiError, getCategories, getOutfit, getProducts } from '../../../lib/catalog-api';
 import { standaloneGalleryItems } from '../../../lib/product-gallery-model';
 
 export const dynamic = 'force-dynamic';
@@ -51,6 +51,15 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
     if (error instanceof CatalogApiError && error.status === 404) notFound();
     throw error;
   }
+  const componentProductIds = new Set(outfit.items.map((item) => item.productId));
+  const relatedProducts = (
+    await getProducts({
+      ...(outfit.categories[0] ? { category: outfit.categories[0].slug } : {}),
+      limit: 8,
+    }).catch(() => ({ items: [] }))
+  ).items
+    .filter((item) => !componentProductIds.has(item.productId))
+    .slice(0, 4);
 
   return (
     <>
@@ -75,33 +84,26 @@ export default async function OutfitPage({ params }: { params: Promise<{ slug: s
           </div>
         </section>
 
-        <section className="outfit-composition" aria-labelledby="composition-title">
-          <div className="outfit-composition-intro">
-            <p>ساختار این ست</p>
-            <h2 id="composition-title">هر جزء، همچنان یک محصول مستقل</h2>
-            <span>رنگ و تعداد هر جزء برای این ست مشخص شده است.</span>
-          </div>
-          <ol>
-            {outfit.items.map((item) => (
-              <li key={item.id}>
-                <Link href={`/products/${item.productSlug}`}>
-                  <div className="outfit-component-media">
-                    <ProductImage
-                      media={item.featuredMedia}
-                      sizes="(max-width: 767px) 88vw, 24vw"
-                    />
-                  </div>
-                  <div>
-                    <span>
-                      {item.quantity.toLocaleString('fa-IR')} عدد، {item.colorName}
-                    </span>
-                    <h3>{item.name}</h3>
-                    <p className="text-link">مشاهده و خرید مستقل</p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ol>
+        <section className="product-related" aria-labelledby="related-products-title">
+          <header className="editorial-section-heading editorial-heading-split">
+            <div>
+              <p>ادامهٔ انتخاب</p>
+              <h2 id="related-products-title">محصولات مشابه</h2>
+            </div>
+            <Link href="/catalog">مشاهدهٔ کاتالوگ</Link>
+          </header>
+          {relatedProducts.length > 0 ? (
+            <div className="product-grid">
+              {relatedProducts.map((item) => (
+                <ProductCard key={`${item.productId}-${item.selectedVariant.id}`} product={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="state-panel">
+              <h3>محصول مشابهی برای نمایش نیست</h3>
+              <p>با بازگشت به کاتالوگ می‌توانید همهٔ انتخاب‌های منتشرشده را ببینید.</p>
+            </div>
+          )}
         </section>
       </main>
       <SiteFooter />

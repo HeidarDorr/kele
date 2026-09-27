@@ -3279,6 +3279,15 @@ Cart, Checkout, Order and Return behavior SHALL preserve those lines as
 Products. A complete Outfit SHALL continue to use its independent Outfit
 revision-size price and identity.
 
+## OTF-021
+
+Every Storefront Outfit card SHALL display the lowest configured selling price
+among the sizes in its published Outfit Revision.
+
+When a Customer opens an Outfit detail page, the initially selected Outfit Size
+SHALL be the first configured size with that lowest selling price. Availability
+SHALL NOT change which price or size is initially presented.
+
 ## Guest cart clarification
 
 ## CRT-011

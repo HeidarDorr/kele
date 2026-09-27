@@ -69,7 +69,7 @@ export const environmentSchema = z
     CALLBACK_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(10).max(1_000).default(120),
     OTP_VERIFY_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(5).max(500).default(60),
     RATE_LIMIT_MAX_KEYS: z.coerce.number().int().min(100).max(100_000).default(10_000),
-    KELE_TYPOGRAPHY: z.enum(['elize', 'markazi']).default('elize'),
+    KELE_TYPOGRAPHY: z.enum(['estedad-vazirmatn', 'elize', 'markazi']).default('estedad-vazirmatn'),
     IDENTITY_SIGNING_SECRET: z
       .string()
       .min(32)

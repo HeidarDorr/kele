@@ -5,7 +5,11 @@ import type {
   OutfitCatalogPort,
   OutfitCatalogReferences,
 } from '../../catalog/application/outfit-catalog.contract.js';
-import { deriveOutfitAvailability, structuralOutfitErrors } from '../domain/outfit.js';
+import {
+  deriveOutfitAvailability,
+  deriveOutfitStartingPrice,
+  structuralOutfitErrors,
+} from '../domain/outfit.js';
 import type {
   OutfitAdminView,
   OutfitAdminSummaryView,
@@ -300,7 +304,7 @@ export class OutfitService {
         featuredMedia: variant.featuredMedia,
       };
     });
-    const startingPrice = Math.min(...record.sizes.map((size) => size.amountRial));
+    const startingPrice = deriveOutfitStartingPrice(record.sizes);
     return {
       id: record.outfitId,
       revisionId: record.revisionId,

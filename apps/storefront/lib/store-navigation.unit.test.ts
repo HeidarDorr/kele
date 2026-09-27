@@ -7,7 +7,7 @@ import {
 
 describe('storefront product navigation', () => {
   it('exposes the approved product groups in their fixed order', () => {
-    expect(productNavigation).toEqual([
+    expect(productNavigation.map(({ label, href }) => ({ label, href }))).toEqual([
       { label: 'ست', href: '/outfits' },
       { label: 'کت', href: '/category/jackets' },
       { label: 'شلوار', href: '/category/trousers' },
@@ -17,6 +17,11 @@ describe('storefront product navigation', () => {
       { label: 'شلوارک', href: '/category/shorts' },
       { label: 'کفش', href: '/category/shoes' },
     ]);
+    expect(new Set(productNavigation.map((item) => item.slug)).size).toBe(8);
+    for (const item of productNavigation) {
+      expect(item.iconSrc).toMatch(/^\/media\/navigation\/category-icons\/.+\.webp$/u);
+      expect(item.bannerSrc).toMatch(/^\/media\/catalog\/category-banners\/.+\.webp$/u);
+    }
   });
 
   it('replaces legacy catalog and outfit entries with one Products entry', () => {

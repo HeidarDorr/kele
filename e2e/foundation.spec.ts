@@ -27,11 +27,19 @@ import {
 import { reviewEvidencePath } from './evidence-paths.mjs';
 import { waitForPageImages } from './image-readiness.js';
 import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
+import { resolveTypographyVariant } from '../packages/design-system/src/typography.js';
 
-const typographyVariant = process.env.KELE_TYPOGRAPHY === 'markazi' ? 'markazi' : 'elize';
+const typographyVariant = resolveTypographyVariant(process.env.KELE_TYPOGRAPHY);
+const bodyFont = typographyVariant === 'estedad-vazirmatn' ? /vazirmatn/i : /peyda/i;
+const displayFont =
+  typographyVariant === 'estedad-vazirmatn'
+    ? /estedad/i
+    : typographyVariant === 'markazi'
+      ? /markazi/i
+      : /elize/i;
 const evidenceDirectory = resolve(
-  typographyVariant === 'markazi'
-    ? reviewEvidencePath('milestone-2-markazi')
+  typographyVariant !== 'elize'
+    ? reviewEvidencePath(`milestone-2-${typographyVariant}`)
     : reviewEvidencePath('milestone-2'),
 );
 const milestoneFiveEvidenceDirectory = reviewEvidencePath('milestone-5');
@@ -41,6 +49,22 @@ let acceptanceProductSlug: string | undefined;
 let acceptanceCategoryId: string | undefined;
 let acceptanceMediaId: string | undefined;
 let milestoneThreeHashesBeforeMilestoneFour: Readonly<Record<string, string>> | null = null;
+
+async function loadRenderedFontFamilies(page: Page): Promise<string[]> {
+  return page.evaluate(async () => {
+    const heading = document.querySelector('h1') ?? document.body;
+    const familyRequests = [
+      getComputedStyle(document.body).fontFamily,
+      getComputedStyle(heading).fontFamily,
+    ];
+    const families = new Set<string>();
+    for (const family of familyRequests) {
+      const faces = await document.fonts.load(['16px', String(family)].join(' '), 'فارسی');
+      for (const face of faces) families.add(face.family);
+    }
+    return [...families];
+  });
+}
 
 async function cartIdFromPage(page: Page): Promise<string> {
   const cookie = (await page.context().cookies()).find((item) => item.name === 'kele_cart');
@@ -530,6 +554,34 @@ test('visual capture starts from the deterministic catalog and editorial fixture
   expect(outfits.items).toEqual([expect.objectContaining({ revisionNumber: 1 })]);
 });
 
+test('storefront loads the selected typography at every required viewport', async ({ browser }) => {
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1280, height: 800 },
+    { width: 1440, height: 900 },
+  ]) {
+    const page = await browser.newPage({ viewport });
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+    await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await page.waitForFunction('document.fonts.status === "loaded"');
+    await expect(page.locator('body')).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('.product-price').first()).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('.option-group h2').first()).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('h1').first()).toHaveCSS('font-family', displayFont);
+    const loadedFamilies = await loadRenderedFontFamilies(page);
+    expect(loadedFamilies.some((family) => bodyFont.test(family))).toBe(true);
+    expect(loadedFamilies.some((family) => displayFont.test(family))).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    ).toBe(0);
+    await page.close();
+  }
+});
+
 test('storefront covers responsive, state, keyboard, RTL and mixed-direction acceptance evidence', async ({
   browser,
 }) => {
@@ -553,12 +605,14 @@ test('storefront covers responsive, state, keyboard, RTL and mixed-direction acc
     ).toBeAttached();
     await expect(page.getByRole('button', { name: /۷ سال KELE-LINEN-BEIGE-7Y/ })).toBeDisabled();
     await page.waitForFunction('document.fonts.status === "loaded"');
-    await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
-    await expect(page.locator('button').first()).toHaveCSS('font-family', /peyda/i);
-    await expect(page.locator('h1').first()).toHaveCSS(
-      'font-family',
-      typographyVariant === 'markazi' ? /markazi/i : /elize/i,
-    );
+    await expect(page.locator('body')).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('button').first()).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('.product-price').first()).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('.option-group h2').first()).toHaveCSS('font-family', bodyFont);
+    await expect(page.locator('h1').first()).toHaveCSS('font-family', displayFont);
+    const loadedFamilies = await loadRenderedFontFamilies(page);
+    expect(loadedFamilies.some((family) => bodyFont.test(family))).toBe(true);
+    expect(loadedFamilies.some((family) => displayFont.test(family))).toBe(true);
     const storefrontLogo = page.locator('.wordmark .brand-wordmark-image').first();
     await expect(storefrontLogo).toBeVisible();
     await expect
@@ -629,7 +683,18 @@ test('administration is responsive and exposes validation and inventory states',
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { name: 'محصولات' })).toBeVisible();
-    await expect(page.locator('body')).toHaveCSS('font-family', /peyda/i);
+    await expect(page.locator('body')).toHaveCSS('font-family', bodyFont);
+    if (typographyVariant === 'estedad-vazirmatn') {
+      await expect(page.getByRole('heading', { name: 'محصولات' })).toHaveCSS(
+        'font-family',
+        displayFont,
+      );
+    }
+    const loadedFamilies = await loadRenderedFontFamilies(page);
+    expect(loadedFamilies.some((family) => bodyFont.test(family))).toBe(true);
+    if (typographyVariant === 'estedad-vazirmatn') {
+      expect(loadedFamilies.some((family) => displayFont.test(family))).toBe(true);
+    }
     const visibleWordmark = page.locator('.admin-brand .brand-wordmark');
     const adminLogoImage = visibleWordmark.locator('.brand-wordmark-image');
     await expect(adminLogoImage).toBeVisible();
@@ -683,9 +748,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.evaluate(() => {
       document.body.removeAttribute('tabindex');
     });
-    await expect(
-      page.getByRole('heading', { name: 'یک انتخاب کامل، بدون حدس میان اندازه‌ها' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'هماهنگی، از اولین انتخاب.' })).toBeVisible();
     await expect(page.getByRole('link', { name: /مشاهدهٔ ست ست لینن آرام/ })).toBeVisible();
     await captureMilestoneFiveEvidence(page, 'outfits-index-laptop.png', {
       preserveFocus: true,
@@ -697,7 +760,11 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       { name: 'error', label: 'دریافت ست‌ها ممکن نشد' },
     ] as const) {
       await gotoAcceptancePresentationState(page, `${e2eUrls.storefront}/outfits`, state.name);
-      await expect(page.getByText(state.label).first()).toBeVisible();
+      if (state.name === 'loading') {
+        await expect(page.getByRole('status', { name: state.label })).toBeVisible();
+      } else {
+        await expect(page.getByText(state.label).first()).toBeVisible();
+      }
       await captureMilestoneFiveEvidence(page, `outfits-${state.name}-laptop.png`);
     }
 
@@ -710,11 +777,21 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
       await page.setViewportSize(viewport);
       await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
       await expect(page.getByRole('heading', { name: 'ست لینن آرام' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'محصولات مشابه' })).toBeVisible();
+      const unavailableOutfitSize = page.getByRole('button', { name: '۷ سال' });
+      await expect(unavailableOutfitSize).toBeEnabled();
+      await expect(unavailableOutfitSize).toHaveClass(/is-unavailable/);
+      const componentOption = page.locator('.outfit-component-option').first();
+      await expect(componentOption.locator('.outfit-component-option-media img')).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: 'هر جزء، همچنان یک محصول مستقل' }),
-      ).toBeVisible();
-      await expect(page.getByRole('button', { name: '۷ سال' })).toBeDisabled();
-      await expect(page.getByRole('link', { name: /کت‌وشلوار لینن بژ/ }).last()).toBeVisible();
+        componentOption.getByRole('link', {
+          name: 'مشاهدهٔ کت‌وشلوار لینن بژ در صفحهٔ محصول',
+        }),
+      ).toHaveAttribute(
+        'href',
+        '/products/beige-linen-suit?color=20000000-0000-4000-8000-000000000020',
+      );
+      await expect(page.locator('.outfit-composition')).toHaveCount(0);
       expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(
         true,
       );
@@ -723,7 +800,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.getByRole('button', { name: '۵ سال' }).click();
-    await expect(page.getByText(/امکان آماده‌سازی ۴ ست/)).toBeVisible();
+    await expect(page.getByText('۴ عدد از این انتخاب موجود است.')).toBeVisible();
     await page.getByRole('button', { name: 'افزودن ست کامل به سبد' }).click();
     await expect(page.getByRole('dialog', { name: 'سبد خرید' })).toBeVisible();
     await expect(
@@ -751,7 +828,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.getByRole('link', { name: 'بازکردن' }).click();
     await expect(
-      page.getByRole('heading', { name: 'همهٔ نگاشت‌ها آمادهٔ انتشارند' }),
+      page.getByRole('heading', { name: 'رنگ و اندازهٔ همهٔ محصولات مشخص است' }),
     ).toBeVisible();
     await expect(page.getByText('تاریخچهٔ تغییرناپذیر')).toBeVisible();
     await expect(page.getByLabel('کد پایدار').first()).toHaveValue('5Y');
@@ -802,7 +879,7 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await captureMilestoneFiveEvidence(page, 'cart-outfit-old-revision-review-laptop.png');
     await page.goto(`${e2eUrls.storefront}/outfits/calm-linen-look`);
     await expect(page.getByRole('heading', { name: 'ست لینن آرام — ویرایش دوم' })).toBeVisible();
-    await expect(page.locator('main .product-label').first()).toHaveText('ست کامل، ویرایش ۲');
+    await expect(page.locator('main .product-label').first()).toHaveText('ست کامل');
   } finally {
     try {
       await context.close();

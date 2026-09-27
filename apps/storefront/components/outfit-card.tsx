@@ -8,7 +8,7 @@ export function OutfitCard({ outfit }: { outfit: OutfitCardValue }) {
       <Link
         className="product-card-image"
         href={`/outfits/${outfit.slug}`}
-        aria-label={`مشاهدهٔ ست ${outfit.name}`}
+        aria-label={`مشاهدهٔ ${outfit.name}`}
       >
         <ProductImage media={outfit.featuredMedia} sizes="(max-width: 639px) 50vw, 25vw" />
       </Link>

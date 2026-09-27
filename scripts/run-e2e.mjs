@@ -257,6 +257,8 @@ async function stopServer(server) {
 let runFailure;
 try {
   const buildEnvironment = { ...sharedEnvironment, NODE_ENV: 'production' };
+  await runPnpm(['--filter', '@kele/config', 'build'], buildEnvironment);
+  await runPnpm(['--filter', '@kele/design-system', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/api', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/storefront', 'build'], buildEnvironment);
   await runPnpm(['--filter', '@kele/admin', 'build'], buildEnvironment);

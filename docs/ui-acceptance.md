@@ -2,7 +2,7 @@
 
 Version: 0.1
 Status: Provisional
-Last reviewed: 2026-08-18
+Last reviewed: 2026-09-05
 
 ## Reference inventory
 
@@ -79,13 +79,20 @@ Missing states that implementation must design:
 - A Product or Outfit detail page displays exactly one prominent live price.
   Selecting a Product SKU or Outfit size updates that same price node in place;
   it must not append a secondary price below the options.
+- Every Outfit card displays the lowest configured revision-size price. On an
+  Outfit detail page, the first selected size is the first configured size at
+  that lowest price, including when that size is currently unavailable.
 - An Outfit has no Outfit-level color selector. Product color and exact SKU
   attributes may appear only as component facts after an Outfit size is
   selected.
-- The Outfit composition section renders only real component products. One or
-  two components must not create reserved empty grid tracks or placeholder
-  surfaces, and every rendered component remains independently linked to its
-  Product detail page.
+- The Outfit purchase panel presents every real component inside the
+  component-option group. Each row shows responsive Product imagery, name and
+  selected-color facts, and links independently to the exact Product and
+  ColorVariant without activating its adjacent inclusion control. One or two
+  components must not create reserved empty tracks or placeholder surfaces.
+- The Outfit page does not repeat those components in a lower composition box.
+  The lower discovery area uses the same related-product structure and states
+  as a Product detail page and excludes the Outfit's constituent Products.
 - Unavailable sizes remain perceivable without relying on color alone, retain
   keyboard semantics, and cannot result in an invalid Add-to-Cart command.
 
@@ -98,11 +105,15 @@ Missing states that implementation must design:
   selection as independent Products. They must never synthesize a modified
   Outfit, an exclusion label, or an Outfit-derived price for that selection.
 
-Failure cases include duplicate prices after a selection, an empty color group
-on an Outfit page, a visible blank composition tile, stale availability after
-an underlying SKU change, and an enabled purchase action without a valid exact
-SKU mapping. Partial insertion of only some remaining Products and representing
-a partial selection as an Outfit are also failures.
+Failure cases include a card or initial Outfit selection using API display order
+instead of the lowest revision-size price, duplicate prices after a selection,
+an empty color group on an Outfit page, a missing or incorrect component Product
+link, link activation that changes the inclusion control, repeated component
+composition below the purchase panel, a related result containing a constituent
+Product, stale availability after an underlying SKU change, and an enabled
+purchase action without a valid exact SKU mapping. Partial insertion of only
+some remaining Products and representing a partial selection as an Outfit are
+also failures.
 
 ### Product gallery amendment (2026-08-28)
 
@@ -112,8 +123,54 @@ a partial selection as an Outfit are also failures.
   featured image, but images from the other colors remain reachable in the same
   gallery.
 - On mobile, a horizontal touch gesture over the primary image moves to the
-  previous or next image with RTL semantics. A vertical gesture continues to
-  scroll the page, and thumbnails remain available to touch and keyboard users.
+  previous or next image with RTL semantics. Previous and next transitions use
+  mirrored horizontal motion. A vertical gesture continues to scroll the page,
+  and thumbnails remain available to touch and keyboard users.
+
+### Product information amendment (2026-08-28)
+
+- The Product information band preserves the supplied description and detail
+  strings without introducing inferred material, care, fit or quality claims.
+- At the mobile acceptance width, the band is a single-column, full-bleed warm
+  surface with two numbered editorial headings and divided detail rows. The
+  description and detail list use a controlled offset without horizontal
+  overflow or text clipping.
+- Section and row numbers are decorative and hidden from assistive technology;
+  the semantic headings, paragraph and list retain the complete reading order.
+- A Product without detail rows renders the description only and does not leave
+  an empty second column or list.
+
+### Route loading amendment (2026-09-05)
+
+- Every Storefront page has an App Router loading boundary. A closer segment
+  boundary may provide route-specific geometry; otherwise the root boundary
+  covers the route, including Homepage and Occasion pages.
+- Loading uses the existing warm, layout-shaped skeleton language. The reserved
+  image, heading, copy and card geometry should resemble the destination page
+  closely enough to prevent a blank or apparently unresponsive transition.
+- One named status region exposes `role="status"` and `aria-busy="true"` while
+  skeleton blocks remain hidden from the accessibility tree. Reduced-motion
+  mode removes their sweep without removing the reserved geometry.
+
+Failure cases are a file-backed page with no reachable boundary, blank content
+during a delayed navigation, a text-only or visually unrelated loading panel,
+multiple competing live announcements, visible skeleton labels, horizontal
+overflow, and animation that persists under reduced motion.
+
+### Typography-scale amendment (2026-09-05)
+
+The Estedad/Vazirmatn review must use the role scale in `design-system.md`:
+Display XL is 40/44 on mobile and 64/68 on desktop, Display L is 32/38 and
+44/50, and Heading M is 24/30 and 28/34. Homepage and Outfit mastheads use
+Display XL; page and Product titles use Display L; section headings use Heading
+M. Body, UI and caption text remain 16, 14 and 12 pixels respectively unless a
+component has an approved accessibility reason to differ.
+
+Acceptance checks computed size, line height, family and overflow at 390, 768,
+1280 and 1440 pixels across Homepage, catalog, Product, Outfit, Occasion,
+Journal, commerce-state and Administration page families. A legacy oversized
+page-specific clamp, clipped Persian title, heading-role inversion, body copy
+reduced below its role, or horizontal overflow fails acceptance.
 
 ## Acceptance viewports
 
@@ -297,21 +354,28 @@ the supplied homepage and product-detail references:
   reference structure and is not an alternate theme. Automatic dark-mode
   palette changes remain unapproved and are not inferred;
 - editorial, image-led compositions rather than generic cards;
-- Elize is loaded locally for storefront display headings in the default
-  review variant and the typed wordmark stand-in; this is not approval of
-  either the font or a final logo;
-- the optional Markazi review variant uses Markazi Text for display headings
-  while retaining Peyda for text; in that variant the visible wordmark is
-  Persian `کله` rendered with Elize in the storefront and administration app;
-- Peyda is loaded locally for body, control and administration text; it also
-  remains a provisional, non-frozen choice;
-- browser acceptance checks computed body/control families for Peyda, the
-  selected display family for headings, and Elize for the wordmark rather than
-  relying on CSS declarations alone;
+- the temporary default `estedad-vazirmatn` review pairing loads Estedad locally
+  for headings and Vazirmatn for body text, controls, labels and prices in both
+  Storefront and Administration; heading roles preserve their component
+  hierarchy, mostly weight 400 with selected headings at 500, while body text is
+  400 and emphasized controls or prices use 500–600;
+- explicit `elize` and `markazi` settings retain the legacy review choices for
+  rollback; see `design-system.md` for their family mapping and restart steps;
+- the existing customer-supplied signature image is the wordmark in every
+  variant; typography selection does not replace it with typed text or approve
+  the final logo;
+- the new pair's official upstream provenance and OFL files are recorded under
+  `packages/design-system/assets/fonts/open-source/`; the temporary selection
+  does not close DES-002 final brand sign-off or approve customer-facing claims;
+- browser acceptance verifies the selected real font faces finish loading,
+  headings use the display family, and body/control/label/price text uses the
+  body family rather than relying on CSS declarations alone;
 - desktop product detail uses a large focal-point-aware gallery beside product
   information; mobile places the gallery first and keeps thumbnails reachable;
-- unavailable sizes remain visible and disabled so stock state is clear without
-  implying cart behavior;
+- unavailable Product sizes remain visible and disabled. An unavailable Outfit
+  size may remain selectable only to expose the OTF-019 component-omission path;
+  the full Outfit purchase action remains blocked while any required component
+  is unavailable;
 - the administration surface favors explicit labeled forms, validation output
   and ledger actions over compressed dashboard cards;
 - cart, checkout, Wishlist, Newsletter, language switching and unapproved
@@ -340,8 +404,21 @@ image-validity warning.
 
 The Elize evidence remains under `output/playwright/milestone-2/`. Equivalent
 E2E Markazi-review captures are written to
-`output/playwright/milestone-2-markazi/`, preventing one typography variant
-from overwriting the other.
+`output/playwright/milestone-2-markazi/`. Capture the current pairing in its own
+typography evidence directory so that one variant does not overwrite another.
+The typography checks in `e2e/foundation.spec.ts` cover Storefront and
+Administration and must be rerun for the selected pair before recording a pass.
+
+For the 2026-09-05 temporary pairing, acceptance at widths 390, 768, 1280 and
+1440 pixels requires readable Persian headings and mixed-direction identifiers,
+no clipped text or horizontal overflow, unchanged artwork, and unchanged
+loading, empty, error, disabled, unavailable and success behavior. Missing font
+assets, fallback-only rendering, a display face on prices or labels, clipped
+heading lines and an altered signature image fail acceptance. Check the loaded
+families after `document.fonts.ready` and retain visual evidence of the
+representative Storefront and Administration page families at each width.
+Heading size, weight and line height may be adjusted to the new family without
+changing business behavior.
 
 Generated linen-suit images are internal prototype assets used only to make
 layout, crop, focal-point and responsive acceptance objective. They do not
@@ -441,10 +518,23 @@ viewport and both its entry and exit use the paired `kele-panel-fade-in` /
 `kele-panel-fade-out` animations without backdrop blur or directional motion,
 while the
 Product disclosure lists Set, Jacket, Trousers, Shirt, T-shirt, Vest, Shorts
-and Shoes without the former Category block. Drawer links remain underline-free.
+and Shoes without the former Category block. The 2026-09-06 follow-up replaces
+the text-only disclosure with the supplied WebP line illustrations, removes all
+decorative group numbering, and gives the desktop panel a physical-left
+editorial image beside a four-by-two RTL group grid. Drawer links remain
+underline-free.
 At 390 px the first row of the four-item Homepage promise grid starts without a
 top divider or top padding, and each Occasion index image occupies the complete
 single-column article width. Reduced-motion removes the new animations.
+
+Catalog group cards use the supplied 3:1 WebP backgrounds with text kept in the
+image's open area and the garment focal point kept visible. They render in one
+column below 640 px and two columns at and above 640 px. The unfiltered Catalog
+also includes published Outfit cards alongside Product cards while preserving
+the independent `/outfits/[slug]` route and Outfit minimum-price projection.
+Responsive evidence is retained in
+`output/playwright/product-discovery-redesign/` for 390×844, 768×1024,
+1280×800 and 1440×900.
 
 Data-backed card rendering and authenticated Admin Product/Media form replay
 were completed against the deterministic PostgreSQL seed. The Product creation

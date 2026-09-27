@@ -1,5 +1,11 @@
 import type { OutfitComponentResolution, OutfitValidationError } from './outfit.types.js';
 
+export function deriveOutfitStartingPrice(
+  sizes: readonly Readonly<{ amountRial: number }>[],
+): number {
+  return Math.min(...sizes.map((size) => size.amountRial));
+}
+
 export function deriveOutfitAvailability(
   components: readonly Pick<
     OutfitComponentResolution,

@@ -1,10 +1,12 @@
 'use client';
 
 import { formatIrrAsToman } from '@kele/design-system/money';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { OutfitDetail } from '../lib/catalog-api';
-import { firstOutfitSizeCode } from '../lib/default-size-selection';
+import { lowestPricedOutfitSizeCode } from '../lib/default-size-selection';
 import { useCart } from './cart-provider';
+import { ProductImage } from './product-image';
 
 type OutfitSize = OutfitDetail['sizes'][number];
 
@@ -46,11 +48,15 @@ export function OutfitPurchaseControls({
 }) {
   const { addOutfit, addProducts, loading } = useCart();
   const [selectedCode, setSelectedCode] = useState<string | null>(() =>
-    firstOutfitSizeCode(outfit.sizes),
+    lowestPricedOutfitSizeCode(outfit.sizes),
   );
   const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const outfitItemsById = useMemo(
+    () => new Map(outfit.items.map((item) => [item.id, item])),
+    [outfit.items],
+  );
   const selected = outfit.sizes.find((size) => size.code === selectedCode) ?? null;
   const included = useMemo(
     () =>
@@ -154,33 +160,64 @@ export function OutfitPurchaseControls({
           <p className="outfit-component-selector-intro">
             {selected.components.length > 1
               ? 'برای خرید بخشی از ست، تیک اجزایی را که نمی‌خواهید بردارید. اجزای باقی‌مانده جداگانه و با قیمت تکی به سبد اضافه می‌شوند.'
-              : 'برای خرید مستقل این محصول، از بخش ساختار ست وارد شوید.'}
+              : 'برای خرید مستقل این محصول، از لینک همان جزء وارد صفحهٔ محصول شوید.'}
           </p>
           <div className="outfit-component-options">
             {selected.components.map((component) => {
               const isIncluded = !excludedIds.has(component.outfitItemId);
+              const outfitItem = outfitItemsById.get(component.outfitItemId);
               return (
-                <label
+                <div
                   key={component.outfitItemId}
-                  className={isIncluded ? 'is-included' : 'is-excluded'}
+                  className={`outfit-component-option ${isIncluded ? 'is-included' : 'is-excluded'}`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isIncluded}
-                    disabled={submitting || selected.components.length === 1}
-                    onChange={() => {
-                      toggleComponent(component.outfitItemId);
-                    }}
-                  />
-                  <span className="outfit-component-option-copy">
-                    <strong>{component.name}</strong>
-                    <small>
-                      {component.colorName} · {component.sizeLabel}
-                      {component.quantity > 1
-                        ? ` · ${component.quantity.toLocaleString('fa-IR')} عدد`
-                        : ''}
-                    </small>
-                  </span>
+                  <label className="outfit-component-option-toggle">
+                    <input
+                      type="checkbox"
+                      checked={isIncluded}
+                      disabled={submitting || selected.components.length === 1}
+                      aria-label={`${component.name} در انتخاب باقی بماند`}
+                      onChange={() => {
+                        toggleComponent(component.outfitItemId);
+                      }}
+                    />
+                  </label>
+                  {outfitItem ? (
+                    <Link
+                      className="outfit-component-option-product"
+                      href={`/products/${outfitItem.productSlug}?color=${encodeURIComponent(outfitItem.variantId)}`}
+                      aria-label={`مشاهدهٔ ${component.name} در صفحهٔ محصول`}
+                    >
+                      <span className="outfit-component-option-media">
+                        <ProductImage
+                          media={outfitItem.featuredMedia}
+                          sizes="(max-width: 767px) 4rem, 4.5rem"
+                        />
+                      </span>
+                      <span className="outfit-component-option-copy">
+                        <strong>{component.name}</strong>
+                        <small>
+                          {component.colorName} · {component.sizeLabel}
+                          {component.quantity > 1
+                            ? ` · ${component.quantity.toLocaleString('fa-IR')} عدد`
+                            : ''}
+                        </small>
+                        <span className="text-link">مشاهدهٔ محصول</span>
+                      </span>
+                    </Link>
+                  ) : (
+                    <span className="outfit-component-option-product">
+                      <span className="outfit-component-option-copy">
+                        <strong>{component.name}</strong>
+                        <small>
+                          {component.colorName} · {component.sizeLabel}
+                          {component.quantity > 1
+                            ? ` · ${component.quantity.toLocaleString('fa-IR')} عدد`
+                            : ''}
+                        </small>
+                      </span>
+                    </span>
+                  )}
                   <span className="outfit-component-option-meta">
                     <small className="outfit-component-price-label">قیمت تکی</small>
                     <bdi>{component.price?.display ?? 'قیمت نامشخص'}</bdi>
@@ -192,7 +229,7 @@ export function OutfitPurchaseControls({
                           : 'ناموجود'}
                     </small>
                   </span>
-                </label>
+                </div>
               );
             })}
           </div>

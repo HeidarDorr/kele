@@ -78,7 +78,7 @@ export function SignInForm({ fakeOtpCode }: { fakeOtpCode: string | undefined })
               setMobile(event.target.value);
             }}
           />
-          <small>با ‎+98‎، با ‎09‎ یا بدون صفر ابتدایی قابل ورود است.</small>
+          {/* <small>با ‎+98‎، با ‎09‎ یا بدون صفر ابتدایی قابل ورود است.</small> */}
           <button className="button-primary" type="submit" disabled={busy}>
             {busy ? 'در حال ارسال…' : 'دریافت کد'}
           </button>

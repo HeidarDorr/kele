@@ -33,7 +33,7 @@ token and typography system rather than a general-purpose component theme.
 - Theme rule: the approved light KELE canvas is page-wide. The dark footer is a
   reference-defined inverse surface, not an alternate color theme.
 
-The warm ivory, burnt-orange and editorial serif direction is not an inferred
+The warm ivory, burnt-orange and restrained Persian display direction is not an inferred
 premium-consumer default. It is explicitly required by `design-system.md` and
 the supplied KELE references, so it overrides the generic anti-default guidance
 in the visual-design skill.
@@ -57,13 +57,13 @@ components and the existing Milestone 1-7 browser evidence before code edits.
 
 | Route                     | Existing states and journeys                                                                                                | Current visual/UX gap to close                                                                                                         | Required M8 acceptance                                                                                                                         |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                       | published, loading fixture, unavailable fixture                                                                             | decorative section numbering/scroll cue, incomplete supported section coverage, hero treatment diverges from light reference direction | light image-led hero, all supported sections, resilient partial data, mobile menu journey                                                      |
+| `/`                       | published, loading fixture, unavailable fixture                                                                             | decorative section numbering/scroll cue, incomplete supported section coverage, hero treatment diverges from light reference direction | light image-led hero, all supported sections, resilient partial data, mobile menu journey and route-transition skeleton                        |
 | `/catalog`                | success, `q`, sort, loading, empty, error                                                                                   | search is visually fused into a utility form; no active-query context; grid rhythm and mobile controls need refinement                 | search/no-results journey, deterministic sort, 2/3/4-column responsive grid, retained input on failure                                         |
 | `/category/[slug]`        | success, empty, not found                                                                                                   | no route loading treatment or dependency-error fixture; presentation repeats generic catalog masthead                                  | editorial PLP heading, empty/error/loading evidence, category navigation                                                                       |
 | `/products/[slug]`        | success, color query, gallery selection, size unavailable, loading, not found, image fallback                               | missing service/content disclosures and related discovery; gallery does not expose position/status; mobile purchase path is long       | close PDP composition match, keyboard gallery, color/size/price state, unavailable and image-error evidence, related products without Wishlist |
 | `/outfits`                | success, loading, empty, error                                                                                              | very large masthead, decorative revision metadata, status overlay on imagery                                                           | consistent discovery masthead, stable 1/2-column layout and full state set                                                                     |
-| `/outfits/[slug]`         | success, size unavailable, loading, not found                                                                               | decorative middle-dot metadata and revision label; component grid lacks compact mobile hierarchy                                       | exact-revision copy, size/availability, independent Product links, component evidence                                                          |
-| `/occasions`              | success, loading, empty, error                                                                                              | numbered editorial rows and excessive alternating treatment                                                                            | calm image-led index, deterministic responsive collapse and state evidence                                                                     |
+| `/outfits/[slug]`         | success, size unavailable, loading, not found                                                                               | decorative middle-dot metadata and revision label; component grid lacks compact mobile hierarchy                                       | exact-revision copy, size/availability, image-backed exact Product links in component options and related-product discovery                    |
+| `/occasions`              | success, loading, empty, error                                                                                              | numbered editorial rows and excessive alternating treatment                                                                            | calm image-led index, deterministic responsive collapse, state evidence and route-transition skeleton                                          |
 | `/occasion/[slug]`        | success, unavailable fixture, not found                                                                                     | missing explicit dependency-error/loading evidence                                                                                     | hero focal point, product availability/empty state, navigation and metadata                                                                    |
 | `/journal`                | success, loading, empty, error                                                                                              | good M7 foundation; heading rhythm and card crop need system alignment                                                                 | retained Article discovery hierarchy across all viewports                                                                                      |
 | `/journal/[slug]`         | success, not found, mixed block types                                                                                       | Product/Outfit references navigate only to indexes; eager inline images; no block-level missing-media feedback                         | one Article JSON-LD object, readable prose, safe references and media fallback                                                                 |
@@ -121,6 +121,57 @@ through the pinned package runner and the existing `kele_e2e` reset guard. This
 keeps the accepted route baselines independent from earlier suites that publish
 new revisions of the shared Outfit fixture; the reset cannot target a normal or
 production database.
+
+### Storefront follow-up acceptance — 2026-09-05
+
+- Every file-backed Storefront page resolves to a segment loading boundary.
+  Route-specific loaders may mirror their destination more closely; the root
+  boundary covers pages without a closer file, including Homepage and the
+  remaining Occasion routes. All variants use layout-shaped skeletons, one
+  named busy status region and the existing reduced-motion behavior.
+- Outfit detail renders each component Product image and exact Product/color
+  link inside the purchase component-option row. The adjacent inclusion control
+  remains a separate keyboard target. The former lower composition box is
+  absent, and the lower area uses the same related-product component and empty
+  state as Product detail while excluding constituent Products.
+- Display roles use the shared fluid type scale: Display XL for Homepage and
+  Outfit mastheads, Display L for page and Product titles, and Heading M for
+  sections. Browser evidence checks the documented mobile and desktop endpoints
+  at 390, 768, 1280 and 1440 pixels after Estedad and Vazirmatn finish loading.
+
+Failure cases are an uncovered route, blank or text-only delayed transition,
+skeleton motion under reduced motion, a component image/link detached from its
+selection row, an incorrect Product/color destination, repeated lower Outfit
+composition, constituent Products in related discovery, a legacy oversized
+heading clamp, clipped Persian text, or horizontal overflow. These are
+presentation changes only; they do not change Outfit revision, availability,
+pricing, Cart identity, API or persistence behavior.
+
+### Product-discovery follow-up acceptance — 2026-09-06
+
+- The desktop Products trigger opens one image-led panel with the supplied
+  editorial image at the physical left and all eight groups in a four-by-two
+  RTL grid. The mobile disclosure presents the same groups in a two-column
+  grid. Both surfaces use the supplied line illustrations and contain no
+  decorative numbers.
+- Catalog group discovery uses the supplied 3:1 photographic backgrounds. It
+  remains one column below 640 px and two columns from 640 px upward, preserves
+  every image's focal garment, has no horizontal overflow and keeps all links
+  usable at 390, 768, 1280 and 1440 px.
+- Runtime category illustrations, category backgrounds and the desktop
+  editorial image are stored as WebP. The two supplied interface compositions
+  are visual references only and are not shipped as Storefront assets.
+- The Catalog page aggregates the published Product and Outfit read projections
+  into one result grid while preserving their independent cards, prices,
+  availability and detail routes under CAT-001. A query filters Outfit cards by
+  Outfit name; price sorting compares Product prices with Outfit minimum prices.
+  If one projection is temporarily unavailable, the page identifies the partial
+  result instead of presenting it as complete.
+
+Failure cases are a numbered group, missing or undecoded artwork, a desktop
+editorial image on the physical right, a clipped mobile grid, background text
+covering the focal garment, Outfit cards absent from the unfiltered Catalog,
+mixed Product/Outfit identity, or horizontal overflow at an acceptance width.
 
 ## Viewport and measurable visual acceptance plan
 
@@ -206,13 +257,13 @@ asset, font licence, usage right or breakpoint for production. Each waiver
 expires at its stated release gate; an unresolved item then keeps production
 launch at `NO-GO`.
 
-| ID      | Temporary M8 waiver                                                                                                                                                      | Resolution owner                                                            | Resolution due                                                       | Launch effect                                                                                                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| DES-001 | The customer-supplied signature PNG temporarily replaces the typed wordmark in Storefront and Administration for local review only. It is explicitly not the final logo. | Product Owner (accountable); Brand/Design owner (delivery)                  | Before production release-candidate visual sign-off                  | This question remains open and launch remains `NO-GO` until the final primary, monochrome and favicon assets are supplied and approved. |
-| DES-002 | Elize/Peyda and the Markazi review variant remain provisional. This waiver grants no licence or production-use approval.                                                 | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Before any production release candidate embeds or serves these fonts | M8 may close; launch remains `NO-GO` until licensing and the final font pairing are approved or replaced.                               |
-| DES-003 | Repository prototype imagery and the reserved missing-media treatment may be used only for M8 evidence. No usage right or production approval is implied.                | Product Owner (accountable); Creative/Content owner (delivery)              | Before production content freeze and customer-facing UAT             | M8 may close; launch remains `NO-GO` until final photography, rights, focal points and crops are approved.                              |
-| DES-004 | The 76 route baselines are engineering extrapolation candidates only; they are not final product/design approval.                                                        | Product Owner and Design owner (jointly accountable)                        | Before production UAT and final design sign-off                      | M8 may close; launch remains `NO-GO` until the extrapolated route families receive product/design approval.                             |
-| DES-005 | The content-driven 640/1024 boundaries and 390/768/1280/1440 evidence widths are provisional M8 acceptance values only.                                                  | Product Owner and Design owner (accountable); Frontend lead (validation)    | Before production responsive UAT and breakpoint sign-off             | M8 may close; launch remains `NO-GO` until responsive behavior and breakpoint boundaries are approved.                                  |
+| ID      | Temporary M8 waiver                                                                                                                                                                                         | Resolution owner                                                            | Resolution due                                                           | Launch effect                                                                                                                           |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| DES-001 | The customer-supplied signature PNG temporarily replaces the typed wordmark in Storefront and Administration for local review only. It is explicitly not the final logo.                                    | Product Owner (accountable); Brand/Design owner (delivery)                  | Before production release-candidate visual sign-off                      | This question remains open and launch remains `NO-GO` until the final primary, monochrome and favicon assets are supplied and approved. |
+| DES-002 | The Estedad/Vazirmatn default and Elize/Peyda or Markazi legacy review choices remain provisional brand pairings. Bundled OFL evidence covers the new open-source files but grants no final brand approval. | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Before any production release candidate embeds or serves the final fonts | M8 may close; launch remains `NO-GO` until the final pairing and any required legacy licences are approved or replaced.                 |
+| DES-003 | Repository prototype imagery and the reserved missing-media treatment may be used only for M8 evidence. No usage right or production approval is implied.                                                   | Product Owner (accountable); Creative/Content owner (delivery)              | Before production content freeze and customer-facing UAT                 | M8 may close; launch remains `NO-GO` until final photography, rights, focal points and crops are approved.                              |
+| DES-004 | The 76 route baselines are engineering extrapolation candidates only; they are not final product/design approval.                                                                                           | Product Owner and Design owner (jointly accountable)                        | Before production UAT and final design sign-off                          | M8 may close; launch remains `NO-GO` until the extrapolated route families receive product/design approval.                             |
+| DES-005 | The content-driven 640/1024 boundaries and 390/768/1280/1440 evidence widths are provisional M8 acceptance values only.                                                                                     | Product Owner and Design owner (accountable); Frontend lead (validation)    | Before production responsive UAT and breakpoint sign-off                 | M8 may close; launch remains `NO-GO` until responsive behavior and breakpoint boundaries are approved.                                  |
 
 `docs/open-questions.md` is the operational register for these five launch
 blockers and carries the same scope, owners, due gates and launch effects.

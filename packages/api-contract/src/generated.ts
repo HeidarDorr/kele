@@ -1579,6 +1579,7 @@ export interface components {
       slug: string;
       name: string;
       featuredMedia: components['schemas']['Media'];
+      /** @description Lowest configured price across all sizes in the published Outfit Revision. */
       startingPrice: components['schemas']['Money'];
       available: boolean;
     };

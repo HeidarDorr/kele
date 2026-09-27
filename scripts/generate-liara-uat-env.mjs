@@ -44,7 +44,7 @@ const values = [
   ['ADMIN_SESSION_PROVIDER', 'postgres_otp'],
   ['ADMIN_SESSION_SIGNING_SECRET', credential()],
   ['ADMIN_OTP_VERIFIER_PEPPER', credential()],
-  ['KELE_TYPOGRAPHY', 'elize'],
+  ['KELE_TYPOGRAPHY', 'estedad-vazirmatn'],
 ];
 
 process.stdout.write(`${values.map(([name, value]) => `${name}=${value}`).join('\n')}\n`);

@@ -1,0 +1,8 @@
+{
+  "app": "<LIARA_APP_ID>",
+  "platform": "docker",
+  "port": 3000,
+  "build": {
+    "location": "germany"
+  }
+}

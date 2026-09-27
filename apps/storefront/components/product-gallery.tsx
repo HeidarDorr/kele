@@ -9,6 +9,8 @@ import {
 } from '../lib/product-gallery-model';
 import { ProductImage } from './product-image';
 
+type GalleryMotionDirection = 'backward' | 'forward';
+
 export function ProductGallery({
   items,
   initialItemKey,
@@ -20,12 +22,19 @@ export function ProductGallery({
     const initialIndex = items.findIndex((item) => item.key === initialItemKey);
     return initialIndex >= 0 ? initialIndex : 0;
   });
+  const [motionDirection, setMotionDirection] = useState<GalleryMotionDirection>('forward');
   const thumbnailButtons = useRef<Array<HTMLButtonElement | null>>([]);
   const touchStart = useRef<GalleryPoint | null>(null);
   const activeIndex = items[selectedIndex] ? selectedIndex : 0;
   const selected = items[activeIndex] ?? items[0];
 
-  function selectIndex(nextIndex: number, focusThumbnail = false) {
+  function selectIndex(
+    nextIndex: number,
+    focusThumbnail = false,
+    direction: GalleryMotionDirection = nextIndex > activeIndex ? 'forward' : 'backward',
+  ) {
+    if (nextIndex === activeIndex) return;
+    setMotionDirection(direction);
     setSelectedIndex(nextIndex);
     if (focusThumbnail) {
       thumbnailButtons.current[nextIndex]?.focus({ preventScroll: true });
@@ -34,7 +43,11 @@ export function ProductGallery({
   }
 
   function moveSelection(step: -1 | 1, focusThumbnail = false) {
-    selectIndex(moveGalleryIndex(activeIndex, items.length, step), focusThumbnail);
+    selectIndex(
+      moveGalleryIndex(activeIndex, items.length, step),
+      focusThumbnail,
+      step === 1 ? 'forward' : 'backward',
+    );
   }
 
   if (!selected) {
@@ -64,7 +77,11 @@ export function ProductGallery({
               if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
               event.preventDefault();
               const step = event.key === 'ArrowLeft' ? 1 : -1;
-              selectIndex(moveGalleryIndex(index, items.length, step), true);
+              selectIndex(
+                moveGalleryIndex(index, items.length, step),
+                true,
+                step === 1 ? 'forward' : 'backward',
+              );
             }}
           >
             <ProductImage media={item.media} sizes="88px" />
@@ -98,7 +115,7 @@ export function ProductGallery({
           touchStart.current = null;
         }}
       >
-        <div className="gallery-primary-image" key={selected.key}>
+        <div className="gallery-primary-image" data-motion={motionDirection} key={selected.key}>
           <ProductImage
             media={selected.media}
             sizes="(max-width: 767px) 100vw, (max-width: 1279px) 55vw, 640px"

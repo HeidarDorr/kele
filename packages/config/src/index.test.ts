@@ -32,8 +32,12 @@ const valid = {
 };
 
 describe('environment configuration', () => {
-  it('defaults typography to Elize and accepts the Markazi review variant', () => {
-    expect(parseEnvironment(valid).KELE_TYPOGRAPHY).toBe('elize');
+  it('defaults typography to Estedad/Vazirmatn and accepts the legacy review variants', () => {
+    expect(parseEnvironment(valid).KELE_TYPOGRAPHY).toBe('estedad-vazirmatn');
+    expect(
+      parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'estedad-vazirmatn' }).KELE_TYPOGRAPHY,
+    ).toBe('estedad-vazirmatn');
+    expect(parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'elize' }).KELE_TYPOGRAPHY).toBe('elize');
     expect(parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'markazi' }).KELE_TYPOGRAPHY).toBe(
       'markazi',
     );

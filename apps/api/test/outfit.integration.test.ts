@@ -153,7 +153,7 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
           {
             code: 'L',
             label: 'بزرگ',
-            amountRial: 51_000_000,
+            amountRial: 45_000_000,
             displayOrder: 1,
             components: [
               {
@@ -193,10 +193,20 @@ describe('Milestone 5 Outfit invariants on PostgreSQL', () => {
       expect(first).toMatchObject({ revisionNumber: 1, revisionState: 'published' });
 
       const publicDetail = await service.getPublic(input.slug);
+      expect(publicDetail.startingPrice.amountRial).toBe(45_000_000);
       expect(publicDetail.sizes).toEqual([
         expect.objectContaining({ code: 'M', availableQuantity: 2, available: true }),
         expect.objectContaining({ code: 'L', availableQuantity: 0, available: false }),
       ]);
+      const publicList = await service.listPublic(null);
+      expect(publicList.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            revisionId: first.revisionId,
+            startingPrice: expect.objectContaining({ amountRial: 45_000_000 }),
+          }),
+        ]),
+      );
       const medium = await service.getOutfitForCheckout(first.revisionId, 'M');
       expect(medium).toMatchObject({
         unitPriceRial: 48_000_000,

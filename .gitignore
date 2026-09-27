@@ -10,6 +10,8 @@ coverage/
 .env
 .env.*
 !.env.example
+liara.json
+kele-liara-uat.zip
 
 # Logs and runtime data
 *.log

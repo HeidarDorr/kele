@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { OutfitService } from '../src/modules/outfit/application/outfit.service.js';
 import {
   deriveOutfitAvailability,
+  deriveOutfitStartingPrice,
   structuralOutfitErrors,
 } from '../src/modules/outfit/domain/outfit.js';
 import type { OutfitCatalogPort } from '../src/modules/catalog/application/outfit-catalog.contract.js';
@@ -10,6 +11,16 @@ import type { OutfitRevisionRecord } from '../src/modules/outfit/domain/outfit.t
 import type { UnitOfWork } from '../src/shared/unit-of-work.js';
 
 describe('Milestone 5 Outfit domain', () => {
+  it('[OTF-021] derives the card price from the cheapest configured size', () => {
+    expect(
+      deriveOutfitStartingPrice([
+        { amountRial: 48_000_000 },
+        { amountRial: 45_000_000 },
+        { amountRial: 51_000_000 },
+      ]),
+    ).toBe(45_000_000);
+  });
+
   it('[OTF-007][OTF-015] derives quantity from exact weighted SKU demand without synthetic stock', () => {
     expect(
       deriveOutfitAvailability([
@@ -51,7 +62,7 @@ describe('Milestone 5 Outfit domain', () => {
       updatedAt: new Date('2026-08-21T00:00:00.000Z'),
     };
     const repository = {
-      listAdmin: async () => [incompleteDraft],
+      listAdmin: () => Promise.resolve([incompleteDraft]),
     } as unknown as OutfitRepository;
     const service = new OutfitService(repository, {} as OutfitCatalogPort, {} as UnitOfWork);
 

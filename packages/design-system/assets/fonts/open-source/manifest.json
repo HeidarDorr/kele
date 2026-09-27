@@ -1,0 +1,29 @@
+{
+  "retrieved": "2026-09-05",
+  "license": "SIL Open Font License 1.1",
+  "modified": false,
+  "fonts": [
+    {
+      "family": "Estedad",
+      "file": "Estedad-Variable.woff2",
+      "role": "headings",
+      "revision": "0dbe689787b8c2ea302373cb601d0f352f9f98e5",
+      "source": "https://raw.githubusercontent.com/aminabedi68/Estedad/0dbe689787b8c2ea302373cb601d0f352f9f98e5/fonts/webfonts/Estedad%5Bwght%5D.woff2",
+      "license": "LICENSE-Estedad.txt",
+      "sha256": "18a2278ad5c9c2f60e034270ea2d5856d04c4e984e47c65483aa63b41e3c5a1e",
+      "bytes": 128304,
+      "weights": "100–900"
+    },
+    {
+      "family": "Vazirmatn",
+      "file": "Vazirmatn-Variable.woff2",
+      "role": "body and controls",
+      "revision": "v33.003",
+      "source": "https://raw.githubusercontent.com/rastikerdar/vazirmatn/v33.003/fonts/webfonts/Vazirmatn%5Bwght%5D.woff2",
+      "license": "LICENSE-Vazirmatn.txt",
+      "sha256": "4e3fa217d38fdafc1fea4414ceb58ca5e662cf0ab5fa735a8c8c20e8b42cad92",
+      "bytes": 111152,
+      "weights": "100–900"
+    }
+  ]
+}

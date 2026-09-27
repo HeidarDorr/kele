@@ -1,9 +1,17 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
+import { OutfitCard } from '../../components/outfit-card';
 import { ProductCard } from '../../components/product-card';
 import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
-import { getCategories, getProducts } from '../../lib/catalog-api';
+import {
+  getCategories,
+  getOutfits,
+  getProducts,
+  type OutfitCardValue,
+  type ProductCardValue,
+} from '../../lib/catalog-api';
 import { getAcceptancePresentationState } from '../../lib/acceptance-presentation-state.server';
 import CatalogLoading from './loading';
 import { productNavigation } from '../../lib/store-navigation';
@@ -22,6 +30,14 @@ type SearchParameters = Promise<{
   focus?: 'search';
 }>;
 
+type CatalogEntry =
+  | Readonly<{ kind: 'outfit'; value: OutfitCardValue; priceRial: number }>
+  | Readonly<{ kind: 'product'; value: ProductCardValue; priceRial: number }>;
+
+function normalizedSearch(value: string): string {
+  return value.trim().toLocaleLowerCase('fa-IR').replaceAll('ي', 'ی').replaceAll('ك', 'ک');
+}
+
 export default async function CatalogPage({ searchParams }: { searchParams: SearchParameters }) {
   const parameters = await searchParams;
   const state = await getAcceptancePresentationState(['loading', 'empty', 'error'] as const);
@@ -36,14 +52,42 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
     );
   }
   const forcedError = state === 'error';
-  const result = forcedError
-    ? null
-    : await getProducts({
-        ...(parameters.q ? { search: parameters.q } : {}),
-        ...(parameters.sort ? { sort: parameters.sort } : {}),
-        limit: state === 'empty' ? 1 : 24,
-      }).catch(() => null);
-  const products = state === 'empty' ? [] : (result?.items ?? []);
+  const [productResult, outfitResult] = forcedError
+    ? ([null, null] as const)
+    : await Promise.all([
+        getProducts({
+          ...(parameters.q ? { search: parameters.q } : {}),
+          ...(parameters.sort ? { sort: parameters.sort } : {}),
+          limit: state === 'empty' ? 1 : 24,
+        }).catch(() => null),
+        getOutfits().catch(() => null),
+      ]);
+  const query = parameters.q ? normalizedSearch(parameters.q) : '';
+  const products = state === 'empty' ? [] : (productResult?.items ?? []);
+  const outfits =
+    state === 'empty'
+      ? []
+      : (outfitResult?.items ?? []).filter(
+          (outfit) => query.length === 0 || normalizedSearch(outfit.name).includes(query),
+        );
+  const catalogUnavailable = productResult === null && outfitResult === null;
+  const catalogPartiallyAvailable = (productResult === null) !== (outfitResult === null);
+  const entries: CatalogEntry[] = [
+    ...outfits.map((outfit) => ({
+      kind: 'outfit' as const,
+      value: outfit,
+      priceRial: outfit.startingPrice.amountRial,
+    })),
+    ...products.map((product) => ({
+      kind: 'product' as const,
+      value: product,
+      priceRial: product.price.amountRial,
+    })),
+  ];
+  if (parameters.sort === 'price_asc' || parameters.sort === 'price_desc') {
+    const direction = parameters.sort === 'price_asc' ? 1 : -1;
+    entries.sort((left, right) => (left.priceRial - right.priceRial) * direction);
+  }
 
   return (
     <>
@@ -52,13 +96,23 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
         <header className="catalog-heading">
           <p className="eyebrow">فروشگاه KELE</p>
           <h1>محصولات</h1>
-          <p>محصولات منتشرشده را بر اساس نام، رنگ، اندازه یا دسته پیدا کنید.</p>
+          <p>محصولات و ست‌های منتشرشده را جست‌وجو کنید یا بر اساس گروه محصول پیش بروید.</p>
         </header>
         <nav className="product-category-index" aria-label="گروه‌های محصولات">
-          {productNavigation.map((item, index) => (
-            <Link href={item.href} key={item.href}>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <strong>{item.label}</strong>
+          {productNavigation.map((item) => (
+            <Link className="product-category-card" href={item.href} key={item.href}>
+              <Image
+                src={item.bannerSrc}
+                alt=""
+                aria-hidden="true"
+                fill
+                sizes="(max-width: 639px) calc(100vw - 2rem), 50vw"
+              />
+              <span className="product-category-card-copy">
+                <small>گروه محصول</small>
+                <strong>{item.label}</strong>
+                <span>مشاهده</span>
+              </span>
             </Link>
           ))}
         </nav>
@@ -88,7 +142,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
           </button>
         </form>
 
-        {result === null ? (
+        {catalogUnavailable ? (
           <section className="state-panel state-error" role="alert">
             <h2>دریافت کاتالوگ ممکن نشد</h2>
             <p>اتصال را بررسی کنید و دوباره تلاش کنید. اطلاعات واردشده حفظ شده است.</p>
@@ -96,7 +150,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
               تلاش دوباره
             </a>
           </section>
-        ) : products.length === 0 ? (
+        ) : entries.length === 0 ? (
           <section className="state-panel" aria-live="polite">
             <h2>نتیجه‌ای پیدا نشد</h2>
             <p>عبارت کوتاه‌تری وارد کنید یا همهٔ محصولات را ببینید.</p>
@@ -106,16 +160,25 @@ export default async function CatalogPage({ searchParams }: { searchParams: Sear
           </section>
         ) : (
           <>
+            {catalogPartiallyAvailable ? (
+              <p className="catalog-partial-notice" role="status">
+                بخشی از کاتالوگ اکنون در دسترس نیست؛ نتایج موجود نمایش داده شده‌اند.
+              </p>
+            ) : null}
             <p className="result-count" aria-live="polite">
-              {products.length.toLocaleString('fa-IR')} نتیجه
+              {entries.length.toLocaleString('fa-IR')} نتیجه
             </p>
             <div className="product-grid">
-              {products.map((product) => (
-                <ProductCard
-                  key={`${product.productId}-${product.selectedVariant.id}`}
-                  product={product}
-                />
-              ))}
+              {entries.map((entry) =>
+                entry.kind === 'outfit' ? (
+                  <OutfitCard key={`outfit-${entry.value.revisionId}`} outfit={entry.value} />
+                ) : (
+                  <ProductCard
+                    key={`product-${entry.value.productId}-${entry.value.selectedVariant.id}`}
+                    product={entry.value}
+                  />
+                ),
+              )}
             </div>
           </>
         )}

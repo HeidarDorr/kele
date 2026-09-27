@@ -23,6 +23,7 @@ authoritative; older names embedded in imported documents are legacy metadata.
 | 11 | `decisions/2026-07-24-employer-open-questions-v1.md` | Approved employer answers incorporated into rules | Incorporated | Decision evidence |
 | 12 | `decisions/2026-07-28-checkout-clarifications.md` | Approved shipping-threshold and cart-merge rules | Incorporated | Decision evidence |
 | 13 | `decisions/2026-08-07-m9-production-providers.md` | Approved M9 provider and administration choices | Incorporated by ADR-0005 | Decision evidence |
+| 14 | `decisions/2026-09-05-outfit-minimum-price-selection.md` | Approved Outfit card price and detail default-size behavior | Incorporated as OTF-021 | Decision evidence |
 
 ## Known import corrections
 

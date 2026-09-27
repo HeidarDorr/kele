@@ -80,6 +80,7 @@ export default async function ProductPage({
   ).items
     .filter((item) => item.productId !== product.productId)
     .slice(0, 4);
+  const productDetails = product.details ?? [];
 
   const productJsonLd = {
     '@context': 'https://schema.org',
@@ -195,19 +196,42 @@ export default async function ProductPage({
           </section>
         </div>
 
-        <section className="product-information" aria-labelledby="details-title">
-          <div>
-            <h2 id="details-title">دربارهٔ محصول</h2>
+        <section
+          className={`product-information${productDetails.length === 0 ? ' product-information--single' : ''}`}
+          aria-labelledby="details-title"
+        >
+          <div className="product-information-section product-information-intro">
+            <header className="product-information-heading">
+              <span className="product-information-index" aria-hidden="true">
+                ۰۱
+              </span>
+              <h2 id="details-title">دربارهٔ محصول</h2>
+            </header>
             <p>{product.description}</p>
           </div>
-          <div>
-            <h2>جزئیات</h2>
-            <ul>
-              {product.details?.map((detail) => (
-                <li key={detail}>{detail}</li>
-              ))}
-            </ul>
-          </div>
+          {productDetails.length > 0 ? (
+            <div className="product-information-section product-information-details">
+              <header className="product-information-heading">
+                <span className="product-information-index" aria-hidden="true">
+                  ۰۲
+                </span>
+                <h2>جزئیات</h2>
+              </header>
+              <ul>
+                {productDetails.map((detail, index) => (
+                  <li key={detail}>
+                    <span className="product-detail-index" aria-hidden="true">
+                      {(index + 1).toLocaleString('fa-IR', {
+                        minimumIntegerDigits: 2,
+                        useGrouping: false,
+                      })}
+                    </span>
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </section>
         <section className="product-related" aria-labelledby="related-products-title">
           <header className="editorial-section-heading editorial-heading-split">

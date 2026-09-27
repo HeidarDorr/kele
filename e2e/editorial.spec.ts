@@ -128,7 +128,7 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       }
       if (viewport.label === 'desktop') {
         await expect(page.locator('.desktop-products-menu li')).toHaveCount(8);
-        const menuGrid = await page.locator('.desktop-products-menu > ul').evaluate((element) => {
+        const menuGrid = await page.locator('.desktop-products-grid').evaluate((element) => {
           const styles = window.getComputedStyle(element);
           return {
             columns: styles.gridTemplateColumns.split(' ').length,
@@ -136,6 +136,11 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
           };
         });
         expect(menuGrid).toEqual({ columns: 4, rows: 2 });
+        await expect(page.locator('.desktop-products-promo img')).toHaveAttribute(
+          'src',
+          /products-promo\.webp/u,
+        );
+        await expect(page.locator('.desktop-products-grid')).not.toContainText(/\d/u);
       }
       const closingBox = await page.locator('.home-closing').boundingBox();
       const footerBox = await page.locator('.site-footer').boundingBox();
@@ -275,6 +280,78 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
         ),
       )
       .toBe(restingHomeRule);
+  });
+
+  test('product discovery uses image-led groups without decorative numbering', async ({
+    browser,
+  }) => {
+    test.setTimeout(120_000);
+    for (const viewport of [
+      { label: 'mobile', width: 390, height: 844 },
+      { label: 'tablet', width: 768, height: 1024 },
+      { label: 'laptop', width: 1280, height: 800 },
+      { label: 'desktop', width: 1440, height: 900 },
+    ]) {
+      const context = await browser.newContext({
+        locale: 'fa-IR',
+        reducedMotion: 'reduce',
+        viewport,
+      });
+      const page = await context.newPage();
+      await page.goto(`${e2eUrls.storefront}/catalog`);
+
+      const categoryIndex = page.locator('.product-category-index').filter({ visible: true });
+      await expect(categoryIndex.locator('.product-category-card')).toHaveCount(8);
+      await expect(categoryIndex).not.toContainText(/[0-9۰-۹]/u);
+      await expect(categoryIndex.locator('img')).toHaveCount(8);
+      await expect(page.locator('.product-grid a[href^="/outfits/"]').first()).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+
+      if (viewport.width >= 1024) {
+        await page.locator('.desktop-products-item').filter({ visible: true }).hover();
+        const menu = page.locator('.desktop-products-panel').filter({ visible: true });
+        await expect(menu.locator('.desktop-products-grid li')).toHaveCount(8);
+        await expect(menu.locator('.desktop-products-grid')).not.toContainText(/[0-9۰-۹]/u);
+        const layout = await menu.evaluate((element) => {
+          const promo = element.querySelector<HTMLElement>('.desktop-products-promo');
+          const groups = element.querySelector<HTMLElement>('.desktop-products-grid');
+          if (!promo || !groups) throw new Error('Desktop Product menu is incomplete');
+          return {
+            columns: window.getComputedStyle(groups).gridTemplateColumns.split(' ').length,
+            promoLeft: promo.getBoundingClientRect().left < groups.getBoundingClientRect().left,
+          };
+        });
+        expect(layout).toEqual({ columns: 4, promoLeft: true });
+      } else {
+        const menuTrigger = page.getByRole('button', { name: 'باز کردن فهرست' });
+        const mobileDialog = page.getByRole('dialog');
+        await expect
+          .poll(async () => {
+            if (await mobileDialog.isVisible()) return true;
+            await menuTrigger.click();
+            return mobileDialog.isVisible();
+          })
+          .toBe(true);
+        const productDisclosure = mobileDialog.getByRole('button', {
+          name: 'نمایش گروه‌های محصولات',
+        });
+        await expect(productDisclosure).toBeVisible();
+        await productDisclosure.click();
+        const groups = page.locator('.mobile-product-links');
+        await expect(groups.getByRole('link')).toHaveCount(8);
+        await expect(groups.locator('img')).toHaveCount(8);
+        await expect(groups).not.toContainText(/[0-9۰-۹]/u);
+      }
+
+      await page.screenshot({
+        path: resolve(evidenceDirectory, 'states', `product-discovery-${viewport.label}.png`),
+        fullPage: true,
+        animations: 'disabled',
+      });
+      await context.close();
+    }
   });
 
   test('mobile editorial grids preserve spacing and image hierarchy', async ({ page }) => {
@@ -488,6 +565,49 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     expect(outfitGallery.width).toBeLessThan(650);
   });
 
+  test('mobile Product information keeps an editorial reading order without overflow', async ({
+    page,
+    request,
+  }) => {
+    const productResponse = await request.get(`${e2eUrls.api}/catalog/products/beige-linen-suit`);
+    expect(productResponse.ok()).toBe(true);
+    const product = (await productResponse.json()) as { details?: string[] };
+    const detailCount = product.details?.length ?? 0;
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${e2eUrls.storefront}/products/beige-linen-suit`);
+
+    const information = page.locator('.product-information').filter({ visible: true });
+    await expect(information).toBeVisible();
+    await expect(information).toHaveCSS('background-color', 'rgb(251, 247, 241)');
+    await expect(information.locator('.product-information-heading')).toHaveCount(
+      detailCount > 0 ? 2 : 1,
+    );
+    await expect(information.locator('li')).toHaveCount(detailCount);
+    await expect(information.locator('.product-information-index')).toHaveCount(
+      detailCount > 0 ? 2 : 1,
+    );
+    await expect(information.locator('.product-detail-index')).toHaveCount(detailCount);
+    for (const decorativeNumber of await information
+      .locator('.product-information-index, .product-detail-index')
+      .all()) {
+      await expect(decorativeNumber).toHaveAttribute('aria-hidden', 'true');
+    }
+
+    expect(
+      await information.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const viewportWidth = document.documentElement.clientWidth;
+        return {
+          fullBleed: Math.abs(rect.width - viewportWidth) <= 1 && Math.abs(rect.x) <= 1,
+          noPageOverflow: document.documentElement.scrollWidth <= viewportWidth,
+          singleColumn:
+            getComputedStyle(element).gridTemplateColumns.trim().split(/\s+/).length === 1,
+        };
+      }),
+    ).toEqual({ fullBleed: true, noPageOverflow: true, singleColumn: true });
+  });
+
   test('Product detail keeps every color image reachable and supports RTL mobile swipe', async ({
     page,
     request,
@@ -526,16 +646,50 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       touches: [],
     });
     await expect(thumbnails.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(primary.locator('.gallery-primary-image')).toHaveAttribute(
+      'data-motion',
+      'forward',
+    );
+    await expect(primary.locator('.gallery-primary-image')).toHaveCSS(
+      'animation-name',
+      'gallery-media-reveal-forward',
+    );
     expect((await primary.boundingBox())?.y).toBe(primaryBoxBeforeSwipe.y);
 
     await primary.dispatchEvent('touchstart', {
-      touches: [{ identifier: 2, clientX: 180, clientY: 180 }],
+      touches: [{ identifier: 2, clientX: 240, clientY: 224 }],
     });
     await primary.dispatchEvent('touchend', {
-      changedTouches: [{ identifier: 2, clientX: 188, clientY: 300 }],
+      changedTouches: [{ identifier: 2, clientX: 80, clientY: 220 }],
       touches: [],
     });
-    await expect(thumbnails.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await expect(thumbnails.nth(0)).toHaveAttribute('aria-pressed', 'true');
+    await expect(primary.locator('.gallery-primary-image')).toHaveAttribute(
+      'data-motion',
+      'backward',
+    );
+    await expect(primary.locator('.gallery-primary-image')).toHaveCSS(
+      'animation-name',
+      'gallery-media-reveal-backward',
+    );
+
+    await primary.dispatchEvent('touchstart', {
+      touches: [{ identifier: 3, clientX: 180, clientY: 180 }],
+    });
+    await primary.dispatchEvent('touchend', {
+      changedTouches: [{ identifier: 3, clientX: 188, clientY: 300 }],
+      touches: [],
+    });
+    await expect(thumbnails.nth(0)).toHaveAttribute('aria-pressed', 'true');
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.reload();
+    const desktopThumbnails = page.locator('.gallery-thumbnails button');
+    await desktopThumbnails.nth(1).click();
+    await expect(page.locator('.gallery-primary-image')).toHaveCSS(
+      'animation-name',
+      'gallery-media-fade',
+    );
   });
 
   for (const viewport of [

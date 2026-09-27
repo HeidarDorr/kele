@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '../../../packages/design-system/src/tokens.css';
+@import '../../../packages/design-system/src/typography.css';
 
 :root {
   color: var(--kele-ink);
@@ -15,11 +16,15 @@ html {
   min-inline-size: 20rem;
 }
 
+body[data-typography='estedad-vazirmatn'] :where(h1, h2, h3) {
+  font-family: var(--font-display), sans-serif;
+}
+
 body {
   margin: 0;
   min-block-size: 100vh;
   background: #f1ebe3;
-  font-family: var(--font-peyda), Tahoma, Arial, sans-serif;
+  font-family: var(--font-body), Tahoma, Arial, sans-serif;
 }
 
 a {
@@ -118,7 +123,7 @@ button:disabled {
 
 .admin-brand small {
   color: #bfb1a4;
-  font-family: var(--font-peyda), Tahoma, sans-serif;
+  font-family: var(--font-body), Tahoma, sans-serif;
   font-size: 0.72rem;
   font-weight: 400;
   letter-spacing: 0;
@@ -201,7 +206,7 @@ button:disabled {
 .admin-login-intro h1 {
   max-inline-size: 14ch;
   margin: 0;
-  font-size: clamp(2.5rem, 6vw, 6.5rem);
+  font-size: var(--kele-type-display-xl);
   font-weight: 500;
   line-height: 1.08;
 }
@@ -297,9 +302,9 @@ button:disabled {
 .admin-heading h1,
 .admin-intro h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-size: var(--kele-type-display-l);
   font-weight: 500;
-  line-height: 1.05;
+  line-height: 1.14;
 }
 
 .admin-section,
@@ -445,8 +450,8 @@ th {
 .editorial-admin-state strong,
 .editorial-boundary-state h1 {
   margin: 0;
-  font-family: var(--font-display), var(--font-peyda), serif;
-  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
+  font-size: var(--kele-type-heading-m);
   font-weight: 500;
 }
 
@@ -908,7 +913,7 @@ label small,
 }
 
 .editorial-admin-grid strong {
-  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
   font-size: 2rem;
   font-weight: 400;
 }
@@ -942,14 +947,14 @@ label small,
 
 .editorial-builder legend {
   padding-inline: 0.7rem;
-  font-family: var(--font-elize), var(--font-peyda), serif;
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
   font-size: 1.65rem;
 }
 
 .editorial-builder legend span {
   margin-inline-end: 0.75rem;
   color: var(--kele-accent-strong);
-  font-family: var(--font-peyda), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 0.7rem;
 }
 
@@ -1023,8 +1028,8 @@ label small,
 
 .homepage-admin-preview h2 {
   margin: 0.6rem 0;
-  font-family: var(--font-elize), var(--font-peyda), serif;
-  font-size: 2.5rem;
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
+  font-size: var(--kele-type-heading-m);
   font-weight: 400;
 }
 
@@ -1091,8 +1096,8 @@ label small,
 
 .journal-admin-preview h2 {
   margin-block-start: 3rem;
-  font-family: var(--font-elize), var(--font-peyda), serif;
-  font-size: 2.8rem;
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
+  font-size: var(--kele-type-heading-m);
   font-weight: 400;
 }
 
