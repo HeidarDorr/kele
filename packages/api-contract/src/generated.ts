@@ -2368,6 +2368,11 @@ export interface components {
       mediaId: string;
       ctaLabel?: string | null;
       href?: string | null;
+      /**
+       * Format: uuid
+       * @description Hero only. The Outfit the Hero presents; its action opens that Outfit. Mutually exclusive with `href`, and publication requires a published Outfit. Absent on revisions saved before the field existed.
+       */
+      outfitId?: string | null;
     };
     HomepageReferenceContent: {
       title: string;

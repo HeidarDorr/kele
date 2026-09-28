@@ -1522,7 +1522,8 @@ h2 {
 .discovery-section h2,
 .product-section h2,
 .category-heading h1,
-.catalog-heading h1 {
+.catalog-heading h1,
+.outfits-heading h1 {
   margin: 0;
   font-size: var(--kele-type-display-l);
   line-height: 1.14;
@@ -1715,13 +1716,15 @@ h2 {
 }
 
 .catalog-heading,
-.category-heading {
+.category-heading,
+.outfits-heading {
   max-inline-size: 45rem;
   margin-block: clamp(2rem, 5vw, 5rem);
 }
 
 .catalog-heading p,
-.category-heading p {
+.category-heading p,
+.outfits-heading p {
   max-inline-size: 40rem;
   color: var(--kele-ink-muted);
   line-height: 1.9;
@@ -2200,61 +2203,15 @@ h2 {
   padding-block-end: clamp(6rem, 12vw, 11rem);
 }
 
-.outfits-masthead {
-  min-block-size: min(68dvh, 44rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding-block: clamp(5rem, 12vw, 9rem) clamp(4rem, 8vw, 7rem);
-  border-block-end: 1px solid var(--kele-line);
+.outfits-heading p {
+  margin-block: 1rem 0;
 }
 
-.outfits-masthead > p,
 .outfit-card-copy p {
   margin: 0 0 1rem;
   color: var(--kele-accent-strong);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-}
-
-.outfits-masthead h1 {
-  max-inline-size: 14ch;
-  margin: 0;
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-display-xl);
-  font-weight: 500;
-  line-height: 0.96;
-}
-
-.outfits-masthead > span {
-  max-inline-size: 40rem;
-  margin-block-start: 2rem;
-  color: var(--kele-ink-muted);
-  line-height: 2;
-}
-
-.outfits-collection {
-  padding-block-start: clamp(4rem, 9vw, 8rem);
-}
-
-.outfits-section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-block-end: 2rem;
-  padding-block-end: 1rem;
-  border-block-end: 1px solid var(--kele-line);
-}
-
-.outfits-section-heading h2 {
-  margin: 0;
-  font-size: var(--kele-type-heading-m);
-}
-
-.outfits-section-heading span {
-  color: var(--kele-ink-muted);
-  font-size: 0.78rem;
 }
 
 .outfit-grid {
@@ -2747,14 +2704,6 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .outfits-masthead {
-    min-block-size: 62dvh;
-  }
-
-  .outfits-masthead h1 {
-    font-size: var(--kele-type-display-xl);
-  }
-
   .outfit-grid,
   .outfit-detail-hero {
     grid-template-columns: 1fr;
@@ -3064,7 +3013,8 @@ summary {
 }
 
 .catalog-heading,
-.category-heading {
+.category-heading,
+.outfits-heading {
   margin-block: clamp(3rem, 7vw, 6rem);
 }
 
@@ -3268,16 +3218,6 @@ summary {
 
 .occasion-index-list article:nth-child(even) .occasion-index-copy {
   grid-column: 1;
-}
-
-.outfits-masthead {
-  min-block-size: min(54dvh, 36rem);
-  padding-block: clamp(4rem, 9vw, 7rem);
-}
-
-.outfits-masthead h1 {
-  font-size: var(--kele-type-display-xl);
-  line-height: 1.06;
 }
 
 .account-section-heading,
@@ -4418,18 +4358,17 @@ summary {
 .home-hero-copy {
   position: relative;
   z-index: 2;
-  inline-size: min(calc(100% - clamp(2rem, 6vw, 6rem)), var(--kele-content-wide));
-  margin-inline: auto;
   padding-block: clamp(3rem, 7vw, 6rem);
 }
 
 .home-hero h1 {
-  max-inline-size: 13ch;
+  max-inline-size: 16ch;
   margin: 0;
   font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-display-xl);
+  font-size: clamp(2rem, calc(1.5rem + 1.9vw), 3.1rem);
   font-weight: 400;
-  line-height: 1.06;
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .home-hero-lede {
@@ -4451,8 +4390,7 @@ summary {
 /* --- Brand promise --- */
 
 .home-promise {
-  padding-block: clamp(3.5rem, 6vw, 5.5rem);
-  border-block-end: 1px solid var(--kele-line);
+  padding-block: clamp(1.75rem, 3vw, 2.5rem);
   background: var(--kele-surface);
 }
 
@@ -4462,76 +4400,46 @@ summary {
   list-style: none;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(1.5rem, 3vw, 3rem);
+  row-gap: 1.75rem;
 }
 
+/* Hairlines divide neighbouring statements only; the strip itself stays open. */
 .home-promise-grid > li {
-  padding-block-start: 1.25rem;
-  border-block-start: 1px solid var(--kele-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding-inline: clamp(1rem, 2.2vw, 2rem);
 }
 
-.home-promise-index {
+.home-promise-grid > li + li {
+  border-inline-start: 1px solid var(--kele-line);
+}
+
+.home-promise-grid > li > div {
+  flex: 1 1 auto;
+  max-inline-size: 15rem;
+}
+
+.home-promise-icon {
+  inline-size: 2rem;
+  block-size: 2rem;
+  flex: none;
   color: var(--kele-accent-strong);
-  font-size: 0.72rem;
 }
 
 .home-promise-grid h3 {
-  margin: 0.75rem 0 0.6rem;
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-heading-m);
-  font-weight: 400;
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.6;
 }
 
 .home-promise-grid p {
   margin: 0;
   color: var(--kele-ink-muted);
-  font-size: 0.9rem;
-  line-height: 1.9;
-}
-
-/* --- Category grid --- */
-
-.home-categories {
-  padding-block: var(--kele-section-space);
-}
-
-.home-category-grid {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(1rem, 2vw, 1.75rem);
-}
-
-.home-category-tile {
-  display: grid;
-  gap: 0.9rem;
-  color: var(--kele-ink);
-  text-decoration: none;
-}
-
-.home-category-media {
-  position: relative;
-  display: block;
-  aspect-ratio: 3 / 4;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--kele-surface-muted);
-}
-
-.home-category-media img {
-  object-fit: cover;
-  transition: transform var(--kele-duration-reveal) var(--kele-ease);
-}
-
-.home-category-tile:hover .home-category-media img {
-  transform: scale(1.03);
-}
-
-.home-category-label {
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+  font-size: 0.82rem;
+  line-height: 1.85;
 }
 
 /* --- Occasions --- */
@@ -4634,10 +4542,9 @@ summary {
   line-height: 1.85;
 }
 
-/* --- Product and outfit rails --- */
+/* --- Product rail --- */
 
-.home-products,
-.home-outfits {
+.home-products {
   padding-block: var(--kele-section-space);
   border-block-start: 1px solid var(--kele-line);
 }
@@ -4698,102 +4605,121 @@ summary {
   font-size: 0.85rem;
 }
 
-/* --- Outfit intro --- */
+/* --- Set spreads --- */
 
-.home-outfits-intro {
-  margin-block-end: clamp(2.5rem, 5vw, 4rem);
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  align-items: center;
-  gap: clamp(2rem, 5vw, 4.5rem);
-}
-
-.home-outfits-copy h2 {
-  max-inline-size: 14ch;
-  margin: 0 0 1.5rem;
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-heading-m);
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-.home-outfits-copy p {
-  max-inline-size: 44ch;
-  margin: 0 0 1.75rem;
-  /* color: var(--kele-ink-muted); */
-  line-height: 2;
-}
-
-.home-outfits-media {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--kele-surface-muted);
-}
-
-.home-outfits-media img {
-  object-fit: cover;
-}
-
-/* --- Craft triptych --- */
-
-.home-craft {
+.home-set {
   padding-block: var(--kele-section-space);
-  background: var(--kele-surface-muted);
-}
-
-.home-craft-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(1rem, 2.5vw, 2.25rem);
-  align-items: start;
-}
-
-.home-craft-grid figure {
-  margin: 0;
-}
-
-/* Editorial offset: the middle frame drops so the row reads as composed rather
-   than tabulated. */
-.home-craft-grid figure:nth-child(2) {
-  margin-block-start: clamp(2rem, 5vw, 5rem);
-}
-
-.home-craft-media {
-  position: relative;
-  display: block;
-  aspect-ratio: 4 / 5;
-  isolation: isolate;
-  overflow: hidden;
   background: var(--kele-canvas);
 }
 
-.home-craft-media img {
+.home-set.is-mirrored {
+  background: var(--kele-surface);
+}
+
+.home-set + .home-set {
+  border-block-start: 1px solid var(--kele-line);
+}
+
+.home-set-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5.5rem);
+}
+
+.home-set-media {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+}
+
+/* Mirrored spreads swap sides so the look always sits on the outer edge and
+   the companion frames lean in towards the copy. The column widths swap with
+   them, so the images keep the wide column. */
+.home-set.is-mirrored .home-set-inner {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+}
+
+.home-set.is-mirrored .home-set-media {
+  order: 2;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.home-set.is-mirrored .home-set-aside {
+  order: -1;
+}
+
+.home-set-look,
+.home-set-detail,
+.home-set-scene {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--kele-surface-muted);
+}
+
+.home-set-scene {
+  aspect-ratio: 5 / 4;
+}
+
+/* The companion frames ride above the look's baseline, so the spread reads as
+   a composition rather than equal tiles. With a scene frame the stack is about
+   as tall as the look, so it rises less and its top clears the look's. */
+.home-set-aside {
+  display: grid;
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  margin-block-end: clamp(3rem, 9vw, 8rem);
+}
+
+.home-set.has-scene .home-set-aside {
+  margin-block-end: clamp(1.5rem, 3.5vw, 3rem);
+}
+
+.home-set-look img,
+.home-set-detail img,
+.home-set-scene img {
   object-fit: cover;
 }
 
-.home-craft-grid figcaption {
-  padding-block-start: 1.25rem;
+.home-set-copy {
+  max-inline-size: 30rem;
 }
 
-.home-craft-grid h3 {
-  margin: 0 0 0.5rem;
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-heading-m);
-  font-weight: 400;
-}
-
-.home-craft-grid figcaption p {
-  max-inline-size: 34ch;
+.home-set-copy h3 {
   margin: 0;
-  color: var(--kele-ink-muted);
-  font-size: 0.9rem;
-  line-height: 1.9;
+  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
+  font-size: var(--kele-type-display-l);
+  font-weight: 400;
+  line-height: 1.15;
 }
 
-.home-craft .home-text-link {
-  margin-block-start: clamp(2rem, 4vw, 3.5rem);
+.home-set-lede {
+  margin: 1.5rem 0 0;
+  color: var(--kele-ink-muted);
+  line-height: 2;
+}
+
+.home-set-meta {
+  margin-block: 2rem 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.25rem;
+}
+
+.home-set-price {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.home-set-meta .availability {
+  font-size: 0.85rem;
+}
+
+.home-sets-empty {
+  padding-block: var(--kele-section-space);
 }
 
 /* --- Brand story --- */
@@ -5222,25 +5148,32 @@ summary {
 /* --- Home responsive --- */
 
 @media (max-width: 1023px) {
-  .home-promise-grid,
-  .home-category-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .home-promise-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-promise-grid > li:nth-child(odd) {
+    border-inline-start: 0;
   }
 
   .home-occasion-layout,
   .home-occasion-layout.is-solo,
-  .home-outfits-intro {
+  .home-set-inner,
+  .home-set.is-mirrored .home-set-inner {
     grid-template-columns: 1fr;
+  }
+
+  .home-set.is-mirrored .home-set-media {
+    order: 0;
+  }
+
+  .home-set-copy {
+    max-inline-size: 40rem;
   }
 
   .home-occasion-aside {
     padding-inline-start: 0;
     padding-block-end: 0;
-  }
-
-  .home-craft-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
   }
 
   .home-journal-grid {
@@ -5267,19 +5200,79 @@ summary {
   }
 
   .home-hero-copy {
-    inline-size: min(calc(100% - 1.5rem), var(--kele-content-wide));
-    padding-block: 2.25rem 1rem;
+    padding-block: 2.5rem 3rem;
+  }
+
+  .home-promise {
+    padding-block: 3rem;
+  }
+
+  .home-set {
+    padding-block: 4rem;
   }
 
   .home-hero h1 {
     max-inline-size: none;
-    font-size: var(--kele-type-display-xl);
   }
 
-  .home-promise-grid,
-  .home-category-grid,
-  .home-craft-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-hero-actions {
+    flex-wrap: nowrap;
+    gap: 1.5rem;
+  }
+
+  .home-hero-actions .home-button {
+    flex: 1 1 auto;
+  }
+
+  .home-hero-actions .home-text-link {
+    flex: none;
+  }
+
+  .home-set-copy .home-button {
+    display: flex;
+    inline-size: 100%;
+  }
+
+  .home-promise-grid {
+    grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+
+  .home-promise-grid > li {
+    justify-content: flex-start;
+    padding-inline: 0;
+    padding-block: 1.1rem;
+  }
+
+  .home-promise-grid > li:first-child {
+    padding-block-start: 0;
+  }
+
+  .home-promise-grid > li:last-child {
+    padding-block-end: 0;
+  }
+
+  .home-promise-grid > li + li {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--kele-line);
+  }
+
+  .home-promise-grid > li > div {
+    max-inline-size: none;
+  }
+
+  .home-promise-icon {
+    inline-size: 1.85rem;
+    block-size: 1.85rem;
+  }
+
+  .home-set-media,
+  .home-set.is-mirrored .home-set-media {
+    grid-template-columns: 1fr;
+  }
+
+  .home-set-aside {
+    display: none;
   }
 
   .home-journal-grid,
@@ -5319,14 +5312,6 @@ summary {
     line-height: 1.8;
   }
 
-  .home-craft-grid figure:nth-child(2) {
-    margin-block-start: 0;
-  }
-
-  .home-craft-grid figure:nth-child(3) {
-    grid-column: 1 / -1;
-  }
-
   .home-story {
     grid-template-columns: 1fr;
   }
@@ -5342,13 +5327,11 @@ summary {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-category-media img,
   .home-occasion-media img,
   .home-journal-media img {
     transition: none;
   }
 
-  .home-category-tile:hover .home-category-media img,
   .home-occasion-tile:hover .home-occasion-media img,
   .home-journal-grid a:hover .home-journal-media img {
     transform: none;
@@ -5473,7 +5456,6 @@ a:any-link:active {
 .product-category-index strong,
 .desktop-products-menu strong,
 .category-links span,
-.home-category-label,
 .home-journal-grid strong,
 .home-product-rail-end strong {
   --kele-link-rule-offset: 0.66em;
@@ -5497,7 +5479,6 @@ a:any-link:active {
 .product-category-index strong::after,
 .desktop-products-menu strong::after,
 .category-links span::after,
-.home-category-label::after,
 .home-journal-grid strong::after,
 .home-product-rail-end strong::after {
   content: '';
@@ -5536,7 +5517,6 @@ a:any-link:active {
 .product-category-index strong,
 .desktop-products-menu strong,
 .category-links span,
-.home-category-label,
 .home-journal-grid strong,
 .home-product-rail-end strong {
   inline-size: fit-content;
@@ -5623,8 +5603,6 @@ a:any-link:active {
   .desktop-products-menu a:focus-visible strong::after,
   .category-links a:hover span::after,
   .category-links a:focus-visible span::after,
-  .home-category-tile:hover .home-category-label::after,
-  .home-category-tile:focus-visible .home-category-label::after,
   .home-journal-grid a:hover strong::after,
   .home-journal-grid a:focus-visible strong::after,
   .home-product-rail-end a:hover strong::after,
@@ -5805,11 +5783,6 @@ a:any-link:active {
 }
 
 @media (max-width: 767px) {
-  .home-promise-grid > li:nth-child(-n + 2) {
-    padding-block-start: 0;
-    border-block-start: 0;
-  }
-
   .occasion-index-list article > a,
   .occasion-index-list article:nth-child(even) > a {
     grid-template-columns: minmax(0, 1fr);
@@ -6033,78 +6006,6 @@ a:any-link:active {
   font-weight: 600;
 }
 
-/* A compact composition-led masthead replaces the previous viewport-height void. */
-.outfits-masthead {
-  min-block-size: 0;
-  padding-block: clamp(2.5rem, 4.5vw, 4rem);
-  border-block-end: 1px solid var(--kele-line);
-}
-
-.outfits-masthead-meta {
-  padding-block-end: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-block-end: 1px solid var(--kele-line);
-}
-
-.outfits-masthead-meta p,
-.outfits-masthead-meta span {
-  margin: 0;
-  color: var(--kele-ink-muted);
-  font-size: 0.75rem;
-}
-
-.outfits-masthead-meta p {
-  color: var(--kele-accent-strong);
-  font-weight: 600;
-}
-
-.outfits-masthead-layout {
-  padding-block-start: clamp(1.75rem, 3vw, 2.75rem);
-  display: grid;
-  direction: ltr;
-  grid-template-columns: minmax(16rem, 0.65fr) minmax(0, 1.35fr);
-  gap: clamp(2rem, 5vw, 5rem);
-  align-items: end;
-}
-
-.outfits-masthead-layout h1 {
-  grid-column: 2;
-  direction: rtl;
-  max-inline-size: 12ch;
-  margin: 0;
-  font-family: var(--font-display), var(--font-body), var(--font-display-fallback);
-  font-size: var(--kele-type-display-xl);
-  font-weight: 400;
-  line-height: 1.06;
-  text-wrap: balance;
-}
-
-.outfits-masthead-copy {
-  grid-column: 1;
-  grid-row: 1;
-  direction: rtl;
-  padding-inline-start: clamp(1.25rem, 3vw, 2.5rem);
-  border-inline-start: 1px solid var(--kele-line);
-}
-
-.outfits-masthead-copy p {
-  max-inline-size: 39rem;
-  margin: 0;
-  color: var(--kele-ink-muted);
-  line-height: 1.95;
-}
-
-.outfits-masthead-copy .home-text-link {
-  margin-block-start: 1rem;
-}
-
-#outfits-title {
-  scroll-margin-block-start: calc(var(--header-block) + 2rem);
-}
-
 .outfit-component-option-copy .text-link {
   display: inline-flex;
   margin-block-start: 0.15rem;
@@ -6133,11 +6034,6 @@ a:any-link:active {
   .detail-purchase-panel {
     position: static;
   }
-
-  .outfits-masthead-layout {
-    grid-template-columns: minmax(15rem, 0.9fr) minmax(0, 1.1fr);
-    gap: clamp(2rem, 5vw, 4rem);
-  }
 }
 
 @media (max-width: 767px) {
@@ -6153,31 +6049,6 @@ a:any-link:active {
 
   .purchase-price-row {
     min-block-size: 4.25rem;
-  }
-
-  .outfits-masthead {
-    padding-block: 2.5rem 3.5rem;
-  }
-
-  .outfits-masthead-layout {
-    direction: rtl;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .outfits-masthead-layout h1 {
-    grid-column: auto;
-    max-inline-size: 10ch;
-    font-size: var(--kele-type-display-xl);
-  }
-
-  .outfits-masthead-copy {
-    grid-column: auto;
-    grid-row: auto;
-    padding-block-start: 1.25rem;
-    padding-inline-start: 0;
-    border-block-start: 1px solid var(--kele-line);
-    border-inline-start: 0;
   }
 }
 
@@ -6280,7 +6151,6 @@ a:any-link:active {
   .product-category-index strong::after,
   .desktop-products-menu strong::after,
   .category-links span::after,
-  .home-category-label::after,
   .home-journal-grid strong::after,
   .home-product-rail-end strong::after,
   .button-primary::after,

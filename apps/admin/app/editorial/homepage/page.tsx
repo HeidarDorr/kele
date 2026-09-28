@@ -113,9 +113,33 @@ export default async function HomepageEditor({
                           rows={2}
                         />
                       </label>
+                      {section.type === 'hero' ? (
+                        <label>
+                          ست هیرو
+                          <select
+                            name={`outfitId:${section.id}`}
+                            defaultValue={content.outfitId ?? ''}
+                          >
+                            <option value="">بدون ست؛ مسیر داخلی استفاده شود</option>
+                            {content.outfitId &&
+                            !outfits.items.some((outfit) => outfit.id === content.outfitId) ? (
+                              <option value={content.outfitId}>ست منتشرنشده یا بایگانی‌شده</option>
+                            ) : null}
+                            {outfits.items.map((outfit) => (
+                              <option key={outfit.id} value={outfit.id}>
+                                {outfit.name} — {outfit.slug}
+                              </option>
+                            ))}
+                          </select>
+                          <small>
+                            دکمهٔ اقدام به صفحهٔ همین ست می‌رود و مسیر داخلی نادیده گرفته می‌شود.
+                            عکس هیرو جدا از عکس‌های خود ست است و در «تصویر هیرو» انتخاب می‌شود.
+                          </small>
+                        </label>
+                      ) : null}
                       <MediaSelect
                         name={`mediaId:${section.id}`}
-                        label="رسانه"
+                        label={section.type === 'hero' ? 'تصویر هیرو (۳۲۰۰ × ۱۴۰۰)' : 'رسانه'}
                         media={media}
                         defaultValue={content.mediaId}
                         required
@@ -187,7 +211,9 @@ export default async function HomepageEditor({
       <form className="editorial-publish" action={publishHomepageAction.bind(null, draft.version)}>
         <div>
           <strong>انتشار نسخه</strong>
-          <p>دقیقاً یک Hero فعال، رسانه‌های موجود و ارجاع‌های منتشرشده لازم است.</p>
+          <p>
+            دقیقاً یک Hero فعال، رسانه‌های موجود و ارجاع‌های منتشرشده، از جمله ست هیرو، لازم است.
+          </p>
         </div>
         <button className="admin-primary" type="submit">
           اعتبارسنجی و انتشار

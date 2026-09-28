@@ -41,6 +41,120 @@ function brief(entry: ArtDirectionBrief): ArtDirectionBrief {
   return entry;
 }
 
+const SET_LOOK_COMPOSITION =
+  'Portrait 4:5 lead frame of a Homepage set spread, also the featured image on the set page. ' +
+  'One child, full body, centred, feet visible, generous headroom. Keep the face near 42% from ' +
+  'the top and nothing essential within 8% of any edge.';
+
+const SET_DETAIL_COMPOSITION =
+  'Portrait 4:5 companion frame that sits beside the lead image on tablet and desktop and is ' +
+  'hidden on mobile. Tactile detail only, never a face, so it reads at about 280px wide.';
+
+const SET_SCENE_COMPOSITION =
+  'Landscape 5:4 third frame stacked under the detail on tablet and desktop and hidden on ' +
+  'mobile. A wider moment of the set being worn; keep the child in the central 60% and ' +
+  'readable at about 280px wide.';
+
+/**
+ * Each Homepage set spread pairs a full look with a close detail. The files are
+ * named after the Outfit slug and referenced by the development seed.
+ */
+const setBriefs = [
+  {
+    slug: 'evening-velvet-set',
+    label: 'ست مخمل شب',
+    look:
+      'He wears a single-breasted charcoal velvet jacket, an ivory linen shirt with the top button ' +
+      'open, hazelnut brown cotton trousers and honey-brown leather loafers. Early evening at a ' +
+      'family celebration: a softly lit terrace with warm lamp light and out-of-focus string lights ' +
+      'far behind him, one hand in his pocket, a quiet proud half-smile. Warm evening light, deep ' +
+      'espresso shadows, ivory and honey highlights, no cool blue tones.',
+    detail:
+      'Close-up still life of the same outfit laid on a dark walnut chair: the charcoal velvet ' +
+      'jacket lapel folded over the ivory linen shirt collar, one honey-brown leather loafer at the ' +
+      'lower edge. Warm lamp light raking across the velvet pile so its texture reads clearly. ' +
+      'Deep espresso shadows, ivory and honey highlights.',
+  },
+  {
+    slug: 'camel-vest-set',
+    label: 'ست وست شتری',
+    look:
+      'He wears a camel wool vest buttoned over an ivory linen shirt with rolled sleeves, hazelnut ' +
+      'brown cotton trousers and honey-brown leather loafers. Late afternoon at a family gathering ' +
+      'in a Persian courtyard with a shallow tiled pool and potted citrus trees softly blurred ' +
+      `behind him, caught mid-step as if walking towards someone. ${PALETTE}`,
+    detail:
+      'Close-up of a child standing, cropped from chest to waist: the knitted texture and ' +
+      'buttons of the camel wool vest over the ivory linen shirt, a rolled linen sleeve at the ' +
+      `frame edge. No face. Soft golden-hour side light revealing the knit. ${PALETTE}`,
+    scene:
+      'Use the attached photograph (the lead look of this set) as the identity, wardrobe and location ' +
+      'reference: the same Iranian boy (same face, hair, age and build) in exactly the same ' +
+      'outfit, a buttoned camel wool vest over an ivory linen shirt with rolled sleeves, hazelnut ' +
+      'brown cotton trousers and honey-brown leather loafers, in the same Persian courtyard with ' +
+      'its shallow tiled pool, potted citrus trees and family gathering. A quieter moment later ' +
+      'the same afternoon: he sits on the stone edge of the pool beside his white-haired ' +
+      'grandfather, who leans in to tell him something; the boy listens with a small smile, ' +
+      'hands resting on his knees. Seen from a few metres away at seated eye level, both figures ' +
+      'in the central part of the frame, the guests and trees softly blurred behind them. Late ' +
+      `afternoon golden light. ${PALETTE}`,
+  },
+  {
+    slug: 'olive-summer-set',
+    label: 'ست تابستان زیتونی',
+    look:
+      'He wears a plain khaki-sand cotton t-shirt, tailored olive linen shorts with a soft turn-up ' +
+      'and honey-brown leather shoes. A summer garden party under old trees with dappled shade on ' +
+      'the grass, he is turning mid-movement with a relaxed laugh, energetic but still composed. ' +
+      PALETTE,
+    detail:
+      'Close-up of the olive linen shorts hem and the honey-brown leather shoes of a child standing ' +
+      'on sunlit stone with a few fallen leaves. No face. Dappled summer light showing the linen ' +
+      `weave and the leather grain. ${PALETTE}`,
+  },
+] as const;
+
+/**
+ * The Hero set is already pictured by the Homepage hero frame, so its two set
+ * images are generated with that photograph attached as the identity and
+ * wardrobe reference.
+ */
+const HERO_REFERENCE =
+  'Use the attached photograph as the identity and wardrobe reference: the same Iranian boy ' +
+  '(same face, hair, age and build) wearing exactly the same outfit, a soft oat-beige ' +
+  'single-breasted linen suit with turned-up trouser hems, a cream open-collar linen shirt and ' +
+  'taupe suede loafers. Keep the same sunlit travertine architecture and warm afternoon light.';
+
+const heroSetBriefs = [
+  brief({
+    file: '/media/outfits/beige-linen-set-look.webp',
+    label: 'ست لینن بژ — نمای کامل',
+    width: 1200,
+    height: 1500,
+    composition: SET_LOOK_COMPOSITION,
+    prompt:
+      `Editorial fashion photograph, 1200x1500, aspect ratio 4:5. ${HERO_REFERENCE} ` +
+      'A new moment from the same afternoon: he walks slowly towards the camera along a plain ' +
+      'travertine wall, one hand in his trouser pocket, the jacket open and moving slightly, a ' +
+      'calm, quietly confident expression. Full body, centred, feet visible, generous headroom. ' +
+      `${PALETTE} ${QUALITY}`,
+  }),
+  brief({
+    file: '/media/outfits/beige-linen-set-detail.webp',
+    label: 'ست لینن بژ — جزئیات',
+    width: 1200,
+    height: 1500,
+    composition: SET_DETAIL_COMPOSITION,
+    prompt:
+      `Editorial detail photograph, 1200x1500, aspect ratio 4:5. ${HERO_REFERENCE} ` +
+      'Close-up of the child standing, cropped from chest to upper thigh: the oat-beige linen ' +
+      'lapel, a single button and the welt pocket over the cream open collar, the linen slub ' +
+      'and soft creases clearly visible, his hand resting in the trouser pocket at the lower ' +
+      'edge. No face. Low warm side light raking across the linen weave. ' +
+      `${PALETTE} ${QUALITY}`,
+  }),
+];
+
 export const artDirectionBriefs: readonly ArtDirectionBrief[] = [
   brief({
     file: '/media/editorial/home-hero-wide.webp',
@@ -59,57 +173,6 @@ export const artDirectionBriefs: readonly ArtDirectionBrief[] = [
       `Generous negative space, quiet and spacious, unhurried mood. ${PALETTE} ${QUALITY}`,
   }),
   brief({
-    file: '/media/editorial/styling-duo.webp',
-    label: 'روایت ست‌ها',
-    width: 1800,
-    height: 1350,
-    composition:
-      'Landscape 4:3 image beside the styling copy column. Two subjects read as one styled pair.',
-    prompt:
-      'Editorial lifestyle photograph, 1800x1350, aspect ratio 4:3. Two Iranian boys aged 6 to 10 ' +
-      'standing together in complementary but not identical outfits: one in an oat linen suit, ' +
-      'one in a knitted vest over a cream shirt with tailored shorts. They stand on a warm stone ' +
-      'terrace with soft greenery blurred behind them, mid-conversation, natural and unposed. ' +
-      `Full body, generous headroom, calm composition. ${PALETTE} ${QUALITY}`,
-  }),
-  brief({
-    file: '/media/editorial/craft-fabric.webp',
-    label: 'جزئیات — پارچه',
-    width: 1100,
-    height: 1375,
-    composition: 'Portrait 4:5 detail, first of a three-part craft triptych. No human face.',
-    prompt:
-      'Extreme close-up still-life photograph, 1100x1375, aspect ratio 4:5. Folded natural oat ' +
-      'linen and soft cream cotton fabric stacked on a warm pale surface, raking side light ' +
-      'revealing the weave and fibre texture. No people, no faces. Tactile, quiet, tangible. ' +
-      `${PALETTE} ${QUALITY}`,
-  }),
-  brief({
-    file: '/media/editorial/craft-stitch.webp',
-    label: 'جزئیات — دوخت',
-    width: 1100,
-    height: 1375,
-    composition:
-      'Portrait 4:5 detail, second of the craft triptych. Sits slightly lower than its neighbours.',
-    prompt:
-      'Extreme close-up detail photograph, 1100x1375, aspect ratio 4:5. The lapel and buttonhole ' +
-      'of a small oat linen child jacket, showing precise hand stitching, a natural corozo button ' +
-      'and a clean seam. Shallow depth of field, warm daylight. No people, no faces. ' +
-      `${PALETTE} ${QUALITY}`,
-  }),
-  brief({
-    file: '/media/editorial/craft-movement.webp',
-    label: 'جزئیات — آزادی حرکت',
-    width: 1100,
-    height: 1375,
-    composition: 'Portrait 4:5 detail, third of the craft triptych. The only one showing motion.',
-    prompt:
-      `Editorial motion photograph, 1100x1375, aspect ratio 4:5. ${SUBJECT} ` +
-      'Cropped from the shoulders down, mid-stride and turning, an unbuttoned oat linen jacket ' +
-      'swinging with the movement, showing that the garment allows the child to move freely. ' +
-      `Slight natural motion blur in the fabric only, the body sharp. Warm daylight. ${PALETTE} ${QUALITY}`,
-  }),
-  brief({
     file: '/media/editorial/home-closing.webp',
     label: 'قاب پایانی صفحه خانه',
     width: 3200,
@@ -124,34 +187,39 @@ export const artDirectionBriefs: readonly ArtDirectionBrief[] = [
       'No people. The CENTRE of the frame is calm and uncluttered so overlaid text stays readable; ' +
       `visual interest sits in the outer thirds. Nostalgic, warm, restful. ${PALETTE} ${QUALITY}`,
   }),
-  ...(
-    [
-      ['set', 'ست', 'a complete oat linen suit with a cream shirt, jacket and trousers'],
-      ['jackets', 'کت', 'a single tailored linen jacket in warm oat, shown on its own'],
-      ['trousers', 'شلوار', 'tailored child trousers in warm sand linen, cuffed at the ankle'],
-      ['shirts', 'پیراهن', 'a soft cream cotton shirt with a rounded collar'],
-      ['t-shirts', 'تیشرت', 'a plain ribbed cotton t-shirt in warm off-white'],
-      ['vests', 'وست', 'a knitted or linen vest in soft camel worn over a cream shirt'],
-      ['shorts', 'شلوارک', 'tailored linen shorts in warm oat with a soft turn-up'],
-      ['shoes', 'کفش', 'a pair of small brown leather loafers'],
-    ] as const
-  ).map(([slug, label, garment]) =>
+  ...setBriefs.flatMap((set) => [
     brief({
-      file: `/media/editorial/category-${slug}.webp`,
-      label: `دسته — ${label}`,
-      width: 900,
-      height: 1200,
-      composition:
-        'Portrait 3:4 category tile in a horizontal rail. The garment must read instantly at ' +
-        'roughly 260px wide, so keep one subject, centred, against a plain ground.',
+      file: `/media/outfits/${set.slug}-look.webp`,
+      label: `${set.label} — نمای کامل`,
+      width: 1200,
+      height: 1500,
+      composition: SET_LOOK_COMPOSITION,
       prompt:
-        `Editorial product photograph, 900x1200, aspect ratio 3:4. A category image showing ${garment}. ` +
-        'Presented cleanly against a plain warm ivory plaster background with soft directional ' +
-        'daylight and a gentle natural shadow. Single subject, centred, generous margins, ' +
-        'nothing else in frame. Must remain legible when displayed small. ' +
-        `${PALETTE} ${QUALITY}`,
+        `Editorial fashion photograph, 1200x1500, aspect ratio 4:5. ${SUBJECT} ${set.look} ` +
+        QUALITY,
     }),
-  ),
+    brief({
+      file: `/media/outfits/${set.slug}-detail.webp`,
+      label: `${set.label} — جزئیات`,
+      width: 1200,
+      height: 1500,
+      composition: SET_DETAIL_COMPOSITION,
+      prompt: `Editorial detail photograph, 1200x1500, aspect ratio 4:5. ${set.detail} ${QUALITY}`,
+    }),
+    ...('scene' in set
+      ? [
+          brief({
+            file: `/media/outfits/${set.slug}-scene.webp`,
+            label: `${set.label} — صحنه`,
+            width: 1500,
+            height: 1200,
+            composition: SET_SCENE_COMPOSITION,
+            prompt: `Editorial fashion photograph, 1500x1200, aspect ratio 5:4. ${set.scene} ${QUALITY}`,
+          }),
+        ]
+      : []),
+  ]),
+  ...heroSetBriefs,
 ];
 
 const briefsByFile = new Map(artDirectionBriefs.map((entry) => [entry.file, entry]));

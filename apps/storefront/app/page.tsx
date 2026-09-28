@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
 import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
-import { getCategories, getOutfits, getProducts } from '../lib/catalog-api';
+import {
+  getCategories,
+  getOutfit,
+  getOutfits,
+  getProducts,
+  type OutfitDetail,
+} from '../lib/catalog-api';
 import {
   getHomepage,
   getJournal,
@@ -13,13 +19,11 @@ import { SiteFooter } from '../components/site-footer';
 import { SiteHeader } from '../components/site-header';
 import { BrandPromise } from '../components/home/brand-promise';
 import { BrandStory } from '../components/home/brand-story';
-import { CategoryRail } from '../components/home/category-rail';
 import { ClosingBand } from '../components/home/closing-band';
-import { CraftTriptych } from '../components/home/craft-triptych';
 import { HomeHero } from '../components/home/home-hero';
+import { HomeSets } from '../components/home/home-sets';
 import { JournalHighlights } from '../components/home/journal-highlights';
 import { OccasionShowcase } from '../components/home/occasion-showcase';
-import { OutfitShowcase } from '../components/home/outfit-showcase';
 import { ProductRail } from '../components/home/product-rail';
 import { getAcceptancePresentationState } from '../lib/acceptance-presentation-state.server';
 
@@ -45,6 +49,7 @@ type MediaSection = Section & {
     mediaId: string;
     ctaLabel?: string | null;
     href?: string | null;
+    outfitId?: string | null;
   };
 };
 
@@ -82,10 +87,38 @@ export default async function HomePage() {
   const journal = journalResult.status === 'fulfilled' ? journalResult.value.items : [];
   const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : null;
   const media = new Map(homepage?.media.map((item) => [item.id, item]) ?? []);
+  const published = homepage?.sections ?? [];
+
+  // Set spreads need the description, gallery and pieces that only the Outfit
+  // detail carries. A set that fails to load is left out rather than half drawn.
+  const featuredOutfitIds = new Set(
+    published.flatMap((section) =>
+      section.type === 'featured_outfits' && 'referenceIds' in section.content
+        ? section.content.referenceIds
+        : [],
+    ),
+  );
+  const outfitDetails = new Map<string, OutfitDetail>();
+  const detailResults = await Promise.allSettled(
+    outfits.filter((item) => featuredOutfitIds.has(item.id)).map((item) => getOutfit(item.slug)),
+  );
+  for (const result of detailResults) {
+    if (result.status === 'fulfilled') outfitDetails.set(result.value.id, result.value);
+  }
 
   function heroMediaOf(section: MediaSection) {
     const asset = media.get(section.content.mediaId);
     return asset ? { url: asset.url, alt: asset.alt, focalPoint: asset.focalPoint } : null;
+  }
+
+  // A Hero that presents an Outfit opens it by its current slug. If that Outfit
+  // has since left the catalogue, the Hero stays editorial rather than linking
+  // to a missing page.
+  function heroHrefOf(section: MediaSection): string | null {
+    const outfitId = section.content.outfitId ?? null;
+    if (outfitId === null) return section.content.href ?? null;
+    const outfit = outfits.find((item) => item.id === outfitId);
+    return outfit ? `/outfits/${outfit.slug}` : null;
   }
 
   function renderSection(section: Section): ReactNode {
@@ -99,7 +132,7 @@ export default async function HomePage() {
           title={section.content.title}
           subtitle={section.content.subtitle}
           ctaLabel={section.content.ctaLabel}
-          href={section.content.href}
+          href={heroHrefOf(section)}
           media={heroMediaOf(section)}
         />
       );
@@ -130,13 +163,14 @@ export default async function HomePage() {
     }
 
     if (section.type === 'featured_outfits' && 'referenceIds' in section.content) {
-      const referenceIds = section.content.referenceIds;
       return (
-        <OutfitShowcase
+        <HomeSets
           key={section.id}
           titleId={titleId}
           title={section.content.title}
-          items={outfits.filter((item) => referenceIds.includes(item.id))}
+          items={section.content.referenceIds
+            .map((id) => outfitDetails.get(id))
+            .filter((item): item is OutfitDetail => item !== undefined)}
         />
       );
     }
@@ -173,31 +207,6 @@ export default async function HomePage() {
     return null;
   }
 
-  /**
-   * Brand-owned sections that carry no published business content. They are
-   * anchored to the section they follow so the page keeps a deliberate rhythm
-   * whichever sections an editor has published.
-   */
-  function connectiveTissue(section: Section): ReactNode {
-    if (section.type === 'hero') {
-      return (
-        <>
-          <BrandPromise />
-          <CategoryRail />
-        </>
-      );
-    }
-    if (section.type === 'featured_products') {
-      return <CraftTriptych />;
-    }
-    return null;
-  }
-
-  const published = homepage?.sections ?? [];
-  // The craft triptych normally follows the curated product row. Without that
-  // anchor it still belongs on the page, just before the closing band.
-  const craftNeedsFallbackSlot = !published.some((section) => section.type === 'featured_products');
-
   return (
     <>
       <SiteHeader categories={categories} settings={settings} />
@@ -215,7 +224,8 @@ export default async function HomePage() {
               published.map((section) => (
                 <Fragment key={section.id}>
                   {renderSection(section)}
-                  {connectiveTissue(section)}
+                  {/* The brand promise is brand-owned copy, anchored under the hero. */}
+                  {section.type === 'hero' ? <BrandPromise /> : null}
                 </Fragment>
               ))
             ) : (
@@ -232,10 +242,8 @@ export default async function HomePage() {
                   </Link>
                 </section>
                 <BrandPromise />
-                <CategoryRail />
               </>
             )}
-            {craftNeedsFallbackSlot ? <CraftTriptych /> : null}
             <ClosingBand />
           </>
         )}

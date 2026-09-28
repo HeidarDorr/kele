@@ -93,8 +93,21 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
       await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
       await expect(
-        page.getByRole('heading', { name: 'لباس‌هایی برای خاطره‌های آرام کودکی' }),
+        page.getByRole('heading', { name: 'برای لحظه‌هایی که تکرار نمی‌شوند.' }),
       ).toBeVisible();
+      await expect(page.getByRole('link', { name: 'مشاهده ست', exact: true })).toHaveAttribute(
+        'href',
+        '/outfits/calm-linen-look',
+      );
+      const setSpreads = page.locator('.home-set');
+      await expect(setSpreads).toHaveCount(1);
+      await expect(setSpreads.getByRole('link', { name: /^مشاهده ست .+/u })).toHaveAttribute(
+        'href',
+        '/outfits/calm-linen-look',
+      );
+      await expect(setSpreads.locator('.home-set-scene')).toHaveCount(1);
+      await expect(setSpreads.getByText('در این ست', { exact: true })).toHaveCount(0);
+      await expect(page.locator('.home-promise-grid .home-promise-icon')).toHaveCount(4);
       await expect(page.getByRole('link', { name: 'موقعیت‌ها' }).first()).toHaveAttribute(
         'href',
         '/occasions',
@@ -360,18 +373,21 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
 
     const promises = page.locator('.home-promise-grid > li');
     await expect(promises).toHaveCount(4);
-    for (const index of [0, 1]) {
-      const firstRowStyle = await promises.nth(index).evaluate((item) => {
-        const style = window.getComputedStyle(item);
-        return {
-          border: style.borderBlockStartWidth,
-          padding: style.paddingBlockStart,
-        };
-      });
-      expect(firstRowStyle.border).toBe('0px');
-      expect(firstRowStyle.padding).toBe('0px');
+    const promiseBoxes: number[] = [];
+    for (const index of [0, 1, 2, 3]) {
+      const box = await promises.nth(index).boundingBox();
+      expect(box).not.toBeNull();
+      promiseBoxes.push(box?.y ?? 0);
     }
-    await expect(promises.nth(2)).toHaveCSS('border-block-start-width', '1px');
+    expect(promiseBoxes).toEqual([...promiseBoxes].sort((a, b) => a - b));
+    expect(new Set(promiseBoxes).size).toBe(4);
+    for (const index of [0, 1, 2, 3]) {
+      await expect(promises.nth(index)).toHaveCSS('border-inline-start-width', '0px');
+      await expect(promises.nth(index)).toHaveCSS(
+        'border-block-start-width',
+        index === 0 ? '0px' : '1px',
+      );
+    }
     await page.screenshot({
       path: resolve(evidenceDirectory, 'states', 'homepage-mobile-refinements.png'),
       fullPage: true,
@@ -965,7 +981,7 @@ test.describe.serial('Milestone 7 editorial acceptance', () => {
     expect(after.publishedAt).not.toBe(before.publishedAt);
     await page.goto(e2eUrls.storefront);
     await expect(
-      page.getByRole('heading', { name: 'لباس‌هایی برای خاطره‌های آرام کودکی' }),
+      page.getByRole('heading', { name: 'برای لحظه‌هایی که تکرار نمی‌شوند.' }),
     ).toBeVisible();
   });
 

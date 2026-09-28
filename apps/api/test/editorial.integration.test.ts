@@ -185,4 +185,67 @@ describe('Milestone 7 editorial persistence', () => {
       });
     });
   });
+
+  it('[CMS-006][CMS-007] publishes a Hero Outfit only while that Outfit is published', async () => {
+    await inRollback(async (transaction) => {
+      await transaction.$executeRawUnsafe('TRUNCATE TABLE "homepage_revisions" CASCADE');
+      const context = {
+        client: () => transaction,
+        run: <T>(operation: () => Promise<T>) => operation(),
+      } as PrismaTransactionContext;
+      const repository = new PrismaEditorialRepository(context);
+      const actor: EditorialActor = {
+        actorId: 'editorial-integration-hero-outfit',
+        role: 'super_admin',
+        correlationId: randomUUID(),
+      };
+      const media = await transaction.mediaAsset.create({
+        data: {
+          url: `/media/editorial/${randomUUID()}.webp`,
+          width: 3200,
+          height: 1400,
+          altText: 'پسربچه با ست لینن در حیاطی آفتابی',
+          format: 'WEBP',
+          group: 'HOMEPAGE',
+        },
+      });
+      const outfit = await transaction.outfit.create({
+        data: { slug: `hero-outfit-${randomUUID()}`, status: 'DRAFT' },
+      });
+      const heroInput = {
+        sections: [
+          {
+            id: randomUUID(),
+            type: 'hero' as const,
+            enabled: true,
+            order: 0,
+            content: {
+              title: 'برای لحظه‌هایی که تکرار نمی‌شوند.',
+              subtitle: null,
+              mediaId: media.id,
+              ctaLabel: 'مشاهده ست',
+              href: null,
+              outfitId: outfit.id,
+            },
+          },
+        ],
+      };
+
+      const draft = await repository.getHomepageDraft(actor);
+      const saved = await repository.saveHomepageDraft(heroInput, draft.version, actor);
+      await expect(repository.publishHomepage(saved.version, actor)).rejects.toMatchObject({
+        code: 'EDITORIAL_REFERENCE_INVALID',
+      });
+
+      await transaction.outfit.update({
+        where: { id: outfit.id },
+        data: { status: 'PUBLISHED', publishedAt: new Date() },
+      });
+      await repository.publishHomepage(saved.version, actor);
+      expect((await repository.getPublishedHomepage()).sections[0]?.content).toMatchObject({
+        outfitId: outfit.id,
+        href: null,
+      });
+    });
+  });
 });

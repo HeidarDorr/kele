@@ -387,6 +387,7 @@ export async function saveHomepageAction(version: number, formData: FormData): P
   const sections = sectionIds.map((id) => {
     const type = stringValue(formData, `type:${id}`);
     const mediaSection = ['hero', 'editorial_banner', 'brand_story'].includes(type);
+    const outfitId = type === 'hero' ? stringValue(formData, `outfitId:${id}`) || null : null;
     return {
       id,
       type,
@@ -398,7 +399,8 @@ export async function saveHomepageAction(version: number, formData: FormData): P
             subtitle: stringValue(formData, `subtitle:${id}`) || null,
             mediaId: stringValue(formData, `mediaId:${id}`),
             ctaLabel: stringValue(formData, `ctaLabel:${id}`) || null,
-            href: stringValue(formData, `href:${id}`) || null,
+            href: outfitId === null ? stringValue(formData, `href:${id}`) || null : null,
+            outfitId,
           }
         : {
             title: stringValue(formData, `title:${id}`),

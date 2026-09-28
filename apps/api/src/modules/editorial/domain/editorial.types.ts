@@ -22,6 +22,8 @@ export interface HomepageMediaContent {
   mediaId: string;
   ctaLabel: string | null;
   href: string | null;
+  /** Hero only; revisions saved before the field existed omit it. */
+  outfitId?: string | null;
 }
 
 export interface HomepageReferenceContent {

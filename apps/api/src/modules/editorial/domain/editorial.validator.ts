@@ -28,6 +28,8 @@ const blockTypes = new Set([
   'divider',
 ]);
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
 export function isSafeInternalHref(value: string): boolean {
   return value.startsWith('/') && !value.startsWith('//') && !value.includes('\\');
 }
@@ -80,13 +82,32 @@ export function validateHomepage(
           code: 'REQUIRED',
           message: 'Media is required.',
         });
+      const outfitId = content.outfitId ?? null;
       if (content.href !== null && !isSafeInternalHref(content.href))
         issues.push({
           path: `${path}.content.href`,
           code: 'UNSAFE_LINK',
           message: 'Homepage links must be safe internal paths.',
         });
-      if ((content.ctaLabel === null) !== (content.href === null))
+      if (outfitId !== null && section.type !== 'hero')
+        issues.push({
+          path: `${path}.content.outfitId`,
+          code: 'UNSUPPORTED_FIELD',
+          message: 'Only the Hero can present an Outfit.',
+        });
+      if (outfitId !== null && !uuidPattern.test(outfitId))
+        issues.push({
+          path: `${path}.content.outfitId`,
+          code: 'INVALID_REFERENCE',
+          message: 'Hero Outfit must be an Outfit identifier.',
+        });
+      if (outfitId !== null && content.href !== null)
+        issues.push({
+          path: `${path}.content`,
+          code: 'DESTINATION_CONFLICT',
+          message: 'A Hero opens either its Outfit or an internal path, not both.',
+        });
+      if ((content.ctaLabel === null) !== (content.href === null && outfitId === null))
         issues.push({
           path: `${path}.content`,
           code: 'CTA_PAIR_REQUIRED',
@@ -221,6 +242,19 @@ function validateBlock(
       code: 'UNSAFE_LINK',
       message: 'External links require a label and HTTPS URL.',
     });
+}
+
+/** Outfits an enabled Hero presents; publication requires each to be published. */
+export function homepageHeroOutfitIds(input: HomepageDraftInput): string[] {
+  return [
+    ...new Set(
+      input.sections.flatMap((section) => {
+        if (section.type !== 'hero' || !section.enabled) return [];
+        const outfitId = (section.content as HomepageMediaContent).outfitId ?? null;
+        return outfitId === null ? [] : [outfitId];
+      }),
+    ),
+  ];
 }
 
 export function journalMediaIds(input: JournalDraftInput): string[] {

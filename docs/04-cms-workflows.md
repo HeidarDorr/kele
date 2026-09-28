@@ -1061,8 +1061,18 @@ Each Homepage Hero SHALL support:
 
 - Destination Link (Optional)
 
+- Hero Outfit (Optional)
+
 When no Destination Link is provided, the Hero SHALL be displayed as
 editorial content only.
+
+A Hero Outfit is the destination of a Hero that presents one set. The Hero
+image stays owned by the Homepage and is chosen separately from the Outfit's
+own images, because it is a wide editorial frame the Outfit gallery does not
+carry. A Hero Outfit and an internal Destination Link are mutually exclusive;
+the CTA opens the Outfit by its current slug. Publication requires the Hero
+Outfit to be published. If the Outfit later leaves the catalogue, the published
+Hero is displayed as editorial content only until an editor chooses another.
 
 ---
 
@@ -1115,7 +1125,7 @@ Administrator enters:
 
 - CTA Label (Optional)
 
-- Destination Link (Optional)
+- Destination Link (Optional), or a Hero Outfit selected from published Outfits
 
 ↓
 

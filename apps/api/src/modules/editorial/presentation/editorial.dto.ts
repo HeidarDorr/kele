@@ -73,6 +73,7 @@ class HomepageSectionDto {
           mediaId: content.mediaId ?? '',
           ctaLabel: typeof content.ctaLabel === 'string' ? content.ctaLabel : null,
           href: typeof content.href === 'string' ? content.href : null,
+          outfitId: typeof content.outfitId === 'string' ? content.outfitId : null,
         },
       };
     }

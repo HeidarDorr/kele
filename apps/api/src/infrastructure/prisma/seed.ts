@@ -50,6 +50,7 @@ const editorialMediaIds = {
 } as const;
 const publishedAt = new Date('2026-07-31T00:00:00.000Z');
 const correctedOutfitPublishedAt = new Date('2026-08-16T00:00:00.000Z');
+const revisedDemoOutfitPublishedAt = new Date('2026-09-27T00:00:00.000Z');
 const customerCopyOutfitPublishedAt = new Date('2026-08-18T00:00:00.000Z');
 const mediaIds = [frontMediaId, backMediaId, detailMediaId];
 const productGroups = [
@@ -152,6 +153,181 @@ const productGroups = [
     price: 22_500_000n,
   },
 ] as const;
+const productGroupSizes = ['5y', '6y'] as const;
+
+function productGroupSkuId(groupIndex: number, sizeIndex: number): string {
+  const sequence = String((groupIndex + 1) * 10 + sizeIndex + 1).padStart(12, '0');
+  return `83000000-0000-4000-8000-${sequence}`;
+}
+
+/**
+ * Development-only Outfits composed from the demo product groups, so the Homepage
+ * can feature complete looks. Their editorial artwork is briefed in the
+ * storefront art-direction registry until the files are delivered.
+ */
+const demoOutfits = [
+  {
+    outfitId: '86000000-0000-4000-8000-000000000001',
+    revisionId: '86000000-0000-4000-8000-000000000011',
+    eventId: '86000000-0000-4000-8000-000000000021',
+    slug: 'evening-velvet-set',
+    name: 'ست مخمل شب',
+    description:
+      'برای شب‌هایی که چراغ‌ها روشن‌اند و همه دور هم جمع شده‌اند. کت مخمل زغالی روی پیراهن لینن شیری، با شلوار فندقی و کفش چرمی عسلی؛ ترکیبی گرم و رسمی که سال‌ها بعد هم در عکس‌های همان شب درست دیده می‌شود.',
+    seoTitle: 'ست مخمل شب | KELE',
+    seoDescription: 'ست کامل کت مخمل زغالی، پیراهن لینن شیری، شلوار فندقی و کفش چرمی عسلی KELE.',
+    categoryIds: [categoryId, occasionCategoryId],
+    homepage: 'featured',
+    pieces: [0, 2, 1, 6],
+    sizePricesRial: [74_000_000n, 78_500_000n],
+    media: [
+      {
+        id: '87000000-0000-4000-8000-000000000011',
+        url: '/media/outfits/evening-velvet-set-look.webp',
+        altText: 'کودک با کت مخمل زغالی، پیراهن شیری و شلوار فندقی در یک شب جشن',
+        focalPointX: 0.5,
+        focalPointY: 0.42,
+      },
+      {
+        id: '87000000-0000-4000-8000-000000000012',
+        url: '/media/outfits/evening-velvet-set-detail.webp',
+        altText: 'جزئیات بافت مخمل زغالی کت و یقهٔ پیراهن لینن شیری',
+        focalPointX: 0.5,
+        focalPointY: 0.5,
+      },
+    ],
+  },
+  {
+    outfitId: '86000000-0000-4000-8000-000000000002',
+    revisionId: '86000000-0000-4000-8000-000000000015',
+    eventId: '86000000-0000-4000-8000-000000000025',
+    supersedesRevisionId: '86000000-0000-4000-8000-000000000012',
+    slug: 'camel-vest-set',
+    name: 'ست وست شتری',
+    description:
+      'برای عصرهای خانوادگی و مهمانی‌های روز. وست پشمی شتری روی پیراهن لینن شیری، با شلوار فندقی و کفش چرمی عسلی؛ آراسته به اندازه، بی‌آنکه سنگین شود، و راحت برای ساعت‌هایی که کودک یک‌جا نمی‌نشیند.',
+    seoTitle: 'ست وست شتری | KELE',
+    seoDescription: 'ست کامل وست پشمی شتری، پیراهن لینن شیری، شلوار فندقی و کفش چرمی عسلی KELE.',
+    categoryIds: [occasionCategoryId],
+    homepage: 'featured',
+    pieces: [4, 2, 1, 6],
+    sizePricesRial: [68_000_000n, 72_500_000n],
+    media: [
+      {
+        id: '87000000-0000-4000-8000-000000000021',
+        url: '/media/outfits/camel-vest-set-look.webp',
+        altText: 'کودک با وست شتری، پیراهن شیری و شلوار فندقی در یک عصر خانوادگی',
+        focalPointX: 0.5,
+        focalPointY: 0.42,
+      },
+      {
+        id: '87000000-0000-4000-8000-000000000022',
+        url: '/media/outfits/camel-vest-set-detail.webp',
+        altText: 'جزئیات بافت پشمی وست شتری روی پیراهن لینن شیری',
+        focalPointX: 0.5,
+        focalPointY: 0.5,
+      },
+      {
+        id: '87000000-0000-4000-8000-000000000023',
+        url: '/media/outfits/camel-vest-set-scene.webp',
+        width: 1500,
+        height: 1200,
+        altText: 'کودک با وست شتری کنار حوض حیاط، در کنار پدربزرگش در یک عصر خانوادگی',
+        focalPointX: 0.5,
+        focalPointY: 0.45,
+      },
+    ],
+  },
+  {
+    outfitId: '86000000-0000-4000-8000-000000000003',
+    revisionId: '86000000-0000-4000-8000-000000000013',
+    eventId: '86000000-0000-4000-8000-000000000023',
+    slug: 'olive-summer-set',
+    name: 'ست تابستان زیتونی',
+    description:
+      'برای روزهای بلند تابستان و مهمانی‌هایی که در باغ برگزار می‌شوند. تیشرت پنبه‌ای خاکی، شلوارک لینن زیتونی و کفش چرمی عسلی؛ سبک و آراسته، برای روزی که قرار است پر از بازی و حرکت باشد.',
+    seoTitle: 'ست تابستان زیتونی | KELE',
+    seoDescription: 'ست کامل تیشرت پنبه‌ای خاکی، شلوارک لینن زیتونی و کفش چرمی عسلی KELE.',
+    categoryIds: ['80000000-0000-4000-8000-000000000006'],
+    homepage: 'featured',
+    pieces: [3, 5, 6],
+    sizePricesRial: [41_000_000n, 44_500_000n],
+    media: [
+      {
+        id: '87000000-0000-4000-8000-000000000031',
+        url: '/media/outfits/olive-summer-set-look.webp',
+        altText: 'کودک با تیشرت خاکی و شلوارک زیتونی در باغی آفتابی',
+        focalPointX: 0.5,
+        focalPointY: 0.42,
+      },
+      {
+        id: '87000000-0000-4000-8000-000000000032',
+        url: '/media/outfits/olive-summer-set-detail.webp',
+        altText: 'جزئیات بافت لینن شلوارک زیتونی و کفش چرمی عسلی',
+        focalPointX: 0.5,
+        focalPointY: 0.55,
+      },
+    ],
+  },
+  {
+    outfitId: '86000000-0000-4000-8000-000000000004',
+    revisionId: '86000000-0000-4000-8000-000000000014',
+    eventId: '86000000-0000-4000-8000-000000000024',
+    slug: 'beige-linen-set',
+    name: 'ست لینن بژ',
+    description:
+      'برای مراسم روز و عکس‌هایی که سال‌ها می‌مانند. کت‌وشلوار لینن بژ روی پیراهن لینن شیری با یقهٔ باز؛ روشن، سبک و رسمی، بی‌آنکه کودک را در قالبی خشک نگه دارد.',
+    seoTitle: 'ست لینن بژ | KELE',
+    seoDescription: 'ست کامل کت‌وشلوار لینن بژ و پیراهن لینن شیری KELE.',
+    categoryIds: [categoryId, occasionCategoryId],
+    homepage: 'hero',
+    pieces: ['beige-linen-suit', 2],
+    sizePricesRial: [52_000_000n, 54_500_000n],
+    media: [
+      {
+        id: '87000000-0000-4000-8000-000000000041',
+        url: '/media/outfits/beige-linen-set-look.webp',
+        altText: 'کودک با کت‌وشلوار لینن بژ و پیراهن شیری در حیاطی سنگی و آفتابی',
+        focalPointX: 0.5,
+        focalPointY: 0.42,
+      },
+      {
+        id: '87000000-0000-4000-8000-000000000042',
+        url: '/media/outfits/beige-linen-set-detail.webp',
+        altText: 'جزئیات بافت لینن کت بژ روی یقهٔ باز پیراهن شیری',
+        focalPointX: 0.5,
+        focalPointY: 0.5,
+      },
+    ],
+  },
+] as const;
+
+type DemoPiece = (typeof demoOutfits)[number]['pieces'][number];
+
+function demoHeroOutfit(): (typeof demoOutfits)[number] {
+  const hero = demoOutfits.find((outfit) => outfit.homepage === 'hero');
+  if (hero === undefined) throw new Error('A demo Outfit must be marked for the Homepage Hero.');
+  return hero;
+}
+
+/** Resolves a demo piece to its product, default colour and the 5Y/6Y SKUs. */
+function demoPiece(piece: DemoPiece): {
+  productId: string;
+  variantId: string;
+  skuIds: readonly [string, string];
+} {
+  if (piece === 'beige-linen-suit') {
+    const [fiveYears, sixYears] = skuInputs;
+    return { productId, variantId, skuIds: [fiveYears.id, sixYears.id] };
+  }
+  const group = productGroups.at(piece);
+  if (group === undefined) throw new Error('Demo outfit references a missing product group.');
+  return {
+    productId: group.productId,
+    variantId: group.variantId,
+    skuIds: [productGroupSkuId(piece, 0), productGroupSkuId(piece, 1)],
+  };
+}
 const prisma = new PrismaClient();
 
 const media = [
@@ -469,6 +645,166 @@ async function reconcileOutfit(transaction: Prisma.TransactionClient): Promise<v
       revisionNumber: currentRevision.revisionNumber + 1,
       sourceRevisionId: currentRevision.id,
       publishedAt: customerCopyOutfitPublishedAt,
+    });
+  }
+}
+
+async function reconcileDemoOutfits(transaction: Prisma.TransactionClient): Promise<void> {
+  for (const [outfitIndex, outfit] of demoOutfits.entries()) {
+    for (const media of outfit.media) {
+      const asset = {
+        url: media.url,
+        width: 'width' in media ? media.width : 1200,
+        height: 'height' in media ? media.height : 1500,
+        altText: media.altText,
+        focalPointX: media.focalPointX,
+        focalPointY: media.focalPointY,
+        format: MediaFormat.WEBP,
+        group: MediaGroup.OUTFIT_EDITORIAL,
+      };
+      await transaction.mediaAsset.upsert({
+        where: { id: media.id },
+        create: { id: media.id, ...asset },
+        update: { ...asset, archivedAt: null },
+      });
+    }
+    await transaction.outfit.upsert({
+      where: { id: outfit.outfitId },
+      create: { id: outfit.outfitId, slug: outfit.slug },
+      update: {},
+    });
+    for (const outfitCategoryId of outfit.categoryIds) {
+      await transaction.outfitCategory.upsert({
+        where: { outfitId_categoryId: { outfitId: outfit.outfitId, categoryId: outfitCategoryId } },
+        create: { outfitId: outfit.outfitId, categoryId: outfitCategoryId },
+        update: {},
+      });
+    }
+
+    // Published revisions are immutable, so each composition is written once. A
+    // changed demo composition gets a new revision that supersedes only the
+    // seed's own earlier revision, never one an editor published.
+    const existing = await transaction.outfitRevision.findUnique({
+      where: { id: outfit.revisionId },
+    });
+    if (existing !== null) continue;
+    const current = await transaction.outfitRevision.findFirst({
+      where: { outfitId: outfit.outfitId, state: OutfitRevisionState.PUBLISHED },
+      orderBy: { revisionNumber: 'desc' },
+    });
+    const supersedesRevisionId =
+      'supersedesRevisionId' in outfit ? outfit.supersedesRevisionId : null;
+    if (current !== null && current.id !== supersedesRevisionId) continue;
+    const latest = await transaction.outfitRevision.findFirst({
+      where: { outfitId: outfit.outfitId },
+      orderBy: { revisionNumber: 'desc' },
+    });
+    const revisionNumber = (latest?.revisionNumber ?? 0) + 1;
+    const revisionPublishedAt = current === null ? publishedAt : revisedDemoOutfitPublishedAt;
+
+    await transaction.outfitRevision.create({
+      data: {
+        id: outfit.revisionId,
+        outfitId: outfit.outfitId,
+        revisionNumber,
+        sourceRevisionId: current?.id ?? null,
+        createdAt: revisionPublishedAt,
+        state: OutfitRevisionState.DRAFT,
+        name: outfit.name,
+        description: outfit.description,
+        seoTitle: outfit.seoTitle,
+        seoDescription: outfit.seoDescription,
+      },
+    });
+    const itemIds: string[] = [];
+    const pieces = outfit.pieces.map(demoPiece);
+    for (const [displayOrder, piece] of pieces.entries()) {
+      const itemSequence = (revisionNumber - 1) * 1000 + 100 + outfitIndex * 10 + displayOrder;
+      const itemId = `86000000-0000-4000-8000-${String(itemSequence).padStart(12, '0')}`;
+      itemIds.push(itemId);
+      await transaction.outfitItem.create({
+        data: {
+          id: itemId,
+          outfitRevisionId: outfit.revisionId,
+          productId: piece.productId,
+          defaultColorVariantId: piece.variantId,
+          quantity: 1,
+          displayOrder,
+        },
+      });
+    }
+    for (const [displayOrder, media] of outfit.media.entries()) {
+      await transaction.outfitRevisionMedia.create({
+        data: {
+          outfitRevisionId: outfit.revisionId,
+          mediaAssetId: media.id,
+          displayOrder,
+          featured: displayOrder === 0,
+        },
+      });
+    }
+    for (const [sizeIndex, size] of productGroupSizes.entries()) {
+      const amountRial = outfit.sizePricesRial[sizeIndex];
+      if (amountRial === undefined) throw new Error('Demo outfit size price is missing.');
+      const outfitSize = await transaction.outfitSize.create({
+        data: {
+          outfitRevisionId: outfit.revisionId,
+          code: size.toUpperCase(),
+          label: sizeIndex === 0 ? '۵ سال' : '۶ سال',
+          amountRial,
+          displayOrder: sizeIndex,
+        },
+      });
+      for (const [displayOrder, piece] of pieces.entries()) {
+        const outfitItemId = itemIds[displayOrder];
+        const skuId = piece.skuIds[sizeIndex];
+        if (outfitItemId === undefined || skuId === undefined)
+          throw new Error('Demo outfit item mapping is incomplete.');
+        await transaction.outfitSizeComponent.create({
+          data: {
+            outfitSizeId: outfitSize.id,
+            outfitItemId,
+            skuId,
+            quantity: 1,
+            displayOrder,
+          },
+        });
+      }
+    }
+    if (current !== null) {
+      await transaction.outfitRevision.update({
+        where: { id: current.id },
+        data: { state: OutfitRevisionState.HISTORICAL, supersededAt: revisionPublishedAt },
+      });
+    }
+    await transaction.outfitRevision.update({
+      where: { id: outfit.revisionId },
+      data: { state: OutfitRevisionState.PUBLISHED, publishedAt: revisionPublishedAt },
+    });
+    await transaction.outfit.update({
+      where: { id: outfit.outfitId },
+      data: {
+        status: PublicationStatus.PUBLISHED,
+        publishedAt,
+        archivedAt: null,
+        version: current === null ? 2 : { increment: 1 },
+      },
+    });
+    await transaction.businessEvent.create({
+      data: {
+        id: outfit.eventId,
+        type: 'OutfitPublished',
+        actorId: 'seed',
+        entityType: 'Outfit',
+        entityId: outfit.outfitId,
+        correlationId,
+        payload: {
+          revisionId: outfit.revisionId,
+          sourceRevisionId: current?.id ?? null,
+          ruleIds: ['OTF-004', 'OTF-014', 'OTF-015', 'OTF-017'],
+          deterministic: true,
+        },
+      },
     });
   }
 }
@@ -825,10 +1161,9 @@ async function reconcileProductGroups(transaction: Prisma.TransactionClient): Pr
         update: { displayOrder, featured: displayOrder === 0 },
       });
     }
-    for (const [sizeIndex, size] of ['5y', '6y'].entries()) {
-      const sequence = String((groupIndex + 1) * 10 + sizeIndex + 1).padStart(12, '0');
-      const skuId = `83000000-0000-4000-8000-${sequence}`;
-      const priceRecordId = `84000000-0000-4000-8000-${sequence}`;
+    for (const [sizeIndex, size] of productGroupSizes.entries()) {
+      const skuId = productGroupSkuId(groupIndex, sizeIndex);
+      const priceRecordId = skuId.replace(/^83/u, '84');
       const code = `${group.skuPrefix}-${size.toUpperCase()}`;
       const amountRial = group.price + BigInt(sizeIndex * 1_200_000);
       const physicalQuantity = sizeIndex === 0 ? 5 : 3;
@@ -893,7 +1228,10 @@ async function reconcileProductGroups(transaction: Prisma.TransactionClient): Pr
   }
 }
 
-async function reconcileEditorial(transaction: Prisma.TransactionClient): Promise<void> {
+async function reconcileEditorial(
+  transaction: Prisma.TransactionClient,
+  composition: Readonly<{ featuredOutfitIds: readonly string[]; heroOutfitId: string }>,
+): Promise<void> {
   const editorialMedia = [
     {
       id: editorialMediaIds.homepageHero,
@@ -972,53 +1310,20 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
       enabled: true,
       order: 1,
       content: {
-        title: 'لباس‌هایی برای خاطره‌های آرام کودکی',
-        subtitle: 'پارچه‌های طبیعی، فرم‌های سنجیده و راحتی برای هر روز و هر مراسم',
+        title: 'برای لحظه‌هایی که تکرار نمی‌شوند.',
+        subtitle: 'انتخاب‌هایی برای روزهایی که قرار است بیشتر از یک روز معمولی باشند.',
         mediaId: editorialMediaIds.homepageHero,
-        ctaLabel: 'دیدن مجموعه',
-        href: '/catalog',
+        ctaLabel: 'مشاهده ست',
+        href: null,
+        outfitId: composition.heroOutfitId,
       },
-    },
-    {
-      id: '71000000-0000-4000-8000-000000000002',
-      type: 'occasion_grid',
-      enabled: true,
-      order: 2,
-      content: { title: 'انتخاب بر اساس موقعیت', referenceIds: [occasionCategoryId] },
-    },
-    {
-      id: '71000000-0000-4000-8000-000000000003',
-      type: 'featured_products',
-      enabled: true,
-      order: 3,
-      content: { title: 'انتخاب‌های تازه', referenceIds: [productId] },
     },
     {
       id: '71000000-0000-4000-8000-000000000005',
       type: 'featured_outfits',
       enabled: true,
-      order: 4,
-      content: { title: 'ست‌های کامل فصل', referenceIds: [outfitId] },
-    },
-    {
-      id: '71000000-0000-4000-8000-000000000004',
-      type: 'brand_story',
-      enabled: true,
-      order: 5,
-      content: {
-        title: 'آرام، ماندگار، برای کودک',
-        subtitle: 'KELE لباس کودک را با احترام به حرکت، لمس و خاطره طراحی می‌کند.',
-        mediaId: editorialMediaIds.journalTailoring,
-        ctaLabel: 'خواندن ژورنال',
-        href: '/journal',
-      },
-    },
-    {
-      id: '71000000-0000-4000-8000-000000000006',
-      type: 'journal_highlights',
-      enabled: true,
-      order: 6,
-      content: { title: 'خواندنی‌های KELE', referenceIds: [journalArticleId] },
+      order: 2,
+      content: { title: 'ست‌های فصل', referenceIds: [...composition.featuredOutfitIds] },
     },
   ];
   await transaction.homepageRevision.upsert({
@@ -1044,12 +1349,15 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
     },
     update: {},
   });
-  // The seed owns this fixture, so re-running it re-applies the composition to a
-  // development database whose revisions have already moved on. Superseded
-  // revisions stay untouched: published history is immutable.
+  // Re-running the seed re-applies this composition only to revisions the seed
+  // still owns. Once an editor saves or publishes the Homepage, their revision
+  // carries their actor id and survives re-seeding, including the UAT start-up
+  // reconciliation. Superseded revisions stay untouched: published history is
+  // immutable.
   await transaction.homepageRevision.updateMany({
     where: {
       state: { in: [EditorialRevisionState.PUBLISHED, EditorialRevisionState.DRAFT] },
+      actorId: 'seed',
     },
     data: { sections: homepageSections },
   });
@@ -1170,22 +1478,10 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
       field: 'media.0',
     },
     {
-      mediaAssetId: editorialMediaIds.journalTailoring,
-      ownerType: 'homepage_revision',
-      ownerId: homepagePublishedId,
-      field: 'media.1',
-    },
-    {
       mediaAssetId: editorialMediaIds.homepageHero,
       ownerType: 'homepage_revision',
       ownerId: homepageDraftId,
       field: 'media.0',
-    },
-    {
-      mediaAssetId: editorialMediaIds.journalTailoring,
-      ownerType: 'homepage_revision',
-      ownerId: homepageDraftId,
-      field: 'media.1',
     },
     {
       mediaAssetId: editorialMediaIds.journalTailoring,
@@ -1194,6 +1490,21 @@ async function reconcileEditorial(transaction: Prisma.TransactionClient): Promis
       field: 'media.0',
     },
   ];
+  // The seed composition carries only the hero image, so any other reference held
+  // by a revision the seed still owns would wrongly block that media from deletion.
+  const seedOwnedHomepageIds = (
+    await transaction.homepageRevision.findMany({
+      where: { id: { in: [homepagePublishedId, homepageDraftId] }, actorId: 'seed' },
+      select: { id: true },
+    })
+  ).map((revision) => revision.id);
+  await transaction.editorialMediaReference.deleteMany({
+    where: {
+      ownerType: 'homepage_revision',
+      ownerId: { in: seedOwnedHomepageIds },
+      field: { not: 'media.0' },
+    },
+  });
   for (const reference of references) {
     await transaction.editorialMediaReference.upsert({
       where: { mediaAssetId_ownerType_ownerId_field: reference },
@@ -1238,7 +1549,19 @@ async function seed(): Promise<void> {
     await reconcileProductNavigationCategories(transaction);
     if (!resetForE2E) await reconcileProductGroups(transaction);
     await reconcileOutfit(transaction);
-    await reconcileEditorial(transaction);
+    await reconcileEditorial(
+      transaction,
+      resetForE2E
+        ? { featuredOutfitIds: [outfitId], heroOutfitId: outfitId }
+        : {
+            featuredOutfitIds: demoOutfits
+              .filter((outfit) => outfit.homepage === 'featured')
+              .map((outfit) => outfit.outfitId),
+            heroOutfitId: demoHeroOutfit().outfitId,
+          },
+    );
+    // Demo Outfits reuse the demo product groups and the occasion category.
+    if (!resetForE2E) await reconcileDemoOutfits(transaction);
     if (resetForE2E) await reconcileE2EShipping(transaction);
   });
   if (resetForE2E) await assertExactE2EFixture();

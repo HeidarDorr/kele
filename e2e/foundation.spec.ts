@@ -748,7 +748,8 @@ test('Outfit customer and admin journeys are responsive, RTL, accessible and rev
     await page.evaluate(() => {
       document.body.removeAttribute('tabindex');
     });
-    await expect(page.getByRole('heading', { name: 'هماهنگی، از اولین انتخاب.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'ست‌های کامل' })).toBeVisible();
+    await expect(page.locator('a[href="#outfits-title"]')).toHaveCount(0);
     await expect(page.getByRole('link', { name: /مشاهدهٔ ست ست لینن آرام/ })).toBeVisible();
     await captureMilestoneFiveEvidence(page, 'outfits-index-laptop.png', {
       preserveFocus: true,

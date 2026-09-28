@@ -56,6 +56,65 @@ describe('Milestone 7 editorial validation', () => {
     expect(unsafe.map((issue) => issue.code)).toContain('UNSAFE_LINK');
   });
 
+  it('[CMS-006][CMS-007] lets only the Hero present an Outfit as its single destination', () => {
+    const mediaId = randomUUID();
+    const outfitId = randomUUID();
+    const hero = (
+      content: Partial<Parameters<typeof validateHomepage>[0]['sections'][0]['content']>,
+    ) =>
+      validateHomepage(
+        {
+          sections: [
+            {
+              id: randomUUID(),
+              type: 'hero',
+              enabled: true,
+              order: 0,
+              content: {
+                title: 'ست فصل',
+                subtitle: null,
+                mediaId,
+                ctaLabel: 'مشاهده ست',
+                href: null,
+                outfitId,
+                ...content,
+              },
+            },
+          ],
+        },
+        true,
+      ).map((issue) => issue.code);
+
+    expect(hero({})).toEqual([]);
+    expect(hero({ href: '/catalog' })).toContain('DESTINATION_CONFLICT');
+    expect(hero({ ctaLabel: null })).toContain('CTA_PAIR_REQUIRED');
+    expect(hero({ outfitId: 'not-an-outfit' })).toContain('INVALID_REFERENCE');
+    expect(hero({ outfitId: null, ctaLabel: null })).toEqual([]);
+
+    const story = validateHomepage(
+      {
+        sections: [
+          {
+            id: randomUUID(),
+            type: 'brand_story',
+            enabled: true,
+            order: 1,
+            content: {
+              title: 'روایت',
+              subtitle: null,
+              mediaId,
+              ctaLabel: 'مشاهده',
+              href: null,
+              outfitId,
+            },
+          },
+        ],
+      },
+      false,
+    );
+    expect(story.map((issue) => issue.code)).toContain('UNSUPPORTED_FIELD');
+  });
+
   it('[CMS-011][CMS-013] rejects arbitrary blocks and non-HTTPS external links', () => {
     expect(isSafeExternalHref('https://example.com/story')).toBe(true);
     expect(isSafeExternalHref('data:text/html,unsafe')).toBe(false);

@@ -5,11 +5,11 @@
   --kele-ink: #30251e;
   --kele-ink-muted: #695d54;
   --kele-line: #ded3c7;
-  /* --kele-accent: #c86f2c; */
-  --kele-accent: #B97A3F;
+  --kele-accent: #c86f2c;
+  /* --kele-accent: #B97A3F; */
   /* --kele-accent-strong: #b04600; */
-  /* --kele-accent-strong: #ff8e42; */
-  --kele-accent-strong: #9F642F;
+  --kele-accent-strong: #ff8e42;
+  /* --kele-accent-strong: #9F642F; */
   /* Tinted accent ground for selected and highlighted surfaces. */
   --kele-accent-soft: #f2ddc9;
   --kele-inverse: #2b1f18;

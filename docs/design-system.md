@@ -391,25 +391,22 @@ inputs in `docs/open-questions.md`.
 ## Homepage composition
 
 The Homepage is the one page that has to argue for the brand before it sells
-anything, so it alternates published commerce with brand-owned connective
-tissue rather than stacking CMS sections in a single rhythm.
+anything. Version 1 leads with complete sets: a hero, the brand promise, one
+editorial spread per featured set, and the closing band.
 
 Published sections render in their CMS order. Brand-owned sections are anchored
-to the section they follow, so the page keeps its rhythm whichever sections an
-editor publishes:
+to the section they follow:
 
 | Position | Section | Source |
 |---|---|---|
-| 1 | Full-bleed hero | CMS `hero` |
-| 2 | Brand promise, four statements | Brand-owned, follows the hero |
-| 3 | Category grid | Brand-owned, follows the hero, uses CAT-007 navigation |
-| 4 | Occasions | CMS `occasion_grid` |
-| 5 | Curated products | CMS `featured_products` |
-| 6 | Craft triptych | Brand-owned, follows the curated products |
-| 7 | Styling and outfits | CMS `featured_outfits` |
-| 8 | Brand story | CMS `brand_story` or `editorial_banner` |
-| 9 | Journal | CMS `journal_highlights` |
-| 10 | Closing band | Brand-owned, always last |
+| 1 | Full-bleed hero, presenting one Hero Outfit | CMS `hero` |
+| 2 | Brand promise, a compact strip of four icon statements divided by hairlines | Brand-owned, follows the hero |
+| 3 | Set spreads, one per referenced Outfit | CMS `featured_outfits` |
+| — | Occasions, curated products, brand story, Journal | CMS `occasion_grid`, `featured_products`, `brand_story` / `editorial_banner`, `journal_highlights`; rendered only when an editor publishes them |
+| last | Closing band | Brand-owned, always last |
+
+The retired category grid, craft triptych and styling intro are preserved on the
+`archive/home-full-sections` branch.
 
 Composition rules:
 
@@ -425,11 +422,43 @@ Composition rules:
 - Sections that can receive one item compose for that case explicitly: a lone
   occasion pairs with an editorial aside, and a lone journal article becomes a
   wide two-column card.
-- The craft triptych drops its middle frame so the row reads as composed rather
-  than tabulated. On mobile it becomes two columns with the third frame spanning
-  both.
+- Each featured set is a full spread: its featured image (4:5) on the outer
+  edge, its next gallery image (4:5) raised beside it and, when the gallery has
+  one, a third scene frame (5:4) stacked under that detail. The copy carries an
+  accent piece-count label above the name, the description, starting price,
+  availability and a "مشاهده ست" action; the individual pieces are listed on
+  the set page, not in the spread. Spreads carry no ordinal numbering. Spreads
+  alternate sides and surfaces in the order the editor chose, and the images
+  keep the wider column on either side. Below 1024 px the copy stacks under the
+  images; below 768 px only the featured image remains. A set whose detail
+  cannot be read is left out, and a section with no readable set states that
+  nothing is published.
 - The closing band is the only inverse surface in the page body. The solid
   button inverts there so it stays visible.
 - When the published Homepage cannot be read, the brand-owned sections still
   render. The page states plainly that the published narrative is unavailable
   and keeps the catalogue reachable, rather than collapsing to a bare notice.
+
+### Replacing the demo sets
+
+Outside E2E, the development seed publishes four demo Outfits. Three
+(`evening-velvet-set`, `camel-vest-set`, `olive-summer-set`) are featured as set
+spreads; `beige-linen-set` is the Hero Outfit, the set the hero photograph
+shows. Replacing them with real sets needs no code change:
+
+1. In the administration app, create each real Outfit under ست تازه (`/outfits/new`),
+   with its category, items, sizes resolved to exact SKUs, prices and editorial
+   media. The featured image is the spread's lead frame; the next gallery image
+   is its detail frame, and an optional third gallery image (landscape 5:4)
+   becomes its scene frame. Publish it.
+2. Under صفحهٔ اصلی (`/editorial/homepage`), in the hero section choose the lead
+   set under ست هیرو and its wide hero frame (3200 × 1400) under تصویر هیرو. The
+   hero action then opens that set and the internal path is ignored.
+3. In the ست‌های منتخب section, remove the demo sets, add the real ones and
+   order them. Save the draft, then validate and publish.
+4. Archive the four demo Outfits from their edit page under ست‌ها so they
+   leave the Outfit listing.
+
+The seed re-applies its composition only to Homepage revisions it still owns
+(`actorId = 'seed'`) and never un-archives an Outfit, so an editor's published
+Homepage survives re-seeding and the UAT start-up reconciliation.

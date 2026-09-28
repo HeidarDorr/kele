@@ -5114,6 +5114,13 @@ components:
         href:
           type: [string, 'null']
           maxLength: 500
+        outfitId:
+          description: >-
+            Hero only. The Outfit the Hero presents; its action opens that
+            Outfit. Mutually exclusive with `href`, and publication requires a
+            published Outfit. Absent on revisions saved before the field existed.
+          type: [string, 'null']
+          format: uuid
 
     HomepageReferenceContent:
       type: object

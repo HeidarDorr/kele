@@ -232,8 +232,8 @@ Every page includes:
 - final, production-approved primary/monochrome SVG variants and favicon; the
   supplied signature PNG is only a temporary in-product review placeholder;
 - licensed web fonts;
-- final product/editorial imagery, including the fourteen Homepage images
-  specified in `apps/storefront/lib/art-direction.ts` (DES-007);
+- final product/editorial imagery, including the Homepage images specified in
+  `apps/storefront/lib/art-direction.ts` (DES-007);
 - icon source or approved icon family;
 - complete UI flows for listing, search, cart, checkout, account, Journal and
   administration;
@@ -272,6 +272,10 @@ Content states, each required before the page is complete:
   empty rail;
 - a single occasion and a single journal article each compose deliberately
   instead of leaving empty grid tracks;
+- each featured set renders as its own spread with its piece count, starting
+  price, availability and action, and an unavailable set says so instead of
+  hiding; a third gallery image adds a scene frame, and mirrored spreads keep
+  the images in the wider column;
 - reduced-motion mode removes the image reveals and the loading sweep.
 
 The redesign supersedes the previous Homepage baselines. Route baselines under

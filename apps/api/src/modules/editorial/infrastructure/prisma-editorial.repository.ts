@@ -22,6 +22,7 @@ import type {
   ValidationIssue,
 } from '../domain/editorial.types.js';
 import {
+  homepageHeroOutfitIds,
   homepageMediaIds,
   journalMediaIds,
   validateHomepage,
@@ -263,6 +264,24 @@ export class PrismaEditorialRepository implements EditorialRepository {
   ): Promise<void> {
     issuesOrThrow(validateHomepage(input, true));
     await this.assertMedia(client, homepageMediaIds(input));
+    const heroOutfitIds = homepageHeroOutfitIds(input);
+    if (
+      heroOutfitIds.length > 0 &&
+      (await client.outfit.count({ where: { id: { in: heroOutfitIds }, status: 'PUBLISHED' } })) !==
+        heroOutfitIds.length
+    )
+      throw new EditorialError(
+        'validation',
+        'EDITORIAL_REFERENCE_INVALID',
+        'Homepage references must resolve to published content.',
+        [
+          {
+            path: 'sections.hero.content.outfitId',
+            code: 'NOT_PUBLISHED',
+            message: 'The Hero Outfit is unavailable.',
+          },
+        ],
+      );
     for (const section of input.sections) {
       if (!('referenceIds' in section.content) || !section.enabled) continue;
       const ids = section.content.referenceIds;

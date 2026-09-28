@@ -35,7 +35,7 @@ export function HomeHero({
         />
       </div>
       <div className="home-hero-veil" aria-hidden="true" />
-      <div className="home-hero-copy">
+      <div className="shell home-hero-copy">
         <p className="home-eyebrow">روایت فصل</p>
         <h1 id={titleId}>{title}</h1>
         {subtitle ? <p className="home-hero-lede">{subtitle}</p> : null}
@@ -46,7 +46,7 @@ export function HomeHero({
             </Link>
           ) : null}
           <Link className="home-text-link" href="/outfits">
-            دیدن ست‌های کامل
+            مشاهده مجموعه ست‌ها
           </Link>
         </div>
       </div>
