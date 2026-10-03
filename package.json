@@ -35,7 +35,9 @@
     "demo:quick-tunnel:urls": "node scripts/quick-tunnel-demo.mjs urls",
     "demo:quick-tunnel:reset": "node scripts/quick-tunnel-demo.mjs reset",
     "demo:liara:env": "node scripts/generate-liara-uat-env.mjs",
-    "demo:liara:archive": "node scripts/create-liara-archive.mjs"
+    "demo:liara:archive": "node scripts/create-liara-archive.mjs",
+    "deploy:hostiran:env": "node scripts/generate-hostiran-env.mjs",
+    "deploy:hostiran:archive": "node scripts/create-hostiran-archive.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

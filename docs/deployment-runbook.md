@@ -22,7 +22,9 @@ staging, availability, backup, provider or release-image certification.
 
 The optional single-application Liara profile documented in
 `liara-uat-demo.md` is the equivalent persistent synthetic-UAT boundary for a
-small review group. Its dedicated root Dockerfile serves Storefront, Admin and
+small review group. The self-hosted Hostiran initial profile in
+`hostiran-initial-deployment.md` reuses the same synthetic runtime on a VPS with
+Docker Compose and Caddy; it is not commercial production. Its dedicated root Dockerfile serves Storefront, Admin and
 API through one public HTTP port and a separate private managed PostgreSQL
 database. It deliberately permits Fake providers only when the explicit
 `KELE_DEPLOYMENT_TIER=uat` contract passes. It is not staging, production,

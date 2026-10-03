@@ -1,0 +1,16 @@
+# Bootstrap overlay when MinIO cannot be pulled from Iranian networks.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.no-minio.yml up -d --build
+#
+# Admin media upload stays disabled until real storage is configured.
+
+services:
+  minio:
+    profiles: ['disabled']
+
+  minio-init:
+    profiles: ['disabled']
+
+  kele:
+    depends_on:
+      postgres:
+        condition: service_healthy

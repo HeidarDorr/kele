@@ -140,6 +140,7 @@ Decision record:
 | RQ-026 | Production media storage uses private multi-zone Arvan Object Storage and CDN. | ADR-0005, OQ-018 |
 | RQ-027 | Production administrator access uses first-party PostgreSQL principals and opaque OTP sessions; static tokens remain local/test only. | ADR-0005, OQ-022 |
 | RQ-028 | Removing any component in the Outfit purchase panel does not modify or create an Outfit. The remaining exact component SKUs are added atomically as independent Product Cart lines, use current Product SKU prices, and remain Products through Checkout, Order and returns. A complete Outfit remains one Outfit line with its independent revision-size price. | Product Owner instruction on 2026-08-18; OTF-008–OTF-010, OTF-019–OTF-020 |
+| RQ-029 | The first self-hosted Hostiran launch may use `KELE_DEPLOYMENT_TIER=uat` with Fake Payment, Fake SMS and private MinIO on the VPS until real providers are provisioned. This boundary is documented in `docs/hostiran-initial-deployment.md` and is not commercial production. | Product Owner instruction on 2026-09-28 |
 
 ## Resolution protocol
 

@@ -1,0 +1,4 @@
+{$KELE_DOMAIN} {
+	encode gzip
+	reverse_proxy kele:3000
+}
