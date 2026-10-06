@@ -7,6 +7,7 @@ import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getCategory } from '../../../lib/catalog-api';
 import { getSiteSettings } from '../../../lib/editorial-api';
 import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
+import { resolvePageTitle } from '../../../lib/page-metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,7 @@ export async function generateMetadata({
   const occasion = await occasionOrNull(slug).catch(() => null);
   return occasion
     ? {
-        title: { absolute: occasion.seo.title ?? occasion.editorialTitle ?? occasion.name },
+        title: resolvePageTitle(occasion.seo.title, occasion.editorialTitle ?? occasion.name),
         description:
           occasion.seo.description ?? occasion.editorialDescription ?? occasion.description ?? '',
         alternates: { canonical: `/occasion/${occasion.slug}` },

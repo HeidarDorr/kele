@@ -5,6 +5,7 @@ import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getCategory } from '../../../lib/catalog-api';
 import { getAcceptancePresentationState } from '../../../lib/acceptance-presentation-state.server';
+import { resolvePageTitle } from '../../../lib/page-metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function generateMetadata({
   try {
     const category = await getCategory(slug, { limit: 1 });
     return {
-      title: category.seo.title ?? category.name,
+      title: resolvePageTitle(category.seo.title, category.name),
       description: category.seo.description ?? category.description ?? undefined,
       alternates: { canonical: `/category/${slug}` },
       openGraph: {

@@ -137,7 +137,7 @@ production database.
 - Display roles use the shared fluid type scale: Display XL for Homepage and
   Outfit mastheads, Display L for page and Product titles, and Heading M for
   sections. Browser evidence checks the documented mobile and desktop endpoints
-  at 390, 768, 1280 and 1440 pixels after Estedad and Vazirmatn finish loading.
+  at 390, 768, 1280 and 1440 pixels after Parastoo and Vazirmatn finish loading.
 
 Failure cases are an uncovered route, blank or text-only delayed transition,
 skeleton motion under reduced motion, a component image/link detached from its
@@ -260,13 +260,15 @@ launch at `NO-GO`.
 | ID      | Temporary M8 waiver                                                                                                                                                                                         | Resolution owner                                                            | Resolution due                                                           | Launch effect                                                                                                                           |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | DES-001 | The customer-supplied signature PNG temporarily replaces the typed wordmark in Storefront and Administration for local review only. It is explicitly not the final logo.                                    | Product Owner (accountable); Brand/Design owner (delivery)                  | Before production release-candidate visual sign-off                      | This question remains open and launch remains `NO-GO` until the final primary, monochrome and favicon assets are supplied and approved. |
-| DES-002 | The Estedad/Vazirmatn default and Elize/Peyda or Markazi legacy review choices remain provisional brand pairings. Bundled OFL evidence covers the new open-source files but grants no final brand approval. | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Before any production release candidate embeds or serves the final fonts | M8 may close; launch remains `NO-GO` until the final pairing and any required legacy licences are approved or replaced.                 |
+| DES-002 | Resolved 2026-10-06: Parastoo headings with Vazirmatn body/control text is the final approved pairing (`parastoo-vazirmatn`). Bundled OFL evidence covers the approved open-source files. Legacy rollback settings remain for engineering comparison only. | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Resolved 2026-10-06 | Typography launch blocker cleared. See `decisions/2026-10-06-final-typography-pairing.md`. |
 | DES-003 | Repository prototype imagery and the reserved missing-media treatment may be used only for M8 evidence. No usage right or production approval is implied.                                                   | Product Owner (accountable); Creative/Content owner (delivery)              | Before production content freeze and customer-facing UAT                 | M8 may close; launch remains `NO-GO` until final photography, rights, focal points and crops are approved.                              |
 | DES-004 | The 76 route baselines are engineering extrapolation candidates only; they are not final product/design approval.                                                                                           | Product Owner and Design owner (jointly accountable)                        | Before production UAT and final design sign-off                          | M8 may close; launch remains `NO-GO` until the extrapolated route families receive product/design approval.                             |
 | DES-005 | The content-driven 640/1024 boundaries and 390/768/1280/1440 evidence widths are provisional M8 acceptance values only.                                                                                     | Product Owner and Design owner (accountable); Frontend lead (validation)    | Before production responsive UAT and breakpoint sign-off                 | M8 may close; launch remains `NO-GO` until responsive behavior and breakpoint boundaries are approved.                                  |
 
-`docs/open-questions.md` is the operational register for these five launch
-blockers and carries the same scope, owners, due gates and launch effects.
+`docs/open-questions.md` is the operational register for these design launch
+items. DES-002 is resolved; DES-001 and DES-003 through DES-005 remain launch
+blockers with the same scope, owners, due gates and launch effects recorded
+there.
 
 ## Verification outputs
 

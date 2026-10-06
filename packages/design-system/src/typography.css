@@ -1,6 +1,12 @@
 /* Font roles are shared by the storefront and administration app. */
 body {
   --font-body: var(--font-vazirmatn);
+  --font-display: var(--font-parastoo);
+  --font-display-fallback: serif;
+}
+
+body[data-typography='estedad-vazirmatn'] {
+  --font-body: var(--font-vazirmatn);
   --font-display: var(--font-estedad);
   --font-display-fallback: sans-serif;
 }

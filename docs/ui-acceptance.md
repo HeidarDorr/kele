@@ -159,7 +159,7 @@ overflow, and animation that persists under reduced motion.
 
 ### Typography-scale amendment (2026-09-05)
 
-The Estedad/Vazirmatn review must use the role scale in `design-system.md`:
+The Parastoo/Vazirmatn pairing must use the role scale in `design-system.md`:
 Display XL is 40/44 on mobile and 64/68 on desktop, Display L is 32/38 and
 44/50, and Heading M is 24/30 and 28/34. Homepage and Outfit mastheads use
 Display XL; page and Product titles use Display L; section headings use Heading
@@ -358,19 +358,20 @@ the supplied homepage and product-detail references:
   reference structure and is not an alternate theme. Automatic dark-mode
   palette changes remain unapproved and are not inferred;
 - editorial, image-led compositions rather than generic cards;
-- the temporary default `estedad-vazirmatn` review pairing loads Estedad locally
-  for headings and Vazirmatn for body text, controls, labels and prices in both
+- the approved default `parastoo-vazirmatn` pairing loads Parastoo locally for
+  headings and Vazirmatn for body text, controls, labels and prices in both
   Storefront and Administration; heading roles preserve their component
   hierarchy, mostly weight 400 with selected headings at 500, while body text is
   400 and emphasized controls or prices use 500–600;
-- explicit `elize` and `markazi` settings retain the legacy review choices for
-  rollback; see `design-system.md` for their family mapping and restart steps;
+- explicit `estedad-vazirmatn`, `elize` and `markazi` settings retain legacy
+  review choices for rollback; see `design-system.md` for their family mapping
+  and restart steps;
 - the existing customer-supplied signature image is the wordmark in every
   variant; typography selection does not replace it with typed text or approve
   the final logo;
-- the new pair's official upstream provenance and OFL files are recorded under
-  `packages/design-system/assets/fonts/open-source/`; the temporary selection
-  does not close DES-002 final brand sign-off or approve customer-facing claims;
+- the approved pair's official upstream provenance and OFL files are recorded
+  under `packages/design-system/assets/fonts/open-source/`; DES-002 is resolved
+  by `decisions/2026-10-06-final-typography-pairing.md`;
 - browser acceptance verifies the selected real font faces finish loading,
   headings use the display family, and body/control/label/price text uses the
   body family rather than relying on CSS declarations alone;
@@ -507,9 +508,10 @@ Evidence is split intentionally:
 The local production-build timing observations are diagnostic, not a production
 network certification: measured `load` was 36–105 ms for the five sampled
 routes. Final CDN, final Media and real-user performance remain Milestone 9.
-DES-001 through DES-005 retain the provisional fallbacks and launch-blocker
-status recorded in `docs/open-questions.md`; M8 implementation does not imply
-asset, font, extrapolation or breakpoint approval.
+DES-001 and DES-003 through DES-005 retain the provisional fallbacks and
+launch-blocker status recorded in `docs/open-questions.md`; DES-002 typography
+is resolved. M8 implementation does not imply asset, extrapolation or
+breakpoint approval.
 
 ## Product navigation and responsive menu evidence
 

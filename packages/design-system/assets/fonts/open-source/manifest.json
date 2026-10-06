@@ -24,6 +24,17 @@
       "sha256": "4e3fa217d38fdafc1fea4414ceb58ca5e662cf0ab5fa735a8c8c20e8b42cad92",
       "bytes": 111152,
       "weights": "100–900"
+    },
+    {
+      "family": "Parastoo",
+      "file": "Parastoo-Variable.ttf",
+      "role": "headings",
+      "revision": "google-fonts-main",
+      "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/parastoo/Parastoo%5Bwght%5D.ttf",
+      "license": "LICENSE-Parastoo.txt",
+      "sha256": "f29efde7fbdc1ec5e2e2d009371103c6a06ec4f85ed1703306b5fa11d261a8e4",
+      "bytes": 170292,
+      "weights": "400–700"
     }
   ]
 }

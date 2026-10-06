@@ -24,6 +24,7 @@ authoritative; older names embedded in imported documents are legacy metadata.
 | 12 | `decisions/2026-07-28-checkout-clarifications.md` | Approved shipping-threshold and cart-merge rules | Incorporated | Decision evidence |
 | 13 | `decisions/2026-08-07-m9-production-providers.md` | Approved M9 provider and administration choices | Incorporated by ADR-0005 | Decision evidence |
 | 14 | `decisions/2026-09-05-outfit-minimum-price-selection.md` | Approved Outfit card price and detail default-size behavior | Incorporated as OTF-021 | Decision evidence |
+| 15 | `decisions/2026-10-06-final-typography-pairing.md` | Approved final Parastoo/Vazirmatn typography pairing | Incorporated; resolves DES-002 | Decision evidence |
 
 ## Known import corrections
 

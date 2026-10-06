@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { resolveTypographyVariant } from './typography.js';
 
 describe('provisional typography variants', () => {
-  it('defaults to Estedad headings and Vazirmatn text', () => {
-    expect(resolveTypographyVariant(undefined)).toBe('estedad-vazirmatn');
-    expect(resolveTypographyVariant('unknown')).toBe('estedad-vazirmatn');
+  it('defaults to Parastoo headings and Vazirmatn text', () => {
+    expect(resolveTypographyVariant(undefined)).toBe('parastoo-vazirmatn');
+    expect(resolveTypographyVariant('unknown')).toBe('parastoo-vazirmatn');
+    expect(resolveTypographyVariant('parastoo-vazirmatn')).toBe('parastoo-vazirmatn');
+  });
+
+  it('retains Estedad as an explicit legacy rollback choice', () => {
     expect(resolveTypographyVariant('estedad-vazirmatn')).toBe('estedad-vazirmatn');
   });
 

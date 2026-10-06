@@ -26,6 +26,7 @@ import { JournalHighlights } from '../components/home/journal-highlights';
 import { OccasionShowcase } from '../components/home/occasion-showcase';
 import { ProductRail } from '../components/home/product-rail';
 import { getAcceptancePresentationState } from '../lib/acceptance-presentation-state.server';
+import { resolveSiteTitle } from '../lib/page-metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings().catch(() => null);
   return settings
     ? {
-        title: settings.configuration.seoDefaults.title ?? settings.configuration.brandName,
+        title: resolveSiteTitle(settings.configuration.seoDefaults.title),
         description:
           settings.configuration.seoDefaults.description ?? settings.configuration.brandTagline,
         alternates: { canonical: '/' },
