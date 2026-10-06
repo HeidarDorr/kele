@@ -10,7 +10,14 @@ export function OutfitCard({ outfit }: { outfit: OutfitCardValue }) {
         href={`/outfits/${outfit.slug}`}
         aria-label={`مشاهدهٔ ${outfit.name}`}
       >
-        <ProductImage media={outfit.featuredMedia} sizes="(max-width: 639px) 50vw, 25vw" />
+        <span className="product-card-image-primary">
+          <ProductImage media={outfit.featuredMedia} sizes="(max-width: 639px) 50vw, 25vw" />
+        </span>
+        {outfit.secondaryMedia ? (
+          <span className="product-card-image-secondary" aria-hidden="true">
+            <ProductImage media={outfit.secondaryMedia} sizes="(max-width: 639px) 50vw, 25vw" />
+          </span>
+        ) : null}
       </Link>
       <div className="product-card-copy">
         <h3>

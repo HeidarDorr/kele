@@ -107,6 +107,7 @@ export type OutfitCardView = Readonly<{
   slug: string;
   name: string;
   featuredMedia: OutfitMedia;
+  secondaryMedia: OutfitMedia | null;
   startingPrice: OutfitMoney;
   available: boolean;
 }>;

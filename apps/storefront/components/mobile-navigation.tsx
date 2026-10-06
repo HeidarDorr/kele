@@ -192,7 +192,7 @@ export function MobileNavigation({ navigation }: { navigation: NavigationItem[] 
                             loading="eager"
                             unoptimized
                           />
-                          <span aria-hidden="true" className="mobile-product-divider" />
+                          {/* <span aria-hidden="true" className="mobile-product-divider" /> */}
                           {item.label}
                         </Link>
                       );

@@ -2896,7 +2896,7 @@ summary {
   padding-block: 1.75rem;
   padding-inline: clamp(1.25rem, 5vw, 2.5rem);
   display: grid;
-  border-block-end: 1px solid var(--kele-line);
+  /* border-block-end: 1px solid var(--kele-line); */
 }
 
 .mobile-primary-links a {
@@ -4225,7 +4225,56 @@ summary {
 .home {
   --home-gutter: clamp(1rem, 3vw, 3rem);
   --home-rail-inset: max(var(--home-gutter), calc((100vw - var(--kele-content-wide)) / 2));
+  --home-surface: #faf7f2;
+  --home-section-space: clamp(2.75rem, 5.5vw, 5.5rem);
+  --home-section-space-inset: calc(var(--home-section-space) / 2);
+  --home-section-space-edge: var(--kele-section-space);
+  --home-set-slant-deg: -5deg;
+  --home-set-slant-fade: clamp(3rem, 6vw, 5.5rem);
   overflow: clip;
+}
+
+/* Tighter vertical rhythm between home sections; page edges keep full breathing room. */
+.home-promise,
+.home-occasions,
+.home-products,
+.home-journal,
+.home-set,
+.home-sets-empty,
+.home-notice {
+  padding-block-start: var(--home-section-space-inset);
+  padding-block-end: var(--home-section-space-inset);
+}
+
+.home > :first-child:is(
+    .home-notice,
+    .home-promise,
+    .home-occasions,
+    .home-products,
+    .home-journal,
+    .home-story,
+    .home-sets-empty
+  ) {
+  padding-block-start: var(--home-section-space-edge);
+}
+
+.home > :is(.home-promise, .home-occasions, .home-products, .home-journal, .home-sets-empty):has(
+    + .home-closing:last-child
+  ) {
+  padding-block-end: var(--home-section-space-edge);
+}
+
+.home > .home-sets:has(+ .home-closing:last-child) > .home-set:last-child {
+  padding-block-end: var(--home-section-space-edge);
+}
+
+.home > .home-story:has(+ .home-closing:last-child) .home-story-copy {
+  padding-block-end: var(--home-section-space-edge);
+}
+
+.home > .home-closing:last-child .home-closing-copy {
+  padding-block-start: var(--home-section-space-inset);
+  padding-block-end: var(--home-section-space-edge);
 }
 
 /* --- Shared home typography and controls --- */
@@ -4320,7 +4369,8 @@ summary {
 
 /* --- Hero --- */
 
-.home-hero {
+.home-hero,
+.home > .home-hero {
   position: relative;
   min-block-size: min(50rem, calc(100svh - var(--header-block)));
   display: grid;
@@ -4328,6 +4378,7 @@ summary {
   isolation: isolate;
   overflow: hidden;
   background: var(--kele-surface-muted);
+  padding: 0;
 }
 
 .home-hero-media {
@@ -4361,6 +4412,12 @@ summary {
   padding-block: clamp(3rem, 7vw, 6rem);
 }
 
+@media (min-width: 768px) {
+  .home-hero-copy {
+    margin-bottom: -8rem;
+  }
+}
+
 .home-hero h1 {
   max-inline-size: 16ch;
   margin: 0;
@@ -4390,8 +4447,18 @@ summary {
 /* --- Brand promise --- */
 
 .home-promise {
-  padding-block: clamp(1.75rem, 3vw, 2.5rem);
-  background: var(--kele-surface);
+  padding-block-start: clamp(2rem, 3.5vw, 3.25rem);
+  padding-block-end: clamp(2rem, 3.5vw, 3.25rem);
+  background: var(--home-surface);
+}
+
+.home > .home-promise + .home-sets > .home-set:first-of-type,
+.home > .home-promise + :is(.home-occasions, .home-products, .home-journal) {
+  padding-block-start: var(--home-section-space-edge);
+}
+
+.home > .home-promise + .home-story .home-story-copy {
+  padding-block-start: var(--home-section-space-edge);
 }
 
 .home-promise-grid {
@@ -4445,7 +4512,6 @@ summary {
 /* --- Occasions --- */
 
 .home-occasions {
-  padding-block: var(--kele-section-space);
   border-block-start: 1px solid var(--kele-line);
 }
 
@@ -4545,7 +4611,6 @@ summary {
 /* --- Product rail --- */
 
 .home-products {
-  padding-block: var(--kele-section-space);
   border-block-start: 1px solid var(--kele-line);
 }
 
@@ -4607,20 +4672,61 @@ summary {
 
 /* --- Set spreads --- */
 
+.home-sets {
+  position: relative;
+  isolation: isolate;
+  background: var(--kele-canvas);
+}
+
 .home-set {
-  padding-block: var(--kele-section-space);
+  position: relative;
   background: var(--kele-canvas);
 }
 
 .home-set.is-mirrored {
-  background: var(--kele-surface);
+  background: var(--home-surface);
 }
 
 .home-set + .home-set {
   border-block-start: 1px solid var(--kele-line);
 }
 
+/* Slanted alternating section on tablet/desktop with smooth editorial gradient */
+@media (min-width: 768px) {
+  .home-set {
+    background: transparent;
+  }
+
+  .home-set.is-mirrored {
+    background: transparent;
+  }
+
+  .home-set + .home-set {
+    border-block-start: 0;
+  }
+
+  .home-set.is-mirrored::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block: calc(-0.5 * var(--home-set-slant-fade));
+    background: linear-gradient(
+      to bottom,
+      var(--kele-canvas) 0%,
+      var(--home-surface) var(--home-set-slant-fade),
+      var(--home-surface) calc(100% - var(--home-set-slant-fade)),
+      var(--kele-canvas) 100%
+    );
+    transform-origin: center center;
+    transform: skewY(var(--home-set-slant-deg));
+    z-index: 0;
+    pointer-events: none;
+  }
+}
+
 .home-set-inner {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   align-items: center;
@@ -4718,16 +4824,13 @@ summary {
   font-size: 0.85rem;
 }
 
-.home-sets-empty {
-  padding-block: var(--kele-section-space);
-}
 
 /* --- Brand story --- */
 
 .home-story {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  background: var(--kele-surface);
+  background: var(--home-surface);
 }
 
 .home-story-media {
@@ -4743,7 +4846,8 @@ summary {
 }
 
 .home-story-copy {
-  padding: clamp(3rem, 8vw, 8rem);
+  padding-block: var(--home-section-space-inset);
+  padding-inline: clamp(3rem, 8vw, 8rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -4769,7 +4873,6 @@ summary {
 /* --- Journal --- */
 
 .home-journal {
-  padding-block: var(--kele-section-space);
   border-block-start: 1px solid var(--kele-line);
 }
 
@@ -4894,7 +4997,16 @@ summary {
   position: relative;
   z-index: 2;
   inline-size: min(calc(100% - 2.5rem), 42rem);
-  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+@media (min-width: 1024px) {
+  .home > .home-closing:last-child .home-closing-copy {
+    padding-block: 0;
+    padding-bottom: 2rem;
+    justify-self: center;
+    align-self: center;
+    margin-inline: auto;
+  }
 }
 
 .home-closing-copy .home-eyebrow {
@@ -4950,7 +5062,6 @@ summary {
 
 .home-notice {
   min-block-size: 52vh;
-  padding-block: clamp(4rem, 10vw, 8rem);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -5894,6 +6005,27 @@ a:any-link:active {
   padding-left: 0;
 }
 
+@media (max-width: 767px) {
+  .site-footer {
+    padding-block: 2rem 1.25rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 2rem;
+    row-gap: 2rem;
+  }
+
+  .footer-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .footer-tail {
+    margin-block-start: 1.25rem;
+    padding-block-start: 1rem;
+  }
+}
+
 /* Product and Outfit purchase sheets share one restrained commerce rhythm. */
 .detail-purchase-panel {
   position: sticky;
@@ -6451,9 +6583,7 @@ a:any-link:active {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     overflow: hidden;
-    border: 0;
-    border-block-start: 1px solid var(--kele-line);
-    border-inline-start: 1px solid var(--kele-line);
+    border: 1px solid var(--kele-line);
     border-radius: 0.45rem;
   }
 
@@ -6466,12 +6596,19 @@ a:any-link:active {
     grid-template-columns: 2.6rem 1px minmax(0, 1fr);
     align-items: center;
     gap: clamp(0.55rem, 2vw, 0.85rem);
-    border-inline-end: 1px solid var(--kele-line);
     border-block-end: 1px solid var(--kele-line);
     color: var(--kele-ink);
     font-family: var(--font-body), var(--font-body-fallback);
     font-size: clamp(0.85rem, 3.6vw, 1rem);
     font-weight: 500;
+  }
+
+  .mobile-product-links a:nth-child(odd) {
+    border-inline-end: 1px solid var(--kele-line);
+  }
+
+  .mobile-product-links a:nth-last-child(-n + 2) {
+    border-block-end: 0;
   }
 
   .mobile-product-links a.is-active {
