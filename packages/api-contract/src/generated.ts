@@ -1579,6 +1579,8 @@ export interface components {
       slug: string;
       name: string;
       featuredMedia: components['schemas']['Media'];
+      /** @description Second gallery image for card hover preview, when present. */
+      secondaryMedia: components['schemas']['Media'] | null;
       /** @description Lowest configured price across all sizes in the published Outfit Revision. */
       startingPrice: components['schemas']['Money'];
       available: boolean;

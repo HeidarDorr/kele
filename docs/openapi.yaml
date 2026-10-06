@@ -3099,7 +3099,17 @@ components:
       type: object
       additionalProperties: false
       required:
-        [id, revisionId, revisionNumber, slug, name, featuredMedia, startingPrice, available]
+        [
+          id,
+          revisionId,
+          revisionNumber,
+          slug,
+          name,
+          featuredMedia,
+          secondaryMedia,
+          startingPrice,
+          available,
+        ]
       properties:
         id:
           type: string
@@ -3116,6 +3126,11 @@ components:
           type: string
         featuredMedia:
           $ref: '#/components/schemas/Media'
+        secondaryMedia:
+          description: Second gallery image for card hover preview, when present.
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Media'
         startingPrice:
           description: Lowest configured price across all sizes in the published Outfit Revision.
           $ref: '#/components/schemas/Money'
