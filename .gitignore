@@ -36,3 +36,11 @@ output/release-image-scan/
 
 # Local object storage and database volumes
 .data/
+
+# Local tooling, IDE, and generated artifacts
+.cursor/
+.graphifyignore
+.tools/
+graphify-out/
+kele-hostiran.zip
+kele-image.tar
