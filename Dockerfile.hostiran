@@ -43,9 +43,9 @@ RUN cd deploy/liara \
     && node_modules/.bin/tsc -p packages/design-system/tsconfig.build.json \
     && node_modules/.bin/tsc -p apps/api/tsconfig.build.json \
     && cd apps/storefront \
-    && ../../node_modules/.bin/next build \
+    && STOREFRONT_ORIGIN=http://127.0.0.1:3100 ../../node_modules/.bin/next build \
     && cd ../admin \
-    && ../../node_modules/.bin/next build
+    && STOREFRONT_ORIGIN=http://127.0.0.1:3100 ../../node_modules/.bin/next build
 
 ARG RELEASE_VERSION=0.1.0
 ARG VCS_REF=unknown

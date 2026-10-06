@@ -20,6 +20,9 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   basePath: adminBasePath,
+  // Uploaded media lives on the storefront origin (/media/uploads/*). The admin
+  // app does not proxy that path, so the default image optimizer cannot fetch it.
+  images: { unoptimized: true },
   reactStrictMode: true,
   poweredByHeader: false,
   distDir: process.env.KELE_E2E_BUILD === 'true' ? '.next-e2e' : '.next',

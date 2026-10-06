@@ -142,6 +142,13 @@ https://shop.example.com/api/v1/health/ready
 
 All four URLs must return HTTP `200`.
 
+The Hostiran NIC (`ens160`) uses MTU 1400. Both compose files set the Docker
+network MTU to 1400 so containers do not advertise a 1460-byte TCP MSS. If the
+network was created earlier with the default MTU 1500, recreate it or keep the
+`kele-clamp-mss` service, which clamps forwarded SYN packets on `ens160` to
+MSS 1320. Without that, TLS handshakes and full pages stall whenever a path
+drops oversized packets.
+
 Sign-in checks:
 
 | Role | Mobile | OTP |
@@ -152,7 +159,63 @@ Sign-in checks:
 Checkout uses Fake Payment. Do not enter real customer, payment or address
 data on a shared initial-deploy URL.
 
-## 7. Routine operations
+## 7. Enable MinIO after bootstrap
+
+If the first deploy used `docker-compose.bootstrap.yml` without storage, enable
+private MinIO once the site is already live. The Hostiran profile builds MinIO
+from `dl.min.io` instead of Docker Hub or Quay, which Iranian VPS networks
+often block.
+
+Confirm `.env` already contains storage settings:
+
+```bash
+grep ^STORAGE_ deploy/hostiran/.env
+```
+
+Expected values:
+
+```text
+STORAGE_PROVIDER=minio
+STORAGE_ENDPOINT=http://minio:9000
+STORAGE_BUCKET=kele-media
+STORAGE_ACCESS_KEY=...
+STORAGE_SECRET_KEY=...
+```
+
+If any are missing, regenerate `.env` locally and copy it to the VPS again.
+
+On the VPS:
+
+```bash
+cd ~/kele/deploy/hostiran
+docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml build minio minio-init
+docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml up -d
+docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml logs -f minio kele
+```
+
+Verify:
+
+```bash
+docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml ps
+```
+
+All services should be `Up`; `minio-init` exits after creating the bucket.
+
+Then test in Administration:
+
+1. Open `/admin` and sign in.
+2. Upload a new media asset.
+3. Confirm the image renders on the storefront under `/media/uploads/...`.
+
+MinIO stays private. Port `9000` is not published to the internet; only the
+KELE application talks to it over the Docker network.
+
+If the MinIO build cannot reach `dl.min.io` from the VPS, build the two images
+on a workstation with working internet, transfer them with `docker save` /
+`docker load`, tag them as `hostiran-minio` and `hostiran-minio-init`, and ask
+for the fallback compose override in the troubleshooting table below.
+
+## 8. Routine operations
 
 Restart after an env change:
 
@@ -201,8 +264,8 @@ production; the startup guards intentionally reject that shortcut.
 | `502` from site | `docker compose logs kele` for upstream failure |
 | `503` readiness | PostgreSQL health and migrations |
 | Container OOM | Upgrade to VPS-4 or lower `KELE_*_HEAP_MB` values |
-| Media upload fails | Confirm `minio` and `minio-init` are healthy; regenerate `.env` |
-| MinIO pull denied on Docker Hub | Use `quay.io/minio/minio` in `deploy/hostiran/docker-compose.yml` |
+| Media upload fails | Confirm `minio` and `minio-init` are healthy; check `STORAGE_*` in `.env` |
+| MinIO registry pull denied | Use `docker-compose.minio.yml`; it builds from `dl.min.io` instead of Quay |
 | Build timeout | Retry build; ensure VPS has free disk (>15 GB) |
 
 ## Security notes

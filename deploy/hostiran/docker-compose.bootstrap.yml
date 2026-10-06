@@ -1,5 +1,5 @@
-# Hostiran bootstrap without MinIO (Iranian networks often block quay.io).
-# Usage: docker compose -f docker-compose.bootstrap.yml up -d --build
+# Hostiran bootstrap without MinIO when registry pulls fail during first boot.
+# After the site is live, enable storage with docker-compose.minio.yml.
 
 services:
   postgres:
@@ -55,3 +55,11 @@ volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+
+# Hostiran presents ens160 with MTU 1400. Docker's default 1500 makes
+# containers advertise MSS 1460, and larger segments are dropped.
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"

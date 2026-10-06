@@ -1,0 +1,41 @@
+# Enable private MinIO after the bootstrap stack is already running.
+# Usage:
+#   docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml build minio minio-init
+#   docker compose -f docker-compose.bootstrap.yml -f docker-compose.minio.yml up -d
+
+services:
+  minio:
+    build:
+      context: .
+      dockerfile: Dockerfile.minio
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  minio-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:?STORAGE_BUCKET is required}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing "local/$$STORAGE_BUCKET"
+
+  kele:
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+
+volumes:
+  minio-data:
