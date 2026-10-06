@@ -16,7 +16,8 @@ html {
   min-inline-size: 20rem;
 }
 
-body[data-typography='estedad-vazirmatn'] :where(h1, h2, h3) {
+body[data-typography='estedad-vazirmatn'] :where(h1, h2, h3),
+body[data-typography='parastoo-vazirmatn'] :where(h1, h2, h3) {
   font-family: var(--font-display), sans-serif;
 }
 

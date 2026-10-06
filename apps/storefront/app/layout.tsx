@@ -18,6 +18,13 @@ const estedad = localFont({
   weight: '100 900',
 });
 
+const parastoo = localFont({
+  src: '../../../packages/design-system/assets/fonts/open-source/Parastoo-Variable.ttf',
+  variable: '--font-parastoo',
+  display: 'swap',
+  weight: '400 700',
+});
+
 const peyda = localFont({
   src: '../../../packages/design-system/assets/fonts/provisional/PeydaWebVF.woff2',
   variable: '--font-peyda',
@@ -54,9 +61,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const typographyVariant = resolveTypographyVariant(process.env.KELE_TYPOGRAPHY);
   const fontClasses =
-    typographyVariant === 'estedad-vazirmatn'
-      ? `${vazirmatn.className} ${vazirmatn.variable} ${estedad.variable}`
-      : `${peyda.className} ${peyda.variable} ${elize.variable} ${markazi.variable}`;
+    typographyVariant === 'parastoo-vazirmatn'
+      ? `${vazirmatn.className} ${vazirmatn.variable} ${parastoo.variable}`
+      : typographyVariant === 'estedad-vazirmatn'
+        ? `${vazirmatn.className} ${vazirmatn.variable} ${estedad.variable}`
+        : `${peyda.className} ${peyda.variable} ${elize.variable} ${markazi.variable}`;
 
   return (
     <html lang="fa-IR" dir="rtl">

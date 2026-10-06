@@ -5,10 +5,11 @@ Status: Provisional, derived from supplied visual references
 Scope: Storefront. Administration UI uses the same tokens with denser layouts.
 
 This document converts the visual references into implementable constraints.
-Version 1 is Persian (`fa-IR`) and Right-to-Left. Exact fonts and
-production-ready vector/favicon logo variants remain open design inputs. The
-customer-supplied signature raster is only the implemented review placeholder;
-it is not the final or production-approved logo.
+Version 1 is Persian (`fa-IR`) and Right-to-Left. Final typography is approved
+in `decisions/2026-10-06-final-typography-pairing.md`. Production-ready vector
+and favicon logo variants remain open under DES-001. The customer-supplied
+signature raster is only the implemented review placeholder; it is not the
+final or production-approved logo.
 
 ## Creative direction
 
@@ -38,41 +39,44 @@ Avoid:
 
 Final values must be sampled/approved with source design files.
 
-## Provisional typography review variants
+## Approved typography
 
-Typography remains an open design input. The temporary pairing requested on
-2026-09-05 is the default for both Storefront and Administration:
+The final pairing approved on 2026-10-06 is the default for both Storefront and
+Administration:
 
-- `KELE_TYPOGRAPHY=estedad-vazirmatn` uses Estedad for display-heading roles
-  while preserving each component's existing hierarchy (mostly weight 400, with
-  selected headings at 500). Vazirmatn covers body text at weight 400 and uses
-  weights 500–600 where navigation, controls, labels or prices need emphasis.
+- `KELE_TYPOGRAPHY=parastoo-vazirmatn` uses **Parastoo** for display-heading
+  roles while preserving each component's existing hierarchy (mostly weight 400,
+  with selected headings at 500). **Vazirmatn** covers body text at weight 400
+  and uses weights 500–600 where navigation, controls, labels or prices need
+  emphasis.
+- `KELE_TYPOGRAPHY=estedad-vazirmatn` retains the earlier Estedad/Vazirmatn
+  review pairing as an explicit legacy rollback choice.
 - `KELE_TYPOGRAPHY=elize` retains Elize headings with Peyda body/control text as
-  an explicit legacy review and rollback choice.
+  another explicit legacy rollback choice.
 - `KELE_TYPOGRAPHY=markazi` retains the Markazi Text storefront display variant
-  with Peyda body/control text as another explicit legacy review choice.
+  with Peyda body/control text as another explicit legacy rollback choice.
 
-The default pair is self-hosted as variable WOFF2 files from the official
-upstream projects. Source provenance, the font manifest and their SIL Open Font
-Licenses are bundled in `packages/design-system/assets/fonts/open-source/`.
-The legacy Markazi Text Arabic variable subset retains its bundled OFL.
-Typography selection preserves the existing signature-image wordmark and other
-artwork. It does not approve a final brand pairing or any customer-facing claim;
-DES-002 remains open for final brand sign-off.
+Both approved faces are self-hosted from
+`packages/design-system/assets/fonts/open-source/` with recorded upstream
+provenance, the font manifest and bundled SIL Open Font License 1.1 notices.
+Legacy rollback fonts retain their bundled licences under `open-source/` and
+`provisional/`. Typography selection preserves the existing signature-image
+wordmark and other artwork. It does not approve the final logo or any
+customer-facing business claim.
 
 Because `next/font` creates build assets, change the setting before building or
 running development and restart both Next applications after changing it.
 Rollback consists of selecting an explicit legacy value and rebuilding or
 restarting the applications; no data migration is required.
 
-Acceptance requires loaded Estedad heading faces and loaded Vazirmatn body,
+Acceptance requires loaded Parastoo heading faces and loaded Vazirmatn body,
 control, label and price faces, verified in the browser rather than inferred
 from CSS declarations. At widths 390, 768, 1280 and 1440 pixels, Persian titles
 and mixed-direction identifiers must remain readable without clipping or
 horizontal overflow. Missing font files, silent fallback rendering, the display
 face leaking into prices or controls, clipped lines, and changed artwork are
-failure cases. Adjust heading weight and line height for the new family while
-preserving the page hierarchy, RTL behavior and existing business states.
+failure cases. Adjust heading weight and line height for the approved family
+while preserving the page hierarchy, RTL behavior and existing business states.
 
 ```css
 :root {

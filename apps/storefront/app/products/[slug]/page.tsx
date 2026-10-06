@@ -8,6 +8,7 @@ import { PdpDisclosures } from '../../../components/pdp-disclosures';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getProduct, getProducts } from '../../../lib/catalog-api';
+import { resolvePageTitle } from '../../../lib/page-metadata';
 import {
   initialProductGalleryItemKey,
   productGalleryItems,
@@ -24,7 +25,7 @@ export async function generateMetadata({
   try {
     const product = await getProduct(slug);
     return {
-      title: { absolute: product.seo.title ?? `${product.name} | KELE` },
+      title: resolvePageTitle(product.seo.title, product.name),
       description: product.seo.description ?? product.description,
       alternates: { canonical: `/products/${slug}` },
       openGraph: {

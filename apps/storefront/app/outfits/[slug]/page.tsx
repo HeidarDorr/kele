@@ -7,6 +7,7 @@ import { ProductGallery } from '../../../components/product-gallery';
 import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { CatalogApiError, getCategories, getOutfit, getProducts } from '../../../lib/catalog-api';
+import { resolvePageTitle } from '../../../lib/page-metadata';
 import { standaloneGalleryItems } from '../../../lib/product-gallery-model';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,7 @@ export async function generateMetadata({
   try {
     const outfit = await getOutfit(slug);
     return {
-      title: outfit.seo.title ?? outfit.name,
+      title: resolvePageTitle(outfit.seo.title, outfit.name),
       description: outfit.seo.description ?? outfit.description,
       alternates: { canonical: `/outfits/${slug}` },
       openGraph: {

@@ -32,8 +32,11 @@ const valid = {
 };
 
 describe('environment configuration', () => {
-  it('defaults typography to Estedad/Vazirmatn and accepts the legacy review variants', () => {
-    expect(parseEnvironment(valid).KELE_TYPOGRAPHY).toBe('estedad-vazirmatn');
+  it('defaults typography to Parastoo/Vazirmatn and accepts the legacy review variants', () => {
+    expect(parseEnvironment(valid).KELE_TYPOGRAPHY).toBe('parastoo-vazirmatn');
+    expect(
+      parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'parastoo-vazirmatn' }).KELE_TYPOGRAPHY,
+    ).toBe('parastoo-vazirmatn');
     expect(
       parseEnvironment({ ...valid, KELE_TYPOGRAPHY: 'estedad-vazirmatn' }).KELE_TYPOGRAPHY,
     ).toBe('estedad-vazirmatn');

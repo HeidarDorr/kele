@@ -1,9 +1,9 @@
 # Open questions and decision register
 
-Version: 1.4
+Version: 1.5
 Status: Active
 Owner: Product owner
-Last reviewed: 2026-08-18
+Last reviewed: 2026-10-06
 
 The employer-approved answers in
 `decisions/2026-07-24-employer-open-questions-v1.md` resolve the original
@@ -91,7 +91,7 @@ Decision record:
 | ID      | Temporary M8 waiver                                                                                                                                       | Resolution owner                                                                 | Resolution due                                                                 | Launch effect                                                                                               |
 | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | DES-001 | The customer-supplied signature PNG temporarily replaces the typed wordmark in Storefront and Administration for local review only. It is explicitly not the final logo. | Product Owner (accountable); Brand/Design owner (delivery) | Before production release-candidate visual sign-off | This question remains open and launch remains `NO-GO` until the final primary, monochrome and favicon assets are supplied and approved. |
-| DES-002 | The 2026-09-05 temporary default is Estedad headings with Vazirmatn body/control text. Official upstream provenance, a manifest and OFL files are bundled in `packages/design-system/assets/fonts/open-source/`. Elize/Peyda and the Markazi variant remain explicit legacy review choices. This selection is not final brand or production-release sign-off. | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Before production release-candidate typography sign-off | Remains open and launch remains `NO-GO` until the final pairing is approved and the selected fonts' provenance/licensing is reviewed. The new pair has recorded OFL provenance; this waiver grants no additional rights for legacy fonts or approval of customer-facing claims. |
+| DES-002 | Resolved 2026-10-06: Parastoo headings with Vazirmatn body/control text is the final approved pairing (`parastoo-vazirmatn`). Official upstream provenance, manifest entries and OFL files are bundled in `packages/design-system/assets/fonts/open-source/`. `estedad-vazirmatn`, Elize/Peyda and Markazi remain explicit legacy rollback settings only. | Product Owner (accountable); Legal/Procurement and Design owners (delivery) | Resolved 2026-10-06 | Typography launch blocker cleared. See `decisions/2026-10-06-final-typography-pairing.md`. Other DES-* blockers remain. |
 | DES-003 | Repository prototype imagery and the reserved missing-media treatment may be used only for M8 evidence. No usage right or production approval is implied. | Product Owner (accountable); Creative/Content owner (delivery)                   | Before production content freeze and customer-facing UAT                       | M8 may close; launch remains `NO-GO` until final photography, rights, focal points and crops are approved.       |
 | DES-004 | The 76 route baselines are engineering extrapolation candidates only; they are not final product/design approval.                                      | Product Owner and Design owner (jointly accountable)                             | Before production UAT and final design sign-off                                | M8 may close; launch remains `NO-GO` until the extrapolated route families receive product/design approval.     |
 | DES-005 | The content-driven 640/1024 boundaries and 390/768/1280/1440 evidence widths are provisional M8 acceptance values only.                                | Product Owner and Design owner (accountable); Frontend lead (validation)         | Before production responsive UAT and breakpoint sign-off                       | M8 may close; launch remains `NO-GO` until responsive behavior and breakpoint boundaries are approved.          |
@@ -141,6 +141,7 @@ Decision record:
 | RQ-027 | Production administrator access uses first-party PostgreSQL principals and opaque OTP sessions; static tokens remain local/test only. | ADR-0005, OQ-022 |
 | RQ-028 | Removing any component in the Outfit purchase panel does not modify or create an Outfit. The remaining exact component SKUs are added atomically as independent Product Cart lines, use current Product SKU prices, and remain Products through Checkout, Order and returns. A complete Outfit remains one Outfit line with its independent revision-size price. | Product Owner instruction on 2026-08-18; OTF-008–OTF-010, OTF-019–OTF-020 |
 | RQ-029 | The first self-hosted Hostiran launch may use `KELE_DEPLOYMENT_TIER=uat` with Fake Payment, Fake SMS and private MinIO on the VPS until real providers are provisioned. This boundary is documented in `docs/hostiran-initial-deployment.md` and is not commercial production. | Product Owner instruction on 2026-09-28 |
+| RQ-030 | Final typography is Parastoo headings with Vazirmatn body, control, label and price text (`parastoo-vazirmatn`). Legacy `estedad-vazirmatn`, `elize` and `markazi` settings remain rollback-only. | Product Owner instruction on 2026-10-06; `decisions/2026-10-06-final-typography-pairing.md`; DES-002 |
 
 ## Resolution protocol
 

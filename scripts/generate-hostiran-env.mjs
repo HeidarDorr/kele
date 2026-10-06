@@ -52,7 +52,7 @@ const values = [
   ['ADMIN_SESSION_PROVIDER', 'postgres_otp'],
   ['ADMIN_SESSION_SIGNING_SECRET', credential()],
   ['ADMIN_OTP_VERIFIER_PEPPER', credential()],
-  ['KELE_TYPOGRAPHY', 'estedad-vazirmatn'],
+  ['KELE_TYPOGRAPHY', 'parastoo-vazirmatn'],
   ['KELE_API_HEAP_MB', '128'],
   ['KELE_STOREFRONT_HEAP_MB', '112'],
   ['KELE_ADMIN_HEAP_MB', '96'],

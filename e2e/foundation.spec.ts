@@ -30,13 +30,17 @@ import { gotoAcceptancePresentationState } from './presentation-fixtures.mjs';
 import { resolveTypographyVariant } from '../packages/design-system/src/typography.js';
 
 const typographyVariant = resolveTypographyVariant(process.env.KELE_TYPOGRAPHY);
-const bodyFont = typographyVariant === 'estedad-vazirmatn' ? /vazirmatn/i : /peyda/i;
+const usesVazirmatnBody =
+  typographyVariant === 'estedad-vazirmatn' || typographyVariant === 'parastoo-vazirmatn';
+const bodyFont = usesVazirmatnBody ? /vazirmatn/i : /peyda/i;
 const displayFont =
   typographyVariant === 'estedad-vazirmatn'
     ? /estedad/i
-    : typographyVariant === 'markazi'
-      ? /markazi/i
-      : /elize/i;
+    : typographyVariant === 'parastoo-vazirmatn'
+      ? /parastoo/i
+      : typographyVariant === 'markazi'
+        ? /markazi/i
+        : /elize/i;
 const evidenceDirectory = resolve(
   typographyVariant !== 'elize'
     ? reviewEvidencePath(`milestone-2-${typographyVariant}`)
@@ -684,7 +688,7 @@ test('administration is responsive and exposes validation and inventory states',
     await expect(page.locator('body')).toHaveAttribute('data-typography', typographyVariant);
     await expect(page.getByRole('heading', { name: 'محصولات' })).toBeVisible();
     await expect(page.locator('body')).toHaveCSS('font-family', bodyFont);
-    if (typographyVariant === 'estedad-vazirmatn') {
+    if (usesVazirmatnBody) {
       await expect(page.getByRole('heading', { name: 'محصولات' })).toHaveCSS(
         'font-family',
         displayFont,
@@ -692,7 +696,7 @@ test('administration is responsive and exposes validation and inventory states',
     }
     const loadedFamilies = await loadRenderedFontFamilies(page);
     expect(loadedFamilies.some((family) => bodyFont.test(family))).toBe(true);
-    if (typographyVariant === 'estedad-vazirmatn') {
+    if (usesVazirmatnBody) {
       expect(loadedFamilies.some((family) => displayFont.test(family))).toBe(true);
     }
     const visibleWordmark = page.locator('.admin-brand .brand-wordmark');

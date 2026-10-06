@@ -6,6 +6,7 @@ import { SiteFooter } from '../../../components/site-footer';
 import { SiteHeader } from '../../../components/site-header';
 import { getCategories } from '../../../lib/catalog-api';
 import { EditorialApiError, getJournalArticle, getSiteSettings } from '../../../lib/editorial-api';
+import { resolvePageTitle } from '../../../lib/page-metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ export async function generateMetadata({
   const article = await articleOrNull(slug).catch(() => null);
   return article
     ? {
-        title: { absolute: article.seo.title ?? article.title },
+        title: resolvePageTitle(article.seo.title, article.title),
         description: article.seo.description ?? article.excerpt,
         alternates: { canonical: `/journal/${article.slug}` },
         openGraph: {

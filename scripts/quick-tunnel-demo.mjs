@@ -216,7 +216,7 @@ async function configureEnvironment(origins) {
     ['RATE_LIMIT_MAX_KEYS', '10000'],
     ['PROVIDER_CONNECT_TIMEOUT_MS', '3000'],
     ['PROVIDER_REQUEST_TIMEOUT_MS', '10000'],
-    ['KELE_TYPOGRAPHY', 'estedad-vazirmatn'],
+    ['KELE_TYPOGRAPHY', 'parastoo-vazirmatn'],
     ['IDENTITY_SIGNING_SECRET', existing.IDENTITY_SIGNING_SECRET ?? randomCredential()],
     ['OTP_VERIFIER_PEPPER', existing.OTP_VERIFIER_PEPPER ?? randomCredential()],
     ['ADMIN_SESSION_PROVIDER', 'development_static'],
